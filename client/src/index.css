@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
+  font-family: "Poppins", Arial, Helvetica, sans-serif;
+}
+
+/* Custom scrollbar styles for notification dropdown */
+.notification-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(209 213 219) rgb(243 244 246);
+}
+
+.notification-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.notification-scrollbar::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 4px;
+}
+
+.notification-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(209 213 219);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.notification-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}
+
+/* Dark mode scrollbar styles */
+.dark .notification-scrollbar {
+  scrollbar-color: rgb(75 85 99) rgb(31 41 55);
+}
+
+.dark .notification-scrollbar::-webkit-scrollbar-track {
+  background: rgb(31 41 55);
+}
+
+.dark .notification-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+}
+
+.dark .notification-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+
+/* Modal overlay styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  margin: 0;
+  border: none;
+  outline: none;
+}
+
+/* Ensure body doesn't have any margin/padding that could cause gaps */
+body.modal-open {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Force modal overlay to cover entire screen */
+.modal-overlay-fixed {
+  position: fixed !important;
+  top: -20px !important;
+  left: -20px !important;
+  right: -20px !important;
+  bottom: -20px !important;
+  width: calc(100vw + 40px) !important;
+  height: calc(100vh + 40px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(2px) !important;
+}
