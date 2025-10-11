@@ -82,7 +82,7 @@ const CoordinatorStudentsTab: React.FC = () => {
     name: "",
     email: "",
     phone: "",
-    program: "",
+    program: "BS Computer Engineering", // Hardcoded for BSCOE students only
     year: "",
     company: "",
     companyAddress: "",
@@ -339,7 +339,7 @@ const CoordinatorStudentsTab: React.FC = () => {
           name: "",
           email: "",
           phone: "",
-          program: "",
+          program: "BS Computer Engineering", // Keep hardcoded for BSCOE
           year: "",
           company: "",
           companyAddress: "",
@@ -894,7 +894,6 @@ const CoordinatorStudentsTab: React.FC = () => {
               newStudent.studentNumber &&
               newStudent.name &&
               newStudent.email &&
-              newStudent.program &&
               newStudent.startDate && (
                 <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <div className="flex items-start">
@@ -1008,29 +1007,15 @@ const CoordinatorStudentsTab: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Program <span className="text-red-500">*</span>
+                      Program
                     </label>
-                    <select
-                      value={newStudent.program}
-                      onChange={(e) =>
-                        handleInputChange("program", e.target.value)
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Select Program</option>
-                      <option value="BS Computer Science">
-                        BS Computer Science
-                      </option>
-                      <option value="BS Information Technology">
-                        BS Information Technology
-                      </option>
-                      <option value="BS Computer Engineering">
-                        BS Computer Engineering
-                      </option>
-                      <option value="BS Information Systems">
-                        BS Information Systems
-                      </option>
-                    </select>
+                    <div className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                      BS Computer Engineering
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      System is designed specifically for Computer Engineering
+                      students
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

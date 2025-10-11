@@ -69,7 +69,9 @@ const StudentAttendanceTab: React.FC = () => {
       const attendanceArray = Array.isArray(logs) ? logs : [];
       setAttendanceLogs(attendanceArray);
 
-      const calculatedStats = attendanceService.calculateStats(attendanceArray);
+      const calculatedStats = await attendanceService.calculateStats(
+        attendanceArray
+      );
       setStats(calculatedStats);
     } catch (error) {
       console.error("Error fetching attendance data:", error);

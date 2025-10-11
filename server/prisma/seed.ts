@@ -198,10 +198,10 @@ async function main() {
     });
   }
 
-  // Create students
+  // Create students and assign them to the instructor
   const student1 = await prisma.student.upsert({
     where: { studentNumber: '2021-12345' },
-    update: {},
+    update: { instructorId: instructor.id },
     create: {
       userId: studentUser1.id,
       studentNumber: '2021-12345',
@@ -210,16 +210,17 @@ async function main() {
       section: 'A',
       companyId: company1.id,
       supervisorName: 'Engr. Juan Dela Cruz',
-      startDate: new Date('2024-06-01'),
-      endDate: new Date('2024-09-30'),
-      totalHours: 500,
-      completedHours: 120
+      instructorId: instructor.id,
+      startDate: new Date('2024-08-01'),
+      endDate: new Date('2024-12-31'),
+      totalHours: 240,
+      completedHours: 0
     }
   });
 
   const student2 = await prisma.student.upsert({
     where: { studentNumber: '2021-12346' },
-    update: {},
+    update: { instructorId: instructor.id },
     create: {
       userId: studentUser2.id,
       studentNumber: '2021-12346',
@@ -228,16 +229,17 @@ async function main() {
       section: 'B',
       companyId: company2.id,
       supervisorName: 'Ms. Lisa Chen',
-      startDate: new Date('2024-07-01'),
-      endDate: new Date('2024-10-31'),
-      totalHours: 400,
-      completedHours: 80
+      instructorId: instructor.id,
+      startDate: new Date('2024-08-15'),
+      endDate: new Date('2025-01-15'),
+      totalHours: 240,
+      completedHours: 0
     }
   });
 
   const student3 = await prisma.student.upsert({
     where: { studentNumber: '2021-12347' },
-    update: {},
+    update: { instructorId: instructor.id },
     create: {
       userId: studentUser3.id,
       studentNumber: '2021-12347',
@@ -246,16 +248,17 @@ async function main() {
       section: 'A',
       companyId: company3.id,
       supervisorName: 'Mr. Mark Thompson',
-      startDate: new Date('2024-05-15'),
-      endDate: new Date('2024-09-15'),
-      totalHours: 500,
-      completedHours: 200
+      instructorId: instructor.id,
+      startDate: new Date('2024-09-01'),
+      endDate: new Date('2025-02-01'),
+      totalHours: 240,
+      completedHours: 0
     }
   });
 
   const student4 = await prisma.student.upsert({
     where: { studentNumber: '2021-12348' },
-    update: {},
+    update: { instructorId: instructor.id },
     create: {
       userId: studentUser4.id,
       studentNumber: '2021-12348',
@@ -264,16 +267,17 @@ async function main() {
       section: 'C',
       companyId: company1.id,
       supervisorName: 'Engr. Maria Santos',
-      startDate: new Date('2024-08-01'),
-      endDate: new Date('2024-11-30'),
-      totalHours: 400,
-      completedHours: 50
+      instructorId: instructor.id,
+      startDate: new Date('2024-09-15'),
+      endDate: new Date('2025-02-15'),
+      totalHours: 240,
+      completedHours: 0
     }
   });
 
   const student5 = await prisma.student.upsert({
     where: { studentNumber: '2021-12349' },
-    update: {},
+    update: { instructorId: instructor.id },
     create: {
       userId: studentUser5.id,
       studentNumber: '2021-12349',
@@ -282,10 +286,11 @@ async function main() {
       section: 'B',
       companyId: company2.id,
       supervisorName: 'Ms. Jennifer Lee',
-      startDate: new Date('2024-06-15'),
-      endDate: new Date('2024-10-15'),
-      totalHours: 500,
-      completedHours: 300
+      instructorId: instructor.id,
+      startDate: new Date('2024-10-01'),
+      endDate: new Date('2025-03-01'),
+      totalHours: 240,
+      completedHours: 0
     }
   });
 
@@ -392,102 +397,94 @@ async function main() {
     ]
   });
 
-  // Create sample attendance logs for all students
+  // Create sample attendance logs for all students with realistic data
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
   const twoDaysAgo = new Date(today);
   twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-  // Attendance for student1
-  await prisma.attendanceLog.createMany({
-    data: [
-      {
-        studentId: student1.id,
-        date: today,
-        timeIn: new Date(today.setHours(8, 0, 0)),
-        timeOut: new Date(today.setHours(17, 0, 0)),
-        durationMinutes: 540,
-        verified: true,
-        verificationMethod: 'MANUAL'
-      },
-      {
-        studentId: student1.id,
-        date: yesterday,
-        timeIn: new Date(yesterday.setHours(8, 15, 0)),
-        timeOut: new Date(yesterday.setHours(17, 0, 0)),
-        durationMinutes: 525,
-        verified: true,
-        verificationMethod: 'QR'
-      },
-      {
-      studentId: student1.id,
-        date: twoDaysAgo,
-        timeIn: new Date(twoDaysAgo.setHours(8, 0, 0)),
-        timeOut: new Date(twoDaysAgo.setHours(17, 30, 0)),
-        durationMinutes: 570,
-        verified: false,
-        verificationMethod: 'MANUAL'
+  // Helper function to create attendance logs for a date range
+  const createAttendanceLogs = async (studentId: string, startDate: Date, endDate: Date, attendanceRate: number = 0.85) => {
+    const logs = [];
+    let currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+      // Skip weekends
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        // Random chance of attendance based on attendanceRate
+        if (Math.random() < attendanceRate) {
+          const timeIn = new Date(currentDate);
+          timeIn.setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0);
+          
+          // Generate realistic work hours for 240-hour requirement (1-3 hours per day)
+          const workHours = 1 + Math.floor(Math.random() * 2); // 1-3 hours
+          const timeOut = new Date(timeIn);
+          timeOut.setHours(timeIn.getHours() + workHours, timeIn.getMinutes(), 0);
+          
+          const durationMinutes = workHours * 60;
+          
+          logs.push({
+            studentId,
+            date: new Date(currentDate),
+            timeIn,
+            timeOut,
+            durationMinutes,
+            verified: Math.random() > 0.2, // 80% verified
+            verificationMethod: Math.random() > 0.5 ? 'QR' : 'MANUAL'
+          });
+        }
       }
-    ]
-  });
-
-  // Attendance for student2
-  await prisma.attendanceLog.createMany({
-    data: [
-      {
-        studentId: student2.id,
-        date: today,
-        timeIn: new Date(today.setHours(9, 0, 0)),
-        timeOut: new Date(today.setHours(18, 0, 0)),
-        durationMinutes: 540,
-        verified: true,
-        verificationMethod: 'QR'
-      },
-      {
-        studentId: student2.id,
-        date: yesterday,
-        timeIn: new Date(yesterday.setHours(8, 30, 0)),
-        timeOut: new Date(yesterday.setHours(17, 30, 0)),
-      durationMinutes: 540,
-      verified: true,
-      verificationMethod: 'MANUAL'
+      currentDate.setDate(currentDate.getDate() + 1);
     }
-    ]
-  });
+    
+    if (logs.length > 0) {
+      await prisma.attendanceLog.createMany({ data: logs });
+    }
+  };
 
-  // Attendance for student3
-  await prisma.attendanceLog.createMany({
-    data: [
-      {
-        studentId: student3.id,
-        date: today,
-        timeIn: new Date(today.setHours(8, 0, 0)),
-        timeOut: new Date(today.setHours(17, 0, 0)),
-        durationMinutes: 540,
-        verified: true,
-        verificationMethod: 'QR'
-      },
-      {
-        studentId: student3.id,
-        date: yesterday,
-        timeIn: new Date(yesterday.setHours(8, 0, 0)),
-        timeOut: new Date(yesterday.setHours(17, 0, 0)),
-        durationMinutes: 540,
-        verified: true,
-        verificationMethod: 'QR'
-      },
-      {
-        studentId: student3.id,
-        date: twoDaysAgo,
-        timeIn: new Date(twoDaysAgo.setHours(8, 0, 0)),
-        timeOut: new Date(twoDaysAgo.setHours(17, 0, 0)),
-        durationMinutes: 540,
-        verified: true,
-        verificationMethod: 'QR'
-      }
-    ]
-  });
+  // Create realistic attendance logs for each student
+  // Student 1: 90% attendance rate (good student)
+  await createAttendanceLogs(
+    student1.id, 
+    new Date('2024-08-01'), 
+    new Date('2024-12-31'), 
+    0.90
+  );
+
+  // Student 2: 75% attendance rate (average student)
+  await createAttendanceLogs(
+    student2.id, 
+    new Date('2024-08-15'), 
+    new Date('2025-01-15'), 
+    0.75
+  );
+
+  // Student 3: 95% attendance rate (excellent student)
+  await createAttendanceLogs(
+    student3.id, 
+    new Date('2024-09-01'), 
+    new Date('2025-02-01'), 
+    0.95
+  );
+
+  // Student 4: 60% attendance rate (at-risk student)
+  await createAttendanceLogs(
+    student4.id, 
+    new Date('2024-09-15'), 
+    new Date('2025-02-15'), 
+    0.60
+  );
+
+  // Student 5: 85% attendance rate (good student)
+  await createAttendanceLogs(
+    student5.id, 
+    new Date('2024-10-01'), 
+    new Date('2025-03-01'), 
+    0.85
+  );
+
 
   // Create sample evaluations for all students
   await prisma.evaluation.createMany({

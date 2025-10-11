@@ -74,10 +74,10 @@ class AttendanceService {
   }
 
   // Calculate attendance stats
-  calculateStats(logs: AttendanceLog[]): AttendanceStats {
+  async calculateStats(logs: AttendanceLog[]): Promise<AttendanceStats> {
     if (!logs || !Array.isArray(logs)) {
       return {
-        totalHours: 0,
+        totalHours: 240, // Default to 240 hours requirement
         completedHours: 0,
         verifiedDays: 0,
         pendingDays: 0,
@@ -85,16 +85,24 @@ class AttendanceService {
       };
     }
 
-    const totalHours = logs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60;
+    // Get the student's required hours from their profile
+    let requiredHours = 240; // Default fallback
+    try {
+      const profileResponse = await api.get('/students/profile');
+      requiredHours = profileResponse.data.totalHours || 240;
+    } catch (error) {
+      console.warn('Could not fetch student profile, using default 240 hours');
+    }
+
     const completedHours = logs
       .filter(log => log.verified)
       .reduce((sum, log) => sum + log.durationMinutes, 0) / 60;
     const verifiedDays = logs.filter(log => log.verified).length;
     const pendingDays = logs.filter(log => !log.verified).length;
-    const avgHoursPerDay = logs.length > 0 ? totalHours / logs.length : 0;
+    const avgHoursPerDay = logs.length > 0 ? completedHours / logs.length : 0;
 
     return {
-      totalHours,
+      totalHours: requiredHours,
       completedHours,
       verifiedDays,
       pendingDays,

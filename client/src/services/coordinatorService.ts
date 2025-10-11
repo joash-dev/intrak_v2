@@ -386,7 +386,7 @@ class CoordinatorService {
       const studentResponse = await api.post('/students', {
         userId: userId,
         studentNumber: studentData.studentNumber,
-        program: studentData.program,
+        program: "BS Computer Engineering", // Always BSCOE for this system
         year: yearNumber,
         section: 'A', // Default section
         companyId: null, // Optional field
@@ -411,7 +411,7 @@ class CoordinatorService {
         evaluation: 0,
         lastActivity: 'Just created',
         avatar: this.generateAvatar(studentData.name),
-        program: studentData.program,
+        program: "BS Computer Engineering", // Always BSCOE for this system
         year: studentData.year,
         section: 'A',
         supervisor: studentData.supervisor || '',
@@ -499,6 +499,49 @@ class CoordinatorService {
       } else {
         throw new Error(error.response?.data?.message || 'Failed to delete student');
       }
+    }
+  }
+
+  // Get all instructors
+  async getAllInstructors(): Promise<any[]> {
+    try {
+      const response = await api.get('/users?role=INSTRUCTOR');
+      return response.data.users || [];
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+      return [];
+    }
+  }
+
+  // Assign student to instructor
+  async assignStudentToInstructor(studentId: string, instructorId: string): Promise<boolean> {
+    try {
+      console.log('Assigning student to instructor:', { studentId, instructorId });
+      const response = await api.patch(`/students/${studentId}/instructor`, {
+        instructorId
+      });
+      
+      console.log('Student assigned successfully:', response.data);
+      return true;
+    } catch (error) {
+      console.error('Error assigning student to instructor:', error);
+      return false;
+    }
+  }
+
+  // Remove student from instructor (unassign)
+  async unassignStudentFromInstructor(studentId: string): Promise<boolean> {
+    try {
+      console.log('Unassigning student from instructor:', { studentId });
+      const response = await api.patch(`/students/${studentId}/instructor`, {
+        instructorId: null
+      });
+      
+      console.log('Student unassigned successfully:', response.data);
+      return true;
+    } catch (error) {
+      console.error('Error unassigning student from instructor:', error);
+      return false;
     }
   }
 }

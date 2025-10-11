@@ -6,11 +6,12 @@ const prisma = new PrismaClient();
 
 export const getStudents = async (req: AuthRequest, res: Response) => {
   try {
-    const { companyId, userId, search, page = 1, limit = 20 } = req.query;
+    const { companyId, userId, instructorId, search, page = 1, limit = 20 } = req.query;
 
     const where: any = {};
     if (companyId) where.companyId = companyId;
     if (userId) where.userId = userId;
+    if (instructorId) where.instructorId = instructorId;
     if (search) {
       where.OR = [
         { studentNumber: { contains: search as string } },
@@ -25,7 +26,8 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
         where,
         include: {
           user: { select: { name: true, email: true } },
-          company: { select: { name: true } }
+          company: { select: { name: true } },
+          instructor: { select: { id: true, name: true, email: true } }
         },
         skip,
         take: Number(limit),
@@ -145,6 +147,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
       section,
       companyId,
       supervisorName,
+      instructorId,
       startDate,
       endDate,
       totalHours
@@ -159,12 +162,14 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         section,
         companyId,
         supervisorName,
+        instructorId,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
-        totalHours: totalHours ? parseInt(totalHours) : 500
+        totalHours: totalHours ? parseInt(totalHours) : 240
       },
       include: {
-        user: { select: { name: true, email: true } }
+        user: { select: { name: true, email: true } },
+        instructor: { select: { id: true, name: true, email: true } }
       }
     });
 
@@ -228,5 +233,282 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'Student deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete student', error });
+  }
+};
+
+// Assign student to instructor
+export const assignInstructor = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const { instructorId } = req.body;
+
+    // Verify instructor exists and has INSTRUCTOR role
+    if (instructorId) {
+      const instructor = await prisma.user.findFirst({
+        where: { 
+          id: instructorId,
+          role: 'INSTRUCTOR',
+          active: true
+        }
+      });
+
+      if (!instructor) {
+        return res.status(400).json({ message: 'Invalid instructor ID or instructor not found' });
+      }
+    }
+
+    const student = await prisma.student.update({
+      where: { id: studentId },
+      data: { instructorId },
+      include: {
+        user: { select: { name: true, email: true } },
+        instructor: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    res.json({ student });
+  } catch (error: any) {
+    console.error('Error assigning instructor:', error);
+    res.status(500).json({ message: 'Failed to assign instructor', error });
+  }
+};
+
+// Get students assigned to a specific instructor
+export const getStudentsByInstructor = async (req: AuthRequest, res: Response) => {
+  try {
+    const { instructorId } = req.params;
+    const { search, page = 1, limit = 20 } = req.query;
+
+    const where: any = { instructorId };
+    
+    if (search) {
+      where.OR = [
+        { studentNumber: { contains: search as string } },
+        { user: { name: { contains: search as string, mode: 'insensitive' } } }
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [students, total] = await Promise.all([
+      prisma.student.findMany({
+        where,
+        include: {
+          user: { select: { name: true, email: true } },
+          company: { select: { name: true } },
+          instructor: { select: { id: true, name: true, email: true } }
+        },
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.student.count({ where })
+    ]);
+
+    res.json({
+      students,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch students by instructor', error });
+  }
+};
+
+// Get students assigned to current instructor (for instructor dashboard)
+export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // Verify user is an instructor
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'INSTRUCTOR') {
+      return res.status(403).json({ message: 'Access denied. Instructor role required.' });
+    }
+
+    const { search, page = 1, limit = 50 } = req.query;
+
+    const where: any = { instructorId: userId };
+    
+    if (search) {
+      where.OR = [
+        { studentNumber: { contains: search as string } },
+        { user: { name: { contains: search as string, mode: 'insensitive' } } }
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [students, total] = await Promise.all([
+      prisma.student.findMany({
+        where,
+        include: {
+          user: { select: { name: true, email: true } },
+          company: { select: { name: true } },
+          instructor: { select: { id: true, name: true, email: true } },
+          attendanceLogs: {
+            select: {
+              id: true,
+              date: true,
+              timeIn: true,
+              timeOut: true,
+              durationMinutes: true,
+              verified: true
+            },
+            orderBy: { date: 'desc' },
+            take: 30 // Last 30 attendance logs
+          },
+          evaluations: {
+            select: {
+              id: true,
+              rating: true,
+              createdAt: true
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5 // Last 5 evaluations
+          }
+        },
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.student.count({ where })
+    ]);
+
+    // Calculate additional metrics for each student
+    const studentsWithMetrics = await Promise.all(students.map(async (student) => {
+      // Calculate attendance rate based on expected working days vs actual attendance
+      let attendanceRate = 0;
+      
+      if (student.startDate && student.endDate) {
+        // Calculate expected working days (excluding weekends)
+        const startDate = new Date(student.startDate);
+        const endDate = new Date(student.endDate);
+        const now = new Date();
+        
+        // Use current date if internship is still ongoing
+        const effectiveEndDate = endDate > now ? now : endDate;
+        
+        let expectedWorkingDays = 0;
+        let currentDate = new Date(startDate);
+        
+        while (currentDate <= effectiveEndDate) {
+          // Count only weekdays (Monday = 1, Sunday = 0)
+          const dayOfWeek = currentDate.getDay();
+          if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            expectedWorkingDays++;
+          }
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Get actual attendance days
+        const presentDays = await prisma.attendanceLog.count({
+          where: { 
+            studentId: student.id, 
+            verified: true,
+            timeIn: { not: null },
+            date: {
+              gte: startDate,
+              lte: effectiveEndDate
+            }
+          }
+        });
+        
+        // Calculate attendance rate
+        if (expectedWorkingDays > 0) {
+          attendanceRate = Math.round((presentDays / expectedWorkingDays) * 100);
+        } else {
+          attendanceRate = 0;
+        }
+      } else {
+        // Fallback: calculate based on available attendance logs
+        const totalAttendanceLogs = await prisma.attendanceLog.count({
+          where: { studentId: student.id, verified: true }
+        });
+        
+        const presentDays = await prisma.attendanceLog.count({
+          where: { 
+            studentId: student.id, 
+            verified: true,
+            timeIn: { not: null }
+          }
+        });
+
+        attendanceRate = totalAttendanceLogs > 0 ? Math.round((presentDays / totalAttendanceLogs) * 100) : 0;
+      }
+
+      // Calculate completed hours
+      const attendanceLogs = await prisma.attendanceLog.findMany({
+        where: { studentId: student.id, verified: true },
+        select: { durationMinutes: true }
+      });
+
+      const completedHours = Math.round(attendanceLogs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60);
+
+      // Get last evaluation rating
+      const lastEvaluation = student.evaluations[0]?.rating || 0;
+
+      // Determine student status based on multiple criteria
+      let status = 'active';
+      
+      // Check if internship period has ended
+      const now = new Date();
+      const endDate = student.endDate ? new Date(student.endDate) : null;
+      const hasEnded = endDate && endDate < now;
+      
+      // Calculate completion percentage
+      const completionPercentage = (completedHours / student.totalHours) * 100;
+      
+      if (hasEnded && completionPercentage >= 100 && attendanceRate >= 75) {
+        // Internship ended and student met all requirements
+        status = 'completed';
+      } else if (hasEnded && (completionPercentage < 100 || attendanceRate < 75)) {
+        // Internship ended but student didn't meet requirements
+        status = 'at_risk';
+      } else if (!hasEnded && attendanceRate < 75) {
+        // Internship ongoing but attendance is poor
+        status = 'at_risk';
+      } else if (!hasEnded && attendanceRate >= 75 && completionPercentage >= 100) {
+        // Internship ongoing but student has already completed all hours
+        status = 'completed';
+      } else {
+        // Default active status
+        status = 'active';
+      }
+
+      return {
+        ...student,
+        attendanceRate,
+        completedHours,
+        lastEvaluation,
+        status,
+        lastActivity: student.attendanceLogs[0]?.date || student.createdAt
+      };
+    }));
+
+    res.json({
+      students: studentsWithMetrics,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching assigned students:', error);
+    res.status(500).json({ message: 'Failed to fetch assigned students', error });
   }
 };
