@@ -1,4 +1,5 @@
 import api from './api';
+import { attendanceService, type AttendanceLog } from './attendanceService';
 
 // Default data structure for loading states
 const defaultDashboardData: DashboardData = {
@@ -48,15 +49,7 @@ export interface Document {
   fileSizeMB?: string;
 }
 
-export interface AttendanceLog {
-  id: string;
-  date: string;
-  timeIn: string;
-  timeOut: string | null;
-  hours: number;
-  verified: boolean;
-  location?: string;
-}
+// AttendanceLog interface is imported from attendanceService
 
 export interface Evaluation {
   id: string;
@@ -106,9 +99,7 @@ export const dashboardService = {
   // Get student attendance logs
   async getStudentAttendance(): Promise<AttendanceLog[]> {
     try {
-      const response = await api.get('/attendance');
-      console.log('Attendance API response:', response.data);
-      return response.data.attendance || response.data || [];
+      return await attendanceService.getAttendanceLogs();
     } catch (error) {
       console.error('Error fetching attendance:', error);
       return [];

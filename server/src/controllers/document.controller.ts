@@ -106,6 +106,29 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       } else {
         return res.status(404).json({ message: 'Student record not found' });
       }
+    } else if (req.user!.role === 'INSTRUCTOR') {
+      // For instructors, only show documents from their assigned students
+      const instructor = await prisma.instructor.findUnique({
+        where: { userId: req.user!.id },
+        include: {
+          students: {
+            select: { id: true }
+          }
+        }
+      });
+      
+      if (instructor && instructor.students.length > 0) {
+        const assignedStudentIds = instructor.students.map(s => s.id);
+        where.studentId = { in: assignedStudentIds };
+      } else {
+        // If instructor has no assigned students, return empty array
+        return res.status(200).json({ 
+          documents: [], 
+          total: 0, 
+          page: Number(page), 
+          limit: Number(limit) 
+        });
+      }
     } else if (studentId) {
       where.studentId = studentId;
     }

@@ -309,10 +309,22 @@ const OverviewTab = ({
                       {new Date(log.date).toLocaleDateString()}
                     </span>
                     <span className="text-gray-900 dark:text-white">
-                      {log.timeIn} - {log.timeOut || "In Progress"}
+                      {log.timeIn
+                        ? new Date(log.timeIn).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "N/A"}{" "}
+                      -{" "}
+                      {log.timeOut
+                        ? new Date(log.timeOut).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "In Progress"}
                     </span>
                     <span className="font-medium text-purple-600">
-                      {log.hours}h
+                      {Math.round(log.durationMinutes / 60)}h
                     </span>
                     {log.verified ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -328,7 +340,10 @@ const OverviewTab = ({
                 </div>
               )}
             </div>
-            <button className="w-full mt-4 py-2 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg">
+            <button
+              onClick={() => setActiveTab("attendance")}
+              className="w-full mt-4 py-2 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg"
+            >
               View Full Calendar
             </button>
           </div>

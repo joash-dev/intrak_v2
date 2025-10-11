@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   Eye,
@@ -10,121 +10,55 @@ import {
   Calendar,
   Building2,
   X,
+  Loader2,
 } from "lucide-react";
-
-interface Document {
-  id: string;
-  studentName: string;
-  studentId: string;
-  studentAvatar: string;
-  company: string;
-  documentType: string;
-  fileName: string;
-  fileSize: string;
-  submittedDate: string;
-  dueDate: string;
-  status: "pending" | "approved" | "rejected";
-  description: string;
-  remarks?: string | null;
-  reviewedDate?: string;
-}
+import {
+  instructorService,
+  type InstructorDocument,
+} from "../../services/instructorService";
+import toast from "react-hot-toast";
 
 const InstructorDocumentsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [selectedDoc, setSelectedDoc] = useState<InstructorDocument | null>(
+    null
+  );
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(
     null
   );
   const [feedback, setFeedback] = useState("");
+  const [documents, setDocuments] = useState<InstructorDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const documents: Document[] = [
-    {
-      id: "1",
-      studentName: "Maria Santos",
-      studentId: "2021-001",
-      studentAvatar: "MS",
-      company: "TechCorp Inc.",
-      documentType: "Weekly Report",
-      fileName: "Weekly_Report_Week10.pdf",
-      fileSize: "2.4 MB",
-      submittedDate: "2024-10-04 09:30 AM",
-      dueDate: "2024-10-04",
-      status: "pending",
-      description:
-        "Weekly progress report covering tasks completed from Sept 27 - Oct 3, 2024",
-      remarks: null,
-    },
-    {
-      id: "2",
-      studentName: "Juan Dela Cruz",
-      studentId: "2021-002",
-      studentAvatar: "JD",
-      company: "InnovateLab",
-      documentType: "Monthly Timesheet",
-      fileName: "Timesheet_September_2024.xlsx",
-      fileSize: "156 KB",
-      submittedDate: "2024-10-03 02:15 PM",
-      dueDate: "2024-10-05",
-      status: "pending",
-      description: "Monthly timesheet for September 2024 with daily hour logs",
-    },
-    {
-      id: "3",
-      studentName: "Ana Reyes",
-      studentId: "2021-003",
-      studentAvatar: "AR",
-      company: "DataSystems Corp",
-      documentType: "Accomplishment Report",
-      fileName: "Accomplishment_Report_Q3.pdf",
-      fileSize: "3.1 MB",
-      submittedDate: "2024-10-02 11:45 AM",
-      dueDate: "2024-10-01",
-      status: "pending",
-      description: "Quarterly accomplishment report with project deliverables",
-    },
-    {
-      id: "4",
-      studentName: "Carlos Martinez",
-      studentId: "2021-004",
-      studentAvatar: "CM",
-      company: "CloudTech Solutions",
-      documentType: "Weekly Report",
-      fileName: "Weekly_Report_Week9.pdf",
-      fileSize: "1.8 MB",
-      submittedDate: "2024-10-01 04:20 PM",
-      dueDate: "2024-09-30",
-      status: "approved",
-      description: "Weekly progress report for Week 9",
-      remarks:
-        "Excellent work! Your documentation is thorough and well-organized.",
-      reviewedDate: "2024-10-02 09:00 AM",
-    },
-    {
-      id: "5",
-      studentName: "Sofia Garcia",
-      studentId: "2021-005",
-      studentAvatar: "SG",
-      company: "WebDev Studio",
-      documentType: "Final Report",
-      fileName: "Final_Internship_Report.pdf",
-      fileSize: "5.2 MB",
-      submittedDate: "2024-09-28 03:00 PM",
-      dueDate: "2024-09-30",
-      status: "approved",
-      description:
-        "Comprehensive final internship report with all deliverables",
-      remarks: "Outstanding work throughout your internship. Well done!",
-      reviewedDate: "2024-09-29 10:30 AM",
-    },
-  ];
+  // Load documents on component mount
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      console.log("Loading documents for instructor review...");
+      const documentsData = await instructorService.getDocumentsForReview();
+      setDocuments(documentsData);
+      console.log("Documents loaded:", documentsData.length);
+    } catch (error) {
+      console.error("Error loading documents:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = {
-    pending: documents.filter((d) => d.status === "pending").length,
-    approved: documents.filter((d) => d.status === "approved").length,
-    rejected: documents.filter((d) => d.status === "rejected").length,
+    pending: documents.filter((d) => d.status === "PENDING").length,
+    approved: documents.filter((d) => d.status === "APPROVED").length,
+    rejected: documents.filter((d) => d.status === "REJECTED").length,
     total: documents.length,
   };
 
@@ -132,52 +66,156 @@ const InstructorDocumentsTab = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      pending:
+      PENDING:
         "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      approved:
+      APPROVED:
         "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+      REJECTED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
     };
-    return colors[status] || colors.pending;
+    return colors[status] || colors.PENDING;
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "pending":
+      case "PENDING":
         return <Clock className="w-4 h-4" />;
-      case "approved":
+      case "APPROVED":
         return <CheckCircle className="w-4 h-4" />;
-      case "rejected":
+      case "REJECTED":
         return <XCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
   };
 
-  const handleReview = (doc: Document, action: "approve" | "reject") => {
+  const getPriorityFromType = (type: string): "high" | "medium" | "low" => {
+    const highPriority = ["final_report", "accomplishment_report"];
+    const mediumPriority = ["weekly_report", "monthly_timesheet"];
+
+    if (highPriority.some((t) => type.toLowerCase().includes(t))) return "high";
+    if (mediumPriority.some((t) => type.toLowerCase().includes(t)))
+      return "medium";
+    return "low";
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const colors: Record<string, string> = {
+      high: "text-red-600 bg-red-50 dark:bg-red-900/20",
+      medium: "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20",
+      low: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+    };
+    return colors[priority] || colors.medium;
+  };
+
+  const handleReview = (
+    doc: InstructorDocument,
+    action: "approve" | "reject"
+  ) => {
     setSelectedDoc(doc);
     setReviewAction(action);
     setShowReviewModal(true);
     setFeedback("");
   };
 
-  const submitReview = () => {
+  const submitReview = async () => {
     if (!selectedDoc) return;
 
     if (reviewAction === "reject" && !feedback.trim()) {
-      alert("Please provide feedback for rejection");
+      toast.error("Please provide feedback for rejection");
       return;
     }
 
-    alert(
-      `Document ${reviewAction}d!\nDocument: ${
-        selectedDoc.fileName
-      }\nFeedback: ${feedback || "No feedback provided"}`
-    );
-    setShowReviewModal(false);
-    setSelectedDoc(null);
-    setReviewAction(null);
-    setFeedback("");
+    try {
+      setSubmitting(true);
+
+      let success = false;
+      if (reviewAction === "approve") {
+        success = await instructorService.approveDocument(
+          selectedDoc.id,
+          feedback
+        );
+      } else {
+        success = await instructorService.rejectDocument(
+          selectedDoc.id,
+          feedback
+        );
+      }
+
+      if (success) {
+        toast.success(`Document ${reviewAction}d successfully!`);
+        // Reload documents to get updated data
+        await loadDocuments();
+      } else {
+        toast.error(`Failed to ${reviewAction} document`);
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error(`Failed to ${reviewAction} document`);
+    } finally {
+      setSubmitting(false);
+      setShowReviewModal(false);
+      setSelectedDoc(null);
+      setReviewAction(null);
+      setFeedback("");
+    }
+  };
+
+  const handleDownload = async (documentId: string, fileName: string) => {
+    try {
+      const blob = await instructorService.downloadDocument(documentId);
+      if (blob) {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success("Document downloaded successfully");
+      } else {
+        toast.error("Failed to download document");
+      }
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      toast.error("Failed to download document");
+    }
+  };
+
+  const handlePreview = async (documentId: string, fileName: string) => {
+    try {
+      const blob = await instructorService.downloadDocument(documentId);
+      if (blob) {
+        // Create preview URL
+        const url = window.URL.createObjectURL(blob);
+
+        // Check if it's a PDF file
+        if (fileName.toLowerCase().endsWith(".pdf")) {
+          // Open PDF in new tab
+          window.open(url, "_blank");
+        } else {
+          // For other file types, download them
+          toast.success(
+            "Preview not available for this file type. Downloading instead."
+          );
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        // Clean up URL after a delay
+        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      } else {
+        toast.error("Failed to preview document");
+      }
+    } catch (error) {
+      console.error("Error previewing document:", error);
+      toast.error("Failed to preview document");
+    }
   };
 
   const filteredDocuments = documents.filter((doc) => {
@@ -186,11 +224,29 @@ const InstructorDocumentsTab = () => {
       doc.documentType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = filterStatus === "all" || doc.status === filterStatus;
+    const matchesStatus =
+      filterStatus === "all" || doc.status.toLowerCase() === filterStatus;
     const matchesType = filterType === "all" || doc.documentType === filterType;
+    const matchesPriority =
+      filterPriority === "all" ||
+      getPriorityFromType(doc.documentType) === filterPriority;
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesPriority;
   });
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading documents...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -305,6 +361,16 @@ const InstructorDocumentsTab = () => {
               </option>
             ))}
           </select>
+          <select
+            value={filterPriority}
+            onChange={(e) => setFilterPriority(e.target.value)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All Priority</option>
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+          </select>
         </div>
       </div>
 
@@ -336,12 +402,14 @@ const InstructorDocumentsTab = () => {
                         <Building2 className="w-4 h-4" />
                         <span>{doc.company}</span>
                       </span>
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Due: {new Date(doc.dueDate).toLocaleDateString()}
+                      {doc.dueDate && (
+                        <span className="flex items-center space-x-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            Due: {new Date(doc.dueDate).toLocaleDateString()}
+                          </span>
                         </span>
-                      </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -351,7 +419,7 @@ const InstructorDocumentsTab = () => {
                   )}`}
                 >
                   {getStatusIcon(doc.status)}
-                  <span>{doc.status}</span>
+                  <span>{doc.status.toLowerCase()}</span>
                 </span>
               </div>
 
@@ -360,11 +428,20 @@ const InstructorDocumentsTab = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
                     <FileText className="w-5 h-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white text-sm">
-                        {doc.documentType}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm">
+                          {doc.documentType}
+                        </p>
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(
+                            getPriorityFromType(doc.documentType)
+                          )}`}
+                        >
+                          {getPriorityFromType(doc.documentType)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
                         {doc.fileName} • {doc.fileSize}
                       </p>
                       <p className="text-xs text-gray-500 mt-2">
@@ -382,17 +459,17 @@ const InstructorDocumentsTab = () => {
               </div>
 
               {/* Review Info (if reviewed) */}
-              {(doc.status === "approved" || doc.status === "rejected") &&
+              {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
                     className={`border-l-4 rounded-lg p-4 mb-4 ${
-                      doc.status === "approved"
+                      doc.status === "APPROVED"
                         ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                         : "border-red-500 bg-red-50 dark:bg-red-900/20"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      {doc.status === "approved" ? (
+                      {doc.status === "APPROVED" ? (
                         <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                       ) : (
                         <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
@@ -415,17 +492,23 @@ const InstructorDocumentsTab = () => {
               {/* Action Buttons */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2">
-                  <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                  <button
+                    onClick={() => handlePreview(doc.id, doc.fileName)}
+                    className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  >
                     <Eye className="w-4 h-4" />
                     <span className="text-sm">Preview</span>
                   </button>
-                  <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  <button
+                    onClick={() => handleDownload(doc.id, doc.fileName)}
+                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
                     <Download className="w-4 h-4" />
                     <span className="text-sm">Download</span>
                   </button>
                 </div>
 
-                {doc.status === "pending" && (
+                {doc.status === "PENDING" && (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleReview(doc, "reject")}
@@ -535,14 +618,21 @@ const InstructorDocumentsTab = () => {
               </button>
               <button
                 onClick={submitReview}
-                disabled={reviewAction === "reject" && !feedback.trim()}
+                disabled={
+                  (reviewAction === "reject" && !feedback.trim()) || submitting
+                }
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${
                   reviewAction === "approve"
                     ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
                     : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
                 } disabled:cursor-not-allowed`}
               >
-                {reviewAction === "approve" ? (
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : reviewAction === "approve" ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
                     <span>Approve Document</span>

@@ -53,6 +53,24 @@ export interface InstructorAlert {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface InstructorDocument {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentAvatar: string;
+  company: string;
+  documentType: string;
+  fileName: string;
+  fileSize: string;
+  submittedDate: string;
+  dueDate?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  description?: string;
+  remarks?: string | null;
+  reviewedDate?: string;
+  fileSizeBytes?: number;
+}
+
 class InstructorService {
   // Get students assigned to current instructor
   async getAssignedStudents(): Promise<InstructorStudent[]> {
@@ -349,6 +367,136 @@ class InstructorService {
       console.error('Error unassigning student from instructor:', error);
       return false;
     }
+  }
+
+  // Get documents from assigned students for review
+  async getDocumentsForReview(): Promise<InstructorDocument[]> {
+    try {
+      console.log('Fetching documents for instructor review...');
+      const response = await api.get('/documents');
+      console.log('Instructor documents API response:', response.data);
+      
+      const documents = response.data.documents || [];
+      
+      // Transform the API response to match InstructorDocument interface
+      return documents.map((doc: any) => ({
+        id: doc.id,
+        studentId: doc.student?.id || '',
+        studentName: doc.student?.user?.name || 'Unknown',
+        studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
+        company: doc.student?.company?.name || 'No Company',
+        documentType: this.mapDocumentType(doc.type),
+        fileName: doc.filename || 'Unknown File',
+        fileSize: this.formatFileSize(doc.fileSize || 0),
+        fileSizeBytes: doc.fileSize || 0,
+        submittedDate: this.formatTimestamp(doc.uploadedAt),
+        dueDate: doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : undefined,
+        status: doc.status || 'PENDING',
+        description: doc.description || '',
+        remarks: doc.remarks || null,
+        reviewedDate: doc.reviewedAt ? this.formatTimestamp(doc.reviewedAt) : undefined,
+      }));
+    } catch (error) {
+      console.error('Error fetching documents for review:', error);
+      // Return empty array if API fails
+      return [];
+    }
+  }
+
+  // Approve a document
+  async approveDocument(documentId: string, remarks?: string): Promise<boolean> {
+    try {
+      console.log('Approving document:', documentId);
+      const response = await api.put(`/documents/${documentId}/approve`, { remarks });
+      console.log('Document approved successfully:', response.data);
+      return true;
+    } catch (error) {
+      console.error('Error approving document:', error);
+      return false;
+    }
+  }
+
+  // Reject a document
+  async rejectDocument(documentId: string, remarks?: string): Promise<boolean> {
+    try {
+      console.log('Rejecting document:', documentId);
+      const response = await api.put(`/documents/${documentId}/reject`, { remarks });
+      console.log('Document rejected successfully:', response.data);
+      return true;
+    } catch (error) {
+      console.error('Error rejecting document:', error);
+      return false;
+    }
+  }
+
+  // Download a document
+  async downloadDocument(documentId: string): Promise<Blob | null> {
+    try {
+      console.log('Downloading document:', documentId);
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      return null;
+    }
+  }
+
+  // Preview a document (get document details)
+  async getDocumentDetails(documentId: string): Promise<InstructorDocument | null> {
+    try {
+      console.log('Getting document details:', documentId);
+      const response = await api.get(`/documents/${documentId}`);
+      const doc = response.data.document;
+      
+      if (!doc) return null;
+      
+      return {
+        id: doc.id,
+        studentId: doc.student?.id || '',
+        studentName: doc.student?.user?.name || 'Unknown',
+        studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
+        company: doc.student?.company?.name || 'No Company',
+        documentType: this.mapDocumentType(doc.type),
+        fileName: doc.filename || 'Unknown File',
+        fileSize: this.formatFileSize(doc.fileSize || 0),
+        fileSizeBytes: doc.fileSize || 0,
+        submittedDate: this.formatTimestamp(doc.uploadedAt),
+        dueDate: doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : undefined,
+        status: doc.status || 'PENDING',
+        description: doc.description || '',
+        remarks: doc.remarks || null,
+        reviewedDate: doc.reviewedAt ? this.formatTimestamp(doc.reviewedAt) : undefined,
+      };
+    } catch (error) {
+      console.error('Error getting document details:', error);
+      return null;
+    }
+  }
+
+  // Helper method to map document type
+  private mapDocumentType(type: string): string {
+    const typeMap: Record<string, string> = {
+      'weekly_report': 'Weekly Report',
+      'monthly_timesheet': 'Monthly Timesheet',
+      'accomplishment_report': 'Accomplishment Report',
+      'final_report': 'Final Report',
+      'timesheet': 'Timesheet',
+      'report': 'Report',
+      'document': 'Document',
+    };
+    
+    return typeMap[type?.toLowerCase()] || type || 'Document';
+  }
+
+  // Helper method to format file size
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }
 
