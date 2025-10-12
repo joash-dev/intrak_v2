@@ -1,12 +1,13 @@
-# OJT Management System
+# INTRAK - OJT Management System
 
-A comprehensive On-the-Job Training (OJT) management system for BS Computer Engineering students, featuring role-based access for Students, Instructors, Coordinators, and Supervisors.
+A comprehensive On-the-Job Training (OJT) management system for BS Computer Engineering students, featuring role-based access for Students, Instructors, Coordinators, and Supervisors with modern UI/UX design.
 
 ![OJT System](https://img.shields.io/badge/Status-Active%20Development-green)
 ![React](https://img.shields.io/badge/React-18.0-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-18.0-green)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15.0-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.0-blue)
 
 ## 🚀 **Quick Start**
 
@@ -61,13 +62,15 @@ PORT=5000
 NODE_ENV="development"
 
 # Email Configuration (Optional)
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT=587
-EMAIL_USER="your-email@gmail.com"
-EMAIL_PASS="your-app-password"
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
 
 # File Upload Configuration
 MAX_FILE_SIZE=10485760  # 10MB in bytes
+MAX_TEMPLATE_FILE_SIZE=10485760  # 10MB for templates
+MAX_PROFILE_PHOTO_SIZE=2097152   # 2MB for profile photos
 UPLOAD_PATH="./uploads"
 ```
 
@@ -77,7 +80,7 @@ Create a `.env` file in the `client` directory:
 
 ```env
 VITE_API_URL=http://localhost:5000
-VITE_APP_NAME=OJT Management System
+VITE_APP_NAME=INTRAK OJT Management System
 ```
 
 ### 4. Database Setup
@@ -140,6 +143,7 @@ Open your browser and navigate to:
 
 - **Frontend**: http://localhost:5173
 - **API**: http://localhost:5000
+- **Database GUI**: http://localhost:5555 (Prisma Studio)
 
 ---
 
@@ -194,6 +198,8 @@ intrak_v2/
 │   │   └── config/         # Configuration files
 │   ├── prisma/             # Database schema and migrations
 │   ├── uploads/            # File uploads directory
+│   │   ├── templates/      # Document templates
+│   │   └── profile-photos/ # User profile photos
 │   └── package.json
 ├── docs/                   # Documentation
 ├── README.md
@@ -251,14 +257,16 @@ npm run test:ui      # Run tests with UI
 
 ### Key Tables
 
-- **users** - User accounts and authentication
+- **users** - User accounts, authentication, and profile photos
 - **students** - Student information and profiles
-- **instructors** - Instructor information
+- **instructors** - Instructor information and assignments
 - **companies** - Company information
-- **documents** - Document uploads and status
-- **attendance** - Attendance logs and verification
+- **documents** - Document uploads and status tracking
+- **document_templates** - Document templates for students
+- **attendance_logs** - Attendance logs and verification
 - **evaluations** - Student evaluations and ratings
 - **announcements** - System announcements
+- **audit_logs** - System activity tracking
 
 ### Database Management
 
@@ -287,7 +295,8 @@ npx prisma migrate deploy
 
 - All API endpoints require authentication
 - Role-based access control for sensitive operations
-- File upload security with virus scanning
+- File upload security with validation
+- Profile photo management with proper authorization
 
 ---
 
@@ -295,34 +304,58 @@ npx prisma migrate deploy
 
 ### Supported File Types
 
-- **Documents**: PDF, DOC, DOCX
+#### Documents
+
+- **PDF**: Primary document format
 - **Images**: JPG, JPEG, PNG
 - **Size Limit**: 10MB per file
+
+#### Document Templates
+
+- **PDF, DOC, DOCX**: Word documents
+- **XLS, XLSX**: Excel spreadsheets
+- **TXT**: Plain text files
+- **Size Limit**: 10MB per template
+
+#### Profile Photos
+
+- **Images**: JPG, JPEG, PNG, GIF, WebP
+- **Size Limit**: 2MB per photo
 
 ### Security Features
 
 - File type validation
 - File size limits
-- Virus scanning (planned)
-- Secure file storage
+- Secure file storage with unique naming
+- Local file system storage (configurable for cloud storage)
+- CORS headers for static file serving
 
 ---
 
 ## 🎨 **UI/UX Features**
 
-### Design System
+### Modern Design System
 
 - **Theme**: Purple primary with blue/green accents
-- **Typography**: Inter font family
+- **Typography**: Inter font family with proper hierarchy
 - **Components**: Custom Tailwind CSS components
 - **Icons**: Lucide React icon library
-- **Responsive**: Mobile-first design
+- **Responsive**: Mobile-first design approach
 
 ### Dark/Light Mode
 
 - Automatic system preference detection
-- Manual theme toggle
-- Persistent theme selection
+- Manual theme toggle in settings
+- Persistent theme selection across sessions
+- Consistent dark mode styling throughout
+
+### Professional UI Components
+
+- **Gradient Headers**: Purple-to-blue gradient backgrounds
+- **Card-based Layout**: Clean, modern card designs
+- **Professional Navigation**: Sidebar navigation with hover effects
+- **Status Indicators**: Color-coded status badges and icons
+- **Interactive Elements**: Smooth transitions and hover states
 
 ---
 
@@ -330,35 +363,61 @@ npx prisma migrate deploy
 
 ### 👨‍🎓 **Student Portal**
 
-- Dashboard with progress tracking
-- Document upload and management
-- Attendance logging (QR, GPS, Manual)
-- View evaluations and reports
-- Profile settings
+#### Core Features
+
+- **Dashboard**: Progress tracking with visual statistics
+- **Document Management**: Upload, view, and track document status
+- **Document Templates**: Download required document templates
+- **Attendance Tracking**: Multiple logging methods (QR, GPS, Manual)
+- **Evaluations**: View instructor and supervisor evaluations
+- **Reports**: Generate personal progress reports
+- **Settings**: Profile management with photo upload
+
+#### Document Features
+
+- **Smart Upload**: Drag-and-drop interface with progress tracking
+- **Status Tracking**: Real-time document approval status
+- **Template System**: Download required document templates
+- **File Management**: View, download, and manage uploaded files
 
 ### 👨‍🏫 **Instructor Portal**
 
-- Monitor assigned students
-- Review and approve/reject documents
-- Submit student evaluations
-- View attendance and progress
-- Generate reports
+#### Core Features
+
+- **Student Management**: Add, edit, and manage assigned students
+- **Document Review**: Approve/reject student documents with feedback
+- **Document Checklist**: Track document submission status per student
+- **Attendance Verification**: Verify and approve student attendance
+- **Student Monitoring**: Monitor student progress and performance
+- **Student Evaluations**: Submit comprehensive student evaluations
+- **Document Templates**: Upload and manage document templates
+- **Settings**: Profile management with dark/light mode preferences
+
+#### Advanced Features
+
+- **Dashboard Analytics**: Real-time statistics and insights
+- **Recent Activities**: Live feed of student actions
+- **Email Notifications**: Welcome emails for new students
+- **Audit Logging**: Track all instructor actions
 
 ### 👨‍💼 **Coordinator Portal**
 
-- Manage all students and instructors
-- Review all documents
-- Verify attendance
-- Generate comprehensive reports
-- Manage announcements
-- System administration
+#### Core Features
+
+- **Student Overview**: Monitor all students across the program
+- **Document Review**: Review all student documents
+- **System Administration**: Manage users and system settings
+- **Reports Generation**: Comprehensive system reports
+- **Announcements**: Manage system-wide announcements
 
 ### 👨‍💻 **Supervisor Portal**
 
-- Monitor company students
-- Verify attendance
-- Submit evaluations
-- View student progress
+#### Core Features
+
+- **Company Students**: Monitor students at their company
+- **Attendance Verification**: Verify student attendance
+- **Student Evaluations**: Submit performance evaluations
+- **Progress Tracking**: View student development
 
 ---
 
@@ -382,7 +441,11 @@ npm run build
 NODE_ENV=production
 DATABASE_URL=your-production-database-url
 JWT_SECRET=your-production-jwt-secret
+JWT_REFRESH_SECRET=your-production-refresh-secret
 PORT=3000
+SMTP_HOST=your-production-smtp-host
+SMTP_USER=your-production-email
+SMTP_PASS=your-production-email-password
 ```
 
 ### Docker Deployment (Optional)
@@ -468,6 +531,13 @@ npx prisma generate
 npx prisma migrate reset
 ```
 
+#### Email Configuration Issues
+
+- Check SMTP credentials in `.env` file
+- Verify email provider settings (Gmail requires app passwords)
+- Check firewall settings for SMTP ports
+- See `server/EMAIL_SETUP_GUIDE.md` for detailed setup instructions
+
 ---
 
 ## 📚 **API Documentation**
@@ -486,16 +556,17 @@ POST /auth/login          # User login
 POST /auth/register       # User registration
 POST /auth/refresh        # Refresh access token
 POST /auth/logout         # User logout
+POST /auth/change-password # Change password
 ```
 
-### Student Endpoints
+### Student Management Endpoints
 
 ```
 GET  /students/profile    # Get student profile
-GET  /students           # Get all students (coordinator only)
-POST /students           # Create student (coordinator only)
+GET  /students           # Get all students (instructor/coordinator)
+POST /students           # Create student (instructor only)
 PUT  /students/:id       # Update student
-DELETE /students/:id     # Delete student
+DELETE /students/:id     # Delete student (instructor only)
 ```
 
 ### Document Endpoints
@@ -507,6 +578,17 @@ GET  /documents/:id      # Get document details
 PUT  /documents/:id/approve # Approve document
 PUT  /documents/:id/reject  # Reject document
 GET  /documents/:id/download # Download document
+DELETE /documents/:id    # Delete document
+```
+
+### Template Endpoints
+
+```
+GET  /templates          # Get document templates
+POST /templates/upload   # Upload template (instructor only)
+GET  /templates/:id/download # Download template
+PUT  /templates/:id      # Update template
+DELETE /templates/:id    # Delete template
 ```
 
 ### Attendance Endpoints
@@ -514,8 +596,23 @@ GET  /documents/:id/download # Download document
 ```
 GET  /attendance         # Get attendance logs
 POST /attendance/log     # Log attendance
-GET  /attendance/qr/:id  # Generate QR code
-POST /attendance/verify  # Verify attendance
+PUT  /attendance/:id/verify # Verify attendance (instructor only)
+GET  /attendance/stats   # Get attendance statistics
+```
+
+### User Profile Endpoints
+
+```
+GET  /users/profile-photo # Get profile photo URL
+POST /users/profile-photo/upload # Upload profile photo
+DELETE /users/profile-photo # Remove profile photo
+```
+
+### Email Endpoints
+
+```
+POST /email/welcome      # Send welcome email (instructor only)
+POST /email/test-send    # Send test email (admin only)
 ```
 
 ---
@@ -539,6 +636,7 @@ POST /attendance/verify  # Verify attendance
 - Use Prettier for code formatting
 - Write meaningful commit messages
 - Add tests for new features
+- Maintain consistent UI/UX design patterns
 
 ### Pull Request Guidelines
 
@@ -557,7 +655,7 @@ POST /attendance/verify  # Verify attendance
 - **Documentation**: Check this README and code comments
 - **Issues**: Create an issue on GitHub
 - **Discussions**: Use GitHub Discussions for questions
-- **Email**: Contact the development team
+- **Email Setup Guide**: See `server/EMAIL_SETUP_GUIDE.md`
 
 ### Reporting Bugs
 
@@ -569,6 +667,7 @@ When reporting bugs, please include:
 - Screenshots (if applicable)
 - Browser/OS information
 - Error messages
+- User role (Student/Instructor/Coordinator/Supervisor)
 
 ---
 
@@ -585,24 +684,33 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Prisma** - Database ORM
 - **Tailwind CSS** - Styling framework
 - **Lucide React** - Icon library
+- **Express.js** - Web framework
+- **PostgreSQL** - Database system
 
 ---
 
 ## 📊 **Project Status**
 
 - ✅ **Core Features**: Complete
-- ✅ **Authentication**: Complete
+- ✅ **Authentication & Authorization**: Complete
 - ✅ **User Management**: Complete
 - ✅ **Document System**: Complete
+- ✅ **Document Templates**: Complete
 - ✅ **Attendance Tracking**: Complete
-- 🔄 **Notifications**: In Progress
+- ✅ **Student Management**: Complete
+- ✅ **Profile Photo System**: Complete
+- ✅ **Professional UI/UX**: Complete
+- ✅ **Dark/Light Mode**: Complete
+- ✅ **Email Notifications**: Complete
+- ✅ **Audit Logging**: Complete
 - 🔄 **Mobile App**: Planned
 - 🔄 **Advanced Analytics**: Planned
+- 🔄 **Real-time Notifications**: Planned
 
 ---
 
 **Last Updated**: January 2025  
-**Version**: 1.0.0  
+**Version**: 2.0.0  
 **Maintainer**: Development Team
 
 ---
@@ -636,5 +744,17 @@ cd client && npm run dev
 
 ### Default Login
 
-- **Email**: student@example.com
-- **Password**: password123
+- **Student**: student@example.com / password123
+- **Instructor**: instructor@example.com / password123
+- **Coordinator**: coordinator@example.com / password123
+- **Supervisor**: supervisor@example.com / password123
+
+### Key Features
+
+- **Modern UI/UX**: Professional design with dark/light mode
+- **Role-based Access**: Secure multi-role system
+- **Document Management**: Upload, review, and template system
+- **Attendance Tracking**: Multiple verification methods
+- **Email Notifications**: Automated welcome emails
+- **Profile Management**: Photo upload and settings
+- **Real-time Updates**: Live activity feeds and statistics
