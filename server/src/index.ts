@@ -22,6 +22,7 @@ import announcementRoutes from './routes/announcement.routes';
 import reportRoutes from './routes/report.routes';
 import auditRoutes from './routes/audit.routes';
 import emailRoutes from './routes/email.routes';
+import templateRoutes from './routes/template.routes';
 
 dotenv.config();
 
@@ -79,8 +80,21 @@ app.use(cookieParser());
 // Rate limiting for auth routes
 app.use('/api/auth', rateLimiter);
 
-// Static files (uploaded documents)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Static files (uploaded documents) with CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
+
+// Serve profile photos with proper headers
+app.use('/api/users/profile-photo', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 
 // Health check (no auth required)
 app.get('/health', (req, res) => {
@@ -123,6 +137,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/templates', templateRoutes);
 
 // 404 handler
 app.use((req, res) => {

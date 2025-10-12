@@ -1,4 +1,5 @@
 import api from './api';
+import { calculateAttendanceStats, formatDuration, formatAttendanceDate, formatAttendanceTime } from '../utils/attendanceCalculations';
 
 export interface AttendanceLog {
   id: string;
@@ -73,18 +74,8 @@ class AttendanceService {
     }
   }
 
-  // Calculate attendance stats
+  // Calculate attendance stats using shared calculation logic
   async calculateStats(logs: AttendanceLog[]): Promise<AttendanceStats> {
-    if (!logs || !Array.isArray(logs)) {
-      return {
-        totalHours: 240, // Default to 240 hours requirement
-        completedHours: 0,
-        verifiedDays: 0,
-        pendingDays: 0,
-        avgHoursPerDay: 0,
-      };
-    }
-
     // Get the student's required hours from their profile
     let requiredHours = 240; // Default fallback
     try {
@@ -94,44 +85,32 @@ class AttendanceService {
       console.warn('Could not fetch student profile, using default 240 hours');
     }
 
-    const completedHours = logs
-      .filter(log => log.verified)
-      .reduce((sum, log) => sum + log.durationMinutes, 0) / 60;
-    const verifiedDays = logs.filter(log => log.verified).length;
-    const pendingDays = logs.filter(log => !log.verified).length;
-    const avgHoursPerDay = logs.length > 0 ? completedHours / logs.length : 0;
-
+    // Use shared calculation logic to ensure consistency
+    const stats = calculateAttendanceStats(logs, requiredHours);
+    
+    // Return in the format expected by the student interface
     return {
-      totalHours: requiredHours,
-      completedHours,
-      verifiedDays,
-      pendingDays,
-      avgHoursPerDay,
+      totalHours: stats.totalHours,
+      completedHours: stats.completedHours,
+      verifiedDays: stats.verifiedDays,
+      pendingDays: stats.pendingDays,
+      avgHoursPerDay: stats.avgHoursPerDay,
     };
   }
 
-  // Format duration for display
+  // Format duration for display (using shared utility)
   formatDuration(minutes: number): string {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-    }
-    return `${mins}m`;
+    return formatDuration(minutes);
   }
 
-  // Format date for display
+  // Format date for display (using shared utility)
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
+    return formatAttendanceDate(dateString);
   }
 
-  // Format time for display
+  // Format time for display (using shared utility)
   formatTime(dateString: string | null): string {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return formatAttendanceTime(dateString);
   }
 
   // Get attendance logs for coordinator view (all students)

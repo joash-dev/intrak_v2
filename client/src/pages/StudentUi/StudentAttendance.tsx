@@ -230,50 +230,101 @@ const StudentAttendanceTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Attendance Management
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Track your daily attendance and monitor your OJT progress
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Completed Hours
-          </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {stats.completedHours.toFixed(1)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            of {stats.totalHours.toFixed(1)} total
-          </p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Completed Hours
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {stats.completedHours.toFixed(1)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                of {stats.totalHours.toFixed(1)} total
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-white" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-green-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Verified Days
-          </p>
-          <p className="text-2xl font-bold text-green-600">
-            {stats.verifiedDays}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            of {attendanceLogs.length} days
-          </p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Verified Days
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {stats.verifiedDays}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                of {attendanceLogs.length} days
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-yellow-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {stats.pendingDays}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">awaiting verification</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Pending
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {stats.pendingDays}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                awaiting verification
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-purple-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Avg Hours/Day
-          </p>
-          <p className="text-2xl font-bold text-purple-600">
-            {stats.avgHoursPerDay.toFixed(1)}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">hours per day</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Avg Hours/Day
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {stats.avgHoursPerDay.toFixed(1)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">hours per day</p>
+            </div>
+            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -304,13 +355,13 @@ const StudentAttendanceTab: React.FC = () => {
         <button
           onClick={handleGenerateQR}
           disabled={qrLoading}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
         >
-          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             {qrLoading ? (
-              <Loader2 className="w-6 h-6 text-purple-600 dark:text-purple-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-white animate-spin" />
             ) : (
-              <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <QrCode className="w-6 h-6 text-white" />
             )}
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
@@ -323,10 +374,10 @@ const StudentAttendanceTab: React.FC = () => {
 
         <button
           onClick={handleOpenManualModal}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group"
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
         >
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Clock className="w-6 h-6 text-white" />
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
             Manual Log
@@ -338,10 +389,10 @@ const StudentAttendanceTab: React.FC = () => {
 
         <button
           onClick={() => setShowUploadModal(true)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group"
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
         >
-          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Upload className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+          <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <Upload className="w-6 h-6 text-white" />
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
             Upload DTR
@@ -352,40 +403,52 @@ const StudentAttendanceTab: React.FC = () => {
         </button>
       </div>
 
-      {/* View Mode Toggle */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Attendance Records
-        </h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setViewMode("calendar")}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              viewMode === "calendar"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            <CalendarIcon className="w-4 h-4" />
-            <span>Calendar</span>
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-              viewMode === "list"
-                ? "bg-purple-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>List</span>
-          </button>
+      {/* Attendance Records Header */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Attendance Records
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                Track your daily attendance and progress
+              </p>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setViewMode("calendar")}
+              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                viewMode === "calendar"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+              }`}
+            >
+              <CalendarIcon className="w-4 h-4" />
+              <span>Calendar</span>
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                viewMode === "list"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>List</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {monthYear}
@@ -476,7 +539,7 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* List View */}
       {viewMode === "list" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>

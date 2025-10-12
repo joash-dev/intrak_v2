@@ -250,77 +250,123 @@ const InstructorDocumentsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Document Review
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Review and provide feedback on student submissions
-        </p>
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Document Review
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Review and provide feedback on student submissions
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Pending Review Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-200 dark:border-amber-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-400/5 dark:to-orange-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
+                  {stats.pending}
+                </p>
+              </div>
+            </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-1">
                 Pending Review
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Awaiting instructor feedback
               </p>
-              <p className="text-3xl font-bold text-yellow-600 mt-1">
-                {stats.pending}
-              </p>
-            </div>
-            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
+        {/* Approved Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-emerald-200 dark:border-emerald-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-400/5 dark:to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl shadow-lg">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+                  {stats.approved}
+                </p>
+              </div>
+            </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
                 Approved
+              </h3>
+              <p className="text-sm text-emerald-700 dark:text-emerald-400">
+                Successfully reviewed documents
               </p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
-                {stats.approved}
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-300" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
+        {/* Rejected Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-rose-200 dark:border-rose-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-red-500/10 dark:from-rose-400/5 dark:to-red-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-rose-500 to-red-500 rounded-xl shadow-lg">
+                <XCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-rose-700 dark:text-rose-300">
+                  {stats.rejected}
+                </p>
+              </div>
+            </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h3 className="text-lg font-semibold text-rose-900 dark:text-rose-100 mb-1">
                 Rejected
+              </h3>
+              <p className="text-sm text-rose-700 dark:text-rose-400">
+                Requires revision and resubmission
               </p>
-              <p className="text-3xl font-bold text-red-600 mt-1">
-                {stats.rejected}
-              </p>
-            </div>
-            <div className="p-3 bg-red-100 dark:bg-red-900 rounded-lg">
-              <XCircle className="w-6 h-6 text-red-600 dark:text-red-300" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total Documents
-              </p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">
-                {stats.total}
-              </p>
+        {/* Total Documents Card */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-indigo-200 dark:border-indigo-800">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-400/5 dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300">
+                  {stats.total}
+                </p>
+              </div>
             </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <FileText className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+            <div>
+              <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-1">
+                Total Documents
+              </h3>
+              <p className="text-sm text-indigo-700 dark:text-indigo-400">
+                All submitted documents
+              </p>
             </div>
           </div>
         </div>

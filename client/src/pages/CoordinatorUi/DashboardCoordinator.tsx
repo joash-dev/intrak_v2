@@ -27,8 +27,6 @@ import {
 } from "lucide-react";
 
 import CoordinatorDocumentsTab from "./CoordinatorDocumentsTab";
-import CoordinatorAttendanceTab from "./CoordinatorAttendaceTab";
-import CoordinatorStudentsTab from "./CoordinatorStudentManagement";
 import CoordinatorReportsTab from "./CoordinatorReportsTab";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
@@ -688,8 +686,6 @@ const CoordinatorPortal: React.FC = () => {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "documents", label: "Review Documents", icon: FileCheck },
-    { id: "attendance", label: "Verify Attendance", icon: Clock },
-    { id: "students", label: "Student Management", icon: Users },
     { id: "reports", label: "Reports", icon: FileSpreadsheet },
     { id: "announcements", label: "Announcements", icon: MessageSquare },
     //{ id: "settings", label: "Settings", icon: Settings },
@@ -720,10 +716,6 @@ const CoordinatorPortal: React.FC = () => {
         return <CoordinatorDashboard />;
       case "documents":
         return <CoordinatorDocumentsTab />;
-      case "attendance":
-        return <CoordinatorAttendanceTab />;
-      case "students":
-        return <CoordinatorStudentsTab />;
       case "reports":
         return <CoordinatorReportsTab />;
       case "announcements":

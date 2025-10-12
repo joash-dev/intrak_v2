@@ -83,9 +83,21 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       if (onDocumentsChange) {
         onDocumentsChange();
       }
-    } catch (err) {
-      setError("Failed to load documents. Please try again.");
+    } catch (err: any) {
       console.error("Error loading documents:", err);
+
+      // Provide more specific error messages
+      if (err.response?.status === 401) {
+        setError("Authentication required. Please log in again.");
+      } else if (err.response?.status === 403) {
+        setError("Access denied. You don't have permission to view documents.");
+      } else if (err.response?.status === 404) {
+        setError("Student record not found. Please contact support.");
+      } else if (err.response?.data?.message) {
+        setError(`Error: ${err.response.data.message}`);
+      } else {
+        setError("Failed to load documents. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -293,51 +305,110 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Total Documents
-          </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {stats.total}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-green-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-          <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-yellow-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-red-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
-          <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Document Management
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Upload and manage your OJT documents
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Actions Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Total Documents
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.total}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Approved
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.approved}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Pending
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.pending}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Rejected
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stats.rejected}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+              <XCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search documents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
             <div className="flex items-center space-x-2">
-              <Filter className="text-gray-400 w-5 h-5" />
+              <Filter className="text-gray-400 w-4 h-4" />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 min-w-[140px]"
               >
                 <option value="ALL">All Status</option>
                 <option value="APPROVED">Approved</option>
@@ -358,7 +429,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       </div>
 
       {/* Documents List */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
@@ -476,10 +547,26 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
         {filteredDocs.length === 0 && (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No documents found
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              {searchQuery || filterStatus !== "ALL"
+                ? "Try adjusting your search or filter criteria"
+                : "Upload your first document to get started"}
             </p>
+            {(!searchQuery && filterStatus === "ALL") && (
+              <button
+                onClick={() => setUploadModalOpen(true)}
+                className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Document
+              </button>
+            )}
           </div>
         )}
       </div>

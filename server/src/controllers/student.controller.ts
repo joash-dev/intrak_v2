@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { auditLog } from '../services/audit.service';
 
 const prisma = new PrismaClient();
 
@@ -153,6 +154,41 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
       totalHours
     } = req.body;
 
+    // Validate student number format
+    if (studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) {
+      return res.status(400).json({ 
+        message: 'Student number must be in format: 22-UR-0592' 
+      });
+    }
+
+    // If no instructor is specified, automatically assign one
+    let assignedInstructorId = instructorId;
+    
+    if (!assignedInstructorId) {
+      // Find the instructor with the least number of assigned students
+      const instructors = await prisma.user.findMany({
+        where: { role: 'INSTRUCTOR', active: true },
+        include: {
+          studentsAssigned: {
+            select: { id: true }
+          }
+        },
+        orderBy: {
+          studentsAssigned: {
+            _count: 'asc'
+          }
+        }
+      });
+
+      // If instructors exist, assign to the one with least students
+      if (instructors.length > 0) {
+        assignedInstructorId = instructors[0].id;
+        console.log(`Auto-assigning student to instructor: ${instructors[0].name} (${instructors[0].id})`);
+      } else {
+        console.log('No instructors available for auto-assignment');
+      }
+    }
+
     const student = await prisma.student.create({
       data: {
         userId,
@@ -162,7 +198,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         section,
         companyId,
         supervisorName,
-        instructorId,
+        instructorId: assignedInstructorId,
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         totalHours: totalHours ? parseInt(totalHours) : 240
@@ -172,6 +208,16 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         instructor: { select: { id: true, name: true, email: true } }
       }
     });
+
+    // Log the assignment for audit purposes
+    if (assignedInstructorId) {
+      await auditLog(req.user!.id, 'STUDENT_AUTO_ASSIGNED', {
+        studentId: student.id,
+        studentName: student.user.name,
+        instructorId: assignedInstructorId,
+        instructorName: student.instructor?.name || 'Unknown'
+      }, req);
+    }
 
     res.status(201).json({ student });
   } catch (error: any) {
@@ -205,6 +251,13 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const updateData = { ...req.body };
 
+    // Validate student number format if provided
+    if (updateData.studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(updateData.studentNumber)) {
+      return res.status(400).json({ 
+        message: 'Student number must be in format: 22-UR-0592' 
+      });
+    }
+
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
     if (updateData.year) updateData.year = parseInt(updateData.year);
@@ -228,10 +281,65 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    // First, get the student record to find the associated user ID
+    const student = await prisma.student.findUnique({
+      where: { id },
+      select: { userId: true }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Delete all related data in the correct order to avoid foreign key constraints
+    
+    // 1. Delete attendance logs
+    const attendanceResult = await prisma.attendanceLog.deleteMany({
+      where: { studentId: id }
+    });
+
+    // 2. Delete document submissions
+    const documentResult = await prisma.document.deleteMany({
+      where: { studentId: id }
+    });
+
+    // 3. Delete evaluations
+    const evaluationResult = await prisma.evaluation.deleteMany({
+      where: { studentId: id }
+    });
+
+    // 4. Delete audit logs related to this student user
+    const auditResult = await prisma.auditLog.deleteMany({
+      where: { userId: student.userId }
+    });
+
+    // 5. Delete the student record
     await prisma.student.delete({ where: { id } });
 
-    res.json({ message: 'Student deleted successfully' });
+    // 6. Finally, delete the user account
+    await prisma.user.delete({ where: { id: student.userId } });
+
+    console.log(`✅ Student deletion completed:`);
+    console.log(`   • Attendance logs: ${attendanceResult.count}`);
+    console.log(`   • Document submissions: ${documentResult.count}`);
+    console.log(`   • Evaluations: ${evaluationResult.count}`);
+    console.log(`   • Audit logs: ${auditResult.count}`);
+    console.log(`   • Student record: 1`);
+    console.log(`   • User account: 1`);
+
+    res.json({ 
+      message: 'Student and all related data deleted successfully',
+      deleted: {
+        attendanceLogs: attendanceResult.count,
+        documents: documentResult.count,
+        evaluations: evaluationResult.count,
+        auditLogs: auditResult.count,
+        studentRecord: 1,
+        userAccount: 1
+      }
+    });
   } catch (error) {
+    console.error('Error deleting student:', error);
     res.status(500).json({ message: 'Failed to delete student', error });
   }
 };

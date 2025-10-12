@@ -58,10 +58,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         studentId,
         type,
         filename: req.file.originalname,
-        storedFilename: req.file.filename,
         filepath: req.file.path,
         mimeType: req.file.mimetype,
-        fileSize: parseInt(req.file.size.toString()),
         uploadedById: req.user!.id,
         status: 'PENDING'
       }
@@ -108,17 +106,13 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       }
     } else if (req.user!.role === 'INSTRUCTOR') {
       // For instructors, only show documents from their assigned students
-      const instructor = await prisma.instructor.findUnique({
-        where: { userId: req.user!.id },
-        include: {
-          students: {
-            select: { id: true }
-          }
-        }
+      const assignedStudents = await prisma.student.findMany({
+        where: { instructorId: req.user!.id },
+        select: { id: true }
       });
       
-      if (instructor && instructor.students.length > 0) {
-        const assignedStudentIds = instructor.students.map(s => s.id);
+      if (assignedStudents.length > 0) {
+        const assignedStudentIds = assignedStudents.map(s => s.id);
         where.studentId = { in: assignedStudentIds };
       } else {
         // If instructor has no assigned students, return empty array
@@ -159,10 +153,10 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       prisma.document.count({ where })
     ]);
 
-    // Format documents with file size
+    // Format documents
     const formattedDocuments = documents.map(doc => ({
       ...doc,
-      fileSizeMB: doc.fileSize ? (doc.fileSize / (1024 * 1024)).toFixed(2) + ' MB' : null
+      fileSizeMB: null // File size not stored in database
     }));
 
     res.json({
@@ -185,22 +179,48 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
 
 export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
   try {
+    console.log(`📄 Getting documents for user: ${req.user?.id}, role: ${req.user?.role}`);
+    
+    // Check if user is authenticated
+    if (!req.user) {
+      console.log(`📄 No authenticated user found`);
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    // Check if user is a student
+    if (req.user.role !== 'STUDENT') {
+      console.log(`📄 User is not a student, role: ${req.user.role}`);
+      return res.status(403).json({ message: 'Access denied. Student role required.' });
+    }
+    
     // Get current student
     const student = await prisma.student.findUnique({
-      where: { userId: req.user!.id },
+      where: { userId: req.user.id },
       include: {
         user: { select: { name: true } }
       }
     });
 
+    console.log(`📄 Student found:`, student ? 'Yes' : 'No');
+
     if (!student) {
-      return res.status(404).json({ message: 'Student record not found' });
+      console.log(`📄 Student record not found for user: ${req.user.id}`);
+      return res.status(404).json({ 
+        message: 'Student record not found',
+        debug: {
+          userId: req.user.id,
+          userRole: req.user.role,
+          userEmail: req.user.email
+        }
+      });
     }
 
     const documents = await prisma.document.findMany({
       where: { studentId: student.id },
       orderBy: { uploadedAt: 'desc' }
     });
+
+    console.log(`📄 Found ${documents.length} documents for student ${student.id}`);
 
     // Format documents for client
     const formattedDocuments = documents.map(doc => ({
@@ -211,7 +231,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       uploadedAt: doc.uploadedAt?.toISOString().split('T')[0] || null,
       reviewedAt: doc.reviewedAt?.toISOString().split('T')[0] || null,
       remarks: doc.remarks,
-      fileSize: doc.fileSize ? (doc.fileSize / (1024 * 1024)).toFixed(2) + ' MB' : null
+      fileSize: null // File size not stored in database
     }));
 
     res.json({ documents: formattedDocuments });

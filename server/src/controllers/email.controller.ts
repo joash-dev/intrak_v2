@@ -61,3 +61,40 @@ export const testEmailConnection = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const sendTestEmail = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        message: 'Email address is required' 
+      });
+    }
+
+    const emailSent = await emailService.sendStudentWelcomeEmail(
+      email,
+      'Test Student',
+      '99-TEST-9999',
+      'testpass123'
+    );
+
+    if (emailSent) {
+      res.json({ 
+        message: 'Test email sent successfully',
+        emailSent: true 
+      });
+    } else {
+      res.status(500).json({ 
+        message: 'Failed to send test email',
+        emailSent: false 
+      });
+    }
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ 
+      message: 'Failed to send test email', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};

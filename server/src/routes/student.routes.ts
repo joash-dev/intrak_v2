@@ -12,9 +12,9 @@ router.get('/profile', studentController.getStudentProfile);
 router.get('/my-assigned', studentController.getMyAssignedStudents);
 router.get('/instructor/:instructorId', studentController.getStudentsByInstructor);
 router.get('/:id', studentController.getStudentById);
-router.post('/', authorize(['ADMIN', 'COORDINATOR']), studentController.createStudent);
-router.put('/:id', authorize(['ADMIN', 'COORDINATOR', 'STUDENT']), studentController.updateStudent);
+router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);
+router.put('/:id', authorize(['ADMIN', 'INSTRUCTOR', 'STUDENT']), studentController.updateStudent);
 router.patch('/:studentId/instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.assignInstructor);
-router.delete('/:id', authorize(['ADMIN']), studentController.deleteStudent);
+router.delete('/:id', authorize(['ADMIN', 'INSTRUCTOR']), studentController.deleteStudent);
 
 export default router;

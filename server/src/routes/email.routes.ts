@@ -8,9 +8,12 @@ const router = Router();
 router.use(authenticate);
 
 // Send welcome email to student
-router.post('/welcome', authorize(['ADMIN', 'COORDINATOR']), emailController.sendStudentWelcomeEmail);
+router.post('/welcome', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), emailController.sendStudentWelcomeEmail);
 
 // Test email connection (for debugging)
 router.get('/test', authorize(['ADMIN']), emailController.testEmailConnection);
+
+// Send test email (for debugging)
+router.post('/test-send', authorize(['ADMIN']), emailController.sendTestEmail);
 
 export default router;

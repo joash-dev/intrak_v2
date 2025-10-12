@@ -185,18 +185,58 @@ class SettingsService {
     return phoneRegex.test(phone.replace(/\s/g, ''));
   }
 
-  // Save profile photo to localStorage
+  // Upload profile photo to server
+  async uploadProfilePhoto(file: File): Promise<string> {
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      const response = await api.post('/users/profile-photo/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data.profilePhoto;
+    } catch (error) {
+      console.error('Error uploading profile photo:', error);
+      throw error;
+    }
+  }
+
+  // Get profile photo URL from server
+  async getProfilePhoto(): Promise<string | null> {
+    try {
+      const response = await api.get('/users/profile-photo');
+      return response.data.profilePhoto;
+    } catch (error) {
+      console.error('Error getting profile photo:', error);
+      return null;
+    }
+  }
+
+  // Remove profile photo from server
+  async removeProfilePhoto(): Promise<void> {
+    try {
+      await api.delete('/users/profile-photo');
+    } catch (error) {
+      console.error('Error removing profile photo:', error);
+      throw error;
+    }
+  }
+
+  // Legacy methods for backward compatibility (now deprecated)
   saveProfilePhoto(photoDataUrl: string): void {
+    console.warn('saveProfilePhoto with localStorage is deprecated. Use uploadProfilePhoto instead.');
     localStorage.setItem('profilePhoto', photoDataUrl);
   }
 
-  // Load profile photo from localStorage
   loadProfilePhoto(): string | null {
+    console.warn('loadProfilePhoto with localStorage is deprecated. Use getProfilePhoto instead.');
     return localStorage.getItem('profilePhoto');
   }
 
-  // Remove profile photo from localStorage
-  removeProfilePhoto(): void {
+  removeProfilePhotoLocal(): void {
     localStorage.removeItem('profilePhoto');
   }
 }

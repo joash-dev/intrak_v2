@@ -54,6 +54,7 @@ model User {
   passwordHash String
   role         Role
   active       Boolean  @default(true)
+  profilePhoto String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -65,6 +66,7 @@ model User {
   announcementsCreated Announcement[]
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
+  templatesUploaded DocumentTemplate[] @relation("TemplateUploader")
 
   @@map("users")
 }
@@ -231,4 +233,23 @@ model AuditLog {
   user User @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+model DocumentTemplate {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  type        DocumentType
+  filename    String
+  filepath    String
+  mimeType    String
+  isActive    Boolean        @default(true)
+  uploadedById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Relations
+  uploadedBy User @relation("TemplateUploader", fields: [uploadedById], references: [id])
+
+  @@map("document_templates")
 }

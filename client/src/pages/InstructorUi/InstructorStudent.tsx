@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -15,7 +15,14 @@ import {
   BarChart3,
   Activity,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
+import { instructorService } from "../../services/instructorService";
+import {
+  calculateAttendanceTrend,
+  determineStudentStatus,
+} from "../../utils/attendanceCalculations";
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -49,85 +56,81 @@ const InstructorMonitoringTab = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const students: Student[] = [
-    {
-      id: "1",
-      studentId: "2021-001",
-      name: "Maria Santos",
-      avatar: "MS",
-      program: "BS Computer Science",
-      company: "TechCorp Inc.",
-      supervisor: "Engr. Juan Dela Cruz",
-      attendanceRate: 96,
-      attendanceTrend: "up",
-      hoursCompleted: 352,
-      requiredHours: 400,
-      tasksCompleted: 18,
-      totalTasks: 20,
-      lastEvaluation: 4.5,
-      recentActivities: 8,
-      status: "excellent",
-      lastActive: "2 hours ago",
-    },
-    {
-      id: "2",
-      studentId: "2021-002",
-      name: "Juan Dela Cruz",
-      avatar: "JD",
-      program: "BS Information Technology",
-      company: "InnovateLab",
-      supervisor: "Ms. Ana Reyes",
-      attendanceRate: 92,
-      attendanceTrend: "stable",
-      hoursCompleted: 328,
-      requiredHours: 400,
-      tasksCompleted: 15,
-      totalTasks: 18,
-      lastEvaluation: 4.2,
-      recentActivities: 5,
-      status: "good",
-      lastActive: "5 hours ago",
-    },
-    {
-      id: "3",
-      studentId: "2021-003",
-      name: "Ana Reyes",
-      avatar: "AR",
-      program: "BS Computer Engineering",
-      company: "DataSystems Corp",
-      supervisor: "Engr. Carlos Martinez",
-      attendanceRate: 88,
-      attendanceTrend: "down",
-      hoursCompleted: 312,
-      requiredHours: 400,
-      tasksCompleted: 12,
-      totalTasks: 16,
-      lastEvaluation: 4.0,
-      recentActivities: 3,
-      status: "needs_attention",
-      lastActive: "1 day ago",
-    },
-    {
-      id: "4",
-      studentId: "2021-004",
-      name: "Carlos Martinez",
-      avatar: "CM",
-      program: "BS Computer Science",
-      company: "CloudTech Solutions",
-      supervisor: "Mr. Pedro Santos",
-      attendanceRate: 98,
-      attendanceTrend: "up",
-      hoursCompleted: 368,
-      requiredHours: 400,
-      tasksCompleted: 20,
-      totalTasks: 20,
-      lastEvaluation: 4.8,
-      recentActivities: 12,
-      status: "excellent",
-      lastActive: "30 mins ago",
-    },
-  ];
+  // Load students and attendance data
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      console.log("Loading students for monitoring...");
+
+      // Fetch students from API
+      const studentsData = await instructorService.getAssignedStudents();
+
+      // Fetch attendance data for all students
+      const attendanceResponse = await instructorService.getStudentAttendance();
+
+      // Transform API data to match Student interface using consistent calculation logic
+      const transformedStudents = await Promise.all(
+        studentsData.map(async (student: any) => {
+          // Get detailed attendance stats for this student using the same logic as attendance service
+          const attendanceStats =
+            await instructorService.getStudentAttendanceStats(student.id);
+
+          // Use the calculated attendance rate from the stats
+          const attendanceRate = attendanceStats.attendanceRate;
+          const completedHours = attendanceStats.completedHours;
+
+          // Determine status using shared utility function
+          const status = determineStudentStatus(
+            attendanceRate,
+            student.lastEvaluation || 0,
+            completedHours,
+            student.requiredHours || 240
+          );
+
+          // Determine attendance trend using shared utility function
+          const studentAttendance = attendanceResponse.filter(
+            (att: any) => att.studentId === student.id && att.verified
+          );
+          const attendanceTrend = calculateAttendanceTrend(studentAttendance);
+
+          return {
+            id: student.id,
+            studentId: student.studentId,
+            name: student.name,
+            avatar: student.avatar,
+            program: student.program,
+            company: student.company,
+            supervisor: student.supervisor,
+            attendanceRate,
+            attendanceTrend,
+            hoursCompleted: completedHours,
+            requiredHours: student.requiredHours,
+            tasksCompleted: student.tasksCompleted,
+            totalTasks: student.totalTasks,
+            lastEvaluation: student.lastEvaluation,
+            recentActivities: attendanceStats.verifiedDays,
+            status,
+            lastActive: student.lastActivity,
+          };
+        })
+      );
+
+      setStudents(transformedStudents);
+      console.log("Students loaded:", transformedStudents.length);
+    } catch (error) {
+      console.error("Error loading students:", error);
+      toast.error("Failed to load student data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const studentDetails: StudentDetail = {
     weeklyAttendance: [
@@ -200,105 +203,138 @@ const InstructorMonitoringTab = () => {
     return matchesSearch && matchesFilter;
   });
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading student monitoring data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Student Monitoring
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Track detailed progress and performance metrics
-        </p>
+      {/* Header Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Student Monitoring
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Track detailed progress and performance metrics
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Total Students
               </p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {stats.total}
               </p>
             </div>
-            <Users className="w-8 h-8 text-purple-600 opacity-50" />
+            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Excellent
               </p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {stats.excellent}
               </p>
             </div>
-            <CheckCircle className="w-8 h-8 text-green-600 opacity-50" />
+            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Good</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {stats.good}
               </p>
             </div>
-            <Award className="w-8 h-8 text-blue-600 opacity-50" />
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Award className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Needs Attention
               </p>
-              <p className="text-3xl font-bold text-yellow-600 mt-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {stats.needsAttention}
               </p>
             </div>
-            <AlertCircle className="w-8 h-8 text-yellow-600 opacity-50" />
+            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-red-500">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Critical
               </p>
-              <p className="text-3xl font-bold text-red-600 mt-1">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                 {stats.critical}
               </p>
             </div>
-            <XCircle className="w-8 h-8 text-red-600 opacity-50" />
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
+              <XCircle className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search students..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 min-w-[140px] text-sm"
           >
             <option value="all">All Status</option>
             <option value="excellent">Excellent</option>
@@ -314,31 +350,26 @@ const InstructorMonitoringTab = () => {
         {filteredStudents.map((student) => (
           <div
             key={student.id}
-            className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border-l-4 ${getStatusColor(
-              student.status
-            )} transition-all hover:shadow-md`}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
           >
-            <div className="p-6">
+            <div className="p-4">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start space-x-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                     {student.avatar}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                       {student.name}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {student.studentId}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {student.program}
+                      {student.studentId} • {student.program}
                     </p>
                   </div>
                 </div>
                 <span
-                  className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                  className={`text-xs px-2.5 py-1 rounded-full font-medium ${getStatusColor(
                     student.status
                   )}`}
                 >
@@ -349,12 +380,12 @@ const InstructorMonitoringTab = () => {
               {/* Company Info */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
                 <div className="flex items-center space-x-2 mb-1">
-                  <Building2 className="w-4 h-4 text-gray-400" />
+                  <Building2 className="w-3 h-3 text-gray-400" />
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {student.company}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400 ml-6">
+                <p className="text-xs text-gray-600 dark:text-gray-400 ml-5">
                   Supervisor: {student.supervisor}
                 </p>
               </div>

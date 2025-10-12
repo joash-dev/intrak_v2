@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
+import path from 'path';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -121,5 +123,170 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete user', error });
+  }
+};
+
+// Upload profile photo
+export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const userId = req.user!.id;
+
+    // Create profile photos directory if it doesn't exist
+    const photosDir = path.join(process.cwd(), 'uploads', 'profile-photos');
+    if (!fs.existsSync(photosDir)) {
+      fs.mkdirSync(photosDir, { recursive: true });
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExtension = path.extname(req.file.originalname);
+    const filename = `${userId}_${timestamp}${fileExtension}`;
+    const filepath = path.join(photosDir, filename);
+
+    // Move file from temp location to profile photos directory
+    fs.renameSync(req.file.path, filepath);
+
+    // Delete old profile photo if it exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    }) as any;
+
+    if (user?.profilePhoto) {
+      const oldFilePath = path.join(process.cwd(), 'uploads', 'profile-photos', user.profilePhoto);
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
+    // Update user profile photo in database
+    await prisma.user.update({
+      where: { id: userId },
+      data: { profilePhoto: filename } as any
+    });
+
+    res.json({ 
+      message: 'Profile photo uploaded successfully',
+      profilePhoto: `/api/users/profile-photo/${filename}`
+    });
+  } catch (error) {
+    console.error('Profile photo upload error:', error);
+    res.status(500).json({ 
+      message: 'Profile photo upload failed', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
+// Get current user's profile photo info
+export const getCurrentUserProfilePhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    }) as any;
+
+    if (!user?.profilePhoto) {
+      return res.json({ profilePhoto: null });
+    }
+
+    // Return the full URL path for the profile photo
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.BASE_URL || 'http://localhost:5000'
+      : 'http://localhost:5000';
+    
+    res.json({ 
+      profilePhoto: `${baseUrl}/api/users/profile-photo/${user.profilePhoto}`
+    });
+  } catch (error) {
+    console.error('Get current user profile photo error:', error);
+    res.status(500).json({ 
+      message: 'Failed to get profile photo', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
+// Get profile photo file by filename (public endpoint - no auth required)
+export const getProfilePhoto = async (req: any, res: Response) => {
+  try {
+    const { filename } = req.params;
+
+    console.log(`📸 Profile photo request: ${filename}`);
+
+    // Validate filename format (should be userId_timestamp.extension)
+    if (!filename || !filename.includes('_')) {
+      console.log(`📸 Invalid filename format: ${filename}`);
+      return res.status(404).json({ message: 'Invalid profile photo filename' });
+    }
+
+    const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', filename);
+    console.log(`📸 Looking for file at: ${filepath}`);
+    
+    if (!fs.existsSync(filepath)) {
+      console.log(`📸 File does not exist at: ${filepath}`);
+      return res.status(404).json({ message: 'Profile photo file not found' });
+    }
+
+    console.log(`📸 Serving profile photo: ${filename}`);
+    
+    // Add CORS headers for image serving
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // Set appropriate content type based on file extension
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp'
+    };
+    res.header('Content-Type', mimeTypes[ext] || 'image/jpeg');
+    
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Get profile photo error:', error);
+    res.status(500).json({ 
+      message: 'Failed to get profile photo', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
+// Remove profile photo
+export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    }) as any;
+
+    if (user?.profilePhoto) {
+      const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', user.profilePhoto);
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+    }
+
+    // Remove profile photo from database
+    await prisma.user.update({
+      where: { id: userId },
+      data: { profilePhoto: null } as any
+    });
+
+    res.json({ message: 'Profile photo removed successfully' });
+  } catch (error) {
+    console.error('Remove profile photo error:', error);
+    res.status(500).json({ 
+      message: 'Failed to remove profile photo', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
   }
 };

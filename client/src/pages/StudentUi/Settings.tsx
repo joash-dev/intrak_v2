@@ -109,18 +109,22 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
     }
   };
 
-  const loadPreferences = () => {
+  const loadPreferences = async () => {
     const notificationPrefs = settingsService.loadNotificationPreferences();
     const appPrefs = settingsService.loadAppPreferences();
-    const savedPhoto = settingsService.loadProfilePhoto();
 
     setNotifications(notificationPrefs);
     setPreferences(appPrefs);
     setDarkMode(appPrefs.theme === "dark");
 
-    // Load saved profile photo
-    if (savedPhoto) {
-      setProfilePhotoPreview(savedPhoto);
+    // Load saved profile photo from server
+    try {
+      const serverPhoto = await settingsService.getProfilePhoto();
+      if (serverPhoto) {
+        setProfilePhotoPreview(serverPhoto);
+      }
+    } catch (error) {
+      console.error("Error loading profile photo in settings:", error);
     }
 
     // Apply the saved theme on load
@@ -234,10 +238,20 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const handleRemovePhoto = () => {
-    setProfilePhotoPreview(null);
-    settingsService.removeProfilePhoto();
-    toast.success("Profile photo removed successfully!");
+  const handleRemovePhoto = async () => {
+    try {
+      await settingsService.removeProfilePhoto();
+      setProfilePhotoPreview(null);
+      toast.success("Profile photo removed successfully!");
+
+      // Notify parent component to refresh dashboard
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+    } catch (error) {
+      console.error("Error removing photo:", error);
+      toast.error("Failed to remove profile photo");
+    }
   };
 
   const handlePhotoUpload = async (
@@ -263,30 +277,18 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
     try {
       setUploadingPhoto(true);
 
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setProfilePhotoPreview(previewUrl);
+      // Upload to server
+      const photoUrl = await settingsService.uploadProfilePhoto(file);
 
-      // Convert file to base64 for localStorage storage
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        if (base64String) {
-          // Save to localStorage
-          settingsService.saveProfilePhoto(base64String);
-        }
-      };
-      reader.readAsDataURL(file);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("profilePhoto", file);
-
-      // Here you would typically upload to your server
-      // For now, we'll simulate the upload
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Update preview with server URL
+      setProfilePhotoPreview(photoUrl);
 
       toast.success("Profile photo updated successfully!");
+
+      // Notify parent component to refresh dashboard
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
 
       // Reset the file input
       event.target.value = "";

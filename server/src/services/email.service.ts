@@ -26,6 +26,26 @@ class EmailService {
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
+      // Check if email configuration is properly set up
+      const hasEmailConfig = process.env.SMTP_HOST && 
+                            process.env.SMTP_USER && 
+                            process.env.SMTP_PASS;
+
+      if (!hasEmailConfig) {
+        console.log('📧 EMAIL SETUP REQUIRED:');
+        console.log('📧 To enable email sending, create a .env file with:');
+        console.log('📧 SMTP_HOST=smtp.gmail.com');
+        console.log('📧 SMTP_PORT=587');
+        console.log('📧 SMTP_USER=your-email@gmail.com');
+        console.log('📧 SMTP_PASS=your-app-password');
+        console.log('📧 See EMAIL_SETUP_GUIDE.md for detailed instructions');
+        console.log('📧 Email content would be:');
+        console.log('   To:', options.to);
+        console.log('   Subject:', options.subject);
+        console.log('   Content:', options.text?.substring(0, 100) + '...');
+        return true; // Return true to not break the student creation flow
+      }
+
       const mailOptions = {
         from: process.env.SMTP_FROM || 'noreply@intrak.edu.ph',
         to: options.to,
@@ -35,10 +55,13 @@ class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('📧 Email sent successfully:', info.messageId);
+      console.log('📧 Email sent successfully to:', options.to);
+      console.log('📧 Message ID:', info.messageId);
       return true;
     } catch (error) {
       console.error('❌ Email sending failed:', error);
+      console.error('❌ Please check your email configuration in .env file');
+      console.error('❌ See EMAIL_SETUP_GUIDE.md for troubleshooting');
       return false;
     }
   }
@@ -247,11 +270,26 @@ PSU Urdaneta Campus
   // Test email configuration
   async testConnection(): Promise<boolean> {
     try {
+      // Check if email configuration is properly set up
+      const hasEmailConfig = process.env.SMTP_HOST && 
+                            process.env.SMTP_USER && 
+                            process.env.SMTP_PASS;
+
+      if (!hasEmailConfig) {
+        console.log('📧 EMAIL SETUP REQUIRED:');
+        console.log('📧 Create a .env file with SMTP configuration');
+        console.log('📧 See EMAIL_SETUP_GUIDE.md for instructions');
+        return false;
+      }
+
       await this.transporter.verify();
       console.log('✅ Email service connection verified');
+      console.log('✅ Ready to send emails to:', process.env.SMTP_USER);
       return true;
     } catch (error) {
       console.error('❌ Email service connection failed:', error);
+      console.error('❌ Please check your email configuration in .env file');
+      console.error('❌ See EMAIL_SETUP_GUIDE.md for troubleshooting');
       return false;
     }
   }

@@ -1,4 +1,5 @@
 import api from './api';
+import { calculateAttendanceStats } from '../utils/attendanceCalculations';
 
 // Types for instructor data
 export interface InstructorStats {
@@ -17,10 +18,12 @@ export interface InstructorStudent {
   studentId: string;
   name: string;
   email: string;
+  phone?: string;
   avatar: string;
   program: string;
   company: string;
   supervisor: string;
+  supervisorEmail?: string;
   startDate: string;
   endDate: string;
   attendanceRate: number;
@@ -72,14 +75,14 @@ export interface InstructorDocument {
 }
 
 class InstructorService {
-  // Get students assigned to current instructor
+  // Get all students (since there's only one instructor for Computer Engineering)
   async getAssignedStudents(): Promise<InstructorStudent[]> {
     try {
-      console.log('Fetching assigned students for instructor...');
+      console.log('Fetching all students for instructor...');
       
-      // Fetch students assigned to current instructor
-      const response = await api.get('/students/my-assigned');
-      console.log('Assigned students API response:', response.data);
+      // Fetch all students since there's only one instructor for Computer Engineering
+      const response = await api.get('/students');
+      console.log('All students API response:', response.data);
       
       const students = response.data.students || [];
       
@@ -107,9 +110,50 @@ class InstructorService {
         section: student.section || '',
       }));
     } catch (error) {
-      console.error('Error fetching assigned students:', error);
+      console.error('Error fetching all students:', error);
       // Return empty array if API fails
       return [];
+    }
+  }
+
+  // Get student attendance data
+  async getStudentAttendance(studentId?: string): Promise<any[]> {
+    try {
+      console.log('Fetching attendance data...');
+      
+      const params = studentId ? { studentId } : {};
+      const response = await api.get('/attendance', { params });
+      console.log('Attendance API response:', response.data);
+      
+      return response.data.logs || response.data.attendance || [];
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      return [];
+    }
+  }
+
+  // Get student attendance statistics (using shared calculation logic)
+  async getStudentAttendanceStats(studentId: string): Promise<any> {
+    try {
+      console.log('Fetching attendance stats for student:', studentId);
+      
+      // Get attendance logs for the student
+      const logs = await this.getStudentAttendance(studentId);
+      
+      // Get student profile to get required hours
+      let requiredHours = 240; // Default fallback
+      try {
+        const profileResponse = await api.get(`/students/${studentId}`);
+        requiredHours = profileResponse.data.totalHours || 240;
+      } catch (error) {
+        console.warn('Could not fetch student profile, using default 240 hours');
+      }
+      
+      // Use shared calculation logic to ensure consistency
+      return calculateAttendanceStats(logs, requiredHours);
+    } catch (error) {
+      console.error('Error fetching attendance stats:', error);
+      return calculateAttendanceStats([], 240); // Return default stats
     }
   }
 
@@ -139,18 +183,99 @@ class InstructorService {
   async getRecentActivities(): Promise<InstructorActivity[]> {
     try {
       console.log('Fetching recent activities for instructor...');
-      const response = await api.get('/instructor/activities');
-      console.log('Instructor activities API response:', response.data);
       
-      const activities = response.data.activities || [];
+      const activities: InstructorActivity[] = [];
       
-      return activities.map((activity: any) => ({
-        id: activity.id,
-        studentName: activity.student?.user?.name || 'Unknown',
-        action: activity.description || activity.action || 'Unknown action',
-        type: this.mapActivityType(activity.type),
-        timestamp: this.formatTimestamp(activity.createdAt || activity.timestamp),
-      }));
+      // Get assigned students
+      const students = await this.getAssignedStudents();
+      
+      // Fetch recent document submissions
+      try {
+        const documentsResponse = await api.get('/documents');
+        const recentDocuments = documentsResponse.data.documents?.slice(0, 10) || [];
+        
+        for (const doc of recentDocuments) {
+          // Only include documents from assigned students
+          const student = students.find(s => s.id === doc.studentId);
+          if (student) {
+            activities.push({
+              id: `doc-${doc.id}`,
+              studentName: student.name,
+              action: `Submitted ${this.getDocumentTypeDisplay(doc.type)}`,
+              type: 'submission',
+              timestamp: doc.uploadedAt || doc.createdAt
+            });
+          }
+        }
+      } catch (docError) {
+        console.warn('Could not fetch documents for activities:', docError);
+      }
+      
+      // Fetch recent attendance logs
+      try {
+        const attendanceResponse = await api.get('/attendance');
+        const recentAttendance = attendanceResponse.data.logs?.slice(0, 10) || [];
+        
+        for (const log of recentAttendance) {
+          // Only include attendance from assigned students
+          const student = students.find(s => s.id === log.studentId);
+          if (student) {
+            const action = log.timeIn && log.timeOut 
+              ? 'Completed attendance session'
+              : log.timeIn 
+              ? 'Checked in for attendance'
+              : 'Checked out from attendance';
+              
+            activities.push({
+              id: `att-${log.id}`,
+              studentName: student.name,
+              action: action,
+              type: 'attendance',
+              timestamp: log.timeIn || log.createdAt
+            });
+          }
+        }
+      } catch (attError) {
+        console.warn('Could not fetch attendance for activities:', attError);
+      }
+      
+      // Fetch instructor activities from audit logs
+      try {
+        const auditResponse = await api.get('/audit');
+        const instructorLogs = auditResponse.data.logs?.filter((log: any) => 
+          log.user?.role === 'INSTRUCTOR' && 
+          (log.action === 'USER_REGISTERED' || log.action === 'STUDENT_AUTO_ASSIGNED')
+        ).slice(0, 5) || [];
+        
+        for (const log of instructorLogs) {
+          if (log.action === 'USER_REGISTERED' && log.meta?.role === 'STUDENT') {
+            activities.push({
+              id: `inst-${log.id}`,
+              studentName: 'System',
+              action: `Added new student: ${log.meta.email}`,
+              type: 'evaluation', // Using evaluation type for instructor actions
+              timestamp: log.createdAt
+            });
+          } else if (log.action === 'STUDENT_AUTO_ASSIGNED') {
+            activities.push({
+              id: `assign-${log.id}`,
+              studentName: 'System',
+              action: `Assigned student to instructor`,
+              type: 'evaluation', // Using evaluation type for instructor actions
+              timestamp: log.createdAt
+            });
+          }
+        }
+      } catch (auditError) {
+        console.warn('Could not fetch audit logs for instructor activities:', auditError);
+      }
+      
+      // Sort activities by timestamp (most recent first)
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      // Return only the 10 most recent activities
+      console.log(`Found ${activities.length} recent activities`);
+      return activities.slice(0, 10);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
       // Return empty array if API fails
@@ -158,24 +283,34 @@ class InstructorService {
     }
   }
 
+  // Helper method to get document type display name
+  private getDocumentTypeDisplay(type: string): string {
+    const typeMap: Record<string, string> = {
+      'weekly_report': 'Weekly Report',
+      'monthly_timesheet': 'Monthly Timesheet', 
+      'accomplishment_report': 'Accomplishment Report',
+      'final_report': 'Final Report',
+      'timesheet': 'Timesheet',
+      'report': 'Report',
+      'document': 'Document'
+    };
+    
+    return typeMap[type?.toLowerCase()] || type || 'Document';
+  }
+
   // Get alerts for instructor
   async getAlerts(): Promise<InstructorAlert[]> {
     try {
       console.log('Fetching alerts for instructor...');
-      const response = await api.get('/instructor/alerts');
-      console.log('Instructor alerts API response:', response.data);
       
-      const alerts = response.data.alerts || [];
+      // TODO: Implement actual alerts system based on:
+      // - Students with low attendance
+      // - Pending document reviews
+      // - Students at risk
+      // - Overdue evaluations
       
-      return alerts.map((alert: any) => ({
-        id: alert.id,
-        type: alert.type || 'info',
-        title: alert.title || 'Alert',
-        message: alert.message || alert.description || 'No message',
-        studentId: alert.studentId,
-        timestamp: this.formatTimestamp(alert.createdAt || alert.timestamp),
-        priority: alert.priority || 'medium',
-      }));
+      console.log('No alerts endpoint available yet');
+      return [];
     } catch (error) {
       console.error('Error fetching alerts:', error);
       // Return empty array if API fails
@@ -215,29 +350,6 @@ class InstructorService {
   }
 
 
-  // Helper method to map activity type
-  private mapActivityType(type: string): 'submission' | 'attendance' | 'task' | 'evaluation' {
-    switch (type?.toLowerCase()) {
-      case 'document':
-      case 'submission':
-      case 'upload':
-        return 'submission';
-      case 'attendance':
-      case 'checkin':
-      case 'checkout':
-        return 'attendance';
-      case 'task':
-      case 'assignment':
-      case 'project':
-        return 'task';
-      case 'evaluation':
-      case 'assessment':
-      case 'rating':
-        return 'evaluation';
-      default:
-        return 'submission';
-    }
-  }
 
   // Helper method to format last activity
   private formatLastActivity(lastActivity: string | Date | null): string {
@@ -369,12 +481,12 @@ class InstructorService {
     }
   }
 
-  // Get documents from assigned students for review
+  // Get all documents for review (since instructor handles all Computer Engineering students)
   async getDocumentsForReview(): Promise<InstructorDocument[]> {
     try {
-      console.log('Fetching documents for instructor review...');
+      console.log('Fetching all documents for instructor review...');
       const response = await api.get('/documents');
-      console.log('Instructor documents API response:', response.data);
+      console.log('All documents API response:', response.data);
       
       const documents = response.data.documents || [];
       
@@ -397,7 +509,7 @@ class InstructorService {
         reviewedDate: doc.reviewedAt ? this.formatTimestamp(doc.reviewedAt) : undefined,
       }));
     } catch (error) {
-      console.error('Error fetching documents for review:', error);
+      console.error('Error fetching all documents for review:', error);
       // Return empty array if API fails
       return [];
     }
@@ -497,6 +609,117 @@ class InstructorService {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Student Management Methods
+  async createStudent(studentData: {
+    studentNumber: string;
+    name: string;
+    email: string;
+    phone: string;
+    program: string;
+    year: string;
+    company: string;
+    companyAddress: string;
+    supervisor: string;
+    supervisorEmail: string;
+    startDate: string;
+    endDate: string;
+  }): Promise<any> {
+    try {
+      console.log('Creating student with data:', studentData);
+      
+      // Generate secure password for the student
+      const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
+      console.log('Generated password for student:', generatedPassword);
+      
+      // First, create a user account using the register endpoint
+      console.log('Creating user account...');
+      const userResponse = await api.post('/auth/register', {
+        name: studentData.name,
+        email: studentData.email,
+        role: 'STUDENT',
+        password: generatedPassword
+      });
+      
+      console.log('User created successfully:', userResponse.data);
+      const userId = userResponse.data.user.id;
+
+      // Convert year string to integer
+      const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
+      
+      // Then create the student record
+      console.log('Creating student record...');
+      const studentResponse = await api.post('/students', {
+        userId: userId,
+        studentNumber: studentData.studentNumber,
+        program: studentData.program,
+        year: yearNumber,
+        section: 'A', // Default section
+        companyId: null, // Will be handled separately
+        supervisorName: studentData.supervisor,
+        startDate: studentData.startDate,
+        endDate: studentData.endDate,
+        totalHours: 240 // Default hours
+      });
+      
+      console.log('Student created successfully:', studentResponse.data);
+      
+      // Send welcome email to student
+      let emailSent = false;
+      try {
+        await api.post('/email/welcome', {
+          studentEmail: studentData.email,
+          studentName: studentData.name,
+          studentNumber: studentData.studentNumber,
+          temporaryPassword: generatedPassword
+        });
+        emailSent = true;
+        console.log('Welcome email sent successfully');
+      } catch (emailError) {
+        console.warn('Failed to send welcome email:', emailError);
+      }
+      
+      return {
+        student: studentResponse.data.student,
+        emailSent: emailSent,
+        name: studentData.name,
+        email: studentData.email,
+        studentNumber: studentData.studentNumber
+      };
+    } catch (error) {
+      console.error('Error creating student:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to generate student password
+  private generateStudentPassword(studentNumber: string, name: string): string {
+    // Generate a secure password based on student number and name
+    const namePart = name.split(' ')[0].toLowerCase().substring(0, 3);
+    const numberPart = studentNumber.replace(/-/g, '').substring(0, 4);
+    const randomPart = Math.random().toString(36).substring(2, 6);
+    return `${namePart}${numberPart}${randomPart}@`;
+  }
+
+  async updateStudent(studentId: string, studentData: Partial<InstructorStudent>): Promise<boolean> {
+    try {
+      await api.put(`/students/${studentId}`, studentData);
+      return true;
+    } catch (error) {
+      console.error('Error updating student:', error);
+      return false;
+    }
+  }
+
+  async deleteStudent(studentId: string): Promise<boolean> {
+    try {
+      await api.delete(`/students/${studentId}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      return false;
+    }
   }
 }
 
