@@ -558,7 +558,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 ? "Try adjusting your search or filter criteria"
                 : "Upload your first document to get started"}
             </p>
-            {(!searchQuery && filterStatus === "ALL") && (
+            {!searchQuery && filterStatus === "ALL" && (
               <button
                 onClick={() => setUploadModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
