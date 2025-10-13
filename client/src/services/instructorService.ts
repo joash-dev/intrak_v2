@@ -1,5 +1,6 @@
 import api from './api';
 import { calculateAttendanceStats } from '../utils/attendanceCalculations';
+import { announcementService, type Announcement } from './announcementService';
 
 // Types for instructor data
 export interface InstructorStats {
@@ -296,6 +297,45 @@ class InstructorService {
     };
     
     return typeMap[type?.toLowerCase()] || type || 'Document';
+  }
+
+  // Get announcements for instructor
+  async getAnnouncements(): Promise<Announcement[]> {
+    try {
+      console.log('Fetching announcements for instructor...');
+      
+      // Get announcements targeted at instructors or all users
+      const response = await announcementService.getAnnouncements();
+      const allAnnouncements = response.announcements;
+      
+      // Filter announcements that are relevant to instructors
+      const instructorAnnouncements = allAnnouncements.filter(announcement => 
+        announcement.audience === 'ALL' || 
+        announcement.audience === 'INSTRUCTORS' ||
+        announcement.audience === 'COORDINATORS' // Instructors might also want to see coordinator announcements
+      );
+      
+      // Transform announcements for display
+      const transformedAnnouncements = instructorAnnouncements.map(announcement => 
+        announcementService.transformAnnouncement(announcement)
+      );
+      
+      console.log(`Found ${transformedAnnouncements.length} announcements for instructor`);
+      return transformedAnnouncements;
+    } catch (error) {
+      console.error('Error fetching announcements for instructor:', error);
+      // Return empty array if API fails
+      return [];
+    }
+  }
+
+  // Track announcement view for instructor
+  async trackAnnouncementView(announcementId: string): Promise<void> {
+    try {
+      await announcementService.trackView(announcementId);
+    } catch (error) {
+      console.warn('Failed to track announcement view:', error);
+    }
   }
 
   // Get alerts for instructor

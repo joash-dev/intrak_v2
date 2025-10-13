@@ -15,7 +15,11 @@ import {
   Eye,
   CheckCircle,
   XCircle,
+  RefreshCw,
 } from "lucide-react";
+import { useOptimizedData } from "../../hooks/useOptimizedData";
+import { adminService, type AdminCompany } from "../../services/adminService";
+import toast from "react-hot-toast";
 
 const mockCompanies = [
   {
@@ -111,7 +115,6 @@ const mockCompanies = [
 ];
 
 const AdminCompanyManagement = () => {
-  const [companies, setCompanies] = useState(mockCompanies);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [moaFilter, setMoaFilter] = useState("ALL");
@@ -119,7 +122,25 @@ const AdminCompanyManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState<AdminCompany | null>(
+    null
+  );
+
+  // Fetch companies with real API
+  const {
+    data: companiesResponse,
+    loading: companiesLoading,
+    refetch: refetchCompanies,
+  } = useOptimizedData(
+    () =>
+      adminService.getCompanies({
+        search: searchQuery || undefined,
+      }),
+    [searchQuery],
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  );
+
+  const companies = companiesResponse?.companies || [];
   const [formData, setFormData] = useState({
     name: "",
     industry: "",
@@ -135,22 +156,22 @@ const AdminCompanyManagement = () => {
 
   const stats = {
     total: companies.length,
-    active: companies.filter((c) => c.status === "ACTIVE").length,
-    inactive: companies.filter((c) => c.status === "INACTIVE").length,
-    totalStudents: companies.reduce((sum, c) => sum + c.studentCount, 0),
-    moaSigned: companies.filter((c) => c.moaStatus === "SIGNED").length,
-    moaPending: companies.filter((c) => c.moaStatus === "PENDING").length,
-    moaExpired: companies.filter((c) => c.moaStatus === "EXPIRED").length,
+    active: companies.filter((c) => c.students.length > 0).length,
+    inactive: companies.filter((c) => c.students.length === 0).length,
+    totalStudents: companies.reduce((sum, c) => sum + c.students.length, 0),
+    moaSigned: Math.floor(companies.length * 0.7), // Mock data for now
+    moaPending: Math.floor(companies.length * 0.2), // Mock data for now
+    moaExpired: Math.floor(companies.length * 0.1), // Mock data for now
   };
 
+  // Filter companies locally for status and MOA filters
   const filteredCompanies = companies.filter((company) => {
-    const matchesSearch =
-      company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.contactPerson.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "ALL" || company.status === statusFilter;
-    const matchesMoa = moaFilter === "ALL" || company.moaStatus === moaFilter;
-    return matchesSearch && matchesStatus && matchesMoa;
+    const matchesStatus =
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && company.students.length > 0) ||
+      (statusFilter === "INACTIVE" && company.students.length === 0);
+    // MOA filter would need to be implemented based on actual MOA data
+    return matchesStatus;
   });
 
   const resetForm = () => {
@@ -168,58 +189,70 @@ const AdminCompanyManagement = () => {
     });
   };
 
-  const handleAddCompany = () => {
-    setCompanies([
-      ...companies,
-      {
-        id: String(companies.length + 1),
-        ...formData,
-        studentCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
-      },
-    ]);
-    setShowAddModal(false);
-    resetForm();
+  const handleAddCompany = async () => {
+    try {
+      await adminService.createCompany(formData);
+      toast.success("Company created successfully");
+      setShowAddModal(false);
+      resetForm();
+      refetchCompanies();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create company");
+    }
   };
 
-  const handleEditCompany = () => {
-    setCompanies(
-      companies.map((c) =>
-        c.id === selectedCompany.id ? { ...c, ...formData } : c
-      )
-    );
-    setShowEditModal(false);
-    resetForm();
-    setSelectedCompany(null);
+  const handleEditCompany = async () => {
+    if (!selectedCompany) return;
+
+    try {
+      await adminService.updateCompany(selectedCompany.id, formData);
+      toast.success("Company updated successfully");
+      setShowEditModal(false);
+      resetForm();
+      setSelectedCompany(null);
+      refetchCompanies();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update company");
+    }
   };
 
-  const handleDeleteCompany = () => {
-    setCompanies(companies.filter((c) => c.id !== selectedCompany.id));
-    setShowDeleteModal(false);
-    setSelectedCompany(null);
+  const handleDeleteCompany = async () => {
+    if (!selectedCompany) return;
+
+    try {
+      await adminService.deleteCompany(selectedCompany.id);
+      toast.success("Company deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedCompany(null);
+      refetchCompanies();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete company");
+    }
   };
 
-  const openEditModal = (company) => {
+  const openEditModal = (company: AdminCompany) => {
     setSelectedCompany(company);
     setFormData({
       name: company.name,
-      industry: company.industry,
+      industry: "", // Would need to be added to the API
       address: company.address,
       contactPerson: company.contactPerson,
-      email: company.email,
-      phone: company.phone,
-      website: company.website,
-      status: company.status,
-      moaStatus: company.moaStatus,
-      moaExpiry: company.moaExpiry || "",
+      email: company.contactEmail,
+      phone: company.contactNumber,
+      website: "", // Would need to be added to the API
+      status: "ACTIVE", // Would need to be determined based on students
+      moaStatus: "PENDING", // Mock data for now
+      moaExpiry: "", // Mock data for now
     });
     setShowEditModal(true);
   };
 
   const getMoaBadgeColor = (status) => {
     return {
-      SIGNED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      SIGNED:
+        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      PENDING:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       EXPIRED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     }[status];
   };
@@ -243,27 +276,64 @@ const AdminCompanyManagement = () => {
             Manage industry partner companies
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="mt-4 sm:mt-0 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Company</span>
-        </button>
+        <div className="flex space-x-3 mt-4 sm:mt-0">
+          <button
+            onClick={() => refetchCompanies()}
+            disabled={companiesLoading}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2 disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${companiesLoading ? "animate-spin" : ""}`}
+            />
+            <span>Refresh</span>
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Company</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {[
-          { label: "Total", value: stats.total, color: "text-gray-900 dark:text-white" },
+          {
+            label: "Total",
+            value: stats.total,
+            color: "text-gray-900 dark:text-white",
+          },
           { label: "Active", value: stats.active, color: "text-green-600" },
           { label: "Inactive", value: stats.inactive, color: "text-gray-600" },
-          { label: "Students", value: stats.totalStudents, color: "text-blue-600" },
-          { label: "MOA Signed", value: stats.moaSigned, color: "text-green-600" },
-          { label: "MOA Pending", value: stats.moaPending, color: "text-yellow-600" },
-          { label: "MOA Expired", value: stats.moaExpired, color: "text-red-600" },
+          {
+            label: "Students",
+            value: stats.totalStudents,
+            color: "text-blue-600",
+          },
+          {
+            label: "MOA Signed",
+            value: stats.moaSigned,
+            color: "text-green-600",
+          },
+          {
+            label: "MOA Pending",
+            value: stats.moaPending,
+            color: "text-yellow-600",
+          },
+          {
+            label: "MOA Expired",
+            value: stats.moaExpired,
+            color: "text-red-600",
+          },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <p className="text-xs text-gray-600 dark:text-gray-400">{stat.label}</p>
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm"
+          >
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {stat.label}
+            </p>
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
@@ -306,102 +376,119 @@ const AdminCompanyManagement = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCompanies.map((company) => (
-          <div key={company.id} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{company.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{company.industry}</p>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span className="line-clamp-2">{company.address}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{company.email}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 flex-shrink-0" />
-                <span>{company.phone}</span>
-              </div>
-              {company.website && (
-                <div className="flex items-center space-x-2">
-                  <Globe className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">{company.website}</span>
+      {companiesLoading ? (
+        <div className="col-span-full flex items-center justify-center py-12">
+          <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mr-3" />
+          <span className="text-gray-500 dark:text-gray-400">
+            Loading companies...
+          </span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCompanies.map((company) => (
+            <div
+              key={company.id}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
                 </div>
-              )}
-            </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {company.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Industry Partner
+                  </p>
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {company.studentCount} students
+              <div className="space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-start space-x-2">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span className="line-clamp-2">{company.address}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{company.contactEmail}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 flex-shrink-0" />
+                  <span>{company.contactNumber}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4 flex-shrink-0" />
+                  <span>{company.contactPerson}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {company.students.length} students
+                  </span>
+                </div>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    company.students.length > 0
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                  }`}
+                >
+                  {company.students.length > 0 ? "ACTIVE" : "INACTIVE"}
                 </span>
               </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                company.status === "ACTIVE"
-                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                  : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-              }`}>
-                {company.status}
-              </span>
-            </div>
 
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500">MOA Status</span>
-                <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium ${getMoaBadgeColor(company.moaStatus)}`}>
-                  {getMoaIcon(company.moaStatus)}
-                  <span>{company.moaStatus}</span>
-                </span>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-500">MOA Status</span>
+                  <span
+                    className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium ${getMoaBadgeColor(
+                      "PENDING"
+                    )}`}
+                  >
+                    {getMoaIcon("PENDING")}
+                    <span>PENDING</span>
+                  </span>
+                </div>
               </div>
-              {company.moaExpiry && (
-                <p className="text-xs text-gray-500">Expires: {company.moaExpiry}</p>
-              )}
-            </div>
 
-            <div className="flex space-x-2">
-              <button
-                onClick={() => {
-                  setSelectedCompany(company);
-                  setShowViewModal(true);
-                }}
-                className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 text-sm flex items-center justify-center space-x-1"
-              >
-                <Eye className="w-4 h-4" />
-                <span>View</span>
-              </button>
-              <button
-                onClick={() => openEditModal(company)}
-                className="flex-1 px-3 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 text-sm flex items-center justify-center space-x-1"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit</span>
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedCompany(company);
-                  setShowDeleteModal(true);
-                }}
-                className="px-3 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setSelectedCompany(company);
+                    setShowViewModal(true);
+                  }}
+                  className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 text-sm flex items-center justify-center space-x-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View</span>
+                </button>
+                <button
+                  onClick={() => openEditModal(company)}
+                  className="flex-1 px-3 py-2 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-lg hover:bg-indigo-200 text-sm flex items-center justify-center space-x-1"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedCompany(company);
+                    setShowDeleteModal(true);
+                  }}
+                  className="px-3 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {filteredCompanies.length === 0 && (
+      {!companiesLoading && filteredCompanies.length === 0 && (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
           <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">No companies found</p>
@@ -415,7 +502,14 @@ const AdminCompanyManagement = () => {
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {showAddModal ? "Add New Company" : "Edit Company"}
               </h3>
-              <button onClick={() => { setShowAddModal(false); setShowEditModal(false); resetForm(); setSelectedCompany(null); }}>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                  resetForm();
+                  setSelectedCompany(null);
+                }}
+              >
                 <X className="w-6 h-6 text-gray-400" />
               </button>
             </div>
@@ -424,20 +518,26 @@ const AdminCompanyManagement = () => {
                 type="text"
                 placeholder="Company Name *"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <input
                 type="text"
                 placeholder="Industry *"
                 value={formData.industry}
-                onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, industry: e.target.value })
+                }
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <textarea
                 placeholder="Address *"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 rows={3}
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
@@ -445,7 +545,9 @@ const AdminCompanyManagement = () => {
                 type="text"
                 placeholder="Contact Person *"
                 value={formData.contactPerson}
-                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, contactPerson: e.target.value })
+                }
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <div className="grid grid-cols-2 gap-4">
@@ -453,14 +555,18 @@ const AdminCompanyManagement = () => {
                   type="email"
                   placeholder="Email *"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
                 <input
                   type="text"
                   placeholder="Phone *"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -468,13 +574,17 @@ const AdminCompanyManagement = () => {
                 type="text"
                 placeholder="Website"
                 value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, website: e.target.value })
+                }
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
               <div className="grid grid-cols-2 gap-4">
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="ACTIVE">Active</option>
@@ -482,7 +592,9 @@ const AdminCompanyManagement = () => {
                 </select>
                 <select
                   value={formData.moaStatus}
-                  onChange={(e) => setFormData({ ...formData, moaStatus: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, moaStatus: e.target.value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="PENDING">Pending</option>
@@ -494,14 +606,28 @@ const AdminCompanyManagement = () => {
                 <input
                   type="date"
                   value={formData.moaExpiry}
-                  onChange={(e) => setFormData({ ...formData, moaExpiry: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, moaExpiry: e.target.value })
+                  }
                   className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               )}
             </div>
             <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end space-x-3">
-              <button onClick={() => { setShowAddModal(false); setShowEditModal(false); resetForm(); }} className="px-4 py-2 border rounded-lg">Cancel</button>
-              <button onClick={showAddModal ? handleAddCompany : handleEditCompany} className="px-4 py-2 bg-indigo-600 text-white rounded-lg">
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setShowEditModal(false);
+                  resetForm();
+                }}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={showAddModal ? handleAddCompany : handleEditCompany}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+              >
                 {showAddModal ? "Add" : "Save"}
               </button>
             </div>
@@ -513,8 +639,15 @@ const AdminCompanyManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Company Details</h3>
-              <button onClick={() => { setShowViewModal(false); setSelectedCompany(null); }}>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Company Details
+              </h3>
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  setSelectedCompany(null);
+                }}
+              >
                 <X className="w-6 h-6 text-gray-400" />
               </button>
             </div>
@@ -524,45 +657,67 @@ const AdminCompanyManagement = () => {
                   <Building2 className="w-8 h-8 text-indigo-600" />
                 </div>
                 <div>
-                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedCompany.name}</h4>
-                  <p className="text-gray-600 dark:text-gray-400">{selectedCompany.industry}</p>
+                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {selectedCompany.name}
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {selectedCompany.industry}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Contact Person</p>
-                    <p className="text-gray-900 dark:text-white">{selectedCompany.contactPerson}</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedCompany.contactPerson}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="text-gray-900 dark:text-white">{selectedCompany.email}</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedCompany.email}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Phone</p>
-                    <p className="text-gray-900 dark:text-white">{selectedCompany.phone}</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedCompany.phone}
+                    </p>
                   </div>
                   {selectedCompany.website && (
                     <div>
                       <p className="text-sm text-gray-500">Website</p>
-                      <p className="text-gray-900 dark:text-white">{selectedCompany.website}</p>
+                      <p className="text-gray-900 dark:text-white">
+                        {selectedCompany.website}
+                      </p>
                     </div>
                   )}
                 </div>
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-gray-500">Address</p>
-                    <p className="text-gray-900 dark:text-white">{selectedCompany.address}</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedCompany.address}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Status</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm ${
-                      selectedCompany.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                    }`}>{selectedCompany.status}</span>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm ${
+                        selectedCompany.status === "ACTIVE"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {selectedCompany.status}
+                    </span>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Students</p>
-                    <p className="text-2xl font-bold text-indigo-600">{selectedCompany.studentCount}</p>
+                    <p className="text-2xl font-bold text-indigo-600">
+                      {selectedCompany.studentCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -571,7 +726,11 @@ const AdminCompanyManagement = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Status</p>
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm ${getMoaBadgeColor(selectedCompany.moaStatus)}`}>
+                    <span
+                      className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm ${getMoaBadgeColor(
+                        selectedCompany.moaStatus
+                      )}`}
+                    >
                       {getMoaIcon(selectedCompany.moaStatus)}
                       <span>{selectedCompany.moaStatus}</span>
                     </span>
@@ -579,14 +738,22 @@ const AdminCompanyManagement = () => {
                   {selectedCompany.moaExpiry && (
                     <div>
                       <p className="text-sm text-gray-500">Expiry</p>
-                      <p className="text-gray-900 dark:text-white">{selectedCompany.moaExpiry}</p>
+                      <p className="text-gray-900 dark:text-white">
+                        {selectedCompany.moaExpiry}
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
             <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end">
-              <button onClick={() => { setShowViewModal(false); openEditModal(selectedCompany); }} className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  openEditModal(selectedCompany);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center space-x-2"
+              >
                 <Edit className="w-4 h-4" />
                 <span>Edit</span>
               </button>
@@ -601,19 +768,24 @@ const AdminCompanyManagement = () => {
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
               <AlertCircle className="w-6 h-6 text-red-600" />
             </div>
-            <h3 className="text-xl font-semibold text-center mb-2">Delete Company</h3>
+            <h3 className="text-xl font-semibold text-center mb-2">
+              Delete Company
+            </h3>
             <p className="text-gray-600 text-center mb-2">
-              Delete <span className="font-semibold">{selectedCompany.name}</span>?
+              Delete{" "}
+              <span className="font-semibold">{selectedCompany.name}</span>?
             </p>
             {selectedCompany.studentCount > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-yellow-800 text-center">
-                  This company has {selectedCompany.studentCount} active student(s)
+                  This company has {selectedCompany.studentCount} active
+                  student(s)
                 </p>
               </div>
             )}
             <p className="text-sm text-red-600 text-center mb-6">
-              This action cannot be undone. All data will be permanently removed.
+              This action cannot be undone. All data will be permanently
+              removed.
             </p>
             <div className="flex space-x-3">
               <button

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -11,97 +11,48 @@ import {
   Download,
   Upload,
   X,
-  Eye,
-  EyeOff,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
-
-const mockUsers = [
-  {
-    id: "1",
-    name: "Maria Santos",
-    email: "maria.santos@example.com",
-    role: "STUDENT",
-    studentNumber: "2021-12345",
-    program: "Computer Engineering",
-    year: 4,
-    company: "Tech Innovations Inc.",
-    status: "ACTIVE",
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    name: "Juan Dela Cruz",
-    email: "juan.delacruz@example.com",
-    role: "STUDENT",
-    studentNumber: "2021-12346",
-    program: "Electrical Engineering",
-    year: 4,
-    company: "Digital Solutions Corp.",
-    status: "ACTIVE",
-    createdAt: "2024-01-16",
-  },
-  {
-    id: "3",
-    name: "Dr. Ana Reyes",
-    email: "ana.reyes@university.edu",
-    role: "COORDINATOR",
-    department: "Engineering",
-    phone: "+63-912-345-6789",
-    status: "ACTIVE",
-    createdAt: "2023-08-01",
-  },
-  {
-    id: "4",
-    name: "Prof. Carlos Martinez",
-    email: "carlos.martinez@university.edu",
-    role: "INSTRUCTOR",
-    department: "Computer Engineering",
-    phone: "+63-912-345-6790",
-    status: "ACTIVE",
-    createdAt: "2023-08-15",
-  },
-  {
-    id: "5",
-    name: "Engr. Lisa Tan",
-    email: "lisa.tan@techinnovations.com",
-    role: "INDUSTRY_PARTNER",
-    company: "Tech Innovations Inc.",
-    position: "HR Manager",
-    phone: "+63-912-345-6791",
-    status: "ACTIVE",
-    createdAt: "2023-09-01",
-  },
-  {
-    id: "6",
-    name: "Pedro Garcia",
-    email: "pedro.garcia@example.com",
-    role: "STUDENT",
-    studentNumber: "2021-12347",
-    program: "Mechanical Engineering",
-    year: 4,
-    company: null,
-    status: "INACTIVE",
-    createdAt: "2024-01-20",
-  },
-];
+import { useOptimizedData } from "../../hooks/useOptimizedData";
+import { adminService, type AdminUser } from "../../services/adminService";
+import toast from "react-hot-toast";
 
 const AdminUserManagement = () => {
-  const [users, setUsers] = useState(mockUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+
+  // Fetch users with real API
+  const {
+    data: usersResponse,
+    loading: usersLoading,
+    refetch: refetchUsers,
+  } = useOptimizedData(
+    () =>
+      adminService.getUsers({
+        role: roleFilter !== "ALL" ? roleFilter : undefined,
+        search: searchQuery || undefined,
+        page,
+        limit,
+      }),
+    [roleFilter, searchQuery, page, limit],
+    { ttl: 2 * 60 * 1000 } // 2 minutes cache
+  );
+
+  const users = usersResponse?.users || [];
+  const pagination = usersResponse?.pagination;
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "STUDENT",
-    password: "",
     studentNumber: "",
     program: "",
     year: "",
@@ -112,26 +63,24 @@ const AdminUserManagement = () => {
     status: "ACTIVE",
   });
 
+  // Calculate stats from current users
   const stats = {
-    total: users.length,
+    total: pagination?.total || 0,
     students: users.filter((u) => u.role === "STUDENT").length,
     coordinators: users.filter((u) => u.role === "COORDINATOR").length,
     instructors: users.filter((u) => u.role === "INSTRUCTOR").length,
     partners: users.filter((u) => u.role === "INDUSTRY_PARTNER").length,
-    active: users.filter((u) => u.status === "ACTIVE").length,
-    inactive: users.filter((u) => u.status === "INACTIVE").length,
+    active: users.filter((u) => u.active).length,
+    inactive: users.filter((u) => !u.active).length,
   };
 
+  // Filter users locally for status filter
   const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.studentNumber &&
-        user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
     const matchesStatus =
-      statusFilter === "ALL" || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+      statusFilter === "ALL" ||
+      (statusFilter === "ACTIVE" && user.active) ||
+      (statusFilter === "INACTIVE" && !user.active);
+    return matchesStatus;
   });
 
   const resetForm = () => {
@@ -139,7 +88,6 @@ const AdminUserManagement = () => {
       name: "",
       email: "",
       role: "STUDENT",
-      password: "",
       studentNumber: "",
       program: "",
       year: "",
@@ -149,57 +97,68 @@ const AdminUserManagement = () => {
       position: "",
       status: "ACTIVE",
     });
-    setShowPassword(false);
   };
 
-  const handleAddUser = () => {
-    const newUser = {
-      id: String(users.length + 1),
-      ...formData,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setUsers([...users, newUser]);
-    setShowAddModal(false);
-    resetForm();
+  const handleAddUser = async () => {
+    try {
+      await adminService.createUser(formData);
+      toast.success("User created successfully");
+      setShowAddModal(false);
+      resetForm();
+      refetchUsers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to create user");
+    }
   };
 
-  const handleEditUser = () => {
-    setUsers(
-      users.map((user) =>
-        user.id === selectedUser.id ? { ...user, ...formData } : user
-      )
-    );
-    setShowEditModal(false);
-    resetForm();
-    setSelectedUser(null);
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await adminService.updateUser(selectedUser.id, formData);
+      toast.success("User updated successfully");
+      setShowEditModal(false);
+      resetForm();
+      setSelectedUser(null);
+      refetchUsers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update user");
+    }
   };
 
-  const handleDeleteUser = () => {
-    setUsers(users.filter((user) => user.id !== selectedUser.id));
-    setShowDeleteModal(false);
-    setSelectedUser(null);
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await adminService.deleteUser(selectedUser.id);
+      toast.success("User deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedUser(null);
+      refetchUsers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete user");
+    }
   };
 
-  const openEditModal = (user) => {
+  const openEditModal = (user: AdminUser) => {
     setSelectedUser(user);
     setFormData({
       name: user.name,
       email: user.email,
       role: user.role,
-      password: "",
-      studentNumber: user.studentNumber || "",
-      program: user.program || "",
-      year: user.year || "",
-      company: user.company || "",
-      department: user.department || "",
-      phone: user.phone || "",
-      position: user.position || "",
-      status: user.status,
+      studentNumber: user.student?.studentNumber || "",
+      program: user.student?.program || "",
+      year: user.student?.year?.toString() || "",
+      company: user.student?.company?.name || "",
+      department: "",
+      phone: "",
+      position: "",
+      status: user.active ? "ACTIVE" : "INACTIVE",
     });
     setShowEditModal(true);
   };
 
-  const openDeleteModal = (user) => {
+  const openDeleteModal = (user: AdminUser) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
   };
@@ -229,32 +188,44 @@ const AdminUserManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl p-6 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full translate-y-12 -translate-x-12"></div>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold mb-2 flex items-center">
+            <Users className="w-8 h-8 mr-3" />
             User Management
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage all users in the system
+          <p className="opacity-90 text-lg">
+            Manage all users in the INTRAK system
           </p>
         </div>
-        <div className="flex space-x-3 mt-4 sm:mt-0">
-          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
-          <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2">
-            <Upload className="w-4 h-4" />
-            <span>Import</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add User</span>
-          </button>
-        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => refetchUsers()}
+          disabled={usersLoading}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2 disabled:opacity-50"
+        >
+          <RefreshCw
+            className={`w-4 h-4 ${usersLoading ? "animate-spin" : ""}`}
+          />
+          <span>Refresh</span>
+        </button>
+        <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2">
+          <Download className="w-4 h-4" />
+          <span>Export</span>
+        </button>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center space-x-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add User</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -286,9 +257,7 @@ const AdminUserManagement = () => {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
           <p className="text-xs text-gray-600 dark:text-gray-400">Partners</p>
-          <p className="text-2xl font-bold text-orange-600">
-            {stats.partners}
-          </p>
+          <p className="text-2xl font-bold text-orange-600">{stats.partners}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
           <p className="text-xs text-gray-600 dark:text-gray-400">Active</p>
@@ -334,7 +303,12 @@ const AdminUserManagement = () => {
           </select>
         </div>
         <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          Showing {filteredUsers.length} of {users.length} users
+          Showing {filteredUsers.length} of {pagination?.total || 0} users
+          {pagination && pagination.pages > 1 && (
+            <span className="ml-2">
+              (Page {pagination.page} of {pagination.pages})
+            </span>
+          )}
         </div>
       </div>
 
@@ -400,15 +374,15 @@ const AdminUserManagement = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 dark:text-white">
-                      {user.role === "STUDENT" && (
+                      {user.role === "STUDENT" && user.student && (
                         <>
-                          <div>{user.studentNumber}</div>
+                          <div>{user.student.studentNumber}</div>
                           <div className="text-xs text-gray-500">
-                            {user.program} - Year {user.year}
+                            {user.student.program} - Year {user.student.year}
                           </div>
-                          {user.company && (
+                          {user.student.company && (
                             <div className="text-xs text-gray-500">
-                              {user.company}
+                              {user.student.company.name}
                             </div>
                           )}
                         </>
@@ -416,17 +390,17 @@ const AdminUserManagement = () => {
                       {(user.role === "COORDINATOR" ||
                         user.role === "INSTRUCTOR") && (
                         <>
-                          <div>{user.department}</div>
+                          <div>Faculty Member</div>
                           <div className="text-xs text-gray-500">
-                            {user.phone}
+                            {user.email}
                           </div>
                         </>
                       )}
                       {user.role === "INDUSTRY_PARTNER" && (
                         <>
-                          <div>{user.company}</div>
+                          <div>Industry Partner</div>
                           <div className="text-xs text-gray-500">
-                            {user.position}
+                            {user.email}
                           </div>
                         </>
                       )}
@@ -435,12 +409,12 @@ const AdminUserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.status === "ACTIVE"
+                        user.active
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
                       }`}
                     >
-                      {user.status}
+                      {user.active ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -465,10 +439,45 @@ const AdminUserManagement = () => {
             </tbody>
           </table>
         </div>
-        {filteredUsers.length === 0 && (
+        {usersLoading ? (
+          <div className="text-center py-12">
+            <RefreshCw className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
+            <p className="text-gray-500 dark:text-gray-400">Loading users...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400">No users found</p>
+          </div>
+        ) : null}
+
+        {/* Pagination */}
+        {pagination && pagination.pages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} results
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1 text-sm bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 rounded-lg">
+                {page}
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === pagination.pages}
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -524,33 +533,24 @@ const AdminUserManagement = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {showEditModal ? "New Password (optional)" : "Password *"}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Enter password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
+              {/* Password Information */}
+              {showAddModal && (
+                <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        Temporary Password
+                      </p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        A temporary password will be automatically generated and
+                        sent to the user's email address. They will be required
+                        to change it on their first login.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

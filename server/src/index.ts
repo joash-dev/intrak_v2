@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
-import { rateLimiter } from './middleware/rateLimiter';
+import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 
 // Routes
@@ -79,6 +79,9 @@ app.use(cookieParser());
 
 // Rate limiting for auth routes
 app.use('/api/auth', rateLimiter);
+
+// More specific rate limiting for login endpoint
+app.use('/api/auth/login', loginRateLimiter);
 
 // Static files (uploaded documents) with CORS headers
 app.use('/uploads', (req, res, next) => {

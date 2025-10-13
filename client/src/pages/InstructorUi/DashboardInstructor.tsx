@@ -25,7 +25,6 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import DebouncedSearch from "../../components/DebouncedSearch";
 import InstructorDocumentsTab from "./InstructorDocuments";
 import InstructorMonitoringTab from "./InstructorStudent";
 import InstructorEvaluationsTab from "./InstructorEvaluation";
@@ -36,22 +35,25 @@ import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import InstructorSettings from "./InstructorSettings";
 import {
   instructorService,
-  type InstructorStats,
   type InstructorStudent,
-  type InstructorActivity,
-  type InstructorAlert,
 } from "../../services/instructorService";
+import { type Announcement } from "../../services/announcementService";
 import { settingsService } from "../../services/settingsService";
-import toast from "react-hot-toast";
 
 // =============================================
 // INSTRUCTOR DASHBOARD COMPONENT
 // =============================================
 interface InstructorDashboardProps {
   setActiveTab: (tab: string) => void;
+  announcements?: Announcement[];
+  onTrackAnnouncementView?: (id: string) => void;
 }
 
-const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
+const InstructorDashboard = ({
+  setActiveTab,
+  announcements = [],
+  onTrackAnnouncementView,
+}: InstructorDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] =
@@ -59,128 +61,47 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
   const [showStudentModal, setShowStudentModal] = useState(false);
 
   // Optimized data fetching with caching
-  const { data: students = [], loading: studentsLoading } = useOptimizedData(
+  const { data: studentsData, loading: studentsLoading } = useOptimizedData(
     () => instructorService.getAssignedStudents(),
     [],
     { ttl: 3 * 60 * 1000 } // 3 minutes cache
   );
 
-  const {
-    data: stats = {
-      totalStudents: 0,
-      activeStudents: 0,
-      atRiskStudents: 0,
-      completedStudents: 0,
-      avgAttendance: 0,
-      avgRating: 0,
-      documentsPending: 0,
-      evaluationsPending: 0,
-    },
-    loading: statsLoading,
-  } = useOptimizedData(
+  const { data: statsData, loading: statsLoading } = useOptimizedData(
     () => instructorService.getDashboardStats(),
     [],
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
   );
 
-  const { data: activities = [], loading: activitiesLoading } =
-    useOptimizedData(
-      () => instructorService.getRecentActivities(),
-      [],
-      { ttl: 2 * 60 * 1000 } // 2 minutes cache
-    );
+  const { data: activitiesData, loading: activitiesLoading } = useOptimizedData(
+    () => instructorService.getRecentActivities(),
+    [],
+    { ttl: 2 * 60 * 1000 } // 2 minutes cache
+  );
 
-  const { data: alerts = [], loading: alertsLoading } = useOptimizedData(
+  const { data: alertsData, loading: alertsLoading } = useOptimizedData(
     () => instructorService.getAlerts(),
     [],
     { ttl: 1 * 60 * 1000 } // 1 minute cache
   );
 
+  // Provide safe defaults
+  const students = studentsData || [];
+  const stats = statsData || {
+    totalStudents: 0,
+    activeStudents: 0,
+    atRiskStudents: 0,
+    completedStudents: 0,
+    avgAttendance: 0,
+    avgRating: 0,
+    documentsPending: 0,
+    evaluationsPending: 0,
+  };
+  const activities = activitiesData || [];
+  const alerts = alertsData || [];
+
   const loading =
     studentsLoading || statsLoading || activitiesLoading || alertsLoading;
-
-  // Optimized search handler
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch all data in parallel
-      const [
-        studentsData,
-        statsData,
-        activitiesData,
-        alertsData,
-        attendanceData,
-      ] = await Promise.allSettled([
-        instructorService.getAssignedStudents(),
-        instructorService.getDashboardStats(),
-        instructorService.getRecentActivities(),
-        instructorService.getAlerts(),
-        instructorService.getStudentAttendance(),
-      ]);
-
-      // Update states with fetched data or defaults
-      const students =
-        studentsData.status === "fulfilled" ? studentsData.value : [];
-      setStudents(students);
-
-      // Calculate real attendance statistics using consistent logic
-      let avgAttendance = 0;
-      if (
-        students &&
-        students.length > 0 &&
-        attendanceData.status === "fulfilled"
-      ) {
-        // Get attendance stats for each student using the same calculation logic
-        const studentAttendanceRates = await Promise.all(
-          students.map(async (student) => {
-            const stats = await instructorService.getStudentAttendanceStats(
-              student.id
-            );
-            return stats.attendanceRate;
-          })
-        );
-
-        // Calculate average attendance rate
-        avgAttendance = Math.round(
-          studentAttendanceRates.reduce((sum, rate) => sum + rate, 0) /
-            studentAttendanceRates.length
-        );
-      }
-
-      // Update stats with real attendance data
-      const updatedStats =
-        statsData.status === "fulfilled" ? statsData.value : stats;
-      setStats({
-        ...updatedStats,
-        avgAttendance,
-      });
-
-      setActivities(
-        activitiesData.status === "fulfilled" ? activitiesData.value : []
-      );
-      setAlerts(alertsData.status === "fulfilled" ? alertsData.value : []);
-
-      console.log("Instructor dashboard data loaded:", {
-        students: students ? students.length : 0,
-        avgAttendance,
-        activities:
-          activitiesData.status === "fulfilled"
-            ? activitiesData.value.length
-            : 0,
-        alerts: alertsData.status === "fulfilled" ? alertsData.value.length : 0,
-      });
-    } catch (error) {
-      console.error("Error loading instructor dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -466,6 +387,69 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Recent Announcements */}
+      {announcements.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            <Bell className="w-5 h-5 mr-2 text-orange-600" />
+            Recent Announcements
+          </h3>
+          <div className="space-y-3">
+            {announcements.slice(0, 3).map((announcement) => (
+              <div
+                key={announcement.id}
+                className="p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded-r-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors cursor-pointer"
+                onClick={() => {
+                  // Track view when announcement is clicked
+                  if (onTrackAnnouncementView) {
+                    onTrackAnnouncementView(announcement.id);
+                  }
+                }}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {announcement.title}
+                      </p>
+                      {announcement.type === "urgent" && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs font-medium rounded-full">
+                          URGENT
+                        </span>
+                      )}
+                      {announcement.type === "warning" && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-xs font-medium rounded-full">
+                          WARNING
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {announcement.content}
+                    </p>
+                    {announcement.createdBy && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        By {announcement.createdBy.name} (
+                        {announcement.createdBy.role})
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
+                    {new Date(announcement.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {announcements.length > 3 && (
+            <div className="mt-4 text-center">
+              <button className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium">
+                View All Announcements ({announcements.length})
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1185,6 +1169,26 @@ const InstructorPortal = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Fetch announcements for the entire portal
+  const { data: announcements } = useOptimizedData(
+    () => instructorService.getAnnouncements(),
+    [],
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  );
+
+  // Ensure announcements is always an array
+  const safeAnnouncements = announcements || [];
+
+  // Handle announcement view tracking
+  const handleTrackAnnouncementView = async (announcementId: string) => {
+    try {
+      await instructorService.trackAnnouncementView(announcementId);
+    } catch (error) {
+      console.warn("Failed to track announcement view:", error);
+    }
+  };
 
   // Prevent back button after logout
   useEffect(() => {
@@ -1267,14 +1271,17 @@ const InstructorPortal = () => {
     };
   }, [isAuthenticated]);
 
-  // Close user menu when clicking outside
+  // Close user menu and notifications when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showUserMenu) {
-        const target = event.target as Element;
-        if (!target.closest(".user-menu-dropdown")) {
-          setShowUserMenu(false);
-        }
+      const target = event.target as Element;
+
+      if (showUserMenu && !target.closest(".user-menu-dropdown")) {
+        setShowUserMenu(false);
+      }
+
+      if (showNotifications && !target.closest(".notifications-dropdown")) {
+        setShowNotifications(false);
       }
     };
 
@@ -1282,7 +1289,7 @@ const InstructorPortal = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showUserMenu]);
+  }, [showUserMenu, showNotifications]);
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -1312,7 +1319,13 @@ const InstructorPortal = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <InstructorDashboard setActiveTab={setActiveTab} />;
+        return (
+          <InstructorDashboard
+            setActiveTab={setActiveTab}
+            announcements={safeAnnouncements}
+            onTrackAnnouncementView={handleTrackAnnouncementView}
+          />
+        );
       case "documents":
         return <InstructorDocumentsTab />;
       case "templates":
@@ -1363,10 +1376,86 @@ const InstructorPortal = () => {
 
             {/* Right: Notifications + User */}
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative notifications-dropdown">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Bell className="w-5 h-5" />
+                  {safeAnnouncements.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Notifications
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {safeAnnouncements.length} new announcements
+                      </p>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {safeAnnouncements.length > 0 ? (
+                        safeAnnouncements.slice(0, 5).map((announcement) => (
+                          <div
+                            key={announcement.id}
+                            className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                            onClick={() => {
+                              handleTrackAnnouncementView(announcement.id);
+                              setShowNotifications(false);
+                            }}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0">
+                                <div
+                                  className={`w-2 h-2 rounded-full mt-2 ${
+                                    announcement.type === "urgent"
+                                      ? "bg-red-500"
+                                      : announcement.type === "warning"
+                                      ? "bg-yellow-500"
+                                      : "bg-blue-500"
+                                  }`}
+                                ></div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {announcement.title}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                  {announcement.content}
+                                </p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                  {new Date(
+                                    announcement.createdAt
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            No notifications
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {safeAnnouncements.length > 5 && (
+                      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                        <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium w-full text-left">
+                          View all notifications
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* User Avatar Dropdown */}
               <div className="relative user-menu-dropdown">
