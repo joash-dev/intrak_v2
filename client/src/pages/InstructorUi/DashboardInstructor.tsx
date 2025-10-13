@@ -1248,6 +1248,23 @@ const InstructorPortal = () => {
     if (isAuthenticated) {
       loadProfilePhoto();
     }
+
+    // Listen for profile photo updates from settings
+    const handleProfilePhotoUpdate = (event: CustomEvent) => {
+      setProfilePhoto(event.detail.photoUrl);
+    };
+
+    window.addEventListener(
+      "profilePhotoUpdated",
+      handleProfilePhotoUpdate as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        "profilePhotoUpdated",
+        handleProfilePhotoUpdate as EventListener
+      );
+    };
   }, [isAuthenticated]);
 
   // Close user menu when clicking outside

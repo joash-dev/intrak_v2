@@ -135,8 +135,50 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     try {
       setSaving(true);
       setErrors({});
-      // Update profile logic here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+
+      // Validate required fields
+      if (!profile.name.trim()) {
+        setErrors({ name: "Full name is required" });
+        return;
+      }
+
+      if (!profile.email.trim()) {
+        setErrors({ email: "Email is required" });
+        return;
+      }
+
+      if (!settingsService.validateEmail(profile.email)) {
+        setErrors({ email: "Please enter a valid email address" });
+        return;
+      }
+
+      if (profile.phone && !settingsService.validatePhone(profile.phone)) {
+        setErrors({ phone: "Please enter a valid phone number" });
+        return;
+      }
+
+      // Update profile using the settings service
+      const updatedProfile = await settingsService.updateProfile({
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+      });
+
+      // Update local state
+      setProfile({ ...profile, ...updatedProfile });
+
+      // Store updated profile in localStorage for immediate access
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...currentUser,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+        })
+      );
+
       setSaveSuccess(true);
       toast.success("Profile updated successfully");
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -191,10 +233,23 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
     try {
       setSaving(true);
       const photoUrl = await settingsService.uploadProfilePhoto(file);
       setProfilePhoto(photoUrl);
+
+      // Dispatch custom event to notify other components of profile photo change
+      window.dispatchEvent(
+        new CustomEvent("profilePhotoUpdated", {
+          detail: { photoUrl },
+        })
+      );
+
       toast.success("Profile photo updated successfully");
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -209,6 +264,14 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
       setSaving(true);
       await settingsService.removeProfilePhoto();
       setProfilePhoto(null);
+
+      // Dispatch custom event to notify other components of profile photo removal
+      window.dispatchEvent(
+        new CustomEvent("profilePhotoUpdated", {
+          detail: { photoUrl: null },
+        })
+      );
+
       toast.success("Profile photo removed successfully");
     } catch (error) {
       console.error("Error removing photo:", error);
@@ -375,11 +438,23 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                         <input
                           type="text"
                           value={profile.name}
-                          onChange={(e) =>
-                            setProfile({ ...profile, name: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          onChange={(e) => {
+                            setProfile({ ...profile, name: e.target.value });
+                            if (errors.name) {
+                              setErrors({ ...errors, name: "" });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                            errors.name
+                              ? "border-red-500"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}
                         />
+                        {errors.name && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.name}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -389,11 +464,23 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                         <input
                           type="email"
                           value={profile.email}
-                          onChange={(e) =>
-                            setProfile({ ...profile, email: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          onChange={(e) => {
+                            setProfile({ ...profile, email: e.target.value });
+                            if (errors.email) {
+                              setErrors({ ...errors, email: "" });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                            errors.email
+                              ? "border-red-500"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}
                         />
+                        {errors.email && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.email}
+                          </p>
+                        )}
                       </div>
 
                       <div>
@@ -403,11 +490,23 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                         <input
                           type="tel"
                           value={profile.phone}
-                          onChange={(e) =>
-                            setProfile({ ...profile, phone: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          onChange={(e) => {
+                            setProfile({ ...profile, phone: e.target.value });
+                            if (errors.phone) {
+                              setErrors({ ...errors, phone: "" });
+                            }
+                          }}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                            errors.phone
+                              ? "border-red-500"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}
                         />
+                        {errors.phone && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.phone}
+                          </p>
+                        )}
                       </div>
 
                       <div>
