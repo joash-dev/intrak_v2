@@ -267,7 +267,7 @@ const CoordinatorReportsTab: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-purple-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -283,7 +283,7 @@ const CoordinatorReportsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -299,7 +299,7 @@ const CoordinatorReportsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -315,7 +315,7 @@ const CoordinatorReportsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-orange-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-orange-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -333,7 +333,7 @@ const CoordinatorReportsTab: React.FC = () => {
       </div>
 
       {/* Quick Actions Banner */}
-      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold mb-2">Generate Custom Report</h3>
@@ -345,7 +345,7 @@ const CoordinatorReportsTab: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -354,13 +354,13 @@ const CoordinatorReportsTab: React.FC = () => {
               placeholder="Search report templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Categories</option>
             <option value="attendance">Attendance</option>
@@ -380,7 +380,7 @@ const CoordinatorReportsTab: React.FC = () => {
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border-l-4 ${getBorderColor(
+              className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getBorderColor(
                 template.color
               )} transition-all hover:shadow-md cursor-pointer`}
               onClick={() => handleGenerateReport(template)}
@@ -388,7 +388,7 @@ const CoordinatorReportsTab: React.FC = () => {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div
-                    className={`p-3 rounded-lg ${getColorClasses(
+                    className={`p-3 rounded-xl ${getColorClasses(
                       template.color
                     )}`}
                   >
@@ -409,7 +409,7 @@ const CoordinatorReportsTab: React.FC = () => {
                     {template.formats.map((format) => (
                       <span
                         key={format}
-                        className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded"
+                        className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
                       >
                         {format.toUpperCase()}
                       </span>
@@ -430,7 +430,7 @@ const CoordinatorReportsTab: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           Recently Generated
         </h2>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">
@@ -485,19 +485,19 @@ const CoordinatorReportsTab: React.FC = () => {
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleDownload(report)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
                           title="Download"
                         >
                           <Download className="w-4 h-4" />
                         </button>
                         <button
-                          className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                          className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                           title="Preview"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                          className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                           title="Print"
                         >
                           <Printer className="w-4 h-4" />
@@ -515,7 +515,7 @@ const CoordinatorReportsTab: React.FC = () => {
       {/* Generate Report Modal */}
       {showGenerateModal && selectedTemplate && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Generate Report
@@ -530,7 +530,7 @@ const CoordinatorReportsTab: React.FC = () => {
 
             {/* Template Info */}
             <div
-              className={`p-4 rounded-lg ${getColorClasses(
+              className={`p-4 rounded-xl ${getColorClasses(
                 selectedTemplate.color
               )} mb-6`}
             >
@@ -561,7 +561,7 @@ const CoordinatorReportsTab: React.FC = () => {
                         startDate: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
                 <div>
@@ -577,7 +577,7 @@ const CoordinatorReportsTab: React.FC = () => {
                         endDate: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
               </div>
@@ -642,14 +642,14 @@ const CoordinatorReportsTab: React.FC = () => {
               <button
                 onClick={() => setShowGenerateModal(false)}
                 disabled={generating}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors font-medium disabled:opacity-50"
+                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-xl transition-colors font-medium disabled:opacity-50"
               >
                 {generating ? (
                   <>

@@ -24,6 +24,8 @@ import {
   Upload,
   ClipboardList,
 } from "lucide-react";
+import { useOptimizedData } from "../../hooks/useOptimizedData";
+import DebouncedSearch from "../../components/DebouncedSearch";
 import InstructorDocumentsTab from "./InstructorDocuments";
 import InstructorMonitoringTab from "./InstructorStudent";
 import InstructorEvaluationsTab from "./InstructorEvaluation";
@@ -52,28 +54,55 @@ interface InstructorDashboardProps {
 const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] =
     useState<InstructorStudent | null>(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
-  const [stats, setStats] = useState<InstructorStats>({
-    totalStudents: 0,
-    activeStudents: 0,
-    atRiskStudents: 0,
-    completedStudents: 0,
-    avgAttendance: 0,
-    avgRating: 0,
-    documentsPending: 0,
-    evaluationsPending: 0,
-  });
-  const [students, setStudents] = useState<InstructorStudent[]>([]);
-  const [activities, setActivities] = useState<InstructorActivity[]>([]);
-  const [alerts, setAlerts] = useState<InstructorAlert[]>([]);
 
-  // Load data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  // Optimized data fetching with caching
+  const { data: students = [], loading: studentsLoading } = useOptimizedData(
+    () => instructorService.getAssignedStudents(),
+    [],
+    { ttl: 3 * 60 * 1000 } // 3 minutes cache
+  );
+
+  const {
+    data: stats = {
+      totalStudents: 0,
+      activeStudents: 0,
+      atRiskStudents: 0,
+      completedStudents: 0,
+      avgAttendance: 0,
+      avgRating: 0,
+      documentsPending: 0,
+      evaluationsPending: 0,
+    },
+    loading: statsLoading,
+  } = useOptimizedData(
+    () => instructorService.getDashboardStats(),
+    [],
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  );
+
+  const { data: activities = [], loading: activitiesLoading } =
+    useOptimizedData(
+      () => instructorService.getRecentActivities(),
+      [],
+      { ttl: 2 * 60 * 1000 } // 2 minutes cache
+    );
+
+  const { data: alerts = [], loading: alertsLoading } = useOptimizedData(
+    () => instructorService.getAlerts(),
+    [],
+    { ttl: 1 * 60 * 1000 } // 1 minute cache
+  );
+
+  const loading =
+    studentsLoading || statsLoading || activitiesLoading || alertsLoading;
+
+  // Optimized search handler
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -101,7 +130,11 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
 
       // Calculate real attendance statistics using consistent logic
       let avgAttendance = 0;
-      if (students.length > 0 && attendanceData.status === "fulfilled") {
+      if (
+        students &&
+        students.length > 0 &&
+        attendanceData.status === "fulfilled"
+      ) {
         // Get attendance stats for each student using the same calculation logic
         const studentAttendanceRates = await Promise.all(
           students.map(async (student) => {
@@ -133,7 +166,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
       setAlerts(alertsData.status === "fulfilled" ? alertsData.value : []);
 
       console.log("Instructor dashboard data loaded:", {
-        students: students.length,
+        students: students ? students.length : 0,
         avgAttendance,
         activities:
           activitiesData.status === "fulfilled"
@@ -195,7 +228,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
     }
   };
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = (students || []).filter((student) => {
     const matchesSearch =
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -788,7 +821,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                 onClick={() => {
                   // Generate report functionality
                   const reportData = {
-                    students: students.length,
+                    students: students ? students.length : 0,
                     activeStudents: stats.activeStudents,
                     avgAttendance: stats.avgAttendance,
                     avgRating: stats.avgRating,

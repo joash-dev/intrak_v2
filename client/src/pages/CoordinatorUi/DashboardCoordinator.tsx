@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Users,
   FileCheck,
@@ -25,19 +25,13 @@ import {
   FileSpreadsheet,
   Loader2,
 } from "lucide-react";
+import { useOptimizedData } from "../../hooks/useOptimizedData";
 
 import CoordinatorDocumentsTab from "./CoordinatorDocumentsTab";
 import CoordinatorReportsTab from "./CoordinatorReportsTab";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
-import {
-  coordinatorService,
-  type CoordinatorStats,
-  type CoordinatorStudent,
-  type CoordinatorActivity,
-  type CoordinatorAlert,
-} from "../../services/coordinatorService";
-import toast from "react-hot-toast";
+import { coordinatorService } from "../../services/coordinatorService";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -71,73 +65,48 @@ const CoordinatorDashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<CoordinatorStats>({
-    totalStudents: 0,
-    activeInterns: 0,
-    pendingApprovals: 0,
-    completedInternships: 0,
-    attendanceRate: 0,
-    documentsPending: 0,
-    tasksCompleted: 0,
-    averageRating: 0,
-    trends: { students: 0, attendance: 0, documents: 0, ratings: 0 },
-  });
 
-  const [students, setStudents] = useState<CoordinatorStudent[]>([]);
-  const [activities, setActivities] = useState<CoordinatorActivity[]>([]);
-  const [alerts, setAlerts] = useState<CoordinatorAlert[]>([]);
+  // Optimized data fetching with caching
+  const { data: students = [], loading: studentsLoading } = useOptimizedData(
+    () => coordinatorService.getAllStudents(),
+    [],
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  );
 
-  // Load data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  const {
+    data: stats = {
+      totalStudents: 0,
+      activeInterns: 0,
+      pendingApprovals: 0,
+      completedInternships: 0,
+      attendanceRate: 0,
+      documentsPending: 0,
+      tasksCompleted: 0,
+      averageRating: 0,
+      trends: { students: 0, attendance: 0, documents: 0, ratings: 0 },
+    },
+    loading: statsLoading,
+  } = useOptimizedData(
+    () => coordinatorService.getDashboardStats(),
+    [],
+    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+  );
 
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
+  const { data: activities = [], loading: activitiesLoading } =
+    useOptimizedData(
+      () => coordinatorService.getRecentActivities(),
+      [],
+      { ttl: 2 * 60 * 1000 } // 2 minutes cache
+    );
 
-      // Fetch all data in parallel
-      const [studentsData, statsData, activitiesData, alertsData] =
-        await Promise.allSettled([
-          coordinatorService.getAllStudents(),
-          coordinatorService.getDashboardStats(),
-          coordinatorService.getRecentActivities(),
-          coordinatorService.getAlerts(),
-        ]);
+  const { data: alerts = [], loading: alertsLoading } = useOptimizedData(
+    () => coordinatorService.getAlerts(),
+    [],
+    { ttl: 1 * 60 * 1000 } // 1 minute cache
+  );
 
-      // Set students data
-      if (studentsData.status === "fulfilled") {
-        setStudents(studentsData.value);
-      }
-
-      // Set stats data
-      if (statsData.status === "fulfilled") {
-        setStats(statsData.value);
-      } else if (studentsData.status === "fulfilled") {
-        // Calculate stats from students if API fails
-        const calculatedStats = coordinatorService.calculateStatsFromStudents(
-          studentsData.value
-        );
-        setStats(calculatedStats);
-      }
-
-      // Set activities data
-      if (activitiesData.status === "fulfilled") {
-        setActivities(activitiesData.value);
-      }
-
-      // Set alerts data
-      if (alertsData.status === "fulfilled") {
-        setAlerts(alertsData.value);
-      }
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading =
+    studentsLoading || statsLoading || activitiesLoading || alertsLoading;
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -211,7 +180,7 @@ const CoordinatorDashboard: React.FC = () => {
     );
   };
 
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = (students || []).filter((student) => {
     const matchesSearch =
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,85 +230,85 @@ const CoordinatorDashboard: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <Users className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
             </div>
-            {getTrendIcon(stats.trends.students)}
+            {getTrendIcon(stats?.trends?.students || 0)}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Total Students
           </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.totalStudents}
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            {stats?.totalStudents || 0}
           </p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500">
             <span className="text-green-600 font-medium">
-              +{stats.trends.students}
+              +{stats?.trends?.students || 0}
             </span>{" "}
             from last month
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-              <UserCheck className="w-6 h-6 text-green-600 dark:text-green-300" />
+            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+              <UserCheck className="w-6 h-6 text-white" />
             </div>
-            {getTrendIcon(stats.trends.attendance)}
+            {getTrendIcon(stats?.trends?.attendance || 0)}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Active Interns
           </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.activeInterns}
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            {stats?.activeInterns || 0}
           </p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500">
             Attendance:{" "}
             <span className="text-green-600 font-medium">
-              {stats.attendanceRate}%
+              {stats?.attendanceRate || 0}%
             </span>
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <FileCheck className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+            <div className="w-12 h-12 bg-yellow-600 rounded-xl flex items-center justify-center">
+              <FileCheck className="w-6 h-6 text-white" />
             </div>
-            {getTrendIcon(stats.trends.documents)}
+            {getTrendIcon(stats?.trends?.documents || 0)}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Pending Approvals
           </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.pendingApprovals}
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            {stats?.pendingApprovals || 0}
           </p>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.documentsPending} documents need review
+          <p className="text-xs text-gray-500">
+            {stats?.documentsPending || 0} documents need review
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Award className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+              <Award className="w-6 h-6 text-white" />
             </div>
-            {getTrendIcon(stats.trends.ratings)}
+            {getTrendIcon(stats?.trends?.ratings || 0)}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             Average Rating
           </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-            {stats.averageRating}
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            {stats?.averageRating || 0}
           </p>
-          <p className="text-xs text-gray-500 mt-2">Out of 5.0 stars</p>
+          <p className="text-xs text-gray-500">Out of 5.0 stars</p>
         </div>
       </div>
 
       {/* Alerts */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
             <Bell className="w-5 h-5 mr-2 text-purple-600" />
@@ -350,10 +319,10 @@ const CoordinatorDashboard: React.FC = () => {
           </button>
         </div>
         <div className="space-y-3">
-          {alerts.map((alert) => (
+          {(alerts || []).map((alert) => (
             <div
               key={alert.id}
-              className={`border-l-4 rounded-lg p-4 ${getAlertColor(
+              className={`border-l-4 rounded-xl p-4 ${getAlertColor(
                 alert.type
               )}`}
             >
@@ -378,20 +347,20 @@ const CoordinatorDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activities */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <Activity className="w-5 h-5 mr-2 text-purple-600" />
             Recent Activities
           </h2>
           <div className="space-y-3">
-            {activities.map((activity) => (
+            {(activities || []).map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl"
               >
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`p-2 rounded-lg ${getActivityColor(
+                    className={`p-2 rounded-xl ${getActivityColor(
                       activity.status
                     )}`}
                   >
@@ -424,7 +393,7 @@ const CoordinatorDashboard: React.FC = () => {
         </div>
 
         {/* Performance Overview */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
             Performance Overview
@@ -436,13 +405,13 @@ const CoordinatorDashboard: React.FC = () => {
                   Attendance Rate
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {stats.attendanceRate}%
+                  {stats?.attendanceRate || 0}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                 <div
                   className="bg-green-500 h-3 rounded-full"
-                  style={{ width: `${stats.attendanceRate}%` }}
+                  style={{ width: `${stats?.attendanceRate || 0}%` }}
                 />
               </div>
             </div>
@@ -452,13 +421,13 @@ const CoordinatorDashboard: React.FC = () => {
                   Tasks Completed
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {stats.tasksCompleted}%
+                  {stats?.tasksCompleted || 0}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                 <div
                   className="bg-blue-500 h-3 rounded-full"
-                  style={{ width: `${stats.tasksCompleted}%` }}
+                  style={{ width: `${stats?.tasksCompleted || 0}%` }}
                 />
               </div>
             </div>
@@ -469,8 +438,9 @@ const CoordinatorDashboard: React.FC = () => {
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
                   {(
-                    ((stats.totalStudents - stats.documentsPending) /
-                      stats.totalStudents) *
+                    (((stats?.totalStudents || 0) -
+                      (stats?.documentsPending || 0)) /
+                      (stats?.totalStudents || 1)) *
                     100
                   ).toFixed(0)}
                   %
@@ -481,8 +451,9 @@ const CoordinatorDashboard: React.FC = () => {
                   className="bg-yellow-500 h-3 rounded-full"
                   style={{
                     width: `${
-                      ((stats.totalStudents - stats.documentsPending) /
-                        stats.totalStudents) *
+                      (((stats?.totalStudents || 0) -
+                        (stats?.documentsPending || 0)) /
+                        (stats?.totalStudents || 1)) *
                       100
                     }%`,
                   }}
@@ -495,13 +466,13 @@ const CoordinatorDashboard: React.FC = () => {
                   Average Rating
                 </span>
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {((stats.averageRating / 5) * 100).toFixed(0)}%
+                  {((stats?.averageRating || 0 / 5) * 100).toFixed(0)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                 <div
                   className="bg-purple-500 h-3 rounded-full"
-                  style={{ width: `${(stats.averageRating / 5) * 100}%` }}
+                  style={{ width: `${(stats?.averageRating || 0 / 5) * 100}%` }}
                 />
               </div>
             </div>
@@ -510,7 +481,7 @@ const CoordinatorDashboard: React.FC = () => {
       </div>
 
       {/* Students List */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Student Management
@@ -523,13 +494,13 @@ const CoordinatorDashboard: React.FC = () => {
                 placeholder="Search students..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
               />
             </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -652,6 +623,7 @@ const CoordinatorPortal: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Prevent back button after logout
   React.useEffect(() => {
@@ -682,6 +654,23 @@ const CoordinatorPortal: React.FC = () => {
     sessionStorage.setItem("isAuthenticated", "true");
     checkAuth();
   }, []);
+
+  // Close user menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showUserMenu) {
+        const target = event.target as Element;
+        if (!target.closest(".user-menu-dropdown")) {
+          setShowUserMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
@@ -728,15 +717,121 @@ const CoordinatorPortal: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Top Navigation Bar */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Left: Hamburger + Logo */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div className="hidden sm:block">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    OJT Portal
+                  </h2>
+                  <p className="text-xs text-gray-500">Coordinator</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Notifications + User */}
+            <div className="flex items-center space-x-4">
+              <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+
+              {/* User Avatar Dropdown */}
+              <div className="relative user-menu-dropdown">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-3 pl-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">DC</span>
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Dr. Cruz
+                    </p>
+                    <p className="text-xs text-gray-500">Coordinator</p>
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center">
+                          <span className="text-white font-semibold">DC</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            Dr. Cruz
+                          </p>
+                          <p className="text-sm text-gray-500">Coordinator</p>
+                          <p className="text-xs text-gray-400">
+                            dr.cruz@university.edu
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          setActiveTab("settings");
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </button>
+                      <button
+                        onClick={() => setShowLogoutModal(true)}
+                        className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Sidebar Overlay - Only show on mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Menu */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:static`}
+        } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -746,19 +841,20 @@ const CoordinatorPortal: React.FC = () => {
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                   OJT Portal
                 </h2>
-                <p className="text-xs text-gray-500">Coordinator</p>
+                <p className="text-xs text-gray-500">Coordinator Dashboard</p>
               </div>
             </div>
+            {/* Only show close button on mobile */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {/* Navigation Links */}
+          <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -766,86 +862,32 @@ const CoordinatorPortal: React.FC = () => {
                   key={item.id}
                   onClick={() => {
                     setActiveTab(item.id);
+                    // Only close sidebar on mobile
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
                     activeTab === item.id
-                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-left">{item.label}</span>
                 </button>
               );
             })}
           </nav>
-
-          {/* User Profile */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
-                DC
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Dr. Cruz
-                </p>
-                <p className="text-xs text-gray-500">Coordinator</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveTab("settings")}
-              className="w-full flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="text-sm">Settings</span>
-            </button>
-            <button
-              className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors mt-2"
-              onClick={() => setShowLogoutModal(true)}
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
-            </button>
-          </div>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <div className="flex items-center space-x-4 ml-auto">
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                DC
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">{renderContent()}</main>
-      </div>
-
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Content Area */}
+      <main
+        className={`p-6 transition-all duration-300 ${
+          sidebarOpen ? "lg:ml-72" : "ml-0"
+        }`}
+      >
+        {renderContent()}
+      </main>
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (

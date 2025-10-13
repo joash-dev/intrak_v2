@@ -13,21 +13,108 @@ import {
   Mail,
   ArrowRight,
   Loader2,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import api from "../../services/api";
+
+interface FieldErrors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false });
   const navigate = useNavigate();
+
+  // Validation functions
+  const validateEmail = (email: string): string | null => {
+    if (!email.trim()) {
+      return "Email is required";
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return null;
+  };
+
+  const validatePassword = (password: string): string | null => {
+    if (!password.trim()) {
+      return "Password is required";
+    }
+    if (password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    return null;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FieldErrors = {};
+
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
+
+    if (emailError) newErrors.email = emailError;
+    if (passwordError) newErrors.password = passwordError;
+
+    setErrors(newErrors);
+    setTouched({ email: true, password: true });
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+
+    if (touched.email) {
+      const error = validateEmail(value);
+      setErrors((prev) => ({ ...prev, email: error || undefined }));
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPassword(value);
+
+    if (touched.password) {
+      const error = validatePassword(value);
+      setErrors((prev) => ({ ...prev, password: error || undefined }));
+    }
+  };
+
+  const handleEmailBlur = () => {
+    setTouched((prev) => ({ ...prev, email: true }));
+    const error = validateEmail(email);
+    setErrors((prev) => ({ ...prev, email: error || undefined }));
+  };
+
+  const handlePasswordBlur = () => {
+    setTouched((prev) => ({ ...prev, password: true }));
+    const error = validatePassword(password);
+    setErrors((prev) => ({ ...prev, password: error || undefined }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setErrors({});
+
+    // Basic validation - only block if fields are completely empty
+    if (!email.trim() || !password.trim()) {
+      validateForm();
+      return;
+    }
+
     setLoading(true);
-    setError("");
 
     try {
       const response = await api.post("/auth/login", { email, password });
@@ -54,7 +141,22 @@ const Login: React.FC = () => {
       const route = roleRoutes[normalizedRole] || "/dashboard";
       navigate(route);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
+      const errorMessage = err.response?.data?.message || "Login failed";
+
+      // Handle specific error types
+      if (
+        errorMessage.toLowerCase().includes("email") ||
+        errorMessage.toLowerCase().includes("user")
+      ) {
+        setErrors({ email: "Invalid email address" });
+      } else if (
+        errorMessage.toLowerCase().includes("password") ||
+        errorMessage.toLowerCase().includes("credential")
+      ) {
+        setErrors({ password: "Incorrect password" });
+      } else {
+        setErrors({ general: errorMessage });
+      }
     } finally {
       setLoading(false);
     }
@@ -118,11 +220,12 @@ const Login: React.FC = () => {
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
+              {/* General Error Message */}
+              {errors.general && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-4 rounded-xl text-sm backdrop-blur-sm">
                   <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4" />
-                    <span>{error}</span>
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.general}</span>
                   </div>
                 </div>
               )}
@@ -134,17 +237,37 @@ const Login: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail className="w-5 h-5 text-gray-400" />
+                    <Mail
+                      className={`w-5 h-5 ${
+                        errors.email ? "text-red-400" : "text-gray-400"
+                      }`}
+                    />
                   </div>
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     required
-                    className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm transition-all duration-200"
+                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 backdrop-blur-sm transition-all duration-200 ${
+                      errors.email
+                        ? "border-red-500/50 focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                        : "border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    }`}
                     placeholder="your.email@university.edu"
                   />
+                  {touched.email && !errors.email && email && (
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                    </div>
+                  )}
                 </div>
+                {errors.email && (
+                  <div className="flex items-center space-x-1 text-red-400 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.email}</span>
+                  </div>
+                )}
               </div>
 
               {/* Password Field */}
@@ -154,20 +277,29 @@ const Login: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="w-5 h-5 text-gray-400" />
+                    <Lock
+                      className={`w-5 h-5 ${
+                        errors.password ? "text-red-400" : "text-gray-400"
+                      }`}
+                    />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
+                    onBlur={handlePasswordBlur}
                     required
-                    className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm transition-all duration-200"
+                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 backdrop-blur-sm transition-all duration-200 ${
+                      errors.password
+                        ? "border-red-500/50 focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                        : "border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    }`}
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-12 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -175,7 +307,18 @@ const Login: React.FC = () => {
                       <Eye className="w-5 h-5" />
                     )}
                   </button>
+                  {touched.password && !errors.password && password && (
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                    </div>
+                  )}
                 </div>
+                {errors.password && (
+                  <div className="flex items-center space-x-1 text-red-400 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.password}</span>
+                  </div>
+                )}
               </div>
 
               {/* Login Button */}

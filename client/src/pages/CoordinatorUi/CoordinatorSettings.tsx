@@ -428,7 +428,7 @@ const CoordinatorSettingsTab = ({
     <div className="space-y-6">
       {/* Success Message */}
       {saveSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4">
+        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-xl p-4">
           <div className="flex items-center space-x-3">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <p className="text-sm text-green-800 dark:text-green-200 font-medium">
@@ -440,7 +440,7 @@ const CoordinatorSettingsTab = ({
 
       {/* Error Messages */}
       {Object.keys(errors).length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-xl p-4">
           <div className="flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <div>
@@ -460,7 +460,7 @@ const CoordinatorSettingsTab = ({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
             <nav className="space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -468,7 +468,7 @@ const CoordinatorSettingsTab = ({
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-left ${
                       activeSection === section.id
                         ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -485,7 +485,7 @@ const CoordinatorSettingsTab = ({
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             {/* Profile Information - Same as Student */}
             {activeSection === "profile" && (
               <div className="space-y-6">
@@ -524,7 +524,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
                   <div>
-                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors inline-block">
+                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
                       {uploadingPhoto ? (
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -547,7 +547,7 @@ const CoordinatorSettingsTab = ({
                     {profilePhotoPreview && (
                       <button
                         onClick={handleRemovePhoto}
-                        className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       >
                         Remove Photo
                       </button>
@@ -569,7 +569,7 @@ const CoordinatorSettingsTab = ({
                           name: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                         errors.name
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
@@ -594,7 +594,7 @@ const CoordinatorSettingsTab = ({
                           email: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                         errors.email
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
@@ -621,7 +621,7 @@ const CoordinatorSettingsTab = ({
                           phone: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                         errors.phone
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
@@ -654,7 +654,7 @@ const CoordinatorSettingsTab = ({
                             emergencyName: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         placeholder="Optional"
                       />
                     </div>
@@ -672,7 +672,7 @@ const CoordinatorSettingsTab = ({
                             emergencyContact: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         placeholder="Optional"
                       />
                     </div>
@@ -682,7 +682,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveProfile}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Changes</span>
@@ -718,7 +718,7 @@ const CoordinatorSettingsTab = ({
                             currentPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                       />
                       <button
                         onClick={() =>
@@ -749,7 +749,7 @@ const CoordinatorSettingsTab = ({
                             newPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                       />
                       <button
                         onClick={() => setShowNewPassword(!showNewPassword)}
@@ -781,7 +781,7 @@ const CoordinatorSettingsTab = ({
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -790,7 +790,7 @@ const CoordinatorSettingsTab = ({
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Two-Factor Authentication
                   </h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-purple-600" />
                       <div>
@@ -843,7 +843,7 @@ const CoordinatorSettingsTab = ({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Document Approvals
@@ -868,7 +868,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Attendance Alerts
@@ -893,7 +893,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         System Announcements
@@ -918,7 +918,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Push Notifications
@@ -943,7 +943,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         SMS Alerts
@@ -972,7 +972,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveNotifications}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Preferences</span>
@@ -1001,7 +1001,7 @@ const CoordinatorSettingsTab = ({
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => setDarkMode(false)}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center space-x-2 transition-colors ${
+                        className={`p-4 border-2 rounded-xl flex items-center justify-center space-x-2 transition-colors ${
                           !darkMode
                             ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
                             : "border-gray-300 dark:border-gray-600"
@@ -1012,7 +1012,7 @@ const CoordinatorSettingsTab = ({
                       </button>
                       <button
                         onClick={() => setDarkMode(true)}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center space-x-2 transition-colors ${
+                        className={`p-4 border-2 rounded-xl flex items-center justify-center space-x-2 transition-colors ${
                           darkMode
                             ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
                             : "border-gray-300 dark:border-gray-600"
@@ -1028,7 +1028,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Changes</span>
@@ -1063,7 +1063,7 @@ const CoordinatorSettingsTab = ({
                           language: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="en">English</option>
                       <option value="fil">Filipino</option>
@@ -1084,7 +1084,7 @@ const CoordinatorSettingsTab = ({
                           dateFormat: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -1104,7 +1104,7 @@ const CoordinatorSettingsTab = ({
                           timeFormat: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="12hr">12 Hour (AM/PM)</option>
                       <option value="24hr">24 Hour</option>
@@ -1115,7 +1115,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Preferences</span>
@@ -1145,7 +1145,7 @@ const CoordinatorSettingsTab = ({
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Auto-approve Documents
@@ -1170,7 +1170,7 @@ const CoordinatorSettingsTab = ({
                         </label>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Require Document Review
@@ -1218,7 +1218,7 @@ const CoordinatorSettingsTab = ({
                               attendanceReminderTime: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Time to send daily attendance reminders
@@ -1249,7 +1249,7 @@ const CoordinatorSettingsTab = ({
                               defaultAnnouncementAudience: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         >
                           <option value="ALL">All Users</option>
                           <option value="STUDENTS">Students Only</option>
@@ -1273,7 +1273,7 @@ const CoordinatorSettingsTab = ({
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Enable Bulk Operations
@@ -1298,7 +1298,7 @@ const CoordinatorSettingsTab = ({
                         </label>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             Show Advanced Metrics
@@ -1335,7 +1335,7 @@ const CoordinatorSettingsTab = ({
                               notificationFrequency: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         >
                           <option value="immediate">Immediate</option>
                           <option value="daily">Daily Summary</option>
@@ -1349,7 +1349,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveCoordinatorSettings}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Coordinator Settings</span>

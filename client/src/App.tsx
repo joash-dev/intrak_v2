@@ -6,6 +6,7 @@ import DashboardCoordinator from "./pages/CoordinatorUi/DashboardCoordinator";
 import DashboardInstructor from "./pages/InstructorUi/DashboardInstructor";
 import DashboardIndustryPartner from "./pages/SupervisorUi/SupervisorDashboard";
 import AdminPage from "./pages/AdminUi/AdminPage";
+
 type ProtectedRouteProps = {
   children: React.ReactNode;
   allowedRoles: string[];

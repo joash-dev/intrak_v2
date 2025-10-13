@@ -327,7 +327,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
             Review and approve student document submissions
           </p>
         </div>
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
           <div className="flex items-center space-x-2">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <span className="text-red-800 dark:text-red-200 font-medium">
@@ -337,7 +337,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           <p className="text-red-700 dark:text-red-300 mt-1">{error}</p>
           <button
             onClick={fetchDocuments}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
           >
             Try Again
           </button>
@@ -360,7 +360,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-yellow-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -376,7 +376,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -392,7 +392,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-red-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-red-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -408,7 +408,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-purple-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -426,7 +426,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -435,13 +435,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
               placeholder="Search by student name, document type, or filename..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -451,7 +451,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Types</option>
             {documentTypes.map((type) => (
@@ -468,7 +468,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
         {filteredDocuments.map((doc) => (
           <div
             key={doc.id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
           >
             <div className="p-6">
               {/* Header */}
@@ -517,7 +517,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
               </div>
 
               {/* Document Info */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
                     {getFileIcon(doc.fileType)}
@@ -546,7 +546,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
               {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
-                    className={`border-l-4 rounded-lg p-4 mb-4 ${
+                    className={`border-l-4 rounded-xl p-4 mb-4 ${
                       doc.status === "APPROVED"
                         ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                         : "border-red-500 bg-red-50 dark:bg-red-900/20"
@@ -578,13 +578,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2">
-                  <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                  <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
                     <Eye className="w-4 h-4" />
                     <span className="text-sm">Preview</span>
                   </button>
                   <button
                     onClick={() => handleDownload(doc)}
-                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     <span className="text-sm">Download</span>
@@ -595,14 +595,14 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleReview(doc, "reject")}
-                      className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 rounded-lg transition-colors font-medium"
+                      className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 rounded-xl transition-colors font-medium"
                     >
                       <XCircle className="w-4 h-4" />
                       <span className="text-sm">Reject</span>
                     </button>
                     <button
                       onClick={() => handleReview(doc, "approve")}
-                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium"
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl transition-colors font-medium"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span className="text-sm">Approve</span>
@@ -616,7 +616,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       </div>
 
       {filteredDocuments.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
           <FileCheck className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 mb-2">
             No documents found
@@ -630,7 +630,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {reviewAction === "approve"
@@ -646,7 +646,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
             </div>
 
             {/* Document Summary */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6">
               <div className="flex items-start space-x-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                   {selectedDoc.studentAvatar}
@@ -687,7 +687,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                     : "Please provide a reason for rejection..."
                 }
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
               />
             </div>
 
@@ -695,7 +695,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={() => setShowReviewModal(false)}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
               >
                 Cancel
               </button>
@@ -704,7 +704,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                 disabled={
                   submitting || (reviewAction === "reject" && !remarks.trim())
                 }
-                className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
+                className={`px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 ${
                   reviewAction === "approve"
                     ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
                     : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
