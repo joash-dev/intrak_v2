@@ -43,26 +43,52 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+// Test endpoint to check server health
+export const testEndpoint = async (req: Request, res: Response) => {
+  try {
+    console.log('Test endpoint called');
+    res.json({ message: 'Server is working', timestamp: new Date().toISOString() });
+  } catch (error: any) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({ message: 'Test endpoint failed', error: error.message });
+  }
+};
+
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
+    console.log('Request body:', { email, password: password ? '[REDACTED]' : 'missing' });
+
+    // Check if required environment variables are set
+    if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+      console.error('Missing JWT environment variables');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
 
     const user = await prisma.user.findUnique({
       where: { email }
     });
 
     if (!user || !user.active) {
+      console.log('User not found or inactive:', { found: !!user, active: user?.active });
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    console.log('User found:', { id: user.id, name: user.name, role: user.role });
 
     const validPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!validPassword) {
+      console.log('Invalid password for user:', user.email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    console.log('Password valid, generating tokens...');
     const { accessToken, refreshToken } = generateTokens(user);
+    console.log('Tokens generated successfully');
 
+    console.log('Creating refresh token in database...');
     await prisma.refreshToken.create({
       data: {
         token: refreshToken,
@@ -70,9 +96,13 @@ export const login = async (req: Request, res: Response) => {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       }
     });
+    console.log('Refresh token created successfully');
 
+    console.log('Logging audit trail...');
     await auditLog(user.id, 'USER_LOGIN', { email }, req);
+    console.log('Audit log created successfully');
 
+    console.log('Sending response...');
     res.json({
       accessToken,
       refreshToken,
@@ -83,8 +113,17 @@ export const login = async (req: Request, res: Response) => {
         role: user.role
       }
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Login failed', error });
+  } catch (error: any) {
+    console.error('Login error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ 
+      message: 'Login failed', 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 };
 

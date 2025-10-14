@@ -183,9 +183,19 @@ const InstructorStudentManagement: React.FC = () => {
       return;
     }
 
+    // Prevent multiple submissions
+    if (isCreating) {
+      console.log(
+        "Student creation already in progress, ignoring duplicate request"
+      );
+      return;
+    }
+
     try {
       setIsCreating(true);
       setCreateError(null);
+
+      console.log("Starting student creation process...");
 
       // Create the student using the instructor service
       const result = await instructorService.createStudent({
@@ -215,10 +225,17 @@ const InstructorStudentManagement: React.FC = () => {
       await loadStudentsData();
     } catch (error: any) {
       console.error("Error creating student:", error);
-      setCreateError(
-        error?.response?.data?.message || "Failed to create student"
-      );
-      toast.error("Failed to create student");
+
+      // Handle specific error messages
+      let errorMessage = "Failed to create student";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      setCreateError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsCreating(false);
     }

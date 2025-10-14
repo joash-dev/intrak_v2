@@ -38,23 +38,42 @@ api.interceptors.response.use(
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401) {
       const refreshToken = localStorage.getItem('refreshToken');
+      const originalUrl = error.config?.url;
+      
+      console.log('401 Error - Original URL:', originalUrl);
+      console.log('401 Error - Has refresh token:', !!refreshToken);
+      
+      // Don't try to refresh if the error is from the refresh endpoint itself
+      if (originalUrl === '/auth/refresh') {
+        console.log('Refresh token endpoint failed, clearing tokens');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
       
       if (refreshToken && error.config && !error.config._retry) {
         error.config._retry = true;
         
         try {
+          console.log('Attempting to refresh token...');
           // Attempt to refresh the token
           const response = await api.post('/auth/refresh', {
             refreshToken: refreshToken
           });
           
-          const { accessToken } = response.data;
+          const { accessToken, refreshToken: newRefreshToken } = response.data;
           localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', newRefreshToken);
+          
+          console.log('Token refreshed successfully');
           
           // Retry the original request with new token
           error.config.headers.Authorization = `Bearer ${accessToken}`;
           return api(error.config);
-        } catch (refreshError) {
+        } catch (refreshError: any) {
+          console.error('Token refresh failed:', refreshError.response?.data);
           // Refresh failed, redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
@@ -64,6 +83,7 @@ api.interceptors.response.use(
         }
       } else {
         // No refresh token or already retried, redirect to login
+        console.log('No refresh token available or already retried');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');

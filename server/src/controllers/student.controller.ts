@@ -140,6 +140,8 @@ export const getStudentById = async (req: AuthRequest, res: Response) => {
 
 export const createStudent = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('Creating student with data:', req.body);
+    
     const {
       userId,
       studentNumber,
@@ -158,6 +160,28 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
     if (studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) {
       return res.status(400).json({ 
         message: 'Student number must be in format: 22-UR-0592' 
+      });
+    }
+
+    // Check if student already exists with this student number
+    if (studentNumber) {
+      const existingStudent = await prisma.student.findUnique({
+        where: { studentNumber }
+      });
+      if (existingStudent) {
+        return res.status(400).json({ 
+          message: `Student with number ${studentNumber} already exists` 
+        });
+      }
+    }
+
+    // Check if user already has a student record
+    const existingStudentByUser = await prisma.student.findUnique({
+      where: { userId }
+    });
+    if (existingStudentByUser) {
+      return res.status(400).json({ 
+        message: 'User already has a student record' 
       });
     }
 

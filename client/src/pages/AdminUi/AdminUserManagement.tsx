@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Users,
   Search,
@@ -9,10 +9,11 @@ import {
   Shield,
   UserCheck,
   Download,
-  Upload,
   X,
   AlertCircle,
   RefreshCw,
+  Lock,
+  CheckCircle,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
@@ -25,6 +26,7 @@ const AdminUserManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -33,21 +35,41 @@ const AdminUserManagement = () => {
   const {
     data: usersResponse,
     loading: usersLoading,
-    refetch: refetchUsers,
+    refresh: refetchUsers,
   } = useOptimizedData(
-    () =>
-      adminService.getUsers({
-        role: roleFilter !== "ALL" ? roleFilter : undefined,
-        search: searchQuery || undefined,
-        page,
-        limit,
-      }),
+    useCallback(
+      () =>
+        adminService.getUsers({
+          role: roleFilter !== "ALL" ? roleFilter : undefined,
+          search: searchQuery || undefined,
+          page,
+          limit,
+        }),
+      [roleFilter, searchQuery, page, limit]
+    ),
     [roleFilter, searchQuery, page, limit],
     { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
   const users = usersResponse?.users || [];
   const pagination = usersResponse?.pagination;
+
+  // Create a reliable refresh function
+  const refreshUsersList = useCallback(async () => {
+    try {
+      if (typeof refetchUsers === "function") {
+        await refetchUsers();
+      } else {
+        // Fallback: reload the page
+        console.warn("refetchUsers not available, reloading page");
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error refreshing users list:", error);
+      // Final fallback: reload the page
+      window.location.reload();
+    }
+  }, [refetchUsers]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -101,13 +123,80 @@ const AdminUserManagement = () => {
 
   const handleAddUser = async () => {
     try {
+      // Basic validation
+      if (!formData.name.trim()) {
+        const errorMsg = "Full name is required";
+        toast.error(errorMsg);
+        alert(errorMsg);
+        return;
+      }
+      if (!formData.email.trim()) {
+        const errorMsg = "Email is required";
+        toast.error(errorMsg);
+        alert(errorMsg);
+        return;
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        const errorMsg = "Please enter a valid email address";
+        toast.error(errorMsg);
+        alert(errorMsg);
+        return;
+      }
+
+      // Student number format validation for students
+      if (formData.role === "STUDENT" && formData.studentNumber) {
+        if (!/^\d{2}-[A-Z]{2}-\d{4}$/.test(formData.studentNumber)) {
+          const errorMsg = "Student number must be in format: 22-UR-0592";
+          toast.error(errorMsg);
+          alert(errorMsg);
+          return;
+        }
+      }
+
+      console.log("Creating user with data:", formData);
       await adminService.createUser(formData);
-      toast.success("User created successfully");
+
+      toast.success(`✅ User created! Password sent to ${formData.email}`, {
+        duration: 5000,
+        style: {
+          background: "#10B981",
+          color: "white",
+          fontWeight: "500",
+        },
+      });
+
       setShowAddModal(false);
       resetForm();
-      refetchUsers();
+
+      // Show success modal
+      setShowSuccessModal(true);
+
+      // Refresh the users list
+      await refreshUsersList();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to create user");
+      console.error("Create user error:", error);
+      let errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create user";
+
+      // Handle specific error cases
+      if (errorMsg.includes("Email already exists")) {
+        errorMsg =
+          "This email address is already registered. Please use a different email.";
+      } else if (errorMsg.includes("Invalid refresh token")) {
+        errorMsg =
+          "Your session has expired. Please refresh the page and try again.";
+      } else if (errorMsg.includes("The operation is insecure")) {
+        errorMsg =
+          "Security error occurred. Please check your connection and try again.";
+      }
+
+      toast.error(errorMsg);
+      alert(`Error creating user: ${errorMsg}`);
     }
   };
 
@@ -116,13 +205,24 @@ const AdminUserManagement = () => {
 
     try {
       await adminService.updateUser(selectedUser.id, formData);
-      toast.success("User updated successfully");
+      const successMsg = "User updated successfully";
+      toast.success(successMsg);
+      alert(successMsg);
+
       setShowEditModal(false);
       resetForm();
       setSelectedUser(null);
-      refetchUsers();
+
+      // Refresh the users list
+      await refreshUsersList();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update user");
+      console.error("Update user error:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update user";
+      toast.error(errorMsg);
+      alert(`Error updating user: ${errorMsg}`);
     }
   };
 
@@ -131,12 +231,38 @@ const AdminUserManagement = () => {
 
     try {
       await adminService.deleteUser(selectedUser.id);
-      toast.success("User deleted successfully");
+      const successMsg = "User deleted successfully";
+      toast.success(successMsg);
+      alert(successMsg);
+
       setShowDeleteModal(false);
       setSelectedUser(null);
-      refetchUsers();
+
+      // Refresh the users list
+      await refreshUsersList();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete user");
+      console.error("Delete user error:", error);
+      let errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete user";
+
+      // Handle specific error cases
+      if (errorMsg.includes("related data")) {
+        errorMsg =
+          "Cannot delete this user. The user has related records (documents, logs, etc.) that need to be handled first.";
+      } else if (errorMsg.includes("User not found")) {
+        errorMsg = "User not found. The user may have already been deleted.";
+      } else if (
+        errorMsg.includes("500") ||
+        errorMsg.includes("Internal server error")
+      ) {
+        errorMsg =
+          "Server error occurred while deleting the user. Please try again or contact support.";
+      }
+
+      toast.error(errorMsg);
+      alert(`Error deleting user: ${errorMsg}`);
     }
   };
 
@@ -163,8 +289,8 @@ const AdminUserManagement = () => {
     setShowDeleteModal(true);
   };
 
-  const getRoleBadgeColor = (role) => {
-    const colors = {
+  const getRoleBadgeColor = (role: string) => {
+    const colors: Record<string, string> = {
       STUDENT: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       COORDINATOR:
         "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
@@ -176,8 +302,8 @@ const AdminUserManagement = () => {
     return colors[role] || "bg-gray-100 text-gray-800";
   };
 
-  const getRoleIcon = (role) => {
-    const icons = {
+  const getRoleIcon = (role: string) => {
+    const icons: Record<string, React.ReactElement> = {
       STUDENT: <Users className="w-4 h-4" />,
       COORDINATOR: <Shield className="w-4 h-4" />,
       INSTRUCTOR: <UserCheck className="w-4 h-4" />,
@@ -206,7 +332,7 @@ const AdminUserManagement = () => {
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => refetchUsers()}
+          onClick={refreshUsersList}
           disabled={usersLoading}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2 disabled:opacity-50"
         >
@@ -329,9 +455,6 @@ const AdminUserManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Created
-                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Actions
                 </th>
@@ -416,9 +539,6 @@ const AdminUserManagement = () => {
                     >
                       {user.active ? "ACTIVE" : "INACTIVE"}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.createdAt}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <button
@@ -529,24 +649,44 @@ const AdminUserManagement = () => {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter email"
+                  placeholder="user@example.com"
+                  title="Enter a valid email address"
                 />
               </div>
 
               {/* Password Information */}
               {showAddModal && (
-                <div className="col-span-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="col-span-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm">
                   <div className="flex items-start space-x-3">
-                    <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                        Temporary Password
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                        <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                        🔐 Temporary Password Setup
                       </p>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        A temporary password will be automatically generated and
-                        sent to the user's email address. They will be required
-                        to change it on their first login.
-                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          • A secure temporary password will be automatically
+                          generated
+                        </p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          • The password will be sent to the user's email
+                          address
+                        </p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          • The user must change the password on their first
+                          login
+                        </p>
+                        <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mt-2">
+                          📧 Email will be sent to:{" "}
+                          <span className="font-mono bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-xs">
+                            {formData.email || "user@example.com"}
+                          </span>
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -587,8 +727,11 @@ const AdminUserManagement = () => {
                           })
                         }
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="2021-12345"
+                        placeholder="22-UR-0592"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Format: YY-DD-NNNN (e.g., 22-UR-0592)
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -620,7 +763,8 @@ const AdminUserManagement = () => {
                         setFormData({ ...formData, program: e.target.value })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Computer Engineering"
+                      placeholder="e.g., Computer Engineering, Information Technology"
+                      title="Enter the academic program name"
                     />
                   </div>
                   <div>
@@ -657,7 +801,8 @@ const AdminUserManagement = () => {
                         })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Engineering"
+                      placeholder="e.g., Engineering, Computer Science, IT Department"
+                      title="Enter the department name"
                     />
                   </div>
                   <div>
@@ -672,6 +817,7 @@ const AdminUserManagement = () => {
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="+63-912-345-6789"
+                      title="Format: +63-XXX-XXX-XXXX (Philippine mobile number)"
                     />
                   </div>
                 </>
@@ -719,6 +865,7 @@ const AdminUserManagement = () => {
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       placeholder="+63-912-345-6789"
+                      title="Format: +63-XXX-XXX-XXXX (Philippine mobile number)"
                     />
                   </div>
                 </>
@@ -798,6 +945,51 @@ const AdminUserManagement = () => {
                 Delete User
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">
+              User Created Successfully!
+            </h3>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                    Temporary Password Sent
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      • Secure temporary password generated
+                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      • Password sent to user's email
+                    </p>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      • User must change password on first login
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+            >
+              Got it!
+            </button>
           </div>
         </div>
       )}

@@ -7,7 +7,10 @@ const router = Router();
 
 router.use(authenticate);
 
-// Send welcome email to student
+// Send welcome email to any user (general)
+router.post('/welcome-user', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), emailController.sendUserWelcomeEmail);
+
+// Send welcome email to student (legacy)
 router.post('/welcome', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), emailController.sendStudentWelcomeEmail);
 
 // Test email connection (for debugging)

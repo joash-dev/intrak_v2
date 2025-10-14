@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
+import { auditLog } from '../services/audit.service';
 
 const prisma = new PrismaClient();
 
@@ -118,11 +119,55 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    await prisma.user.delete({ where: { id } });
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, email: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Use a transaction to handle related data deletion
+    await prisma.$transaction(async (tx) => {
+      // Delete audit logs first (since they don't have cascade delete)
+      await tx.auditLog.deleteMany({
+        where: { userId: id }
+      });
+
+      // Delete the user (this will cascade delete RefreshToken and Student records)
+      await tx.user.delete({
+        where: { id }
+      });
+    });
+
+    // Log the deletion
+    await auditLog(req.user!.id, 'USER_DELETED', { 
+      deletedUserId: id, 
+      deletedUserName: user.name,
+      deletedUserEmail: user.email 
+    }, req);
 
     res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to delete user', error });
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    
+    // Handle specific database errors
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        message: 'Cannot delete user. User has related data that must be handled first.' 
+      });
+    }
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(500).json({ 
+      message: 'Failed to delete user', 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 };
 

@@ -666,8 +666,24 @@ class InstructorService {
     startDate: string;
     endDate: string;
   }): Promise<any> {
+    let userId: string | null = null;
+    
     try {
       console.log('Creating student with data:', studentData);
+      
+      // Check if user already exists
+      try {
+        const existingUserResponse = await api.get(`/users?email=${studentData.email}`);
+        if (existingUserResponse.data.users && existingUserResponse.data.users.length > 0) {
+          throw new Error(`User with email ${studentData.email} already exists`);
+        }
+      } catch (checkError: any) {
+        if (checkError.message.includes('already exists')) {
+          throw checkError;
+        }
+        // If it's a network error, continue with creation
+        console.log('Could not check existing users, proceeding with creation...');
+      }
       
       // Generate secure password for the student
       const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
@@ -683,7 +699,7 @@ class InstructorService {
       });
       
       console.log('User created successfully:', userResponse.data);
-      const userId = userResponse.data.user.id;
+      userId = userResponse.data.user.id;
 
       // Convert year string to integer
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
@@ -727,8 +743,38 @@ class InstructorService {
         email: studentData.email,
         studentNumber: studentData.studentNumber
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating student:', error);
+      
+      // Cleanup: If user was created but student creation failed, delete the user
+      if (userId) {
+        console.log('Cleaning up created user account due to student creation failure...');
+        try {
+          await api.delete(`/users/${userId}`);
+          console.log('User account cleaned up successfully');
+        } catch (cleanupError) {
+          console.error('Failed to cleanup user account:', cleanupError);
+        }
+      }
+      
+      // Provide more specific error messages
+      if (error.response?.status === 400) {
+        const errorMsg = error.response.data?.message || 'Validation error';
+        if (errorMsg.includes('Email already exists')) {
+          throw new Error(`A user with email ${studentData.email} already exists. Please use a different email address.`);
+        } else if (errorMsg.includes('Student number')) {
+          throw new Error(`Student number ${studentData.studentNumber} is already in use. Please use a different student number.`);
+        } else {
+          throw new Error(`Validation error: ${errorMsg}`);
+        }
+      } else if (error.response?.status === 401) {
+        throw new Error('Authentication error. Please log in again.');
+      } else if (error.response?.status === 403) {
+        throw new Error('Permission denied. You do not have permission to create students.');
+      } else if (error.response?.status === 500) {
+        throw new Error('Server error occurred. Please try again later.');
+      }
+      
       throw error;
     }
   }

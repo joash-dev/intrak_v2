@@ -66,14 +66,34 @@ class EmailService {
     }
   }
 
-  async sendStudentWelcomeEmail(
-    studentEmail: string,
-    studentName: string,
-    studentNumber: string,
-    temporaryPassword: string
+  async sendUserWelcomeEmail(
+    userEmail: string,
+    userName: string,
+    userRole: string,
+    temporaryPassword: string,
+    additionalInfo?: {
+      studentNumber?: string;
+      program?: string;
+      department?: string;
+    }
   ): Promise<boolean> {
-    const subject = 'Welcome to INTRAK - Your Account Credentials';
+    const roleDisplayNames: Record<string, string> = {
+      'STUDENT': 'Student',
+      'INSTRUCTOR': 'Instructor',
+      'COORDINATOR': 'Coordinator',
+      'ADMIN': 'Administrator',
+      'INDUSTRY_PARTNER': 'Industry Partner'
+    };
+
+    const roleDisplayName = roleDisplayNames[userRole] || userRole;
+    const subject = `Welcome to INTRAK - Your ${roleDisplayName} Account Credentials`;
     
+    const additionalInfoHtml = additionalInfo ? `
+      ${additionalInfo.studentNumber ? `<p><strong>Student Number:</strong> ${additionalInfo.studentNumber}</p>` : ''}
+      ${additionalInfo.program ? `<p><strong>Program:</strong> ${additionalInfo.program}</p>` : ''}
+      ${additionalInfo.department ? `<p><strong>Department:</strong> ${additionalInfo.department}</p>` : ''}
+    ` : '';
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -95,67 +115,59 @@ class EmailService {
             background-color: #ffffff;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
           .header {
             text-align: center;
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 3px solid #3b82f6;
+            border-bottom: 2px solid #3b82f6;
           }
           .logo {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #3b82f6;
             margin-bottom: 10px;
           }
-          .subtitle {
-            color: #6b7280;
-            font-size: 16px;
-          }
-          .content {
-            margin-bottom: 30px;
-          }
-          .credentials-box {
+          .credentials {
             background-color: #f8fafc;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
             padding: 20px;
             margin: 20px 0;
           }
-          .credential-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
+          .credentials h3 {
+            margin-top: 0;
+            color: #1e40af;
           }
-          .credential-item:last-child {
-            border-bottom: none;
+          .credential-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            border-left: 4px solid #3b82f6;
           }
           .credential-label {
-            font-weight: 600;
+            font-weight: bold;
             color: #374151;
           }
           .credential-value {
             font-family: 'Courier New', monospace;
-            background-color: #ffffff;
+            background-color: #f3f4f6;
             padding: 5px 10px;
-            border-radius: 4px;
-            border: 1px solid #d1d5db;
+            border-radius: 3px;
             color: #1f2937;
           }
-          .password-warning {
+          .warning {
             background-color: #fef3c7;
             border: 1px solid #f59e0b;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 15px;
             margin: 20px 0;
-            color: #92400e;
           }
-          .warning-icon {
-            color: #f59e0b;
-            font-weight: bold;
+          .warning h4 {
+            margin-top: 0;
+            color: #92400e;
           }
           .footer {
             text-align: center;
@@ -172,7 +184,7 @@ class EmailService {
             padding: 12px 24px;
             text-decoration: none;
             border-radius: 6px;
-            font-weight: 600;
+            font-weight: bold;
             margin: 20px 0;
           }
         </style>
@@ -180,54 +192,40 @@ class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <div class="logo">🎓 INTRAK</div>
-            <div class="subtitle">Internship Tracking System</div>
+            <div class="logo">INTRAK</div>
+            <h1>Welcome to INTRAK, ${userName}!</h1>
+            <p>Your ${roleDisplayName} account has been successfully created.</p>
           </div>
-          
-          <div class="content">
-            <h2>Welcome to INTRAK, ${studentName}!</h2>
-            
-            <p>Your student account has been successfully created. Below are your login credentials:</p>
-            
-            <div class="credentials-box">
-              <div class="credential-item">
-                <span class="credential-label">Student Number:</span>
-                <span class="credential-value">${studentNumber}</span>
-              </div>
-              <div class="credential-item">
-                <span class="credential-label">Email:</span>
-                <span class="credential-value">${studentEmail}</span>
-              </div>
-              <div class="credential-item">
-                <span class="credential-label">Temporary Password:</span>
-                <span class="credential-value">${temporaryPassword}</span>
-              </div>
+
+          <div class="credentials">
+            <h3>🔐 Your Account Credentials</h3>
+            <div class="credential-item">
+              <div class="credential-label">Email Address:</div>
+              <div class="credential-value">${userEmail}</div>
             </div>
-            
-            <div class="password-warning">
-              <span class="warning-icon">⚠️</span>
-              <strong>Important:</strong> This is a temporary password. Please change it immediately after your first login for security purposes.
+            <div class="credential-item">
+              <div class="credential-label">Temporary Password:</div>
+              <div class="credential-value">${temporaryPassword}</div>
             </div>
-            
-            <p>You can now access the INTRAK system using these credentials. Once logged in, you'll be able to:</p>
-            <ul>
-              <li>View your internship details and requirements</li>
-              <li>Submit required documents</li>
-              <li>Track your attendance and progress</li>
-              <li>Communicate with your coordinator and supervisor</li>
-            </ul>
-            
-            <div style="text-align: center;">
-              <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" class="button">
-                Login to INTRAK
-              </a>
+            <div class="credential-item">
+              <div class="credential-label">Role:</div>
+              <div class="credential-value">${roleDisplayName}</div>
             </div>
+            ${additionalInfoHtml}
           </div>
-          
+
+          <div class="warning">
+            <h4>⚠️ Important Security Notice</h4>
+            <p>This is a temporary password that you must change on your first login for security reasons. Please keep your credentials secure and do not share them with anyone.</p>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/login" class="button">Login to INTRAK</a>
+          </div>
+
           <div class="footer">
-            <p>If you have any questions or need assistance, please contact your internship coordinator.</p>
-            <p><strong>INTRAK Team</strong><br>
-            PSU Urdaneta Campus</p>
+            <p>If you have any questions or need assistance, please contact your system administrator.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
           </div>
         </div>
       </body>
@@ -235,60 +233,60 @@ class EmailService {
     `;
 
     const text = `
-Welcome to INTRAK, ${studentName}!
+Welcome to INTRAK, ${userName}!
 
-Your student account has been successfully created. Below are your login credentials:
+Your ${roleDisplayName} account has been successfully created.
 
-Student Number: ${studentNumber}
-Email: ${studentEmail}
+ACCOUNT CREDENTIALS:
+Email: ${userEmail}
 Temporary Password: ${temporaryPassword}
+Role: ${roleDisplayName}
+${additionalInfo ? `
+Additional Information:
+${additionalInfo.studentNumber ? `Student Number: ${additionalInfo.studentNumber}` : ''}
+${additionalInfo.program ? `Program: ${additionalInfo.program}` : ''}
+${additionalInfo.department ? `Department: ${additionalInfo.department}` : ''}
+` : ''}
 
-IMPORTANT: This is a temporary password. Please change it immediately after your first login for security purposes.
+IMPORTANT: This is a temporary password that you must change on your first login.
 
-You can now access the INTRAK system using these credentials. Once logged in, you'll be able to:
-- View your internship details and requirements
-- Submit required documents
-- Track your attendance and progress
-- Communicate with your coordinator and supervisor
+Login at: ${process.env.CLIENT_URL || 'http://localhost:3000'}/login
 
-Login URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}/login
+If you have any questions, please contact your system administrator.
 
-If you have any questions or need assistance, please contact your internship coordinator.
-
-INTRAK Team
-PSU Urdaneta Campus
+This is an automated message. Please do not reply to this email.
     `;
 
     return await this.sendEmail({
-      to: studentEmail,
+      to: userEmail,
       subject,
       html,
       text
     });
   }
 
-  // Test email configuration
+  async sendStudentWelcomeEmail(
+    studentEmail: string,
+    studentName: string,
+    studentNumber: string,
+    temporaryPassword: string
+  ): Promise<boolean> {
+    return await this.sendUserWelcomeEmail(
+      studentEmail,
+      studentName,
+      'STUDENT',
+      temporaryPassword,
+      { studentNumber }
+    );
+  }
+
   async testConnection(): Promise<boolean> {
     try {
-      // Check if email configuration is properly set up
-      const hasEmailConfig = process.env.SMTP_HOST && 
-                            process.env.SMTP_USER && 
-                            process.env.SMTP_PASS;
-
-      if (!hasEmailConfig) {
-        console.log('📧 EMAIL SETUP REQUIRED:');
-        console.log('📧 Create a .env file with SMTP configuration');
-        console.log('📧 See EMAIL_SETUP_GUIDE.md for instructions');
-        return false;
-      }
-
       await this.transporter.verify();
-      console.log('✅ Email service connection verified');
-      console.log('✅ Ready to send emails to:', process.env.SMTP_USER);
+      console.log('✅ Email service connection successful');
       return true;
     } catch (error) {
       console.error('❌ Email service connection failed:', error);
-      console.error('❌ Please check your email configuration in .env file');
       console.error('❌ See EMAIL_SETUP_GUIDE.md for troubleshooting');
       return false;
     }

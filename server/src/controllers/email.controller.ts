@@ -1,6 +1,50 @@
 import { Request, Response } from 'express';
 import { emailService } from '../services/email.service';
 
+export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
+  try {
+    const { 
+      userEmail, 
+      userName, 
+      userRole, 
+      temporaryPassword, 
+      additionalInfo 
+    } = req.body;
+
+    if (!userEmail || !userName || !userRole || !temporaryPassword) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: userEmail, userName, userRole, temporaryPassword' 
+      });
+    }
+
+    const emailSent = await emailService.sendUserWelcomeEmail(
+      userEmail,
+      userName,
+      userRole,
+      temporaryPassword,
+      additionalInfo
+    );
+
+    if (emailSent) {
+      res.json({ 
+        message: 'Welcome email sent successfully',
+        emailSent: true 
+      });
+    } else {
+      res.status(500).json({ 
+        message: 'Failed to send welcome email',
+        emailSent: false 
+      });
+    }
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    res.status(500).json({ 
+      message: 'Failed to send welcome email', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
 export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
   try {
     const { studentEmail, studentName, studentNumber, temporaryPassword } = req.body;

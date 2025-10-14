@@ -130,12 +130,102 @@ class AdminService {
     position?: string;
   }): Promise<{ user: AdminUser }> {
     try {
-      const response = await api.post('/auth/register', userData);
-      return response.data;
-    } catch (error) {
+      // Generate a default password if not provided
+      const password = userData.password || this.generateDefaultPassword();
+      
+      // Prepare user data for registration
+      const userRegistrationData = {
+        name: userData.name,
+        email: userData.email,
+        password: password,
+        role: userData.role
+      };
+
+      // Create the user first
+      const userResponse = await api.post('/auth/register', userRegistrationData);
+      const user = userResponse.data.user;
+
+      // If this is a student, create the student profile
+      if (userData.role === 'STUDENT' && (userData.studentNumber || userData.program || userData.year)) {
+        try {
+          // Validate and format student number if provided
+          let formattedStudentNumber = userData.studentNumber;
+          if (formattedStudentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(formattedStudentNumber)) {
+            // Try to format the student number if it's in a different format
+            console.warn(`Invalid student number format: ${formattedStudentNumber}. Expected format: 22-UR-0592`);
+            // For now, we'll skip student profile creation if format is wrong
+            throw new Error(`Invalid student number format. Expected: 22-UR-0592, got: ${formattedStudentNumber}`);
+          }
+
+          const studentData = {
+            userId: user.id,
+            studentNumber: formattedStudentNumber,
+            program: userData.program,
+            year: userData.year ? parseInt(userData.year) : undefined,
+            section: userData.department // Using department as section for now
+          };
+
+          // Remove undefined values
+          const cleanStudentData = Object.fromEntries(
+            Object.entries(studentData).filter(([_, value]) => value !== undefined)
+          );
+
+          if (Object.keys(cleanStudentData).length > 1) { // More than just userId
+            console.log('Creating student profile with data:', cleanStudentData);
+            await api.post('/students', cleanStudentData);
+          }
+        } catch (studentError: any) {
+          console.warn('Failed to create student profile, but user was created:', studentError);
+          console.warn('Student error response:', studentError.response?.data);
+          // Don't throw here as the user was successfully created
+        }
+      }
+
+      // Send welcome email to the user
+      let emailSent = false;
+      try {
+        console.log('Sending welcome email to user...');
+        const emailResponse = await api.post('/email/welcome-user', {
+          userEmail: userData.email,
+          userName: userData.name,
+          userRole: userData.role,
+          temporaryPassword: password,
+          additionalInfo: {
+            studentNumber: userData.studentNumber,
+            program: userData.program,
+            department: userData.department
+          }
+        });
+        
+        emailSent = emailResponse.data.emailSent;
+        console.log('Welcome email sent successfully:', emailSent);
+      } catch (emailError: any) {
+        console.warn('Failed to send welcome email:', emailError);
+        console.warn('Email error response:', emailError.response?.data);
+        // Don't throw here as the user was successfully created
+      }
+
+      return {
+        ...userResponse.data,
+        emailSent
+      };
+    } catch (error: any) {
       console.error('Error creating user:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('User data sent:', userData);
       throw error;
     }
+  }
+
+  private generateDefaultPassword(): string {
+    // Generate a secure default password
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   }
 
   async updateUser(id: string, userData: {
