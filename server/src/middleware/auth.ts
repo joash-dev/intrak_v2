@@ -21,8 +21,10 @@ export const authenticate = async (
     // Get token from Authorization header
     const token = req.headers.authorization?.replace('Bearer ', '');
     
-    console.log('🔍 Checking auth - Token present:', !!token);
-    console.log('🔍 Authorization header:', req.headers.authorization);
+    // Avoid logging sensitive authorization headers in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Checking auth - Token present:', !!token);
+    }
     
     if (!token) {
       return res.status(401).json({ 
@@ -49,7 +51,9 @@ export const authenticate = async (
     
     next();
   } catch (error: any) {
-    console.error('❌ Auth error:', error.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('❌ Auth error:', error.message);
+    }
     
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token expired' });

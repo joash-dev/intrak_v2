@@ -376,30 +376,46 @@ export const getProfilePhoto = async (req: any, res: Response) => {
   try {
     const { filename } = req.params;
 
-    console.log(`📸 Profile photo request: ${filename}`);
-
-    // Validate filename format (should be userId_timestamp.extension)
-    if (!filename || !filename.includes('_')) {
-      console.log(`📸 Invalid filename format: ${filename}`);
+    // Basic validation
+    if (typeof filename !== 'string' || filename.length === 0) {
       return res.status(404).json({ message: 'Invalid profile photo filename' });
     }
 
-    const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', filename);
-    console.log(`📸 Looking for file at: ${filepath}`);
-    
-    if (!fs.existsSync(filepath)) {
-      console.log(`📸 File does not exist at: ${filepath}`);
+    // Enforce strict filename pattern: userId_timestamp.ext
+    const allowedExtensions = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
+    const sanitized = path.basename(filename);
+    const ext = path.extname(sanitized).toLowerCase();
+
+    // Reject if path traversal is attempted or extension is not allowed
+    if (sanitized !== filename || !allowedExtensions.has(ext)) {
+      return res.status(404).json({ message: 'Invalid profile photo filename' });
+    }
+
+    // Validate structural pattern (e.g., uuid-or-id + '_' + timestamp)
+    const nameWithoutExt = sanitized.slice(0, -ext.length);
+    const validPattern = /^[A-Za-z0-9-]+_\d+$/; // id_like + '_' + digits
+    if (!validPattern.test(nameWithoutExt)) {
+      return res.status(404).json({ message: 'Invalid profile photo filename' });
+    }
+
+    const photosDir = path.join(process.cwd(), 'uploads', 'profile-photos');
+    const baseDir = path.resolve(photosDir);
+    const absolutePath = path.resolve(photosDir, sanitized);
+
+    // Ensure the resolved path stays within the base directory
+    if (!(absolutePath === baseDir || absolutePath.startsWith(baseDir + path.sep))) {
+      return res.status(404).json({ message: 'Invalid profile photo filename' });
+    }
+
+    if (!fs.existsSync(absolutePath)) {
       return res.status(404).json({ message: 'Profile photo file not found' });
     }
 
-    console.log(`📸 Serving profile photo: ${filename}`);
-    
     // Add CORS headers for image serving
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
-    
+
     // Set appropriate content type based on file extension
-    const ext = path.extname(filename).toLowerCase();
     const mimeTypes: { [key: string]: string } = {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
@@ -408,8 +424,8 @@ export const getProfilePhoto = async (req: any, res: Response) => {
       '.webp': 'image/webp'
     };
     res.header('Content-Type', mimeTypes[ext] || 'image/jpeg');
-    
-    res.sendFile(filepath);
+
+    res.sendFile(absolutePath);
   } catch (error) {
     console.error('Get profile photo error:', error);
     res.status(500).json({ 

@@ -11,13 +11,29 @@ ensureNASDirectoryExists(uploadPath).catch(console.error);
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      const studentId = req.body.studentId;
-      const dir = path.join(uploadPath, 'documents', studentId);
-      
-      await ensureNASDirectoryExists(dir);
-      cb(null, dir);
+      const rawStudentId = String(req.body?.studentId ?? '').trim();
+
+      // Validate and sanitize studentId to prevent path traversal
+      const validIdPattern = /^[A-Za-z0-9_-]+$/;
+      if (!rawStudentId || !validIdPattern.test(rawStudentId)) {
+        return cb(new Error('Invalid studentId'), '');
+      }
+
+      const baseDir = path.join(uploadPath, 'documents');
+      const targetDir = path.join(baseDir, rawStudentId);
+
+      const resolvedBase = path.resolve(baseDir);
+      const resolvedTarget = path.resolve(targetDir);
+
+      // Ensure the target directory stays within the base directory
+      if (!(resolvedTarget === resolvedBase || resolvedTarget.startsWith(resolvedBase + path.sep))) {
+        return cb(new Error('Invalid upload path'), '');
+      }
+
+      await ensureNASDirectoryExists(resolvedTarget);
+      cb(null, resolvedTarget);
     } catch (error) {
-      cb(error, '');
+      cb(error as Error, '');
     }
   },
   filename: (req, file, cb) => {
