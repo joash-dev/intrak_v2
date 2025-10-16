@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 
@@ -91,10 +91,9 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
 export const uploadRateLimit = multer({
   limits: {
     files: 1, // Only one file per request
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'), // 10MB
-    filesize: parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
+    fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (req, file, cb: FileFilterCallback) => {
     // Additional file filter for security
     const allowedMimes = (process.env.ALLOWED_MIMETYPES || 
       'application/pdf,image/jpeg,image/png').split(',');
@@ -102,7 +101,8 @@ export const uploadRateLimit = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type'), false);
+      // Do not pass Error instance to avoid type issues; reject file
+      cb(null, false);
     }
   }
 });
