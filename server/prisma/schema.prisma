@@ -55,6 +55,9 @@ model User {
   role         Role
   active       Boolean  @default(true)
   profilePhoto String?
+  phone        String?
+  department   String?
+  office       String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -67,6 +70,7 @@ model User {
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
   templatesUploaded DocumentTemplate[] @relation("TemplateUploader")
+  adminSettings     AdminSettings?
 
   @@map("users")
 }
@@ -252,4 +256,28 @@ model DocumentTemplate {
   uploadedBy User @relation("TemplateUploader", fields: [uploadedById], references: [id])
 
   @@map("document_templates")
+}
+
+model AdminSettings {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  maintenanceMode       Boolean  @default(false)
+  emailNotifications    Boolean  @default(true)
+  systemAlerts          Boolean  @default(true)
+  autoBackup            Boolean  @default(true)
+  sessionTimeout        Int      @default(30)
+  maxLoginAttempts      Int      @default(5)
+  emailSystemAlerts     Boolean  @default(true)
+  emailUserActivity     Boolean  @default(true)
+  emailMaintenance      Boolean  @default(true)
+  pushNotifications     Boolean  @default(true)
+  smsAlerts             Boolean  @default(false)
+  theme                 String   @default("system")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_settings")
 }

@@ -240,8 +240,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
   const handleRemovePhoto = async () => {
     try {
+      // Remove from server
       await settingsService.removeProfilePhoto();
       setProfilePhotoPreview(null);
+
       toast.success("Profile photo removed successfully!");
 
       // Notify parent component to refresh dashboard
@@ -279,8 +281,6 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
       // Upload to server
       const photoUrl = await settingsService.uploadProfilePhoto(file);
-
-      // Update preview with server URL
       setProfilePhotoPreview(photoUrl);
 
       toast.success("Profile photo updated successfully!");

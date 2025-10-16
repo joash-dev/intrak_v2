@@ -103,13 +103,16 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      // Load profile data (mock data for now)
+      // Load profile data from localStorage
+      const userData = localStorage.getItem("user");
+      const user = userData ? JSON.parse(userData) : {};
+
       const mockProfile: InstructorProfile = {
-        id: "1",
-        name: "Prof. Garcia",
-        email: "prof.garcia@university.edu",
-        phone: "+63 912 345 6789",
-        department: "Computer Engineering",
+        id: user.id || "1",
+        name: user.name || "Instructor",
+        email: user.email || "instructor@university.edu",
+        phone: user.phone || "+63 912 345 6789",
+        department: user.department || "Computer Engineering",
         office: "Engineering Building, Room 201",
         profilePhoto: "",
       };
@@ -119,7 +122,9 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
       // Load profile photo if available
       try {
         const photoUrl = await settingsService.getProfilePhoto();
-        setProfilePhoto(photoUrl);
+        if (photoUrl) {
+          setProfilePhoto(photoUrl);
+        }
       } catch (error) {
         console.log("No profile photo found");
       }
@@ -204,8 +209,13 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     try {
       setSaving(true);
       setErrors({});
-      // Password change logic here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+
+      // Call the real API to change password
+      await settingsService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+
       setSaveSuccess(true);
       toast.success("Password changed successfully");
       setPasswordData({
@@ -214,9 +224,19 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
         confirmPassword: "",
       });
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error changing password:", error);
-      toast.error("Failed to change password");
+      const errorMessage = error.message || "Failed to change password";
+      toast.error(errorMessage);
+
+      // Set specific field errors if available
+      if (errorMessage.includes("Current password is incorrect")) {
+        setErrors({ currentPassword: "Current password is incorrect" });
+      } else if (errorMessage.includes("at least 8 characters")) {
+        setErrors({
+          newPassword: "Password must be at least 8 characters long",
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -240,6 +260,8 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
 
     try {
       setSaving(true);
+
+      // Upload to server
       const photoUrl = await settingsService.uploadProfilePhoto(file);
       setProfilePhoto(photoUrl);
 
@@ -262,6 +284,8 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
   const handleRemovePhoto = async () => {
     try {
       setSaving(true);
+
+      // Remove from server
       await settingsService.removeProfilePhoto();
       setProfilePhoto(null);
 

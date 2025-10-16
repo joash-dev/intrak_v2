@@ -1,16 +1,46 @@
-import { Router } from 'express';
-import { authenticate } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
-import * as companyController from '../controllers/company.controller';
+import express from "express";
+import { authenticate } from "../middleware/auth";
+import { authorize } from "../middleware/authorize";
+import * as companyController from "../controllers/company.controller";
 
-const router = Router();
+const router = express.Router();
 
-router.use(authenticate);
+// =============================================
+// COMPANY ROUTES
+// =============================================
 
-router.get('/', companyController.getCompanies);
-router.get('/:id', companyController.getCompanyById);
-router.post('/', authorize(['ADMIN']), companyController.createCompany);
-router.put('/:id', authorize(['ADMIN']), companyController.updateCompany);
-router.delete('/:id', authorize(['ADMIN']), companyController.deleteCompany);
+// Get all companies (Admin, Coordinator)
+router.get("/", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getAllCompanies);
+
+// Get company by ID (Admin, Coordinator)
+router.get("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getCompanyById);
+
+// Create new company (Admin, Coordinator)
+router.post("/", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.createCompany);
+
+// Update company (Admin, Coordinator)
+router.put("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.updateCompany);
+
+// Delete company (Admin, Coordinator)
+router.delete("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.deleteCompany);
+
+// =============================================
+// MOA ROUTES (Using Document model)
+// =============================================
+
+// Get all MOAs (Admin, Coordinator)
+router.get("/moas/all", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getAllMOAs);
+
+// Get MOA by ID (Admin, Coordinator)
+router.get("/moas/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getMOAById);
+
+// Approve MOA (Admin, Coordinator)
+router.patch("/moas/:id/approve", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.approveMOA);
+
+// Reject MOA (Admin, Coordinator)
+router.patch("/moas/:id/reject", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.rejectMOA);
+
+// Get MOA statistics (Admin, Coordinator)
+router.get("/moas/stats/overview", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getMOAStats);
 
 export default router;

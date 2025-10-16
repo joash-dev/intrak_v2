@@ -23,4 +23,7 @@ router.get('/:id', userController.getUserById);
 router.put('/:id', userController.updateUser);
 router.delete('/:id', authorize(['ADMIN']), userController.deleteUser);
 
+// Password change route
+router.put('/password/change', authenticate, userController.changePassword);
+
 export default router;

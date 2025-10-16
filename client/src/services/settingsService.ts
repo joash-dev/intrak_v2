@@ -80,10 +80,30 @@ class SettingsService {
 
   // Change password
   async changePassword(passwordData: PasswordChangeData): Promise<void> {
-    const userId = await this.getCurrentUserId();
-    await api.put(`/users/${userId}`, {
-      password: passwordData.newPassword
-    });
+    try {
+      console.log('🔐 SettingsService: Attempting password change...');
+      console.log('🔐 SettingsService: Current token exists:', !!localStorage.getItem('accessToken'));
+      
+      const response = await api.put('/users/password/change', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
+      console.log('✅ SettingsService: Password change successful:', response.data);
+    } catch (error: any) {
+      console.error('❌ SettingsService: Error changing password:', error);
+      console.error('❌ SettingsService: Error response:', error.response);
+      console.error('❌ SettingsService: Error response data:', error.response?.data);
+      console.error('❌ SettingsService: Error response status:', error.response?.status);
+      
+      // Extract the specific error message from the API response
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Failed to change password';
+      
+      console.error('❌ SettingsService: Final error message:', errorMessage);
+      throw new Error(errorMessage);
+    }
   }
 
   // Save notification preferences to localStorage (could be extended to save to server)

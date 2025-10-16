@@ -1170,6 +1170,11 @@ const InstructorPortal = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    initials: string;
+  } | null>(null);
 
   // Fetch announcements for the entire portal
   const { data: announcements } = useOptimizedData(
@@ -1238,19 +1243,48 @@ const InstructorPortal = () => {
     };
   }, []);
 
-  // Load profile photo
+  // Load current user data and profile photo
   useEffect(() => {
-    const loadProfilePhoto = async () => {
+    const loadUserData = async () => {
       try {
+        // Get user data from localStorage
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          const user = JSON.parse(userData);
+          const initials = user.name
+            ? user.name
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")
+                .toUpperCase()
+                .substring(0, 2)
+            : "IN";
+
+          setCurrentUser({
+            name: user.name || "Instructor",
+            email: user.email || "instructor@university.edu",
+            initials: initials,
+          });
+        }
+
+        // Load profile photo
         const photoUrl = await settingsService.getProfilePhoto();
-        setProfilePhoto(photoUrl);
+        if (photoUrl) {
+          setProfilePhoto(photoUrl);
+        }
       } catch (error) {
         console.log("No profile photo found");
+        // Set default user data if localStorage fails
+        setCurrentUser({
+          name: "Instructor",
+          email: "instructor@university.edu",
+          initials: "IN",
+        });
       }
     };
 
     if (isAuthenticated) {
-      loadProfilePhoto();
+      loadUserData();
     }
 
     // Listen for profile photo updates from settings
@@ -1472,13 +1506,13 @@ const InstructorPortal = () => {
                       />
                     ) : (
                       <span className="text-white font-semibold text-sm">
-                        PG
+                        {currentUser?.initials || "IN"}
                       </span>
                     )}
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Prof. Garcia
+                      {currentUser?.name || "Instructor"}
                     </p>
                     <p className="text-xs text-gray-500">Instructor</p>
                   </div>
@@ -1498,16 +1532,18 @@ const InstructorPortal = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-white font-semibold">PG</span>
+                            <span className="text-white font-semibold">
+                              {currentUser?.initials || "IN"}
+                            </span>
                           )}
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            Prof. Garcia
+                            {currentUser?.name || "Instructor"}
                           </p>
                           <p className="text-sm text-gray-500">Instructor</p>
                           <p className="text-xs text-gray-400">
-                            prof.garcia@university.edu
+                            {currentUser?.email || "instructor@university.edu"}
                           </p>
                         </div>
                       </div>

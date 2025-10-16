@@ -1,4 +1,4 @@
-import api from '../api/AxiosClient';
+import api from './api';
 import { announcementService, type Announcement } from './announcementService';
 
 // Types
@@ -9,6 +9,10 @@ export interface AdminUser {
   role: 'ADMIN' | 'COORDINATOR' | 'INSTRUCTOR' | 'STUDENT' | 'INDUSTRY_PARTNER';
   active: boolean;
   createdAt: string;
+  phone?: string;
+  department?: string;
+  office?: string;
+  profilePhoto?: string;
   student?: {
     studentNumber: string;
     program: string;
@@ -90,6 +94,102 @@ export interface DocumentStats {
 
 // Admin Service Class
 class AdminService {
+  // Admin Profile Management
+  async getAdminProfile(): Promise<{ user: AdminUser }> {
+    try {
+      const response = await api.get('/admin/profile');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching admin profile:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch admin profile');
+    }
+  }
+
+  async updateAdminProfile(profileData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    department?: string;
+    office?: string;
+  }): Promise<{ user: AdminUser }> {
+    try {
+      const response = await api.put('/admin/profile', profileData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating admin profile:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update admin profile');
+    }
+  }
+
+  async changeAdminPassword(passwordData: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<{ message: string }> {
+    try {
+      console.log('🔐 AdminService: Attempting password change...');
+      console.log('🔐 AdminService: Current token exists:', !!localStorage.getItem('accessToken'));
+      console.log('🔐 AdminService: Refresh token exists:', !!localStorage.getItem('refreshToken'));
+      
+      const response = await api.put('/admin/password', passwordData);
+      console.log('✅ AdminService: Password change successful:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ AdminService: Error changing admin password:', error);
+      console.error('❌ AdminService: Error response:', error.response);
+      console.error('❌ AdminService: Error response data:', error.response?.data);
+      console.error('❌ AdminService: Error response status:', error.response?.status);
+      console.error('❌ AdminService: Error response headers:', error.response?.headers);
+      
+      // Check if this is a token expiration issue
+      if (error.response?.status === 401) {
+        console.log('🔍 AdminService: 401 error detected - this might be token expiration');
+        console.log('🔍 AdminService: Error message:', error.response?.data?.message);
+      }
+      
+      // Extract the specific error message from the API response
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Failed to change password';
+      
+      console.error('❌ AdminService: Final error message:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Admin Settings Management
+  async getAdminSettings(): Promise<{ adminSettings: any }> {
+    try {
+      const response = await api.get('/admin/settings');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching admin settings:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch admin settings');
+    }
+  }
+
+  async updateAdminSettings(settingsData: {
+    maintenanceMode?: boolean;
+    emailNotifications?: boolean;
+    systemAlerts?: boolean;
+    autoBackup?: boolean;
+    sessionTimeout?: number;
+    maxLoginAttempts?: number;
+    emailSystemAlerts?: boolean;
+    emailUserActivity?: boolean;
+    emailMaintenance?: boolean;
+    pushNotifications?: boolean;
+    smsAlerts?: boolean;
+    theme?: string;
+  }): Promise<{ adminSettings: any }> {
+    try {
+      const response = await api.put('/admin/settings', settingsData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating admin settings:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update admin settings');
+    }
+  }
+
   // User Management
   async getUsers(params?: {
     role?: string;
@@ -185,23 +285,38 @@ class AdminService {
       let emailSent = false;
       try {
         console.log('Sending welcome email to user...');
-        const emailResponse = await api.post('/email/welcome-user', {
-          userEmail: userData.email,
-          userName: userData.name,
-          userRole: userData.role,
-          temporaryPassword: password,
-          additionalInfo: {
-            studentNumber: userData.studentNumber,
-            program: userData.program,
-            department: userData.department
-          }
-        });
         
-        emailSent = emailResponse.data.emailSent;
+        // Use the same approach as instructor service for consistency
+        if (userData.role === 'STUDENT') {
+          // For students, use the student welcome email endpoint
+          const emailResponse = await api.post('/email/welcome', {
+            studentEmail: userData.email,
+            studentName: userData.name,
+            studentNumber: userData.studentNumber || 'N/A',
+            temporaryPassword: password
+          });
+          emailSent = emailResponse.data.emailSent;
+        } else {
+          // For other roles, use the general user welcome email endpoint
+          const emailResponse = await api.post('/email/welcome-user', {
+            userEmail: userData.email,
+            userName: userData.name,
+            userRole: userData.role,
+            temporaryPassword: password,
+            additionalInfo: {
+              studentNumber: userData.studentNumber,
+              program: userData.program,
+              department: userData.department
+            }
+          });
+          emailSent = emailResponse.data.emailSent;
+        }
+        
         console.log('Welcome email sent successfully:', emailSent);
       } catch (emailError: any) {
         console.warn('Failed to send welcome email:', emailError);
         console.warn('Email error response:', emailError.response?.data);
+        console.warn('Email error status:', emailError.response?.status);
         // Don't throw here as the user was successfully created
       }
 

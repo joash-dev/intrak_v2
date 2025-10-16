@@ -107,7 +107,7 @@ const InstructorEvaluationsTab = () => {
         id: "1",
         date: "2024-09-15",
         rating: 4.5,
-        evaluator: "Prof. Garcia",
+        evaluator: "Instructor",
         type: "Mid-term",
       },
       {
@@ -123,7 +123,7 @@ const InstructorEvaluationsTab = () => {
         id: "1",
         date: "2024-09-10",
         rating: 4.2,
-        evaluator: "Prof. Garcia",
+        evaluator: "Instructor",
         type: "Mid-term",
       },
     ],

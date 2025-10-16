@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   FileCheck,
@@ -18,6 +18,7 @@ import {
   FileText,
   Menu,
   X,
+  TrendingUp,
   LogOut,
   Settings,
   Home,
@@ -28,10 +29,12 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 
 import CoordinatorDocumentsTab from "./CoordinatorDocumentsTab";
-import CoordinatorReportsTab from "./CoordinatorReportsTab";
+import CoordinatorCompanyManagement from "./CoordinatorCompanyManagement";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
+import CoordinatorStudentManagement from "./CoordinatorStudentManagement";
 import { coordinatorService } from "../../services/coordinatorService";
+import { settingsService } from "../../services/settingsService";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -206,138 +209,221 @@ const CoordinatorDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Dashboard Overview
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Monitor and manage all internship activities
-          </p>
+      {/* Header Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/5 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+
+        <div className="relative flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-3 mb-2">
+              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
+                Dashboard Overview
+              </h1>
+            </div>
+            <p className="text-purple-100 text-sm font-medium max-w-xl">
+              Monitor and manage all internship activities across the system
+            </p>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-md">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-purple-100 text-xs font-medium mt-1">
+                Total Students
+              </p>
+              <p className="text-2xl font-bold text-white">
+                {stats?.totalStudents || 0}
+              </p>
+            </div>
+          </div>
         </div>
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="today">Today</option>
-          <option value="this_week">This Week</option>
-          <option value="this_month">This Month</option>
-          <option value="this_semester">This Semester</option>
-        </select>
       </div>
 
-      {/* Stats Cards */}
+      {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
+        {/* Total Students Card */}
+        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <Users className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats?.totalStudents || 0}
+                </p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <ArrowUpRight className="w-4 h-4 text-green-500" />
+                  <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                    +12%
+                  </span>
+                </div>
+              </div>
             </div>
-            {getTrendIcon(stats?.trends?.students || 0)}
+            <h3 className="text-gray-900 dark:text-white text-sm font-semibold mb-1">
+              Total Students
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Across all programs
+            </p>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Total Students
-          </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {stats?.totalStudents || 0}
-          </p>
-          <p className="text-xs text-gray-500">
-            <span className="text-green-600 font-medium">
-              +{stats?.trends?.students || 0}
-            </span>{" "}
-            from last month
-          </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
-              <UserCheck className="w-6 h-6 text-white" />
+        {/* Active Interns Card */}
+        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <UserCheck className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats?.activeInterns || 0}
+                </p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <ArrowUpRight className="w-4 h-4 text-green-500" />
+                  <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                    +8%
+                  </span>
+                </div>
+              </div>
             </div>
-            {getTrendIcon(stats?.trends?.attendance || 0)}
+            <h3 className="text-gray-900 dark:text-white text-sm font-semibold mb-1">
+              Active Interns
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Currently interning
+            </p>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Active Interns
-          </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {stats?.activeInterns || 0}
-          </p>
-          <p className="text-xs text-gray-500">
-            Attendance:{" "}
-            <span className="text-green-600 font-medium">
-              {stats?.attendanceRate || 0}%
-            </span>
-          </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-yellow-600 rounded-xl flex items-center justify-center">
-              <FileCheck className="w-6 h-6 text-white" />
+        {/* Pending Approvals Card */}
+        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <FileCheck className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats?.pendingApprovals || 0}
+                </p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <ArrowDownRight className="w-4 h-4 text-red-500" />
+                  <span className="text-red-600 dark:text-red-400 text-sm font-medium">
+                    -3%
+                  </span>
+                </div>
+              </div>
             </div>
-            {getTrendIcon(stats?.trends?.documents || 0)}
+            <h3 className="text-gray-900 dark:text-white text-sm font-semibold mb-1">
+              Pending Approvals
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Documents need review
+            </p>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Pending Approvals
-          </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {stats?.pendingApprovals || 0}
-          </p>
-          <p className="text-xs text-gray-500">
-            {stats?.documentsPending || 0} documents need review
-          </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-              <Award className="w-6 h-6 text-white" />
+        {/* Average Rating Card */}
+        <div className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-amber-600/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <Award className="w-7 h-7 text-white" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {stats?.averageRating > 0
+                    ? stats.averageRating.toFixed(1)
+                    : "N/A"}
+                </p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <ArrowUpRight className="w-4 h-4 text-green-500" />
+                  <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+                    +0.2
+                  </span>
+                </div>
+              </div>
             </div>
-            {getTrendIcon(stats?.trends?.ratings || 0)}
+            <h3 className="text-gray-900 dark:text-white text-sm font-semibold mb-1">
+              Average Rating
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              {stats?.averageRating > 0 ? "out of 5.0" : "0 evaluations"}
+            </p>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            Average Rating
-          </p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {stats?.averageRating || 0}
-          </p>
-          <p className="text-xs text-gray-500">Out of 5.0 stars</p>
         </div>
       </div>
 
-      {/* Alerts */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <Bell className="w-5 h-5 mr-2 text-purple-600" />
-            Recent Alerts
-          </h2>
-          <button className="text-sm text-purple-600 hover:text-purple-700">
+      {/* Enhanced Alerts Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Recent Alerts
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Important notifications and updates
+              </p>
+            </div>
+          </div>
+          <button className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 font-medium text-sm">
             View All
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {(alerts || []).map((alert) => (
             <div
               key={alert.id}
-              className={`border-l-4 rounded-xl p-4 ${getAlertColor(
+              className={`border-l-4 rounded-2xl p-5 hover:shadow-md transition-all duration-200 ${getAlertColor(
                 alert.type
               )}`}
             >
-              <div className="flex items-start space-x-3">
-                {getAlertIcon(alert.type)}
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 mt-1">
+                  {getAlertIcon(alert.type)}
+                </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-2">
                     {alert.title}
                   </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
                     {alert.description}
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {alert.timestamp}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500 font-medium">
+                      {alert.timestamp}
+                    </p>
+                    <span
+                      className={`text-xs px-3 py-1 rounded-full font-medium ${
+                        alert.type === "warning"
+                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          : alert.type === "error"
+                          ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                          : alert.type === "success"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      }`}
+                    >
+                      {alert.type}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -345,29 +431,43 @@ const CoordinatorDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Activity className="w-5 h-5 mr-2 text-purple-600" />
-            Recent Activities
-          </h2>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Enhanced Recent Activities */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Recent Activities
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Latest system activities
+                </p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium text-sm">
+              View All
+            </button>
+          </div>
+          <div className="space-y-4">
             {(activities || []).map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl"
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-2xl hover:shadow-md transition-all duration-200"
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <div
-                    className={`p-2 rounded-xl ${getActivityColor(
+                    className={`p-3 rounded-2xl shadow-sm ${getActivityColor(
                       activity.status
                     )}`}
                   >
                     {getActivityIcon(activity.type)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {activity.student}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -377,13 +477,13 @@ const CoordinatorDashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ${getActivityColor(
+                    className={`text-xs px-3 py-1 rounded-full font-medium ${getActivityColor(
                       activity.status
                     )}`}
                   >
                     {activity.status}
                   </span>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1 font-medium">
                     {activity.timestamp}
                   </p>
                 </div>
@@ -392,51 +492,65 @@ const CoordinatorDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Performance Overview */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
-            Performance Overview
-          </h2>
-          <div className="space-y-4">
+        {/* Enhanced Performance Overview */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Performance Overview
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Key performance metrics
+                </p>
+              </div>
+            </div>
+            <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium text-sm">
+              View All
+            </button>
+          </div>
+          <div className="space-y-6">
             <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   Attendance Rate
                 </span>
-                <span className="font-medium text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {stats?.attendanceRate || 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-green-500 h-3 rounded-full"
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${stats?.attendanceRate || 0}%` }}
                 />
               </div>
             </div>
             <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   Tasks Completed
                 </span>
-                <span className="font-medium text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {stats?.tasksCompleted || 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-blue-500 h-3 rounded-full"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${stats?.tasksCompleted || 0}%` }}
                 />
               </div>
             </div>
             <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   Document Approval
                 </span>
-                <span className="font-medium text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {(
                     (((stats?.totalStudents || 0) -
                       (stats?.documentsPending || 0)) /
@@ -446,9 +560,9 @@ const CoordinatorDashboard: React.FC = () => {
                   %
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-yellow-500 h-3 rounded-full"
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{
                     width: `${
                       (((stats?.totalStudents || 0) -
@@ -461,17 +575,17 @@ const CoordinatorDashboard: React.FC = () => {
               </div>
             </div>
             <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-700 dark:text-gray-300">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-700 dark:text-gray-300 font-medium">
                   Average Rating
                 </span>
-                <span className="font-medium text-gray-900 dark:text-white">
+                <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {((stats?.averageRating || 0 / 5) * 100).toFixed(0)}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-purple-500 h-3 rounded-full"
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${(stats?.averageRating || 0 / 5) * 100}%` }}
                 />
               </div>
@@ -480,27 +594,37 @@ const CoordinatorDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Students List */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Student Management
-          </h2>
-          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+      {/* Enhanced Students List */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0 mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Student Management
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Manage and monitor student progress
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students, companies, or student numbers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -510,97 +634,106 @@ const CoordinatorDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+              <tr>
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Student
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Company
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Attendance
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Tasks
                 </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Rating
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredStudents.map((student) => (
                 <tr
                   key={student.id}
-                  className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                  className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 cursor-pointer transition-all duration-200"
                 >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                  <td className="py-6 px-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
                         {student.avatar}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        <p className="font-semibold text-gray-900 dark:text-white text-base">
                           {student.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           {formatStudentId(student.studentNumber)} •{" "}
                           {student.program}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <td className="py-6 px-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {student.company}
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
+                  <td className="py-6 px-6">
                     <span
-                      className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                      className={`text-xs px-4 py-2 rounded-full font-semibold ${getStatusColor(
                         student.status
                       )}`}
                     >
                       {student.status}
                     </span>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <td className="py-6 px-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                         <div
-                          className={`h-2 rounded-full ${
+                          className={`h-3 rounded-full transition-all duration-500 ${
                             student.attendance >= 90
-                              ? "bg-green-500"
+                              ? "bg-gradient-to-r from-green-500 to-green-600"
                               : student.attendance >= 75
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
+                              ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                              : "bg-gradient-to-r from-red-500 to-red-600"
                           }`}
                           style={{ width: `${student.attendance}%` }}
                         />
                       </div>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
                         {student.attendance}%
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {student.tasks.completed}/{student.tasks.total}
-                    </span>
+                  <td className="py-6 px-6">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {student.tasks.completed}/{student.tasks.total}
+                      </span>
+                    </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center space-x-1">
-                      <Award className="w-4 h-4 text-yellow-500" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <td className="py-6 px-6">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-lg flex items-center justify-center">
+                        <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">
                         {student.evaluation}
                       </span>
                     </div>
@@ -624,6 +757,14 @@ const CoordinatorPortal: React.FC = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+
+  // Current user state
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    initials: string;
+  } | null>(null);
 
   // Prevent back button after logout
   React.useEffect(() => {
@@ -635,6 +776,70 @@ const CoordinatorPortal: React.FC = () => {
 
     return () => {
       window.removeEventListener("popstate", preventBackButton);
+    };
+  }, []);
+
+  // Load current user data
+  useEffect(() => {
+    const loadUserData = () => {
+      try {
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          const user = JSON.parse(userData);
+          const name = user.name || user.fullName || "Coordinator";
+          const email = user.email || "";
+          const initials = name
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
+
+          setCurrentUser({
+            name,
+            email,
+            initials,
+          });
+        }
+
+        // Load profile photo from server
+        const loadProfilePhoto = async () => {
+          try {
+            const serverPhoto = await settingsService.getProfilePhoto();
+            if (serverPhoto) {
+              setProfilePhoto(serverPhoto);
+            }
+          } catch (error) {
+            console.log("No profile photo found");
+          }
+        };
+        loadProfilePhoto();
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        // Fallback to default values
+        setCurrentUser({
+          name: "Coordinator",
+          email: "",
+          initials: "CO",
+        });
+      }
+    };
+
+    loadUserData();
+
+    // Listen for profile photo updates from settings
+    const handleProfilePhotoUpdate = (event: any) => {
+      const { photoUrl } = event.detail;
+      setProfilePhoto(photoUrl);
+    };
+
+    window.addEventListener("profilePhotoUpdated", handleProfilePhotoUpdate);
+
+    return () => {
+      window.removeEventListener(
+        "profilePhotoUpdated",
+        handleProfilePhotoUpdate
+      );
     };
   }, []);
 
@@ -674,8 +879,9 @@ const CoordinatorPortal: React.FC = () => {
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "students", label: "Student Management", icon: Users },
     { id: "documents", label: "Review Documents", icon: FileCheck },
-    { id: "reports", label: "Reports", icon: FileSpreadsheet },
+    { id: "companies", label: "Company Management", icon: Building2 },
     { id: "announcements", label: "Announcements", icon: MessageSquare },
     //{ id: "settings", label: "Settings", icon: Settings },
   ];
@@ -703,10 +909,12 @@ const CoordinatorPortal: React.FC = () => {
     switch (activeTab) {
       case "dashboard":
         return <CoordinatorDashboard />;
+      case "students":
+        return <CoordinatorStudentManagement />;
       case "documents":
         return <CoordinatorDocumentsTab />;
-      case "reports":
-        return <CoordinatorReportsTab />;
+      case "companies":
+        return <CoordinatorCompanyManagement />;
       case "announcements":
         return <CoordinatorAnnouncementsTab />;
       case "settings":
@@ -719,7 +927,7 @@ const CoordinatorPortal: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Top Navigation Bar */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 lg:ml-72">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Left: Hamburger + Logo */}
@@ -757,11 +965,21 @@ const CoordinatorPortal: React.FC = () => {
                   className="flex items-center space-x-3 pl-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
                 >
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">DC</span>
+                    {profilePhoto ? (
+                      <img
+                        src={profilePhoto}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-semibold text-sm">
+                        {currentUser?.initials || "CO"}
+                      </span>
+                    )}
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Dr. Cruz
+                      {currentUser?.name || "Coordinator"}
                     </p>
                     <p className="text-xs text-gray-500">Coordinator</p>
                   </div>
@@ -774,15 +992,25 @@ const CoordinatorPortal: React.FC = () => {
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center">
-                          <span className="text-white font-semibold">DC</span>
+                          {profilePhoto ? (
+                            <img
+                              src={profilePhoto}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white font-semibold">
+                              {currentUser?.initials || "CO"}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            Dr. Cruz
+                            {currentUser?.name || "Coordinator"}
                           </p>
                           <p className="text-sm text-gray-500">Coordinator</p>
                           <p className="text-xs text-gray-400">
-                            dr.cruz@university.edu
+                            {currentUser?.email || "coordinator@university.edu"}
                           </p>
                         </div>
                       </div>
@@ -881,11 +1109,7 @@ const CoordinatorPortal: React.FC = () => {
       </aside>
 
       {/* Content Area */}
-      <main
-        className={`p-6 transition-all duration-300 ${
-          sidebarOpen ? "lg:ml-72" : "ml-0"
-        }`}
-      >
+      <main className="p-6 transition-all duration-300 lg:ml-72">
         {renderContent()}
       </main>
 

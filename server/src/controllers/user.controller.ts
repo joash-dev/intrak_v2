@@ -115,6 +115,70 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user!.id;
+
+    // Validate input
+    if (!currentPassword) {
+      return res.status(400).json({ message: 'Current password is required' });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({ message: 'New password is required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ 
+        message: 'New password must be at least 8 characters long' 
+      });
+    }
+
+    // Get user with current password hash
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true, email: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ 
+        message: 'Current password is incorrect. Please enter your current password correctly.' 
+      });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash }
+    });
+
+    // Log the password change
+    await auditLog(userId, 'PASSWORD_CHANGED', { 
+      userId: userId,
+      userEmail: user.email
+    }, req);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error: any) {
+    console.error('Change password error:', error);
+    res.status(500).json({ 
+      message: 'Failed to change password. Please try again.', 
+      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
 export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -122,7 +186,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, role: true }
     });
 
     if (!user) {
@@ -131,12 +195,52 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     // Use a transaction to handle related data deletion
     await prisma.$transaction(async (tx) => {
-      // Delete audit logs first (since they don't have cascade delete)
+      // Delete related data in the correct order to avoid foreign key constraints
+      
+      // 1. Delete audit logs
       await tx.auditLog.deleteMany({
         where: { userId: id }
       });
 
-      // Delete the user (this will cascade delete RefreshToken and Student records)
+      // 2. Delete refresh tokens
+      await tx.refreshToken.deleteMany({
+        where: { userId: id }
+      });
+
+      // 3. Delete documents uploaded by this user
+      await tx.document.deleteMany({
+        where: { uploadedBy: id }
+      });
+
+      // 4. Delete evaluations given by this user
+      await tx.evaluation.deleteMany({
+        where: { evaluatorId: id }
+      });
+
+      // 5. Delete announcements created by this user
+      await tx.announcement.deleteMany({
+        where: { createdBy: id }
+      });
+
+      // 6. Delete document templates uploaded by this user
+      await tx.documentTemplate.deleteMany({
+        where: { uploadedBy: id }
+      });
+
+      // 7. Delete admin settings if user is admin
+      await tx.adminSettings.deleteMany({
+        where: { userId: id }
+      });
+
+      // 8. For students, unassign them from this instructor
+      if (user.role === 'INSTRUCTOR') {
+        await tx.student.updateMany({
+          where: { instructorId: id },
+          data: { instructorId: null }
+        });
+      }
+
+      // 9. Delete the user (this will cascade delete Student record if user is a student)
       await tx.user.delete({
         where: { id }
       });
@@ -156,17 +260,28 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     // Handle specific database errors
     if (error.code === 'P2003') {
       return res.status(400).json({ 
-        message: 'Cannot delete user. User has related data that must be handled first.' 
+        message: 'Cannot delete user. User has related data that must be handled first. Please contact support for assistance.' 
       });
     }
     
     if (error.code === 'P2025') {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found. The user may have already been deleted.' });
     }
 
+    if (error.code === 'P2002') {
+      return res.status(400).json({ 
+        message: 'Cannot delete user due to unique constraint violation. Please contact support.' 
+      });
+    }
+
+    // Provide more detailed error message in development
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Failed to delete user: ${error.message}` 
+      : 'Failed to delete user. Please try again or contact support.';
+
     res.status(500).json({ 
-      message: 'Failed to delete user', 
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };

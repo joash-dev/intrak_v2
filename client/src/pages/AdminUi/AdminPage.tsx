@@ -17,6 +17,7 @@ import {
   User,
 } from "lucide-react";
 import AdminUserManagement from "./AdminUserManagement";
+import AdminSettings from "./AdminSettings";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import {
   adminService,
@@ -28,7 +29,6 @@ import {
   type DocumentStats,
 } from "../../services/adminService";
 import api from "../../services/api";
-import toast from "react-hot-toast";
 import { settingsService } from "../../services/settingsService";
 
 // Admin Data Interface
@@ -221,169 +221,6 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
   );
 };
 
-// Settings Tab Component
-const AdminSettingsTab = () => {
-  const [settings, setSettings] = useState({
-    systemMaintenance: false,
-    emailNotifications: true,
-    systemAlerts: true,
-    maintenanceMode: false,
-  });
-
-  const handleSettingChange = (key: string, value: boolean) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-    toast.success("Setting updated successfully");
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">System Settings</h2>
-        <p className="opacity-90">
-          Configure system-wide settings and preferences
-        </p>
-      </div>
-
-      {/* System Configuration */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
-            <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              System Configuration
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              General system settings
-            </p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              System Maintenance Mode
-            </span>
-            <button
-              onClick={() =>
-                handleSettingChange(
-                  "systemMaintenance",
-                  !settings.systemMaintenance
-                )
-              }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.systemMaintenance
-                  ? "bg-purple-600"
-                  : "bg-gray-200 dark:bg-gray-700"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.systemMaintenance ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Maintenance Mode
-            </span>
-            <span className="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
-              Disabled
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Notification Settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-lg flex items-center justify-center">
-            <Bell className="w-6 h-6 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Notifications
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Alert preferences
-            </p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Email Alerts
-            </span>
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-              Enabled
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              System Alerts
-            </span>
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-              Enabled
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Maintenance Mode
-            </span>
-            <span className="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
-              Disabled
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Security Settings */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800 rounded-lg flex items-center justify-center">
-            <Shield className="w-6 h-6 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Security
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              System security settings
-            </p>
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Two-Factor Authentication
-            </span>
-            <span className="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-              Enabled
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Session Timeout
-            </span>
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
-              30 minutes
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Login Attempts
-            </span>
-            <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
-              5 attempts
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Main Admin Dashboard Component
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -500,7 +337,7 @@ const AdminDashboard = () => {
           setProfilePhoto(serverPhoto);
         }
       } catch (error) {
-        console.error("Error loading profile photo from server:", error);
+        console.error("Error loading profile photo:", error);
       }
     };
     loadProfilePhoto();
@@ -606,7 +443,7 @@ const AdminDashboard = () => {
       case "users":
         return <AdminUserManagement />;
       case "settings":
-        return <AdminSettingsTab />;
+        return <AdminSettings onBack={() => setActiveTab("overview")} />;
       default:
         return <AdminOverviewTab data={adminData} />;
     }

@@ -20,10 +20,11 @@ import {
   AlertCircle,
   FileText,
   Settings,
-  Database,
   Activity,
   Download,
   Upload,
+  Palette,
+  Monitor,
 } from "lucide-react";
 import {
   settingsService,
@@ -44,10 +45,7 @@ const CoordinatorSettingsTab = ({
   const [activeSection, setActiveSection] = useState("profile");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    // Initialize dark mode based on current document state
-    return document.documentElement.classList.contains("dark");
-  });
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,7 +95,6 @@ const CoordinatorSettingsTab = ({
     enableBulkOperations: true,
     showAdvancedMetrics: false,
     notificationFrequency: "immediate", // immediate, daily, weekly
-    systemMaintenanceMode: false,
   });
 
   // Load user data on component mount
@@ -132,35 +129,44 @@ const CoordinatorSettingsTab = ({
     }
   };
 
-  const loadPreferences = () => {
+  const loadPreferences = async () => {
     const notificationPrefs = settingsService.loadNotificationPreferences();
     const appPrefs = settingsService.loadAppPreferences();
-    const savedPhoto = settingsService.loadProfilePhoto();
 
     setNotifications(notificationPrefs);
     setPreferences(appPrefs);
 
-    // Only set dark mode if theme is explicitly set to dark
-    // Don't change theme on load if it's auto
-    if (appPrefs.theme === "dark") {
-      setDarkMode(true);
-    } else if (appPrefs.theme === "light") {
-      setDarkMode(false);
-    } else {
-      // For auto theme, check current system preference but don't change the UI state
-      const isDarkMode = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      setDarkMode(isDarkMode);
-    }
+    // Load theme from preferences
+    const savedTheme =
+      (appPrefs.theme as "light" | "dark" | "system") || "system";
+    setTheme(savedTheme);
 
-    // Load saved profile photo
-    if (savedPhoto) {
-      setProfilePhotoPreview(savedPhoto);
+    // Load saved profile photo from server
+    try {
+      const serverPhoto = await settingsService.getProfilePhoto();
+      if (serverPhoto) {
+        setProfilePhotoPreview(serverPhoto);
+      }
+    } catch (error) {
+      console.error("Error loading profile photo in settings:", error);
     }
+  };
 
-    // Apply the saved theme on load
-    settingsService.applyTheme(appPrefs.theme);
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+
+    // Update preferences
+    const updatedPreferences = {
+      ...preferences,
+      theme: newTheme,
+    };
+    setPreferences(updatedPreferences);
+
+    // Save to localStorage
+    settingsService.saveAppPreferences(updatedPreferences);
+
+    // Apply theme immediately
+    settingsService.applyTheme(newTheme);
   };
 
   const loadCoordinatorSettings = () => {
@@ -270,13 +276,8 @@ const CoordinatorSettingsTab = ({
   };
 
   const handleSavePreferences = () => {
-    const updatedPreferences = {
-      ...preferences,
-      theme: (darkMode ? "dark" : "light") as "light" | "dark" | "auto",
-    };
-    settingsService.saveAppPreferences(updatedPreferences);
-    settingsService.applyTheme(updatedPreferences.theme);
-    setPreferences(updatedPreferences);
+    settingsService.saveAppPreferences(preferences);
+    settingsService.applyTheme(preferences.theme);
     setSaveSuccess(true);
     toast.success("Preferences saved");
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -292,10 +293,23 @@ const CoordinatorSettingsTab = ({
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const handleRemovePhoto = () => {
-    setProfilePhotoPreview(null);
-    settingsService.removeProfilePhoto();
-    toast.success("Profile photo removed successfully!");
+  const handleRemovePhoto = async () => {
+    try {
+      await settingsService.removeProfilePhoto();
+      setProfilePhotoPreview(null);
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("profilePhotoUpdated", {
+          detail: { photoUrl: null },
+        })
+      );
+
+      toast.success("Profile photo removed successfully!");
+    } catch (error) {
+      console.error("Error removing photo:", error);
+      toast.error("Failed to remove profile photo");
+    }
   };
 
   const handlePhotoUpload = async (
@@ -321,28 +335,16 @@ const CoordinatorSettingsTab = ({
     try {
       setUploadingPhoto(true);
 
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setProfilePhotoPreview(previewUrl);
+      // Upload to server
+      const photoUrl = await settingsService.uploadProfilePhoto(file);
+      setProfilePhotoPreview(photoUrl);
 
-      // Convert file to base64 for localStorage storage
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        if (base64String) {
-          // Save to localStorage
-          settingsService.saveProfilePhoto(base64String);
-        }
-      };
-      reader.readAsDataURL(file);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("profilePhoto", file);
-
-      // Here you would typically upload to your server
-      // For now, we'll simulate the upload
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("profilePhotoUpdated", {
+          detail: { photoUrl },
+        })
+      );
 
       toast.success("Profile photo updated successfully!");
 
@@ -382,32 +384,13 @@ const CoordinatorSettingsTab = ({
     toast.success("Settings exported successfully!");
   };
 
-  const handleSystemMaintenance = () => {
-    if (
-      confirm(
-        "Are you sure you want to toggle system maintenance mode? This will affect all users."
-      )
-    ) {
-      setCoordinatorSettings((prev) => ({
-        ...prev,
-        systemMaintenanceMode: !prev.systemMaintenanceMode,
-      }));
-      toast.success(
-        `System maintenance mode ${
-          coordinatorSettings.systemMaintenanceMode ? "disabled" : "enabled"
-        }`
-      );
-    }
-  };
-
   const sections = [
     { id: "profile", label: "Profile Information", icon: User },
     { id: "security", label: "Security", icon: Lock },
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "appearance", label: "Appearance", icon: Moon },
+    { id: "appearance", label: "Appearance", icon: Palette },
     { id: "preferences", label: "Preferences", icon: Globe },
     { id: "coordinator", label: "Coordinator Settings", icon: Settings },
-    { id: "system", label: "System Management", icon: Database },
     { id: "help", label: "Help & Support", icon: HelpCircle },
   ];
 
@@ -981,7 +964,7 @@ const CoordinatorSettingsTab = ({
               </div>
             )}
 
-            {/* Appearance - Same as Student */}
+            {/* Appearance Tab */}
             {activeSection === "appearance" && (
               <div className="space-y-6">
                 <div>
@@ -989,39 +972,108 @@ const CoordinatorSettingsTab = ({
                     Appearance Settings
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Customize how the portal looks
+                    Customize your interface appearance
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">
-                      Theme
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => setDarkMode(false)}
-                        className={`p-4 border-2 rounded-xl flex items-center justify-center space-x-2 transition-colors ${
-                          !darkMode
-                            ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                      >
-                        <Sun className="w-5 h-5" />
-                        <span className="font-medium">Light Mode</span>
-                      </button>
-                      <button
-                        onClick={() => setDarkMode(true)}
-                        className={`p-4 border-2 rounded-xl flex items-center justify-center space-x-2 transition-colors ${
-                          darkMode
-                            ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                      >
-                        <Moon className="w-5 h-5" />
-                        <span className="font-medium">Dark Mode</span>
-                      </button>
-                    </div>
+                {/* Theme Settings */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Theme Settings
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Choose your preferred theme appearance
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Light Theme */}
+                    <button
+                      onClick={() => handleThemeChange("light")}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "light"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
+                          <Sun className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            Light
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Clean and bright interface
+                          </p>
+                        </div>
+                      </div>
+                      {theme === "light" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Dark Theme */}
+                    <button
+                      onClick={() => handleThemeChange("dark")}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "dark"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
+                          <Moon className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            Dark
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Easy on the eyes
+                          </p>
+                        </div>
+                      </div>
+                      {theme === "dark" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
+
+                    {/* System Theme */}
+                    <button
+                      onClick={() => handleThemeChange("system")}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "system"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                          <Monitor className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            System
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Follows system preference
+                          </p>
+                        </div>
+                      </div>
+                      {theme === "system" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -1354,176 +1406,6 @@ const CoordinatorSettingsTab = ({
                     <Save className="w-4 h-4" />
                     <span>Save Coordinator Settings</span>
                   </button>
-                </div>
-              </div>
-            )}
-
-            {/* System Management - NEW */}
-            {activeSection === "system" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    System Management
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Advanced system controls and maintenance
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  {/* System Status */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-green-600" />
-                      System Status
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            Database
-                          </span>
-                        </div>
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Online
-                        </p>
-                      </div>
-
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            API Server
-                          </span>
-                        </div>
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Running
-                        </p>
-                      </div>
-
-                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                            Storage
-                          </span>
-                        </div>
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                          75% Used
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Maintenance Mode */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Settings className="w-5 h-5 mr-2 text-orange-600" />
-                      Maintenance Control
-                    </h3>
-
-                    <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                          System Maintenance Mode
-                        </p>
-                        <p className="text-xs text-red-600 dark:text-red-400">
-                          {coordinatorSettings.systemMaintenanceMode
-                            ? "System is currently in maintenance mode"
-                            : "System is running normally"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleSystemMaintenance}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          coordinatorSettings.systemMaintenanceMode
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-red-600 hover:bg-red-700 text-white"
-                        }`}
-                      >
-                        {coordinatorSettings.systemMaintenanceMode
-                          ? "Disable"
-                          : "Enable"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Data Management */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Download className="w-5 h-5 mr-2 text-blue-600" />
-                      Data Management
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button
-                        onClick={handleExportData}
-                        className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow"
-                      >
-                        <Download className="w-5 h-5 text-blue-600" />
-                        <div className="text-left">
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                            Export Settings
-                          </p>
-                          <p className="text-xs text-blue-600 dark:text-blue-400">
-                            Download your configuration
-                          </p>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          toast("Import functionality coming soon")
-                        }
-                        className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
-                      >
-                        <Upload className="w-5 h-5 text-green-600" />
-                        <div className="text-left">
-                          <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                            Import Settings
-                          </p>
-                          <p className="text-xs text-green-600 dark:text-green-400">
-                            Upload configuration file
-                          </p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* System Information */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-gray-600" />
-                      System Information
-                    </h3>
-
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <p>
-                        <span className="font-medium">Version:</span> 1.0.0
-                      </p>
-                      <p>
-                        <span className="font-medium">Last Updated:</span>{" "}
-                        October 2024
-                      </p>
-                      <p>
-                        <span className="font-medium">Database Size:</span> 2.3
-                        GB
-                      </p>
-                      <p>
-                        <span className="font-medium">Active Users:</span> 156
-                      </p>
-                      <p>
-                        <span className="font-medium">Total Documents:</span>{" "}
-                        1,247
-                      </p>
-                      <p>
-                        <span className="font-medium">System Uptime:</span> 15
-                        days, 8 hours
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}

@@ -76,14 +76,14 @@ export interface InstructorDocument {
 }
 
 class InstructorService {
-  // Get all students (since there's only one instructor for Computer Engineering)
+  // Get students assigned to the current instructor
   async getAssignedStudents(): Promise<InstructorStudent[]> {
     try {
-      console.log('Fetching all students for instructor...');
+      console.log('Fetching assigned students for current instructor...');
       
-      // Fetch all students since there's only one instructor for Computer Engineering
-      const response = await api.get('/students');
-      console.log('All students API response:', response.data);
+      // Fetch only students assigned to the current instructor
+      const response = await api.get('/students/my-assigned');
+      console.log('Assigned students API response:', response.data);
       
       const students = response.data.students || [];
       
@@ -111,7 +111,7 @@ class InstructorService {
         section: student.section || '',
       }));
     } catch (error) {
-      console.error('Error fetching all students:', error);
+      console.error('Error fetching assigned students:', error);
       // Return empty array if API fails
       return [];
     }
@@ -190,13 +190,14 @@ class InstructorService {
       // Get assigned students
       const students = await this.getAssignedStudents();
       
-      // Fetch recent document submissions
+      // Fetch recent document submissions (backend will automatically filter by instructor's assigned students)
       try {
-        const documentsResponse = await api.get('/documents');
-        const recentDocuments = documentsResponse.data.documents?.slice(0, 10) || [];
+        const documentsResponse = await api.get('/documents', {
+          params: { limit: 10 }
+        });
+        const recentDocuments = documentsResponse.data.documents || [];
         
         for (const doc of recentDocuments) {
-          // Only include documents from assigned students
           const student = students.find(s => s.id === doc.studentId);
           if (student) {
             activities.push({
@@ -212,13 +213,20 @@ class InstructorService {
         console.warn('Could not fetch documents for activities:', docError);
       }
       
-      // Fetch recent attendance logs
+      // Fetch recent attendance logs and filter by assigned students
       try {
-        const attendanceResponse = await api.get('/attendance');
-        const recentAttendance = attendanceResponse.data.logs?.slice(0, 10) || [];
+        const attendanceResponse = await api.get('/attendance', {
+          params: { limit: 50 } // Get more to filter by assigned students
+        });
+        const allAttendance = attendanceResponse.data.logs || [];
+        
+        // Filter to only include attendance from assigned students
+        const assignedStudentIds = students.map(s => s.id);
+        const recentAttendance = allAttendance
+          .filter((log: any) => assignedStudentIds.includes(log.studentId))
+          .slice(0, 10);
         
         for (const log of recentAttendance) {
-          // Only include attendance from assigned students
           const student = students.find(s => s.id === log.studentId);
           if (student) {
             const action = log.timeIn && log.timeOut 
@@ -521,12 +529,23 @@ class InstructorService {
     }
   }
 
-  // Get all documents for review (since instructor handles all Computer Engineering students)
+  // Get documents for review from assigned students only
   async getDocumentsForReview(): Promise<InstructorDocument[]> {
     try {
-      console.log('Fetching all documents for instructor review...');
+      console.log('Fetching documents for instructor review from assigned students...');
+      
+      // First get assigned students
+      const assignedStudents = await this.getAssignedStudents();
+      const assignedStudentIds = assignedStudents.map(s => s.id);
+      
+      if (assignedStudentIds.length === 0) {
+        console.log('No assigned students found, returning empty documents list');
+        return [];
+      }
+      
+      // Fetch documents (backend will automatically filter by instructor's assigned students)
       const response = await api.get('/documents');
-      console.log('All documents API response:', response.data);
+      console.log('Documents for assigned students API response:', response.data);
       
       const documents = response.data.documents || [];
       
@@ -549,7 +568,7 @@ class InstructorService {
         reviewedDate: doc.reviewedAt ? this.formatTimestamp(doc.reviewedAt) : undefined,
       }));
     } catch (error) {
-      console.error('Error fetching all documents for review:', error);
+      console.error('Error fetching documents for review:', error);
       // Return empty array if API fails
       return [];
     }

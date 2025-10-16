@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
+import { instructorService } from "../../services/instructorService";
 import toast from "react-hot-toast";
 
 const AdminUserManagement = () => {
@@ -27,7 +28,12 @@ const AdminUserManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<AdminUser | null>(
+    null
+  );
+  const [selectedInstructor, setSelectedInstructor] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
@@ -263,6 +269,31 @@ const AdminUserManagement = () => {
 
       toast.error(errorMsg);
       alert(`Error deleting user: ${errorMsg}`);
+    }
+  };
+
+  const handleAssignStudent = (student: AdminUser) => {
+    setSelectedStudent(student);
+    setShowAssignModal(true);
+  };
+
+  const handleConfirmAssignment = async () => {
+    if (!selectedStudent || !selectedInstructor) return;
+
+    try {
+      await instructorService.assignStudentToInstructor(
+        selectedStudent.id,
+        selectedInstructor
+      );
+      toast.success(
+        `Student ${selectedStudent.name} assigned to instructor successfully`
+      );
+      setShowAssignModal(false);
+      setSelectedStudent(null);
+      setSelectedInstructor("");
+      await refreshUsersList();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to assign student to instructor");
     }
   };
 
@@ -547,6 +578,15 @@ const AdminUserManagement = () => {
                     >
                       <Edit className="w-4 h-4" />
                     </button>
+                    {user.role === "STUDENT" && (
+                      <button
+                        onClick={() => handleAssignStudent(user)}
+                        className="text-green-600 hover:text-green-900 mr-4"
+                        title="Assign to Instructor"
+                      >
+                        <UserCheck className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => openDeleteModal(user)}
                       className="text-red-600 hover:text-red-900"
@@ -990,6 +1030,65 @@ const AdminUserManagement = () => {
             >
               Got it!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment Modal */}
+      {showAssignModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
+              <UserCheck className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
+              Assign Student to Instructor
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
+              Assign{" "}
+              <span className="font-semibold">{selectedStudent.name}</span> to
+              an instructor
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Instructor
+              </label>
+              <select
+                value={selectedInstructor}
+                onChange={(e) => setSelectedInstructor(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="">Choose an instructor...</option>
+                {users
+                  .filter((user) => user.role === "INSTRUCTOR" && user.active)
+                  .map((instructor) => (
+                    <option key={instructor.id} value={instructor.id}>
+                      {instructor.name} ({instructor.email})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setSelectedStudent(null);
+                  setSelectedInstructor("");
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAssignment}
+                disabled={!selectedInstructor}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                Assign Student
+              </button>
+            </div>
           </div>
         </div>
       )}

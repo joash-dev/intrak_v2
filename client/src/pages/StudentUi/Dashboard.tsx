@@ -485,7 +485,7 @@ const StudentDashboard = () => {
           console.log("No profile photo found");
         }
       } catch (error) {
-        console.error("Error loading profile photo from server:", error);
+        console.error("Error loading profile photo:", error);
       }
     } catch (err: any) {
       console.error("Error fetching dashboard data:", err);
@@ -542,10 +542,7 @@ const StudentDashboard = () => {
           console.log("Initial load - No profile photo found");
         }
       } catch (error) {
-        console.error(
-          "Initial load - Error loading profile photo from server:",
-          error
-        );
+        console.error("Initial load - Error loading profile photo:", error);
       }
     };
     loadProfilePhoto();

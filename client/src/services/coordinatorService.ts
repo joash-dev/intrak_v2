@@ -1,4 +1,6 @@
 import api from './api';
+import { companyService } from './companyService';
+import type { Company, MOA, MOAStats } from './companyService';
 
 // Types for coordinator data
 export interface CoordinatorStats {
@@ -257,6 +259,28 @@ class CoordinatorService {
       return allStudents.filter(student => student.status === status);
     } catch (error) {
       console.error('Error fetching students by status:', error);
+      return [];
+    }
+  }
+
+  // Get all instructors
+  async getInstructors(): Promise<any[]> {
+    try {
+      console.log('Fetching instructors from API...');
+      const response = await api.get('/users?role=INSTRUCTOR');
+      console.log('Instructors API response:', response.data);
+      const instructors = response.data.users || [];
+      
+      // Transform the API response to include student count
+      return instructors.map((instructor: any) => ({
+        id: instructor.id,
+        name: instructor.name,
+        email: instructor.email,
+        studentsAssigned: instructor.studentsAssigned || 0,
+        active: instructor.active
+      }));
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
       return [];
     }
   }
@@ -543,6 +567,106 @@ class CoordinatorService {
       console.error('Error unassigning student from instructor:', error);
       return false;
     }
+  }
+
+  // =============================================
+  // COMPANY MANAGEMENT METHODS
+  // =============================================
+
+  // Get all companies
+  async getAllCompanies(): Promise<Company[]> {
+    return companyService.getAllCompanies();
+  }
+
+  // Get company by ID
+  async getCompanyById(id: string): Promise<Company> {
+    return companyService.getCompanyById(id);
+  }
+
+  // Create new company
+  async createCompany(companyData: Partial<Company>): Promise<Company> {
+    return companyService.createCompany(companyData);
+  }
+
+  // Update company
+  async updateCompany(id: string, companyData: Partial<Company>): Promise<Company> {
+    return companyService.updateCompany(id, companyData);
+  }
+
+  // Delete company
+  async deleteCompany(id: string): Promise<void> {
+    return companyService.deleteCompany(id);
+  }
+
+  // Upload MOA document
+  async uploadMOA(formData: FormData): Promise<MOA> {
+    return companyService.uploadMOA(formData);
+  }
+
+  // =============================================
+  // MOA MANAGEMENT METHODS
+  // =============================================
+
+  // Get all MOAs
+  async getAllMOAs(filters?: {
+    status?: string;
+    companyId?: string;
+    expiring?: boolean;
+  }): Promise<MOA[]> {
+    return companyService.getAllMOAs(filters);
+  }
+
+  // Get MOA by ID
+  async getMOAById(id: string): Promise<MOA> {
+    return companyService.getMOAById(id);
+  }
+
+  // Note: MOA creation and update are handled through the document upload system
+
+  // Approve MOA
+  async approveMOA(id: string, notes?: string): Promise<MOA> {
+    return companyService.approveMOA(id, notes);
+  }
+
+  // Reject MOA
+  async rejectMOA(id: string, reason: string): Promise<MOA> {
+    return companyService.rejectMOA(id, reason);
+  }
+
+  // Note: MOA deletion is handled through the document management system
+
+  // Get MOA statistics
+  async getMOAStats(): Promise<MOAStats> {
+    return companyService.getMOAStats();
+  }
+
+  // =============================================
+  // UTILITY METHODS
+  // =============================================
+
+  // Check if MOA is expiring soon
+  isExpiringSoon(endDate: string): boolean {
+    return companyService.isExpiringSoon(endDate);
+  }
+
+  // Check if MOA is expired
+  isExpired(endDate: string): boolean {
+    return companyService.isExpired(endDate);
+  }
+
+  // Get days until expiry
+  getDaysUntilExpiry(endDate: string): number {
+    return companyService.getDaysUntilExpiry(endDate);
+  }
+
+  // Format date for display
+  formatDate(dateString: string): string {
+    return companyService.formatDate(dateString);
+  }
+
+  // Get status info
+  getStatusInfo(status: string) {
+    return companyService.getStatusInfo(status);
   }
 }
 
