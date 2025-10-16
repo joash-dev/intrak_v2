@@ -100,9 +100,14 @@ app.use('/api/users/profile-photo', (req, res, next) => {
   next();
 });
 
-// Health check (no auth required)
+// Health check endpoint (no auth required)
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Favicon handler
@@ -116,16 +121,6 @@ app.get('/api/test-auth', authenticate, (req: AuthRequest, res) => {
     message: '✅ Authentication successful!',
     user: req.user,
     timestamp: new Date().toISOString()
-  });
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
   });
 });
 

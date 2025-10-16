@@ -379,9 +379,13 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Delete file from filesystem
-    const fs = require('fs');
     if (fs.existsSync(document.filepath)) {
-      fs.unlinkSync(document.filepath);
+      try {
+        fs.unlinkSync(document.filepath);
+      } catch (error) {
+        console.error('Failed to delete file from filesystem:', error);
+        // Continue with database deletion even if file deletion fails
+      }
     }
 
     await prisma.document.delete({ where: { id } });

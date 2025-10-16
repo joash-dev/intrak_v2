@@ -53,8 +53,20 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
   }
 
   try {
+    // Only scan text-based files for malicious content
+    const textBasedMimes = ['text/', 'application/json', 'application/xml', 'application/xhtml'];
+    const isTextFile = textBasedMimes.some(mime => req.file!.mimetype.startsWith(mime));
+    
+    if (!isTextFile) {
+      // Skip content scanning for binary files (images, PDFs, etc.)
+      return next();
+    }
+
     const fileBuffer = fs.readFileSync(req.file.path);
-    const fileContent = fileBuffer.toString('utf8', 0, Math.min(1024, fileBuffer.length)); // Read first 1KB
+    
+    // Only scan the first 1KB for performance
+    const scanLength = Math.min(1024, fileBuffer.length);
+    const fileContent = fileBuffer.toString('utf8', 0, scanLength);
     
     // Check for potentially malicious content
     const maliciousPatterns = [
@@ -83,7 +95,8 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
     next();
   } catch (error) {
     console.error('File content scan error:', error);
-    next(); // Continue if scan fails
+    // For binary files or scan errors, continue processing
+    next();
   }
 };
 
