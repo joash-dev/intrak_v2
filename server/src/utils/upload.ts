@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
       cb(null, dir);
     } catch (error) {
       console.error('Upload destination error:', error);
-      cb(error, '');
+      cb(error as Error, '');
     }
   },
   filename: (req, file, cb) => {

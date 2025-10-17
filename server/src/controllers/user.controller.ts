@@ -209,7 +209,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
       // 3. Delete documents uploaded by this user
       await tx.document.deleteMany({
-        where: { uploadedBy: id }
+        where: { uploadedById: id }
       });
 
       // 4. Delete evaluations given by this user
@@ -219,12 +219,12 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
       // 5. Delete announcements created by this user
       await tx.announcement.deleteMany({
-        where: { createdBy: id }
+        where: { createdById: id }
       });
 
       // 6. Delete document templates uploaded by this user
       await tx.documentTemplate.deleteMany({
-        where: { uploadedBy: id }
+        where: { uploadedById: id }
       });
 
       // 7. Delete admin settings if user is admin

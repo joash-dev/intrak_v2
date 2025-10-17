@@ -91,8 +91,7 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
 export const uploadRateLimit = multer({
   limits: {
     files: 1, // Only one file per request
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'), // 10MB
-    filesize: parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
+    fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
   },
   fileFilter: (req, file, cb) => {
     // Additional file filter for security
@@ -102,7 +101,7 @@ export const uploadRateLimit = multer({
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type'), false);
+      cb(new Error('Invalid file type') as any, false);
     }
   }
 });

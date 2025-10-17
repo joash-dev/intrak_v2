@@ -763,11 +763,8 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
       data: {
         companyId: companyId,
         supervisorName: supervisorName,
-        supervisorEmail: supervisorEmail,
-        supervisorPhone: supervisorPhone || null,
         startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        status: 'PENDING_APPROVAL' // Set status to pending approval
+        endDate: new Date(endDate)
       },
       include: {
         user: { select: { name: true, email: true } },
