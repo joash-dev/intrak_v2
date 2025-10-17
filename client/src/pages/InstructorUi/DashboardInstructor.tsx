@@ -295,24 +295,6 @@ const InstructorDashboard = ({
         </div>
       </div>
 
-      {/* At Risk Students Alert */}
-      {stats.atRiskStudents > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-4">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-red-900 dark:text-red-100 text-sm">
-                BSCOE Students Need Attention
-              </h4>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                {stats.atRiskStudents} BSCOE student(s) have low attendance or
-                performance. Please review and provide guidance.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* System Alerts */}
       {alerts.length > 0 && (
         <div className="space-y-3">
@@ -387,69 +369,6 @@ const InstructorDashboard = ({
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Recent Announcements */}
-      {announcements.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Bell className="w-5 h-5 mr-2 text-orange-600" />
-            Recent Announcements
-          </h3>
-          <div className="space-y-3">
-            {announcements.slice(0, 3).map((announcement) => (
-              <div
-                key={announcement.id}
-                className="p-4 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded-r-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors cursor-pointer"
-                onClick={() => {
-                  // Track view when announcement is clicked
-                  if (onTrackAnnouncementView) {
-                    onTrackAnnouncementView(announcement.id);
-                  }
-                }}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {announcement.title}
-                      </p>
-                      {announcement.type === "urgent" && (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 text-xs font-medium rounded-full">
-                          URGENT
-                        </span>
-                      )}
-                      {announcement.type === "warning" && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 text-xs font-medium rounded-full">
-                          WARNING
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      {announcement.content}
-                    </p>
-                    {announcement.createdBy && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        By {announcement.createdBy.name} (
-                        {announcement.createdBy.role})
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
-                    {new Date(announcement.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {announcements.length > 3 && (
-            <div className="mt-4 text-center">
-              <button className="text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium">
-                View All Announcements ({announcements.length})
-              </button>
-            </div>
-          )}
         </div>
       )}
 
@@ -848,43 +767,50 @@ const InstructorDashboard = ({
       {/* Student Details Modal */}
       {showStudentModal && selectedStudent && (
         <div
-          className="fixed inset-0 bg-black/50 z-[99999] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4"
           onClick={() => setShowStudentModal(false)}
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             width: "100vw",
             height: "100vh",
+            zIndex: 99999,
+            margin: "0",
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 dark:border-gray-700 relative z-[100000] animate-in zoom-in-95 duration-300"
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in zoom-in-95 duration-200 flex flex-col"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              maxHeight: "90vh",
+              margin: "20px",
+            }}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {/* Fixed Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Student Details
               </h3>
               <button
                 onClick={() => setShowStudentModal(false)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            {/* Scrollable Content */}
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Student Header */}
-              <div className="flex items-start space-x-6">
+              <div className="flex items-start space-x-4">
                 <div className="relative">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                     {selectedStudent.avatar}
                   </div>
                   <div
-                    className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white dark:border-gray-800 ${
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${
                       selectedStudent.status === "completed"
                         ? "bg-green-500"
                         : selectedStudent.status === "at_risk"
@@ -894,10 +820,10 @@ const InstructorDashboard = ({
                   ></div>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                     {selectedStudent.name}
                   </h4>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     {selectedStudent.studentId} • {selectedStudent.program}
                   </p>
                   <div className="flex items-center space-x-4">
@@ -919,23 +845,23 @@ const InstructorDashboard = ({
               </div>
 
               {/* Progress Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="text-sm font-semibold text-blue-700 dark:text-blue-300">
                       Attendance Rate
                     </h5>
-                    <Clock className="w-6 h-6 text-blue-500" />
+                    <Clock className="w-5 h-5 text-blue-500" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                      <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                         {selectedStudent.attendanceRate}%
                       </span>
                     </div>
-                    <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-3">
+                    <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
                       <div
-                        className={`h-3 rounded-full transition-all duration-500 ${
+                        className={`h-2 rounded-full transition-all duration-500 ${
                           selectedStudent.attendanceRate >= 90
                             ? "bg-gradient-to-r from-green-500 to-green-600"
                             : selectedStudent.attendanceRate >= 75
@@ -948,25 +874,25 @@ const InstructorDashboard = ({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-lg font-semibold text-green-700 dark:text-green-300">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="text-sm font-semibold text-green-700 dark:text-green-300">
                       Hours Completed
                     </h5>
-                    <Activity className="w-6 h-6 text-green-500" />
+                    <Activity className="w-5 h-5 text-green-500" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold text-green-900 dark:text-green-100">
+                      <span className="text-2xl font-bold text-green-900 dark:text-green-100">
                         {selectedStudent.hoursCompleted}
                       </span>
                       <span className="text-sm text-green-600 dark:text-green-400">
                         / {selectedStudent.requiredHours}
                       </span>
                     </div>
-                    <div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-3">
+                    <div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
                       <div
-                        className="h-3 rounded-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
                         style={{
                           width: `${Math.min(
                             (selectedStudent.hoursCompleted /
@@ -980,25 +906,25 @@ const InstructorDashboard = ({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h5 className="text-lg font-semibold text-purple-700 dark:text-purple-300">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
                       Tasks Completed
                     </h5>
-                    <Award className="w-6 h-6 text-purple-500" />
+                    <Award className="w-5 h-5 text-purple-500" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold text-purple-900 dark:text-purple-100">
+                      <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
                         {selectedStudent.tasksCompleted}
                       </span>
                       <span className="text-sm text-purple-600 dark:text-purple-400">
                         / {selectedStudent.totalTasks}
                       </span>
                     </div>
-                    <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-3">
+                    <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
                       <div
-                        className="h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
+                        className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
                         style={{
                           width: `${Math.min(
                             (selectedStudent.tasksCompleted /

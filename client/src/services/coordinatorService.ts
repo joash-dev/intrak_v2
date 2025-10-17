@@ -48,6 +48,10 @@ export interface CoordinatorStudent {
   supervisorEmail?: string;
   startDate?: string;
   endDate?: string;
+  // Instructor information
+  instructorId?: string | null;
+  instructorName?: string | null;
+  instructorEmail?: string | null;
 }
 
 export interface CoordinatorActivity {
@@ -105,6 +109,10 @@ class CoordinatorService {
         supervisorEmail: '', // Not available in current API
         startDate: student.startDate || '',
         endDate: student.endDate || '',
+        // Add instructor information
+        instructorId: student.instructor?.id || null,
+        instructorName: student.instructor?.name || null,
+        instructorEmail: student.instructor?.email || null,
       }));
     } catch (error) {
       console.error('Error fetching students:', error);

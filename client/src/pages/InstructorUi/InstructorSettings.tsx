@@ -184,6 +184,16 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
         })
       );
 
+      // Reload profile photo to ensure it's up to date
+      try {
+        const photoUrl = await settingsService.getProfilePhoto();
+        if (photoUrl) {
+          setProfilePhoto(photoUrl);
+        }
+      } catch (photoError) {
+        console.log("No profile photo found");
+      }
+
       setSaveSuccess(true);
       toast.success("Profile updated successfully");
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -214,6 +224,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
       await settingsService.changePassword({
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword,
       });
 
       setSaveSuccess(true);

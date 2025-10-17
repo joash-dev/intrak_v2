@@ -15,6 +15,8 @@ router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);
 router.put('/:id', authorize(['ADMIN', 'INSTRUCTOR', 'STUDENT']), studentController.updateStudent);
 router.patch('/:studentId/instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.assignInstructor);
+router.patch('/bulk-assign-instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.bulkAssignInstructor);
+router.post('/apply-company', authorize(['STUDENT']), studentController.applyToCompany);
 router.delete('/:id', authorize(['ADMIN', 'INSTRUCTOR']), studentController.deleteStudent);
 
 export default router;

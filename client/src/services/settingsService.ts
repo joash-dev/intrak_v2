@@ -27,7 +27,7 @@ export interface AppPreferences {
   language: string;
   dateFormat: string;
   timeFormat: string;
-  theme: 'light' | 'dark' | 'auto';
+  theme: 'light' | 'dark' | 'auto' | 'system';
 }
 
 class SettingsService {
@@ -140,7 +140,7 @@ class SettingsService {
   }
 
   // Apply theme to document
-  applyTheme(theme: 'light' | 'dark' | 'auto'): void {
+  applyTheme(theme: 'light' | 'dark' | 'auto' | 'system'): void {
     const root = document.documentElement;
     
     if (theme === 'dark') {
@@ -148,7 +148,7 @@ class SettingsService {
     } else if (theme === 'light') {
       root.classList.remove('dark');
     } else {
-      // Auto theme based on system preference
+      // Auto/System theme based on system preference
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         root.classList.add('dark');
       } else {

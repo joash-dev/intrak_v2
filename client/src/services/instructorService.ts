@@ -105,7 +105,7 @@ class InstructorService {
         tasksCompleted: student.tasksCompleted || 0,
         totalTasks: student.totalTasks || 20,
         lastEvaluation: student.lastEvaluation || 0,
-        status: student.status || 'active',
+        status: this.mapStudentStatus(student),
         lastActivity: this.formatLastActivity(student.lastActivity),
         year: student.year || 0,
         section: student.section || '',
@@ -366,6 +366,22 @@ class InstructorService {
     }
   }
 
+  // Map student status from detailed status to simple status
+  private mapStudentStatus(student: any): 'active' | 'at_risk' | 'completed' {
+    // If student has completed required hours, mark as completed
+    if (student.completedHours >= student.totalHours) {
+      return 'completed';
+    }
+    
+    // If student has low attendance or performance issues, mark as at_risk
+    if (student.attendanceRate < 70 || student.lastEvaluation < 3.0) {
+      return 'at_risk';
+    }
+    
+    // Otherwise, student is active
+    return 'active';
+  }
+
   // Calculate stats from student data
   private calculateStatsFromStudents(students: InstructorStudent[]): InstructorStats {
     const totalStudents = students.length;
@@ -509,6 +525,23 @@ class InstructorService {
       return true;
     } catch (error) {
       console.error('Error assigning student to instructor:', error);
+      return false;
+    }
+  }
+
+  // Bulk assign students to instructor
+  async bulkAssignStudentsToInstructor(studentIds: string[], instructorId: string): Promise<boolean> {
+    try {
+      console.log('Bulk assigning students to instructor:', { studentIds, instructorId });
+      const response = await api.patch('/students/bulk-assign-instructor', {
+        studentIds,
+        instructorId
+      });
+      
+      console.log('Students bulk assigned successfully:', response.data);
+      return true;
+    } catch (error) {
+      console.error('Error bulk assigning students to instructor:', error);
       return false;
     }
   }
@@ -678,12 +711,6 @@ class InstructorService {
     phone: string;
     program: string;
     year: string;
-    company: string;
-    companyAddress: string;
-    supervisor: string;
-    supervisorEmail: string;
-    startDate: string;
-    endDate: string;
   }): Promise<any> {
     let userId: string | null = null;
     
@@ -731,10 +758,10 @@ class InstructorService {
         program: studentData.program,
         year: yearNumber,
         section: 'A', // Default section
-        companyId: null, // Will be handled separately
-        supervisorName: studentData.supervisor,
-        startDate: studentData.startDate,
-        endDate: studentData.endDate,
+        companyId: null, // Students will choose their company later
+        supervisorName: '', // Students will fill this later
+        startDate: null, // Students will fill this later
+        endDate: null, // Students will fill this later
         totalHours: 240 // Default hours
       });
       

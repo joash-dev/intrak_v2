@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Users,
   Search,
@@ -34,6 +34,15 @@ const AdminUserManagement = () => {
     null
   );
   const [selectedInstructor, setSelectedInstructor] = useState<string>("");
+  const [instructors, setInstructors] = useState<
+    {
+      id: string;
+      name: string;
+      email: string;
+      active: boolean;
+      _count: { studentsAssigned: number };
+    }[]
+  >([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
@@ -60,6 +69,21 @@ const AdminUserManagement = () => {
   const users = usersResponse?.users || [];
   const pagination = usersResponse?.pagination;
 
+  // Fetch instructors for assignment dropdown
+  useEffect(() => {
+    const fetchInstructors = async () => {
+      try {
+        const instructorsData = await adminService.getInstructors();
+        setInstructors(instructorsData);
+      } catch (error) {
+        console.error("Error fetching instructors:", error);
+        toast.error("Failed to load instructors");
+      }
+    };
+
+    fetchInstructors();
+  }, []);
+
   // Create a reliable refresh function
   const refreshUsersList = useCallback(async () => {
     try {
@@ -69,6 +93,14 @@ const AdminUserManagement = () => {
         // Fallback: reload the page
         console.warn("refetchUsers not available, reloading page");
         window.location.reload();
+      }
+
+      // Also refresh instructors list
+      try {
+        const instructorsData = await adminService.getInstructors();
+        setInstructors(instructorsData);
+      } catch (error) {
+        console.error("Error refreshing instructors:", error);
       }
     } catch (error) {
       console.error("Error refreshing users list:", error);
@@ -1060,11 +1092,10 @@ const AdminUserManagement = () => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="">Choose an instructor...</option>
-                {users
-                  .filter((user) => user.role === "INSTRUCTOR" && user.active)
-                  .map((instructor) => (
+                {instructors.map((instructor) => (
                     <option key={instructor.id} value={instructor.id}>
-                      {instructor.name} ({instructor.email})
+                    {instructor.name} ({instructor.email}) -{" "}
+                    {instructor._count.studentsAssigned} students
                     </option>
                   ))}
               </select>

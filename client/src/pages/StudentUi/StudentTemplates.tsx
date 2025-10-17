@@ -15,6 +15,7 @@ const StudentTemplates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
 
   useEffect(() => {
     fetchTemplates();
@@ -53,11 +54,24 @@ const StudentTemplates: React.FC = () => {
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === "all" || template.type === filterType;
+    const matchesCategory =
+      filterCategory === "all" || template.category === filterCategory;
 
-    return matchesSearch && matchesType;
+    return matchesSearch && matchesType && matchesCategory;
   });
 
+  // Group templates by category
+  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
+    const category = template.category || "PRE_DEPLOYMENT";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(template);
+    return acc;
+  }, {} as Record<string, DocumentTemplate[]>);
+
   const documentTypeOptions = templateService.getDocumentTypeOptions();
+  const categoryOptions = templateService.getCategoryOptions();
 
   if (loading) {
     return (
@@ -103,6 +117,20 @@ const StudentTemplates: React.FC = () => {
           </div>
           <div>
             <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All Categories</option>
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
               className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -118,74 +146,119 @@ const StudentTemplates: React.FC = () => {
         </div>
       </div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.length === 0 ? (
-          <div className="col-span-full text-center py-16">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-              No Templates Available
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              {searchQuery || filterType !== "all"
-                ? "Try adjusting your search criteria or filters to find templates."
-                : "No document templates are currently available. Contact your instructor for more information."}
-            </p>
+      {/* Templates by Category */}
+      {Object.keys(groupedTemplates).length === 0 ? (
+        <div className="text-center py-16">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
           </div>
-        ) : (
-          filteredTemplates.map((template) => (
-            <div
-              key={template.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
-            >
-              <div className="flex items-start justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            No Templates Available
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            {searchQuery || filterType !== "all" || filterCategory !== "all"
+              ? "Try adjusting your search criteria or filters to find templates."
+              : "No document templates are currently available. Contact your instructor for more information."}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {Object.entries(groupedTemplates).map(
+            ([category, categoryTemplates]) => (
+              <div key={category} className="space-y-4">
+                {/* Category Header */}
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
-                    <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div
+                    className={`p-2 rounded-lg ${
+                      category === "PRE_DEPLOYMENT"
+                        ? "bg-blue-100 dark:bg-blue-900/20"
+                        : category === "UPON_APPROVAL"
+                        ? "bg-yellow-100 dark:bg-yellow-900/20"
+                        : "bg-green-100 dark:bg-green-900/20"
+                    }`}
+                  >
+                    <FileText
+                      className={`w-5 h-5 ${
+                        category === "PRE_DEPLOYMENT"
+                          ? "text-blue-600 dark:text-blue-400"
+                          : category === "UPON_APPROVAL"
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-green-600 dark:text-green-400"
+                      }`}
+                    />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                      {template.name}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {templateService.getCategoryDisplay(category)}
                     </h3>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
-                      {templateService.getDocumentTypeDisplay(template.type)}
-                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {categoryTemplates.length} template
+                      {categoryTemplates.length !== 1 ? "s" : ""} available
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                    Active
-                  </span>
+
+                {/* Templates Grid for this Category */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {categoryTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
+                            <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {template.name}
+                            </h3>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
+                              {templateService.getDocumentTypeDisplay(
+                                template.type
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                            Active
+                          </span>
+                        </div>
+                      </div>
+
+                      {template.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                          {template.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        <span>
+                          Uploaded by {template.uploadedBy?.name || "Unknown"}
+                        </span>
+                        <span>
+                          {new Date(template.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleDownload(template)}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Template</span>
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {template.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-                  {template.description}
-                </p>
-              )}
-
-              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                <span>
-                  Uploaded by {template.uploadedBy?.name || "Unknown"}
-                </span>
-                <span>{new Date(template.createdAt).toLocaleDateString()}</span>
-              </div>
-
-              <button
-                onClick={() => handleDownload(template)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download Template</span>
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+            )
+          )}
+        </div>
+      )}
 
       {/* Help Section */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
@@ -195,19 +268,56 @@ const StudentTemplates: React.FC = () => {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-              How to Use Templates
+              Document Categories & How to Use Templates
             </h3>
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-              <p>1. Download the template that matches your document type</p>
-              <p>2. Fill out the template with your information</p>
-              <p>
-                3. Upload the completed document through the Document Submission
-                section
-              </p>
-              <p>
-                4. Templates help ensure your documents meet the required format
-                and include all necessary information
-              </p>
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-3">
+              <div>
+                <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">
+                  Document Categories:
+                </p>
+                <ul className="space-y-1 ml-4">
+                  <li>
+                    •{" "}
+                    <span className="font-medium text-blue-600 dark:text-blue-400">
+                      Pre-deployment:
+                    </span>{" "}
+                    Documents needed before starting OJT
+                  </li>
+                  <li>
+                    •{" "}
+                    <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                      Upon Approval:
+                    </span>{" "}
+                    Documents required after OJT approval
+                  </li>
+                  <li>
+                    •{" "}
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      Post-OJT:
+                    </span>{" "}
+                    Documents needed after completing OJT
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">
+                  How to Use Templates:
+                </p>
+                <ul className="space-y-1 ml-4">
+                  <li>
+                    1. Download the template that matches your document type
+                  </li>
+                  <li>2. Fill out the template with your information</li>
+                  <li>
+                    3. Upload the completed document through the Document
+                    Submission section
+                  </li>
+                  <li>
+                    4. Templates help ensure your documents meet the required
+                    format and include all necessary information
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

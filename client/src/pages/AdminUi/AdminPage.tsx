@@ -144,32 +144,41 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
 
       {/* Alerts Section */}
       {data.alerts.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2 text-orange-600" />
+            <AlertTriangle className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
             System Alerts
           </h3>
           <div className="space-y-3">
             {data.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`p-4 rounded-lg border-l-4 ${
+                className={`p-4 rounded-lg border-l-2 bg-gray-50 dark:bg-gray-700/50 ${
                   alert.type === "warning"
-                    ? "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
-                    : "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
+                    ? "border-amber-400 dark:border-amber-500"
+                    : "border-slate-400 dark:border-slate-500"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          alert.type === "warning"
+                            ? "bg-amber-400 dark:bg-amber-500"
+                            : "bg-slate-400 dark:bg-slate-500"
+                        }`}
+                      ></div>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">
                       {alert.title}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">
                       {alert.message}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {alert.createdAt}
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    {new Date(alert.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -179,40 +188,67 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
       )}
 
       {/* Recent Activities */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-          <Activity className="w-5 h-5 mr-2 text-green-600" />
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <Activity className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
           Recent Activities
         </h3>
-        <div className="space-y-3">
+          <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
+            Last 24 hours
+          </span>
+        </div>
+        <div className="space-y-2">
           {data.recentActivities.length > 0 ? (
-            data.recentActivities.slice(0, 5).map((activity) => (
+            data.recentActivities.slice(0, 5).map((activity, index) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                className="group relative p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-md transition-colors duration-150"
               >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white leading-5">
                       {activity.description}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {activity.user} • {activity.timestamp}
-                    </p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {activity.user}
+                          </span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
+                            •
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            {activity.timestamp}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="ml-3 flex-shrink-0">
+                        <span className="inline-flex items-center px-2 py-1 rounded-sm text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                          {activity.type}
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <span className="text-xs px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">
-                  {activity.type}
-                </span>
+                {index < data.recentActivities.slice(0, 5).length - 1 && (
+                  <div className="absolute left-4 top-8 w-px h-4 bg-gray-200 dark:bg-gray-600"></div>
+                )}
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-              <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>No recent activities</p>
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <Activity className="w-6 h-6 opacity-50" />
+              </div>
+              <p className="text-sm font-medium">No recent activities</p>
+              <p className="text-xs mt-1">
+                Activities will appear here as they occur
+              </p>
             </div>
           )}
         </div>

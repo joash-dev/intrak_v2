@@ -23,6 +23,35 @@ enum DocumentType {
   EVALUATION_FORM
   DTR_HARDCOPY
   OTHER
+  // Pre-deployment documents
+  RECORD_FILE
+  APPLICATION_INTERNSHIP
+  MEDICAL_CERTIFICATE
+  CERTIFICATION_UNITS
+  INTERNSHIP_RESUME
+  CONSENT_FORM
+  ENDORSEMENT_LETTER
+  INTERNSHIP_RELEASE
+  // Upon approval documents
+  INTERNSHIP_AGREEMENT
+  TRAINING_AGREEMENT
+  // Post-OJT documents
+  INTERNSHIP_EVALUATION
+  CERTIFICATE_COMPLETION
+  NARRATIVE_REPORT
+  DTR_PHOTOCOPY
+  TIME_FRAMES
+  WEEKLY_REPORTS
+  STUDENT_FEEDBACK
+  SUPERVISOR_FEEDBACK
+  AGENCY_SELF_EVALUATION
+  AGENCY_STUDENT_EVALUATION
+}
+
+enum DocumentCategory {
+  PRE_DEPLOYMENT
+  UPON_APPROVAL
+  POST_OJT
 }
 
 enum DocumentStatus {
@@ -240,17 +269,18 @@ model AuditLog {
 }
 
 model DocumentTemplate {
-  id          String         @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
   description String?
   type        DocumentType
+  category    DocumentCategory
   filename    String
   filepath    String
   mimeType    String
-  isActive    Boolean        @default(true)
+  isActive    Boolean          @default(true)
   uploadedById String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   // Relations
   uploadedBy User @relation("TemplateUploader", fields: [uploadedById], references: [id])

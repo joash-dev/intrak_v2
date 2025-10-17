@@ -72,9 +72,13 @@ const CoordinatorCompanyManagement: React.FC = () => {
   // Filter companies based on search and status
   const filteredCompanies = (companies || []).filter((company) => {
     const matchesSearch =
-      company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.contactPerson.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.contactEmail.toLowerCase().includes(searchQuery.toLowerCase());
+      (company.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (company.contactPerson || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (company.contactEmail || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     // Since companies don't have a status field in the current schema, we'll show all
     return matchesSearch;
   });
@@ -82,7 +86,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
   // Filter MOAs based on search and status
   const filteredMOAs = (moas || []).filter((moa) => {
     const matchesSearch =
-      moa.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (moa.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (moa.student?.company?.name || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());

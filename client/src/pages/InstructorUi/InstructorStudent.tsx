@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Users,
   Search,
@@ -18,11 +18,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { instructorService } from "../../services/instructorService";
+import { useOptimizedData } from "../../hooks/useOptimizedData";
 import {
   calculateAttendanceTrend,
   determineStudentStatus,
 } from "../../utils/attendanceCalculations";
-import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -56,17 +56,9 @@ const InstructorMonitoringTab = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Load students and attendance data
-  useEffect(() => {
-    loadStudents();
-  }, []);
-
-  const loadStudents = async () => {
-    try {
-      setLoading(true);
+  // Optimized data fetching with caching
+  const { data: studentsData, loading: studentsLoading } = useOptimizedData(
+    async () => {
       console.log("Loading students for monitoring...");
 
       // Fetch students from API
@@ -122,15 +114,15 @@ const InstructorMonitoringTab = () => {
         })
       );
 
-      setStudents(transformedStudents);
       console.log("Students loaded:", transformedStudents.length);
-    } catch (error) {
-      console.error("Error loading students:", error);
-      toast.error("Failed to load student data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return transformedStudents;
+    },
+    [],
+    { ttl: 3 * 60 * 1000 } // 3 minutes cache
+  );
+
+  const students = studentsData || [];
+  const loading = studentsLoading;
 
   const studentDetails: StudentDetail = {
     weeklyAttendance: [
@@ -508,18 +500,37 @@ const InstructorMonitoringTab = () => {
 
       {/* Detail Modal */}
       {showDetailModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xl">
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "100vw",
+            height: "100vh",
+            zIndex: 50,
+            margin: "0",
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col"
+            style={{
+              maxHeight: "90vh",
+              margin: "20px",
+            }}
+          >
+            {/* Fixed Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                   {selectedStudent.avatar}
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                     {selectedStudent.name}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {selectedStudent.studentId} • {selectedStudent.company}
                   </p>
                 </div>
@@ -528,127 +539,132 @@ const InstructorMonitoringTab = () => {
                 onClick={() => setShowDetailModal(false)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400"
               >
-                <XCircle className="w-6 h-6" />
+                <XCircle className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {/* Weekly Attendance */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            {/* Scrollable Content */}
+            <div className="p-4 overflow-y-auto flex-1">
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Weekly Attendance */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+                    Weekly Attendance
+                  </h4>
+                  <div className="space-y-3">
+                    {studentDetails.weeklyAttendance.map((week, index) => (
+                      <div key={index}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {week.week}
+                          </span>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {week.rate}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div
+                            className="bg-green-500 h-2 rounded-full"
+                            style={{ width: `${week.rate}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Progress */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
+                    Monthly Hours
+                  </h4>
+                  <div className="space-y-3">
+                    {studentDetails.monthlyProgress.map((month, index) => (
+                      <div key={index}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {month.month}
+                          </span>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {month.hours} hrs
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full"
+                            style={{ width: `${(month.hours / 100) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Task History */}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
-                  Weekly Attendance
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
+                  Recent Tasks
                 </h4>
-                <div className="space-y-3">
-                  {studentDetails.weeklyAttendance.map((week, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {week.week}
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {week.rate}%
+                <div className="space-y-2">
+                  {studentDetails.taskHistory.map((task, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {task.task}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full"
-                          style={{ width: `${week.rate}%` }}
-                        />
+                      <div className="flex items-center space-x-3">
+                        <span className="text-xs text-gray-500">
+                          {task.date}
+                        </span>
+                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
+                          {task.status}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Monthly Progress */}
+              {/* Evaluation History */}
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-                  Monthly Hours
+                  <Award className="w-5 h-5 mr-2 text-yellow-600" />
+                  Evaluation History
                 </h4>
-                <div className="space-y-3">
-                  {studentDetails.monthlyProgress.map((month, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-700 dark:text-gray-300">
-                          {month.month}
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {month.hours} hrs
-                        </span>
+                <div className="space-y-2">
+                  {studentDetails.evaluationHistory.map((evaluation, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Award className="w-4 h-4 text-yellow-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            Rating: {evaluation.rating}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {evaluation.evaluator}
+                          </p>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full"
-                          style={{ width: `${(month.hours / 100) * 100}%` }}
-                        />
-                      </div>
+                      <span className="text-xs text-gray-500 flex items-center space-x-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>{evaluation.date}</span>
+                      </span>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            {/* Task History */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2 text-green-600" />
-                Recent Tasks
-              </h4>
-              <div className="space-y-2">
-                {studentDetails.taskHistory.map((task, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {task.task}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-xs text-gray-500">{task.date}</span>
-                      <span className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
-                        {task.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Evaluation History */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <Award className="w-5 h-5 mr-2 text-yellow-600" />
-                Evaluation History
-              </h4>
-              <div className="space-y-2">
-                {studentDetails.evaluationHistory.map((evaluation, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Award className="w-4 h-4 text-yellow-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          Rating: {evaluation.rating}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {evaluation.evaluator}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-500 flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{evaluation.date}</span>
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>

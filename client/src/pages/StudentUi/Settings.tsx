@@ -101,6 +101,16 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
         ...userProfile,
         name: userProfile.name,
       });
+
+      // Load profile photo from server
+      try {
+        const serverPhoto = await settingsService.getProfilePhoto();
+        if (serverPhoto) {
+          setProfilePhotoPreview(serverPhoto);
+        }
+      } catch (error) {
+        console.error("Error loading profile photo in settings:", error);
+      }
     } catch (error) {
       console.error("Error loading user data:", error);
       toast.error("Failed to load user data");

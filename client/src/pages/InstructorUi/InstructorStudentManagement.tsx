@@ -70,12 +70,6 @@ const InstructorStudentManagement: React.FC = () => {
     phone: "",
     program: "BS Computer Engineering", // Hardcoded for BSCOE students only
     year: "",
-    company: "",
-    companyAddress: "",
-    supervisor: "",
-    supervisorEmail: "",
-    startDate: "",
-    endDate: "",
   });
 
   // Load students data on component mount
@@ -143,37 +137,6 @@ const InstructorStudentManagement: React.FC = () => {
       errors.year = "Year level is required";
     }
 
-    if (!newStudent.company.trim()) {
-      errors.company = "Company name is required";
-    }
-
-    if (!newStudent.companyAddress.trim()) {
-      errors.companyAddress = "Company address is required";
-    }
-
-    if (!newStudent.supervisor.trim()) {
-      errors.supervisor = "Supervisor name is required";
-    }
-
-    if (!newStudent.supervisorEmail.trim()) {
-      errors.supervisorEmail = "Supervisor email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newStudent.supervisorEmail)) {
-      errors.supervisorEmail = "Invalid supervisor email format";
-    }
-
-    if (!newStudent.startDate.trim()) {
-      errors.startDate = "Start date is required";
-    }
-
-    if (!newStudent.endDate.trim()) {
-      errors.endDate = "End date is required";
-    } else if (
-      newStudent.startDate &&
-      new Date(newStudent.endDate) <= new Date(newStudent.startDate)
-    ) {
-      errors.endDate = "End date must be after start date";
-    }
-
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -205,12 +168,6 @@ const InstructorStudentManagement: React.FC = () => {
         phone: newStudent.phone,
         program: newStudent.program,
         year: newStudent.year,
-        company: newStudent.company,
-        companyAddress: newStudent.companyAddress,
-        supervisor: newStudent.supervisor,
-        supervisorEmail: newStudent.supervisorEmail,
-        startDate: newStudent.startDate,
-        endDate: newStudent.endDate,
       });
 
       setCreatedStudentInfo({
@@ -746,160 +703,6 @@ const InstructorStudentManagement: React.FC = () => {
                 {fieldErrors.year && (
                   <p className="text-xs text-red-500 mt-1">
                     {fieldErrors.year}
-                  </p>
-                )}
-              </div>
-
-              {/* Company */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Company *
-                </label>
-                <input
-                  type="text"
-                  value={newStudent.company}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, company: e.target.value })
-                  }
-                  placeholder="ABC Corporation"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.company
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.company && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.company}
-                  </p>
-                )}
-              </div>
-
-              {/* Company Address */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Company Address *
-                </label>
-                <input
-                  type="text"
-                  value={newStudent.companyAddress}
-                  onChange={(e) =>
-                    setNewStudent({
-                      ...newStudent,
-                      companyAddress: e.target.value,
-                    })
-                  }
-                  placeholder="123 Business St, City, Province"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.companyAddress
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.companyAddress && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.companyAddress}
-                  </p>
-                )}
-              </div>
-
-              {/* Supervisor */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Supervisor *
-                </label>
-                <input
-                  type="text"
-                  value={newStudent.supervisor}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, supervisor: e.target.value })
-                  }
-                  placeholder="Maria Santos"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.supervisor
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.supervisor && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.supervisor}
-                  </p>
-                )}
-              </div>
-
-              {/* Supervisor Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Supervisor Email *
-                </label>
-                <input
-                  type="email"
-                  value={newStudent.supervisorEmail}
-                  onChange={(e) =>
-                    setNewStudent({
-                      ...newStudent,
-                      supervisorEmail: e.target.value,
-                    })
-                  }
-                  placeholder="maria.santos@company.com"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.supervisorEmail
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.supervisorEmail && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.supervisorEmail}
-                  </p>
-                )}
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Start Date *
-                </label>
-                <input
-                  type="date"
-                  value={newStudent.startDate}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, startDate: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.startDate
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.startDate && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.startDate}
-                  </p>
-                )}
-              </div>
-
-              {/* End Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  End Date *
-                </label>
-                <input
-                  type="date"
-                  value={newStudent.endDate}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, endDate: e.target.value })
-                  }
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.endDate
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
-                  }`}
-                />
-                {fieldErrors.endDate && (
-                  <p className="text-xs text-red-500 mt-1">
-                    {fieldErrors.endDate}
                   </p>
                 )}
               </div>

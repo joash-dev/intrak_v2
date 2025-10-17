@@ -22,6 +22,9 @@ router.put('/settings', adminController.updateAdminSettings);
 // Admin dashboard routes
 router.get('/dashboard', adminController.getAdminDashboard);
 
+// Admin user management routes
+router.get('/instructors', adminController.getInstructors);
+
 // Profile photo routes (reuse from user controller)
 router.get('/profile-photo', userController.getCurrentUserProfilePhoto);
 router.post('/profile-photo/upload', profilePhotoUpload.single('photo'), userController.uploadProfilePhoto);

@@ -9,11 +9,11 @@ const router = express.Router();
 // COMPANY ROUTES
 // =============================================
 
-// Get all companies (Admin, Coordinator)
-router.get("/", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getAllCompanies);
+// Get all companies (Admin, Coordinator, Student)
+router.get("/", authenticate, authorize(["ADMIN", "COORDINATOR", "STUDENT"]), companyController.getAllCompanies);
 
-// Get company by ID (Admin, Coordinator)
-router.get("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getCompanyById);
+// Get company by ID (Admin, Coordinator, Student)
+router.get("/:id", authenticate, authorize(["ADMIN", "COORDINATOR", "STUDENT"]), companyController.getCompanyById);
 
 // Create new company (Admin, Coordinator)
 router.post("/", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.createCompany);

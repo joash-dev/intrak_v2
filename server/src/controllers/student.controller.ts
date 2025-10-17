@@ -405,6 +405,80 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Bulk assign students to instructor
+export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentIds, instructorId } = req.body;
+
+    if (!Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ message: 'Student IDs array is required' });
+    }
+
+    if (!instructorId) {
+      return res.status(400).json({ message: 'Instructor ID is required' });
+    }
+
+    // Verify instructor exists and has INSTRUCTOR role
+    const instructor = await prisma.user.findFirst({
+      where: { 
+        id: instructorId,
+        role: 'INSTRUCTOR',
+        active: true
+      }
+    });
+
+    if (!instructor) {
+      return res.status(400).json({ message: 'Invalid instructor ID or instructor not found' });
+    }
+
+    // Verify all students exist
+    const students = await prisma.student.findMany({
+      where: { 
+        id: { in: studentIds }
+      },
+      include: {
+        user: { select: { name: true, email: true } }
+      }
+    });
+
+    if (students.length !== studentIds.length) {
+      return res.status(400).json({ message: 'One or more student IDs are invalid' });
+    }
+
+    // Bulk update students
+    const updateResult = await prisma.student.updateMany({
+      where: { 
+        id: { in: studentIds }
+      },
+      data: { instructorId }
+    });
+
+    // Get updated students with instructor info
+    const updatedStudents = await prisma.student.findMany({
+      where: { 
+        id: { in: studentIds }
+      },
+      include: {
+        user: { select: { name: true, email: true } },
+        instructor: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    res.json({ 
+      message: `Successfully assigned ${updateResult.count} students to instructor`,
+      students: updatedStudents,
+      instructor: {
+        id: instructor.id,
+        name: instructor.name,
+        email: instructor.email
+      }
+    });
+  } catch (error: any) {
+    console.error('Error bulk assigning instructor:', error);
+    res.status(500).json({ message: 'Failed to bulk assign instructor', error });
+  }
+};
+
 // Get students assigned to a specific instructor
 export const getStudentsByInstructor = async (req: AuthRequest, res: Response) => {
   try {
@@ -642,5 +716,82 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
   } catch (error) {
     console.error('Error fetching assigned students:', error);
     res.status(500).json({ message: 'Failed to fetch assigned students', error });
+  }
+};
+
+// Apply to company for OJT
+export const applyToCompany = async (req: AuthRequest, res: Response) => {
+  try {
+    const { companyId, supervisorName, supervisorEmail, supervisorPhone, startDate, endDate, motivation, skills, expectations } = req.body;
+    
+    // Validate required fields
+    if (!companyId || !supervisorName || !supervisorEmail || !startDate || !endDate || !motivation) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: companyId, supervisorName, supervisorEmail, startDate, endDate, motivation' 
+      });
+    }
+
+    // Get the student record
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: { user: true }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // Check if company exists
+    const company = await prisma.company.findUnique({
+      where: { id: companyId }
+    });
+
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    // Check if student already has a company assigned
+    if (student.companyId) {
+      return res.status(400).json({ 
+        message: 'Student already has a company assigned. Please contact your instructor to change companies.' 
+      });
+    }
+
+    // Update student with company information
+    const updatedStudent = await prisma.student.update({
+      where: { id: student.id },
+      data: {
+        companyId: companyId,
+        supervisorName: supervisorName,
+        supervisorEmail: supervisorEmail,
+        supervisorPhone: supervisorPhone || null,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        status: 'PENDING_APPROVAL' // Set status to pending approval
+      },
+      include: {
+        user: { select: { name: true, email: true } },
+        company: { select: { name: true, address: true } }
+      }
+    });
+
+    // Log the application for audit purposes
+    await auditLog(req.user!.id, 'STUDENT_COMPANY_APPLICATION', {
+      studentId: student.id,
+      studentName: student.user.name,
+      companyId: companyId,
+      companyName: company.name,
+      supervisorName: supervisorName,
+      startDate: startDate,
+      endDate: endDate
+    }, req);
+
+    res.json({
+      message: 'Application submitted successfully',
+      student: updatedStudent
+    });
+  } catch (error) {
+    console.error('Error applying to company:', error);
+    res.status(500).json({ message: 'Failed to submit application', error });
   }
 };

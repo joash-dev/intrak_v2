@@ -15,13 +15,13 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { name, description, type } = req.body;
-    console.log(`📄 Template upload data: name=${name}, type=${type}`);
+    const { name, description, type, category } = req.body;
+    console.log(`📄 Template upload data: name=${name}, type=${type}, category=${category}`);
 
     // Validate required fields
-    if (!name || !type) {
+    if (!name || !type || !category) {
       return res.status(400).json({ 
-        message: 'Template name and type are required' 
+        message: 'Template name, type, and category are required' 
       });
     }
 
@@ -60,6 +60,7 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
         name: name.trim(),
         description: description?.trim() || null,
         type,
+        category,
         filename: req.file.originalname,
         filepath: filepath,
         mimeType: req.file.mimetype,

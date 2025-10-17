@@ -35,6 +35,8 @@ export interface Student {
   supervisor?: string;
   totalHours?: number;
   completedHours?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Document {
@@ -88,7 +90,6 @@ export const dashboardService = {
   async getStudentDocuments(): Promise<Document[]> {
     try {
       const response = await api.get('/documents');
-      console.log('Documents API response:', response.data);
       return response.data.documents || response.data || [];
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -110,7 +111,6 @@ export const dashboardService = {
   async getStudentEvaluations(): Promise<Evaluation[]> {
     try {
       const response = await api.get('/evaluations');
-      console.log('Evaluations API response:', response.data);
       return response.data.evaluations || response.data || [];
     } catch (error) {
       console.error('Error fetching evaluations:', error);
@@ -122,7 +122,6 @@ export const dashboardService = {
   async getAnnouncements(): Promise<Announcement[]> {
     try {
       const response = await api.get('/announcements');
-      console.log('Announcements API response:', response.data);
       return response.data.announcements || response.data || [];
     } catch (error) {
       console.error('Error fetching announcements:', error);

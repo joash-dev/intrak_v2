@@ -125,6 +125,73 @@ class DocumentService {
     const maxSize = 10 * 1024 * 1024; // 10MB
     return file.size <= maxSize;
   }
+
+  // Get document category based on document type
+  getDocumentCategory(documentType: string): 'PRE_DEPLOYMENT' | 'UPON_APPROVAL' | 'POST_OJT' {
+    const preDeploymentTypes = [
+      'RECORD_FILE',
+      'APPLICATION_FOR_INTERNSHIP',
+      'MEDICAL_CERTIFICATE_PSYCHOLOGICAL_TEST',
+      'CERTIFICATION_OF_UNITS_EARNED',
+      'INTERNSHIP_RESUME',
+      'CONSENT_FORM',
+      'ENDORSEMENT_LETTER',
+      'INTERNSHIP_RELEASE_FORM'
+    ];
+
+    const uponApprovalTypes = [
+      'MEMORANDUM_OF_AGREEMENT',
+      'INTERNSHIP_AGREEMENT',
+      'TRAINING_AGREEMENT_LIABILITY_WAIVER'
+    ];
+
+    const postOjtTypes = [
+      'INTERNSHIP_EVALUATION_FORM',
+      'CERTIFICATE_OF_TRAINING_COMPLETION',
+      'INTERNSHIP_NARRATIVE_REPORT',
+      'PHOTOCOPY_OF_DAILY_TIME_RECORD',
+      'INTERNSHIP_TIME_FRAMES',
+      'PRACTICUM_INTERNSHIP_WEEKLY_REPORTS',
+      'STUDENT_TRAINEES_FEEDBACK_FORM',
+      'TRAINING_SUPERVISORS_FEEDBACK_FORM',
+      'EVALUATION_INSTRUMENT_SELF_RATEE',
+      'EVALUATION_INSTRUMENT_STUDENT'
+    ];
+
+    if (preDeploymentTypes.includes(documentType)) {
+      return 'PRE_DEPLOYMENT';
+    } else if (uponApprovalTypes.includes(documentType)) {
+      return 'UPON_APPROVAL';
+    } else if (postOjtTypes.includes(documentType)) {
+      return 'POST_OJT';
+    } else {
+      return 'PRE_DEPLOYMENT'; // Default fallback
+    }
+  }
+
+  // Get category display name
+  getCategoryDisplay(category: string): string {
+    switch (category) {
+      case 'PRE_DEPLOYMENT':
+        return 'Pre-deployment Documents';
+      case 'UPON_APPROVAL':
+        return 'Upon Approval Documents';
+      case 'POST_OJT':
+        return 'Post-OJT Documents';
+      default:
+        return 'Unknown Category';
+    }
+  }
+
+  // Get category options for filtering
+  getCategoryOptions(): Array<{ value: string; label: string }> {
+    return [
+      { value: 'all', label: 'All Categories' },
+      { value: 'PRE_DEPLOYMENT', label: 'Pre-deployment' },
+      { value: 'UPON_APPROVAL', label: 'Upon Approval' },
+      { value: 'POST_OJT', label: 'Post-OJT' }
+    ];
+  }
 }
 
 export const documentService = new DocumentService();

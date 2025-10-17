@@ -34,10 +34,8 @@ class AttendanceService {
   // Get student's attendance logs
   async getAttendanceLogs(): Promise<AttendanceLog[]> {
     const response = await api.get('/attendance?studentId=me');
-    console.log('Attendance API response:', response.data);
     // Handle different response formats from server
     const logs = response.data.logs || response.data.attendance || response.data || [];
-    console.log('Processed attendance logs:', logs);
     return Array.isArray(logs) ? logs : [];
   }
 

@@ -121,6 +121,16 @@ const CoordinatorSettingsTab = ({
         ...userProfile,
         name: userProfile.name,
       });
+
+      // Load profile photo from server
+      try {
+        const serverPhoto = await settingsService.getProfilePhoto();
+        if (serverPhoto) {
+          setProfilePhotoPreview(serverPhoto);
+        }
+      } catch (error) {
+        console.error("Error loading profile photo in settings:", error);
+      }
     } catch (error) {
       console.error("Error loading user data:", error);
       toast.error("Failed to load user data");
@@ -140,6 +150,9 @@ const CoordinatorSettingsTab = ({
     const savedTheme =
       (appPrefs.theme as "light" | "dark" | "system") || "system";
     setTheme(savedTheme);
+
+    // Apply the theme immediately
+    settingsService.applyTheme(savedTheme === "system" ? "auto" : savedTheme);
 
     // Load saved profile photo from server
     try {
@@ -166,7 +179,7 @@ const CoordinatorSettingsTab = ({
     settingsService.saveAppPreferences(updatedPreferences);
 
     // Apply theme immediately
-    settingsService.applyTheme(newTheme);
+    settingsService.applyTheme(newTheme === "system" ? "auto" : newTheme);
   };
 
   const loadCoordinatorSettings = () => {

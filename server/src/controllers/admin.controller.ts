@@ -362,6 +362,51 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Get all instructors for assignment dropdown
+export const getInstructors = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    // Verify user is admin
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    // Get all active instructors
+    const instructors = await prisma.user.findMany({
+      where: { 
+        role: 'INSTRUCTOR',
+        active: true
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        active: true,
+        _count: {
+          select: {
+            studentsAssigned: true
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({ instructors });
+  } catch (error) {
+    console.error('Get instructors error:', error);
+    res.status(500).json({
+      message: 'Failed to fetch instructors',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
 // Get admin dashboard data
 export const getAdminDashboard = async (req: AuthRequest, res: Response) => {
   try {

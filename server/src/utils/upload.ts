@@ -11,12 +11,13 @@ ensureNASDirectoryExists(uploadPath).catch(console.error);
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      const studentId = req.body.studentId;
-      const dir = path.join(uploadPath, 'documents', studentId);
+      // Create a general documents directory since we can't access studentId here
+      const dir = path.join(uploadPath, 'documents', 'temp');
       
       await ensureNASDirectoryExists(dir);
       cb(null, dir);
     } catch (error) {
+      console.error('Upload destination error:', error);
       cb(error, '');
     }
   },

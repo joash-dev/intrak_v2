@@ -26,6 +26,7 @@ import StudentTemplates from "./StudentTemplates";
 import StudentAttendanceTab from "./StudentAttendance";
 import StudentEvaluationsTab from "./StudentEvaluation";
 import StudentReportsTab from "./StudentReport";
+import StudentCompanySelection from "./StudentCompanySelection";
 import Setting from "./Settings";
 import { dashboardService } from "../../services/dashboardService";
 import type { DashboardData } from "../../services/dashboardService";
@@ -475,14 +476,9 @@ const StudentDashboard = () => {
 
       // Also refresh profile photo from server
       try {
-        console.log("Loading profile photo from server...");
         const serverPhoto = await settingsService.getProfilePhoto();
-        console.log("Server photo response:", serverPhoto);
         if (serverPhoto) {
           setProfilePhoto(serverPhoto);
-          console.log("Profile photo set to:", serverPhoto);
-        } else {
-          console.log("No profile photo found");
         }
       } catch (error) {
         console.error("Error loading profile photo:", error);
@@ -552,14 +548,24 @@ const StudentDashboard = () => {
     }
   }, [isAuthenticated]);
 
-  // Refresh data when returning from settings
+  // Refresh data when returning from settings (with debouncing)
   useEffect(() => {
     if (activeTab !== "settings" && isAuthenticated) {
-      // Small delay to ensure smooth transition
-      const timer = setTimeout(() => {
-        refreshDashboardData(false); // Don't show loading spinner for background refresh
-      }, 100);
-      return () => clearTimeout(timer);
+      // Only refresh if we haven't refreshed recently (debounce)
+      const lastRefresh = localStorage.getItem("lastDashboardRefresh");
+      const now = Date.now();
+      const timeSinceLastRefresh = lastRefresh
+        ? now - parseInt(lastRefresh)
+        : Infinity;
+
+      // Only refresh if it's been more than 30 seconds since last refresh
+      if (timeSinceLastRefresh > 30000) {
+        const timer = setTimeout(() => {
+          refreshDashboardData(false); // Don't show loading spinner for background refresh
+          localStorage.setItem("lastDashboardRefresh", now.toString());
+        }, 100);
+        return () => clearTimeout(timer);
+      }
     }
   }, [activeTab, isAuthenticated]);
 
@@ -686,6 +692,7 @@ const StudentDashboard = () => {
     { id: "overview", label: "Overview", icon: Home },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "templates", label: "Templates", icon: Download },
+    { id: "companies", label: "Companies", icon: Building2 },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "evaluations", label: "Evaluations", icon: Star },
     { id: "reports", label: "Reports", icon: TrendingUp },
@@ -699,6 +706,10 @@ const StudentDashboard = () => {
         return <StudentDocumentsTab onDocumentsChange={refreshDocuments} />;
       case "templates":
         return <StudentTemplates />;
+      case "companies":
+        return (
+          <StudentCompanySelection onCompanyUpdate={refreshDashboardData} />
+        );
       case "attendance":
         return <StudentAttendanceTab />;
       case "evaluations":

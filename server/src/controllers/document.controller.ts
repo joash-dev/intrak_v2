@@ -2,11 +2,12 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { validateNASConnection } from '../config/nas';
+import { validateNASConnection, getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 import path from 'path';
 import fs from 'fs';
 
 const prisma = new PrismaClient();
+const uploadPath = getStoragePath();
 
 export const uploadDocument = async (req: AuthRequest, res: Response) => {
   try {
@@ -25,40 +26,68 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     const { studentId, type } = req.body;
 
     // Validate required fields
-    if (!studentId || !type) {
+    if (!type) {
       return res.status(400).json({ 
-        message: 'Student ID and document type are required' 
+        message: 'Document type is required' 
       });
     }
 
-    // Verify student exists and user has permission
+    let targetStudentId = studentId;
+
+    // If user is a student, automatically use their student ID
+    if (req.user!.role === 'STUDENT') {
+      const currentStudent = await prisma.student.findUnique({
+        where: { userId: req.user!.id }
+      });
+      
+      if (!currentStudent) {
+        return res.status(404).json({ message: 'Student record not found' });
+      }
+      
+      targetStudentId = currentStudent.id;
+    } else if (!studentId) {
+      return res.status(400).json({ 
+        message: 'Student ID is required for non-student users' 
+      });
+    }
+
+    // Verify student exists
     const student = await prisma.student.findUnique({
-      where: { id: studentId }
+      where: { id: targetStudentId }
     });
 
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Check if user is the student or has permission
-    if (req.user!.role === 'STUDENT') {
-      const currentStudent = await prisma.student.findUnique({
-        where: { userId: req.user!.id }
-      });
-      if (currentStudent?.id !== studentId) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-    }
-
     // Calculate file size in MB
     const fileSizeMB = (req.file.size / (1024 * 1024)).toFixed(2);
 
+    // Move file to student-specific directory
+    const studentDir = path.join(uploadPath, 'documents', targetStudentId);
+    await ensureNASDirectoryExists(studentDir);
+    
+    const finalFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
+    const finalPath = path.join(studentDir, finalFilename);
+    
+    // Move file from temp location to final location
+    try {
+      fs.renameSync(req.file.path, finalPath);
+    } catch (moveError) {
+      console.error('Error moving file:', moveError);
+      // Clean up temp file if move fails
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      throw new Error('Failed to save file');
+    }
+
     const document = await prisma.document.create({
       data: {
-        studentId,
+        studentId: targetStudentId,
         type,
         filename: req.file.originalname,
-        filepath: req.file.path,
+        filepath: finalPath,
         mimeType: req.file.mimetype,
         uploadedById: req.user!.id,
         status: 'PENDING'
@@ -68,7 +97,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
       documentId: document.id,
       type,
-      studentId,
+      studentId: targetStudentId,
       filename: req.file.originalname,
       fileSize: fileSizeMB + ' MB'
     }, req);

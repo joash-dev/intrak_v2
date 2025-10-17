@@ -17,6 +17,7 @@ const InstructorTemplateManagement: React.FC = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -29,6 +30,10 @@ const InstructorTemplateManagement: React.FC = () => {
   const [uploadForm, setUploadForm] = useState({
     name: "",
     description: "",
+    category: "PRE_DEPLOYMENT" as
+      | "PRE_DEPLOYMENT"
+      | "UPON_APPROVAL"
+      | "POST_OJT",
     type: "",
     file: null as File | null,
   });
@@ -58,7 +63,12 @@ const InstructorTemplateManagement: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!uploadForm.name || !uploadForm.type || !uploadForm.file) {
+    if (
+      !uploadForm.name ||
+      !uploadForm.category ||
+      !uploadForm.type ||
+      !uploadForm.file
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -68,13 +78,20 @@ const InstructorTemplateManagement: React.FC = () => {
       await templateService.uploadTemplate({
         name: uploadForm.name,
         description: uploadForm.description || undefined,
+        category: uploadForm.category,
         type: uploadForm.type,
         file: uploadForm.file,
       });
 
       toast.success("Template uploaded successfully");
       setShowUploadModal(false);
-      setUploadForm({ name: "", description: "", type: "", file: null });
+      setUploadForm({
+        name: "",
+        description: "",
+        category: "PRE_DEPLOYMENT",
+        type: "",
+        file: null,
+      });
       fetchTemplates();
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to upload template");
@@ -143,14 +160,26 @@ const InstructorTemplateManagement: React.FC = () => {
     const matchesSearch =
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      filterCategory === "all" || template.category === filterCategory;
     const matchesType = filterType === "all" || template.type === filterType;
     const matchesStatus =
       filterStatus === "all" ||
       (filterStatus === "active" && template.isActive) ||
       (filterStatus === "inactive" && !template.isActive);
 
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesCategory && matchesType && matchesStatus;
   });
+
+  // Group templates by category for display
+  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
+    const category = template.category || "OTHER";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(template);
+    return acc;
+  }, {} as Record<string, DocumentTemplate[]>);
 
   const documentTypeOptions = templateService.getDocumentTypeOptions();
 
@@ -207,6 +236,18 @@ const InstructorTemplateManagement: React.FC = () => {
           </div>
           <div className="flex gap-4">
             <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All Categories</option>
+              {templateService.getCategoryOptions().map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
               className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -232,149 +273,203 @@ const InstructorTemplateManagement: React.FC = () => {
       </div>
 
       {/* Templates List */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="space-y-6">
         {filteredTemplates.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                No Templates Found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                {searchQuery ||
+                filterCategory !== "all" ||
+                filterType !== "all" ||
+                filterStatus !== "all"
+                  ? "Try adjusting your search criteria or filters to find templates."
+                  : "Upload your first document template to help students with standardized document formats."}
+              </p>
+              {!searchQuery &&
+                filterCategory === "all" &&
+                filterType === "all" &&
+                filterStatus === "all" && (
+                  <button
+                    onClick={() => setShowUploadModal(true)}
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Upload Your First Template
+                  </button>
+                )}
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-              No Templates Found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              {searchQuery || filterType !== "all" || filterStatus !== "all"
-                ? "Try adjusting your search criteria or filters to find templates."
-                : "Upload your first document template to help students with standardized document formats."}
-            </p>
-            {!searchQuery && filterType === "all" && filterStatus === "all" && (
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Upload Your First Template
-              </button>
-            )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Template Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Type
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Uploaded By
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Created
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                {filteredTemplates.map((template) => (
-                  <tr
-                    key={template.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                          <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {template.name}
-                          </div>
-                          {template.description && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {template.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
-                        {templateService.getDocumentTypeDisplay(template.type)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          template.isActive
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+          Object.entries(groupedTemplates).map(
+            ([category, categoryTemplates]) => (
+              <div
+                key={category}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700"
+              >
+                {/* Category Header */}
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`p-2 rounded-lg ${
+                        category === "PRE_DEPLOYMENT"
+                          ? "bg-blue-100 dark:bg-blue-900/20"
+                          : category === "UPON_APPROVAL"
+                          ? "bg-yellow-100 dark:bg-yellow-900/20"
+                          : "bg-green-100 dark:bg-green-900/20"
+                      }`}
+                    >
+                      <FileText
+                        className={`w-5 h-5 ${
+                          category === "PRE_DEPLOYMENT"
+                            ? "text-blue-600 dark:text-blue-400"
+                            : category === "UPON_APPROVAL"
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-green-600 dark:text-green-400"
                         }`}
-                      >
-                        {template.isActive ? (
-                          <>
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-3 h-3 mr-1" />
-                            Inactive
-                          </>
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                      {template.uploadedBy?.name || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(template.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleDownload(template)}
-                          className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                          title="Download"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {templateService.getCategoryDisplay(category)}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {categoryTemplates.length} template
+                        {categoryTemplates.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Templates Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Template Name
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Type
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Uploaded By
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Created
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {categoryTemplates.map((template) => (
+                        <tr
+                          key={template.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
                         >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(template)}
-                          className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(template)}
-                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {template.name}
+                                </div>
+                                {template.description && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    {template.description}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
+                              {templateService.getDocumentTypeDisplay(
+                                template.type
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                                template.isActive
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+                              }`}
+                            >
+                              {template.isActive ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Active
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Inactive
+                                </>
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {template.uploadedBy?.name || "Unknown"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(template.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleDownload(template)}
+                                className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="Download"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => openEditModal(template)}
+                                className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(template)}
+                                className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          )
         )}
       </div>
 
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Upload Template
+              Upload Document Template
             </h3>
 
             <div className="space-y-4">
@@ -395,6 +490,33 @@ const InstructorTemplateManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Document Category *
+                </label>
+                <select
+                  value={uploadForm.category}
+                  onChange={(e) => {
+                    const category = e.target.value as
+                      | "PRE_DEPLOYMENT"
+                      | "UPON_APPROVAL"
+                      | "POST_OJT";
+                    setUploadForm({
+                      ...uploadForm,
+                      category,
+                      type: "", // Reset type when category changes
+                    });
+                  }}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  {templateService.getCategoryOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Document Type *
                 </label>
                 <select
@@ -405,11 +527,13 @@ const InstructorTemplateManagement: React.FC = () => {
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">Select document type</option>
-                  {documentTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {templateService
+                    .getDocumentTypeOptionsByCategory(uploadForm.category)
+                    .map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -446,6 +570,9 @@ const InstructorTemplateManagement: React.FC = () => {
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Supported formats: PDF, DOC, DOCX, XLS, XLSX
+                </p>
               </div>
             </div>
 
