@@ -934,21 +934,10 @@ const CoordinatorPortal: React.FC = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-white" />
-                </div>
-                <div className="hidden sm:block">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                    OJT Portal
-                  </h2>
-                  <p className="text-xs text-gray-500">Coordinator</p>
-                </div>
-              </div>
             </div>
 
             {/* Right: Notifications + User */}

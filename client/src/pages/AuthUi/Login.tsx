@@ -1,22 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Cpu,
-  Code,
-  Database,
-  Network,
-  Shield,
-  Zap,
   Eye,
   EyeOff,
   Lock,
   Mail,
-  ArrowRight,
   Loader2,
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
 import api from "../../services/api";
+
+// Import Outfit font
+const outfitFont = {
+  fontFamily: "'Outfit', sans-serif",
+};
 
 interface FieldErrors {
   email?: string;
@@ -163,66 +161,44 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Floating Tech Icons */}
-        <div className="absolute top-20 left-10 animate-float">
-          <Cpu className="w-8 h-8 text-purple-400/30" />
-        </div>
-        <div className="absolute top-40 right-20 animate-float-delayed">
-          <Code className="w-6 h-6 text-blue-400/30" />
-        </div>
-        <div className="absolute top-60 left-1/4 animate-float">
-          <Database className="w-10 h-10 text-cyan-400/20" />
-        </div>
-        <div className="absolute bottom-40 right-1/3 animate-float-delayed">
-          <Network className="w-7 h-7 text-purple-400/25" />
-        </div>
-        <div className="absolute bottom-60 left-20 animate-float">
-          <Shield className="w-6 h-6 text-green-400/30" />
-        </div>
-        <div className="absolute top-1/3 right-10 animate-float-delayed">
-          <Zap className="w-5 h-5 text-yellow-400/30" />
-        </div>
+    <>
+      <style>
+        {`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');`}
+      </style>
+      <div className="h-screen flex overflow-hidden">
+        {/* Left Section - Login Form */}
+        <div className="flex-1 flex items-center justify-center bg-white p-8">
+          <div className="w-full max-w-md">
+            {/* Top Gap */}
+            <div className="h-4"></div>
 
-        {/* Circuit Pattern Overlay */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,_white_1px,_transparent_0)] bg-[length:50px_50px] animate-pulse"></div>
-        </div>
+            {/* Logo */}
+            <div className="mb-8 flex justify-center">
+              <img src="/logo.jpg" alt="INTRAK Logo" className="h-32 w-auto" />
+            </div>
 
-        {/* Gradient Orbs */}
-        <div className="absolute top-0 left-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob-delayed"></div>
-        <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob-slow"></div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Login Card */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mb-4 shadow-lg">
-                <Cpu className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                INTRAK
+            {/* Welcome Message */}
+            <div className="text-center mb-6">
+              <h1
+                className="text-4xl font-bold text-gray-900 mb-2"
+                style={outfitFont}
+              >
+                Welcome to INTRAK
               </h1>
-              <p className="text-gray-300 mt-2 text-lg">
-                OJT Management System
-              </p>
-              <p className="text-gray-400 text-sm mt-1">
-                Computer Engineering Department
+              <p className="text-gray-500 text-lg" style={outfitFont}>
+                Please enter your credentials to access the OJT Management
+                System
               </p>
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* General Error Message */}
               {errors.general && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-300 p-4 rounded-xl text-sm backdrop-blur-sm">
+                <div
+                  className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg text-sm"
+                  style={outfitFont}
+                >
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="w-4 h-4" />
                     <span>{errors.general}</span>
@@ -232,7 +208,10 @@ const Login: React.FC = () => {
 
               {/* Email Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">
+                <label
+                  className="block text-sm font-medium text-gray-700"
+                  style={outfitFont}
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -249,21 +228,25 @@ const Login: React.FC = () => {
                     onChange={handleEmailChange}
                     onBlur={handleEmailBlur}
                     required
-                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 backdrop-blur-sm transition-all duration-200 ${
+                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${
                       errors.email
-                        ? "border-red-500/50 focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
-                        : "border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     }`}
-                    placeholder="your.email@university.edu"
+                    placeholder="example@psu.edu.ph"
+                    style={outfitFont}
                   />
                   {touched.email && !errors.email && email && (
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      <CheckCircle className="w-5 h-5 text-green-500" />
                     </div>
                   )}
                 </div>
                 {errors.email && (
-                  <div className="flex items-center space-x-1 text-red-400 text-sm">
+                  <div
+                    className="flex items-center space-x-1 text-red-500 text-sm"
+                    style={outfitFont}
+                  >
                     <AlertCircle className="w-4 h-4" />
                     <span>{errors.email}</span>
                   </div>
@@ -272,7 +255,10 @@ const Login: React.FC = () => {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">
+                <label
+                  className="block text-sm font-medium text-gray-700"
+                  style={outfitFont}
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -289,17 +275,18 @@ const Login: React.FC = () => {
                     onChange={handlePasswordChange}
                     onBlur={handlePasswordBlur}
                     required
-                    className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-400 backdrop-blur-sm transition-all duration-200 ${
+                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${
                       errors.password
-                        ? "border-red-500/50 focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
-                        : "border-white/20 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     }`}
                     placeholder="••••••••"
+                    style={outfitFont}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-12 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-12 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -309,23 +296,27 @@ const Login: React.FC = () => {
                   </button>
                   {touched.password && !errors.password && password && (
                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      <CheckCircle className="w-5 h-5 text-green-500" />
                     </div>
                   )}
                 </div>
                 {errors.password && (
-                  <div className="flex items-center space-x-1 text-red-400 text-sm">
+                  <div
+                    className="flex items-center space-x-1 text-red-500 text-sm"
+                    style={outfitFont}
+                  >
                     <AlertCircle className="w-4 h-4" />
                     <span>{errors.password}</span>
                   </div>
                 )}
               </div>
 
-              {/* Login Button */}
+              {/* Continue Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 group"
+                className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                style={outfitFont}
               >
                 {loading ? (
                   <>
@@ -333,23 +324,33 @@ const Login: React.FC = () => {
                     <span>Authenticating...</span>
                   </>
                 ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
+                  <span>Continue</span>
                 )}
               </button>
             </form>
-          </div>
 
-          {/* Footer */}
-          <div className="text-center mt-6 text-gray-400 text-sm">
-            <p>© 2025 Computer Engineering Department</p>
-            <p className="mt-1">Secure • Reliable • Professional</p>
+            {/* Footer Text */}
+            <div
+              className="mt-8 text-gray-500 text-sm leading-relaxed text-center"
+              style={outfitFont}
+            >
+              <p>Streamline. Manage. Connect.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section - Image */}
+        <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+          <div className="relative">
+            <img
+              src="/intrak_light.jpg"
+              alt="INTRAK Illustration"
+              className="max-w-full h-auto"
+            />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

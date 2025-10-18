@@ -18,6 +18,10 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
 import { instructorService } from "../../services/instructorService";
+import ModernLoader, {
+  SkeletonCard,
+  TableSkeleton,
+} from "../../components/LoadingStates/ModernLoader";
 import toast from "react-hot-toast";
 
 const AdminUserManagement = () => {
@@ -504,21 +508,18 @@ const AdminUserManagement = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -527,13 +528,13 @@ const AdminUserManagement = () => {
               {filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-100 dark:border-gray-700/50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
-                        <span className="text-indigo-600 dark:text-indigo-300 font-semibold">
-                          {user.name.charAt(0)}
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl flex items-center justify-center shadow-sm border border-indigo-200 dark:border-indigo-700">
+                        <span className="text-indigo-600 dark:text-indigo-300 font-bold text-sm">
+                          {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div className="ml-4">
@@ -558,40 +559,6 @@ const AdminUserManagement = () => {
                       </span>
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {user.role === "STUDENT" && user.student && (
-                        <>
-                          <div>{user.student.studentNumber}</div>
-                          <div className="text-xs text-gray-500">
-                            {user.student.program} - Year {user.student.year}
-                          </div>
-                          {user.student.company && (
-                            <div className="text-xs text-gray-500">
-                              {user.student.company.name}
-                            </div>
-                          )}
-                        </>
-                      )}
-                      {(user.role === "COORDINATOR" ||
-                        user.role === "INSTRUCTOR") && (
-                        <>
-                          <div>Faculty Member</div>
-                          <div className="text-xs text-gray-500">
-                            {user.email}
-                          </div>
-                        </>
-                      )}
-                      {user.role === "INDUSTRY_PARTNER" && (
-                        <>
-                          <div>Industry Partner</div>
-                          <div className="text-xs text-gray-500">
-                            {user.email}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -603,28 +570,35 @@ const AdminUserManagement = () => {
                       {user.active ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={() => openEditModal(user)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                        className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
+                        title="Edit User"
                     >
-                      <Edit className="w-4 h-4" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        <Edit className="w-4 h-4 relative z-10" />
                     </button>
                     {user.role === "STUDENT" && (
                       <button
                         onClick={() => handleAssignStudent(user)}
-                        className="text-green-600 hover:text-green-900 mr-4"
+                          className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
                         title="Assign to Instructor"
                       >
-                        <UserCheck className="w-4 h-4" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-green-400/20 to-green-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                          <UserCheck className="w-4 h-4 relative z-10" />
                       </button>
                     )}
                     <button
                       onClick={() => openDeleteModal(user)}
-                      className="text-red-600 hover:text-red-900"
+                        className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
+                        title="Delete User"
                     >
-                      <Trash2 className="w-4 h-4" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-400/0 via-red-400/20 to-red-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                        <Trash2 className="w-4 h-4 relative z-10" />
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -632,9 +606,8 @@ const AdminUserManagement = () => {
           </table>
         </div>
         {usersLoading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
-            <p className="text-gray-500 dark:text-gray-400">Loading users...</p>
+          <div className="p-6">
+            <TableSkeleton rows={5} columns={4} />
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12">

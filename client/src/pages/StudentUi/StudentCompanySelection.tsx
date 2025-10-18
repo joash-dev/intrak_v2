@@ -5,9 +5,7 @@ import {
   Phone,
   Mail,
   Users,
-  Calendar,
   CheckCircle,
-  Clock,
   Search,
   Filter,
   Loader2,
@@ -99,7 +97,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
       setApplying(true);
 
       // Call the API to submit the application
-      const result = await api.post("/students/apply-company", {
+      await api.post("/students/apply-company", {
         companyId: selectedCompany.id,
         supervisorName: applicationData.supervisorName,
         supervisorEmail: applicationData.supervisorEmail,
