@@ -258,38 +258,38 @@ const CoordinatorStudentManagement: React.FC = () => {
       <div className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Student Management
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage student assignments and instructor assignments
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <Users className="w-4 h-4" />
-            <span>{filteredStudents.length} students</span>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Student Management
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Manage student assignments and instructor assignments
+              </p>
             </div>
-            {filteredStudents.filter(
-              (student: Student) => !student.instructorId
-            ).length > 0 && (
-              <button
-                onClick={() => {
-                  const unassignedStudents = filteredStudents.filter(
-                    (student: Student) => !student.instructorId
-                  );
-                  setSelectedStudents(
-                    unassignedStudents.map((student: Student) => student.id)
-                  );
-                  setShowMassAssignModal(true);
-                }}
-                className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Quick Assign All Unassigned
-              </button>
-            )}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                <Users className="w-4 h-4" />
+                <span>{filteredStudents.length} students</span>
+              </div>
+              {filteredStudents.filter(
+                (student: Student) => !student.instructorId
+              ).length > 0 && (
+                <button
+                  onClick={() => {
+                    const unassignedStudents = filteredStudents.filter(
+                      (student: Student) => !student.instructorId
+                    );
+                    setSelectedStudents(
+                      unassignedStudents.map((student: Student) => student.id)
+                    );
+                    setShowMassAssignModal(true);
+                  }}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Quick Assign All Unassigned
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -299,44 +299,44 @@ const CoordinatorStudentManagement: React.FC = () => {
       <div className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-400/10 transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-blue-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search students..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search students..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="at_risk">At Risk</option>
-            <option value="completed">Completed</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="at_risk">At Risk</option>
+              <option value="completed">Completed</option>
+              <option value="inactive">Inactive</option>
+            </select>
 
-          <select
-            value={instructorFilter}
-            onChange={(e) => setInstructorFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="all">All Assignments</option>
-            <option value="assigned">Assigned</option>
-            <option value="unassigned">Unassigned</option>
-            {(instructors || []).map((instructor: Instructor) => (
-              <option key={instructor.id} value={instructor.id}>
-                {instructor.name}
-              </option>
-            ))}
-          </select>
+            <select
+              value={instructorFilter}
+              onChange={(e) => setInstructorFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              <option value="all">All Assignments</option>
+              <option value="assigned">Assigned</option>
+              <option value="unassigned">Unassigned</option>
+              {(instructors || []).map((instructor: Instructor) => (
+                <option key={instructor.id} value={instructor.id}>
+                  {instructor.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
@@ -480,8 +480,8 @@ const CoordinatorStudentManagement: React.FC = () => {
                           <UserCheck className="w-4 h-4 text-green-500 mr-2" />
                           <div>
                             <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {student.instructorName}
-                          </span>
+                              {student.instructorName}
+                            </span>
                             <div className="text-xs text-gray-500">
                               {student.instructorEmail}
                             </div>
