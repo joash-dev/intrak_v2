@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   FileCheck,
-  FileX,
   Eye,
   Download,
   Clock,
@@ -9,20 +8,13 @@ import {
   XCircle,
   AlertCircle,
   Search,
-  Filter,
   Calendar,
-  User,
   Building2,
-  Paperclip,
-  MessageSquare,
-  Send,
-  ChevronDown,
-  ChevronUp,
   FileText,
   Loader2,
 } from "lucide-react";
+// Import document service
 import { documentService } from "../../services/documentService";
-import { coordinatorService } from "../../services/coordinatorService";
 
 interface Document {
   id: string;
@@ -32,7 +24,6 @@ interface Document {
   uploadedAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;
-  fileSize?: number;
   fileSizeMB?: string;
   student?: {
     studentNumber: string;
@@ -51,7 +42,6 @@ interface Document {
   company?: string;
   documentType?: string;
   fileName?: string;
-  fileSize?: string;
   fileType?: "pdf" | "doc" | "image" | "excel";
   submittedDate?: string;
   dueDate?: string;
@@ -71,7 +61,6 @@ const CoordinatorDocumentsTab: React.FC = () => {
     null
   );
   const [remarks, setRemarks] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // State for API data
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -487,10 +476,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
                       </span>
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(
-                          doc.priority
+                          doc.priority || "medium"
                         )}`}
                       >
-                        {doc.priority} priority
+                        {doc.priority || "medium"} priority
                       </span>
                     </div>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
@@ -501,7 +490,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                       <span className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          Due: {new Date(doc.dueDate).toLocaleDateString()}
+                          Due: {doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : "Not Set"}
                         </span>
                       </span>
                     </div>
@@ -520,13 +509,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
               <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    {getFileIcon(doc.fileType)}
+                    {getFileIcon(doc.fileType || "pdf")}
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white text-sm">
                         {doc.documentType}
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        {doc.fileName} • {doc.fileSize}
+                        {doc.fileName} • {doc.fileSizeMB}
                       </p>
                       <p className="text-xs text-gray-500 mt-2">
                         {doc.description}
@@ -661,7 +650,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-2 mb-2">
-                {getFileIcon(selectedDoc.fileType)}
+                {getFileIcon(selectedDoc.fileType || "pdf")}
                 <p className="font-medium text-gray-900 dark:text-white text-sm">
                   {selectedDoc.documentType}
                 </p>

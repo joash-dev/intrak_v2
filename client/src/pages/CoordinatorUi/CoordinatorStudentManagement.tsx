@@ -1,19 +1,22 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Users,
   Search,
   UserCheck,
   UserX,
   Building2,
-  CheckCircle,
-  AlertTriangle,
-  X,
+  // CheckCircle,
+  // AlertTriangle,
+  // X,
   Loader2,
   Eye,
-  Edit,
+  // Edit,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import { coordinatorService } from "../../services/coordinatorService";
+import {
+  coordinatorService,
+  type CoordinatorStudent,
+} from "../../services/coordinatorService";
 import { instructorService } from "../../services/instructorService";
 import toast from "react-hot-toast";
 
@@ -35,22 +38,9 @@ const formatStudentId = (studentNumber: string) => {
   return studentNumber || "22-UR-0592";
 };
 
-interface Student {
-  id: string;
-  studentNumber: string;
-  name: string;
-  email: string;
-  program: string;
-  year: number;
-  company: string;
-  supervisor: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  instructorId?: string | null;
-  instructorName?: string | null;
-  instructorEmail?: string | null;
-}
+// Use CoordinatorStudent from the service instead of local interface
+// Alias for clarity
+type Student = CoordinatorStudent;
 
 interface Instructor {
   id: string;

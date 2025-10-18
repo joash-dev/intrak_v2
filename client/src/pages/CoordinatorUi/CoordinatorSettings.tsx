@@ -22,7 +22,7 @@ import {
   Settings,
   Activity,
   Download,
-  Upload,
+  //Upload,
   Palette,
   Monitor,
 } from "lucide-react";
@@ -1487,6 +1487,21 @@ const CoordinatorSettingsTab = ({
                       Read our privacy terms
                     </p>
                   </a>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Data Management
+                    </h3>
+                    <button
+                      onClick={handleExportData}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Export Settings</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">

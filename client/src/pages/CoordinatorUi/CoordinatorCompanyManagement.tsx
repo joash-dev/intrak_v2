@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Building2,
   FileText,
@@ -8,14 +8,14 @@ import {
   AlertTriangle,
   Clock,
   Search,
-  Filter,
+  // Filter,
   Plus,
   Edit,
   Trash2,
   Eye,
   Download,
-  Upload,
-  RefreshCw,
+  // Upload,
+  // RefreshCw,
   Loader2,
   X,
 } from "lucide-react";
@@ -31,7 +31,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
   const [moaStatusFilter, setMoaStatusFilter] = useState("all");
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [showAddMOA, setShowAddMOA] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  // const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedMOA, setSelectedMOA] = useState<MOA | null>(null);
   const [selectedStudentForMOA, setSelectedStudentForMOA] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -111,16 +111,16 @@ const CoordinatorCompanyManagement: React.FC = () => {
   });
 
   // Filter MOAs based on search and status
-  const filteredMOAs = (moas || []).filter((moa) => {
-    const matchesSearch =
-      (moa.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (moa.student?.company?.name || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      moaStatusFilter === "all" || moa.status === moaStatusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // const filteredMOAs = (moas || []).filter((moa) => {
+  //   const matchesSearch =
+  //     (moa.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     (moa.student?.company?.name || "")
+  //       .toLowerCase()
+  //       .includes(searchQuery.toLowerCase());
+  //   const matchesStatus =
+  //     moaStatusFilter === "all" || moa.status === moaStatusFilter;
+  //   return matchesSearch && matchesStatus;
+  // });
 
   // Get status color and icon
   const getStatusInfo = (status: string) => {
@@ -288,7 +288,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
   // Open delete confirmation modal
   const openDeleteConfirm = (company: Company) => {
     // Don't open modal if company has assigned students
-    if (company._count?.students > 0) {
+    if (company._count?.students && company._count.students > 0) {
       alert(
         `Cannot delete company "${company.name}" because it has ${
           company._count.students
@@ -429,54 +429,58 @@ const CoordinatorCompanyManagement: React.FC = () => {
                 </div>
               </div>
               <div className="mt-6">
-                {moas.filter(
+                {moas &&
+                moas.filter(
                   (moa) =>
                     isExpiringSoon(moa.uploadedAt) || isExpired(moa.uploadedAt)
                 ).length > 0 ? (
                   <div className="space-y-3">
-                    {moas
-                      .filter(
-                        (moa) =>
-                          isExpiringSoon(moa.uploadedAt) ||
-                          isExpired(moa.uploadedAt)
-                      )
-                      .map((moa) => (
-                        <div
-                          key={moa.id}
-                          className={`p-4 rounded-xl border-l-4 ${
+                    {moas &&
+                      moas
+                        .filter(
+                          (moa) =>
+                            isExpiringSoon(moa.uploadedAt) ||
                             isExpired(moa.uploadedAt)
-                              ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                              : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {moa.title} -{" "}
-                                {moa.student?.company?.name ||
-                                  "Unknown Company"}
-                              </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {isExpired(moa.uploadedAt)
-                                  ? "Expired"
-                                  : "Expiring soon"}{" "}
-                                - Uploaded{" "}
-                                {new Date(moa.uploadedAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                View
-                              </button>
-                              {!isExpired(moa.uploadedAt) && (
-                                <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                  Renew
+                        )
+                        .map((moa) => (
+                          <div
+                            key={moa.id}
+                            className={`p-4 rounded-xl border-l-4 ${
+                              isExpired(moa.uploadedAt)
+                                ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                                : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {moa.title} -{" "}
+                                  {moa.student?.company?.name ||
+                                    "Unknown Company"}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {isExpired(moa.uploadedAt)
+                                    ? "Expired"
+                                    : "Expiring soon"}{" "}
+                                  - Uploaded{" "}
+                                  {new Date(
+                                    moa.uploadedAt
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                  View
                                 </button>
-                              )}
+                                {!isExpired(moa.uploadedAt) && (
+                                  <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    Renew
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8">
@@ -550,15 +554,16 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                   {company.contactPerson}
                                 </p>
-                                {company._count?.students > 0 && (
-                                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                    {company._count.students} student
-                                    {company._count.students !== 1
-                                      ? "s"
-                                      : ""}{" "}
-                                    assigned
-                                  </p>
-                                )}
+                                {company._count?.students &&
+                                  company._count.students > 0 && (
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                      {company._count.students} student
+                                      {company._count.students !== 1
+                                        ? "s"
+                                        : ""}{" "}
+                                      assigned
+                                    </p>
+                                  )}
                               </div>
                             </div>
                             <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
@@ -587,14 +592,19 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             </button>
                             <button
                               onClick={() => openDeleteConfirm(company)}
-                              disabled={company._count?.students > 0}
+                              disabled={Boolean(
+                                company._count?.students &&
+                                  company._count.students > 0
+                              )}
                               className={`p-2 rounded-lg transition-colors ${
-                                company._count?.students > 0
+                                company._count?.students &&
+                                company._count.students > 0
                                   ? "text-gray-400 cursor-not-allowed"
                                   : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                               }`}
                               title={
-                                company._count?.students > 0
+                                company._count?.students &&
+                                company._count.students > 0
                                   ? `Cannot delete: ${company._count.students} student(s) assigned`
                                   : "Delete Company"
                               }
@@ -1184,7 +1194,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           value={moaForm.studentId}
                           onChange={(e) => {
                             const studentId = e.target.value;
-                            const selectedStudent = students.find(
+                            const selectedStudent = students?.find(
                               (s) => s.id === studentId
                             );
                             setSelectedStudentForMOA(selectedStudent);
@@ -1196,27 +1206,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         >
                           <option value="">Select a student</option>
-                          {students
-                            .filter(
+                          {students &&
+                            students
+                              .filter(
+                                (student) =>
+                                  student.company &&
+                                  student.company !== "No Company"
+                              )
+                              .map((student) => (
+                                <option key={student.id} value={student.id}>
+                                  {student.name} ({student.studentNumber}) -{" "}
+                                  {student.company}
+                                </option>
+                              ))}
+                          {students &&
+                            students.filter(
                               (student) =>
                                 student.company &&
                                 student.company !== "No Company"
-                            )
-                            .map((student) => (
-                              <option key={student.id} value={student.id}>
-                                {student.name} ({student.studentNumber}) -{" "}
-                                {student.company}
+                            ).length === 0 && (
+                              <option value="" disabled>
+                                No students assigned to companies yet
                               </option>
-                            ))}
-                          {students.filter(
-                            (student) =>
-                              student.company &&
-                              student.company !== "No Company"
-                          ).length === 0 && (
-                            <option value="" disabled>
-                              No students assigned to companies yet
-                            </option>
-                          )}
+                            )}
                         </select>
 
                         {/* Show selected student's company info */}
@@ -1351,17 +1363,18 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         Contact: {companyToDelete.contactPerson} (
                         {companyToDelete.contactEmail})
                       </p>
-                      {companyToDelete._count?.students > 0 && (
-                        <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
-                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                            ⚠️ This company has{" "}
-                            {companyToDelete._count.students} assigned student
-                            {companyToDelete._count.students !== 1 ? "s" : ""}.
-                            You must unassign all students before deleting the
-                            company.
-                          </p>
-                        </div>
-                      )}
+                      {companyToDelete._count?.students &&
+                        companyToDelete._count.students > 0 && (
+                          <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                              ⚠️ This company has{" "}
+                              {companyToDelete._count.students} assigned student
+                              {companyToDelete._count.students !== 1 ? "s" : ""}
+                              . You must unassign all students before deleting
+                              the company.
+                            </p>
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -1398,18 +1411,21 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       onClick={handleDeleteCompany}
                       disabled={
                         deleteConfirmText !== "delete" ||
-                        companyToDelete._count?.students > 0 ||
+                        (companyToDelete._count?.students &&
+                          companyToDelete._count.students > 0) ||
                         isDeletingCompany
                       }
                       className={`group relative px-6 py-2 rounded-lg transition-all duration-300 overflow-hidden ${
                         deleteConfirmText === "delete" &&
-                        companyToDelete._count?.students === 0 &&
+                        (!companyToDelete._count?.students ||
+                          companyToDelete._count.students === 0) &&
                         !isDeletingCompany
                           ? "bg-red-600 text-white hover:bg-red-700"
                           : "bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400"
                       }`}
                     >
-                      {companyToDelete._count?.students > 0 ? (
+                      {companyToDelete._count?.students &&
+                      companyToDelete._count.students > 0 ? (
                         "Cannot Delete"
                       ) : isDeletingCompany ? (
                         <>

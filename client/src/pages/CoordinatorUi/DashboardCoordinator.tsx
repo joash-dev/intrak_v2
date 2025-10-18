@@ -23,7 +23,7 @@ import {
   Settings,
   Home,
   MessageSquare,
-  FileSpreadsheet,
+  // FileSpreadsheet,
   Loader2,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -65,7 +65,7 @@ const formatStudentId = (studentNumber: string) => {
 // COORDINATOR DASHBOARD COMPONENT
 // =============================================
 const CoordinatorDashboard: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("this_month");
+  // const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -175,13 +175,13 @@ const CoordinatorDashboard: React.FC = () => {
     }
   };
 
-  const getTrendIcon = (value: number) => {
-    return value >= 0 ? (
-      <ArrowUpRight className="w-4 h-4 text-green-600" />
-    ) : (
-      <ArrowDownRight className="w-4 h-4 text-red-600" />
-    );
-  };
+  // const getTrendIcon = (value: number) => {
+  //   return value >= 0 ? (
+  //     <ArrowUpRight className="w-4 h-4 text-green-600" />
+  //   ) : (
+  //     <ArrowDownRight className="w-4 h-4 text-red-600" />
+  //   );
+  // };
 
   const filteredStudents = (students || []).filter((student) => {
     const matchesSearch =
@@ -345,7 +345,7 @@ const CoordinatorDashboard: React.FC = () => {
               </div>
               <div className="text-right">
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {stats?.averageRating > 0
+                  {stats?.averageRating && stats.averageRating > 0
                     ? stats.averageRating.toFixed(1)
                     : "N/A"}
                 </p>
@@ -361,7 +361,9 @@ const CoordinatorDashboard: React.FC = () => {
               Average Rating
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              {stats?.averageRating > 0 ? "out of 5.0" : "0 evaluations"}
+              {stats?.averageRating && stats.averageRating > 0
+                ? "out of 5.0"
+                : "0 evaluations"}
             </p>
           </div>
         </div>
