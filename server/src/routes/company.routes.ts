@@ -43,4 +43,5 @@ router.patch("/moas/:id/reject", authenticate, authorize(["ADMIN", "COORDINATOR"
 // Get MOA statistics (Admin, Coordinator)
 router.get("/moas/stats/overview", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.getMOAStats);
 
+
 export default router;

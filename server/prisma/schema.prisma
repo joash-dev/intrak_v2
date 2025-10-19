@@ -76,6 +76,7 @@ enum AnnouncementAudience {
   PARTNERS
 }
 
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique

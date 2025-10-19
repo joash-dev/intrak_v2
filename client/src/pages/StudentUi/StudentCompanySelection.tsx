@@ -44,6 +44,39 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
     expectations: "",
   });
 
+  // Skill recommendations for students to click
+  const skillRecommendations = [
+    "JavaScript",
+    "Python",
+    "Java",
+    "C++",
+    "React",
+    "Node.js",
+    "HTML/CSS",
+    "SQL",
+    "Git",
+    "Problem Solving",
+    "Teamwork",
+    "Communication",
+    "Time Management",
+    "Leadership",
+    "Analytical Thinking",
+    "Project Management",
+    "Database Design",
+    "API Development",
+    "Mobile Development",
+    "UI/UX Design",
+    "Data Analysis",
+    "Machine Learning",
+    "Web Development",
+    "Software Testing",
+    "Agile Methodology",
+    "Version Control",
+    "Cloud Computing",
+    "Cybersecurity",
+    "DevOps",
+  ];
+
   // Load companies and current student data
   useEffect(() => {
     loadData();
@@ -90,13 +123,36 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
     setShowApplicationModal(true);
   };
 
+  const handleSkillClick = (skill: string) => {
+    const currentSkills = applicationData.skills;
+    const skillsArray = currentSkills
+      ? currentSkills.split(",").map((s) => s.trim())
+      : [];
+
+    if (skillsArray.includes(skill)) {
+      // Remove skill if already selected
+      const updatedSkills = skillsArray.filter((s) => s !== skill);
+      setApplicationData({
+        ...applicationData,
+        skills: updatedSkills.join(", "),
+      });
+    } else {
+      // Add skill if not selected
+      const updatedSkills = [...skillsArray, skill];
+      setApplicationData({
+        ...applicationData,
+        skills: updatedSkills.join(", "),
+      });
+    }
+  };
+
   const handleSubmitApplication = async () => {
     if (!selectedCompany) return;
 
     try {
       setApplying(true);
 
-      // Call the API to submit the application
+      // Call the API to apply to the company (old endpoint)
       await api.post("/students/apply-company", {
         companyId: selectedCompany.id,
         supervisorName: applicationData.supervisorName,
@@ -328,7 +384,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
               {/* Application Form */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Supervisor Information */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Supervisor Name *
@@ -360,27 +417,26 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                         })
                       }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      placeholder="supervisor@company.com"
+                      placeholder="Enter supervisor email"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Supervisor Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={applicationData.supervisorPhone}
-                    onChange={(e) =>
-                      setApplicationData({
-                        ...applicationData,
-                        supervisorPhone: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="+63 912 345 6789"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Supervisor Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      value={applicationData.supervisorPhone}
+                      onChange={(e) =>
+                        setApplicationData({
+                          ...applicationData,
+                          supervisorPhone: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="Enter supervisor phone"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -440,18 +496,50 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Relevant Skills
                   </label>
-                  <textarea
-                    value={applicationData.skills}
-                    onChange={(e) =>
-                      setApplicationData({
-                        ...applicationData,
-                        skills: e.target.value,
-                      })
-                    }
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="List your relevant skills and experience..."
-                  />
+                  <div className="mb-3">
+                    <textarea
+                      value={applicationData.skills}
+                      onChange={(e) =>
+                        setApplicationData({
+                          ...applicationData,
+                          skills: e.target.value,
+                        })
+                      }
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="Selected skills will appear here, or type your own..."
+                    />
+                  </div>
+
+                  {/* Skill Recommendations */}
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      Click to add skills:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {skillRecommendations.map((skill) => {
+                        const isSelected = applicationData.skills
+                          .split(",")
+                          .map((s) => s.trim())
+                          .includes(skill);
+
+                        return (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => handleSkillClick(skill)}
+                            className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                              isSelected
+                                ? "bg-purple-600 text-white"
+                                : "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500"
+                            }`}
+                          >
+                            {skill}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -488,6 +576,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                   applying ||
                   !applicationData.supervisorName ||
                   !applicationData.supervisorEmail ||
+                  !applicationData.supervisorPhone ||
                   !applicationData.startDate ||
                   !applicationData.endDate ||
                   !applicationData.motivation

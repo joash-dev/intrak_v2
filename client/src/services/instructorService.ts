@@ -717,18 +717,11 @@ class InstructorService {
     try {
       console.log('Creating student with data:', studentData);
       
-      // Check if user already exists
-      try {
-        const existingUserResponse = await api.get(`/users?email=${studentData.email}`);
-        if (existingUserResponse.data.users && existingUserResponse.data.users.length > 0) {
-          throw new Error(`User with email ${studentData.email} already exists`);
-        }
-      } catch (checkError: any) {
-        if (checkError.message.includes('already exists')) {
-          throw checkError;
-        }
-        // If it's a network error, continue with creation
-        console.log('Could not check existing users, proceeding with creation...');
+      // Check for student number conflicts before creating user account
+      console.log('Checking for existing student number...');
+      const studentExists = await this.checkStudentExists(studentData.studentNumber);
+      if (studentExists) {
+        throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
       }
       
       // Generate secure password for the student
@@ -737,33 +730,70 @@ class InstructorService {
       
       // First, create a user account using the register endpoint
       console.log('Creating user account...');
-      const userResponse = await api.post('/auth/register', {
-        name: studentData.name,
-        email: studentData.email,
-        role: 'STUDENT',
-        password: generatedPassword
-      });
-      
-      console.log('User created successfully:', userResponse.data);
-      userId = userResponse.data.user.id;
+      let userResponse;
+      try {
+        userResponse = await api.post('/auth/register', {
+          name: studentData.name,
+          email: studentData.email,
+          role: 'STUDENT',
+          password: generatedPassword
+        });
+        console.log('User created successfully:', userResponse.data);
+        userId = userResponse.data.user.id;
+      } catch (userError: any) {
+        console.error('Error creating user account:', userError);
+        if (userError.response?.status === 400 && userError.response?.data?.message?.includes('Email already exists')) {
+          throw new Error(`A user with email "${studentData.email}" already exists. Please use a different email address.`);
+        }
+        throw userError;
+      }
 
       // Convert year string to integer
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
       
       // Then create the student record
       console.log('Creating student record...');
-      const studentResponse = await api.post('/students', {
-        userId: userId,
-        studentNumber: studentData.studentNumber,
-        program: studentData.program,
-        year: yearNumber,
-        section: 'A', // Default section
-        companyId: null, // Students will choose their company later
-        supervisorName: '', // Students will fill this later
-        startDate: null, // Students will fill this later
-        endDate: null, // Students will fill this later
-        totalHours: 240 // Default hours
-      });
+      let studentResponse;
+      try {
+        studentResponse = await api.post('/students', {
+          userId: userId,
+          studentNumber: studentData.studentNumber,
+          program: studentData.program,
+          year: yearNumber,
+          section: 'A', // Default section
+          companyId: null, // Students will choose their company later
+          supervisorName: '', // Students will fill this later
+          startDate: null, // Students will fill this later
+          endDate: null, // Students will fill this later
+          totalHours: 240 // Default hours
+        });
+      } catch (studentError: any) {
+        console.error('Error creating student record:', studentError);
+        
+        // Clean up the user account that was created
+        if (userId) {
+          console.log('Cleaning up created user account due to student creation failure...');
+          try {
+            await api.delete(`/users/${userId}`);
+            console.log('User account cleaned up successfully');
+            
+            // Verify the user was actually deleted
+            const userStillExists = await this.checkUserExists(studentData.email);
+            if (userStillExists) {
+              console.error('WARNING: User still exists after cleanup attempt!');
+            } else {
+              console.log('Verification: User successfully deleted from database');
+            }
+          } catch (cleanupError) {
+            console.error('Failed to cleanup user account:', cleanupError);
+          }
+        }
+        
+        if (studentError.response?.status === 400 && studentError.response?.data?.message?.includes('Student with number')) {
+          throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
+        }
+        throw studentError;
+      }
       
       console.log('Student created successfully:', studentResponse.data);
       
@@ -792,24 +822,23 @@ class InstructorService {
     } catch (error: any) {
       console.error('Error creating student:', error);
       
-      // Cleanup: If user was created but student creation failed, delete the user
-      if (userId) {
-        console.log('Cleaning up created user account due to student creation failure...');
-        try {
-          await api.delete(`/users/${userId}`);
-          console.log('User account cleaned up successfully');
-        } catch (cleanupError) {
-          console.error('Failed to cleanup user account:', cleanupError);
-        }
-      }
-      
-      // Provide more specific error messages
+      // Provide more specific error messages with debugging information
+      console.error('Student creation error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+
       if (error.response?.status === 400) {
         const errorMsg = error.response.data?.message || 'Validation error';
+        console.error('Backend validation error:', errorMsg);
+        
         if (errorMsg.includes('Email already exists')) {
-          throw new Error(`A user with email ${studentData.email} already exists. Please use a different email address.`);
-        } else if (errorMsg.includes('Student number')) {
-          throw new Error(`Student number ${studentData.studentNumber} is already in use. Please use a different student number.`);
+          throw new Error(`A user with email "${studentData.email}" already exists. Please use a different email address.`);
+        } else if (errorMsg.includes('Student with number')) {
+          throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
+        } else if (errorMsg.includes('User already has a student record')) {
+          throw new Error(`A student record already exists for this user. Please check the existing records.`);
         } else {
           throw new Error(`Validation error: ${errorMsg}`);
         }
@@ -822,6 +851,37 @@ class InstructorService {
       }
       
       throw error;
+    }
+  }
+
+  // Helper method to check if user exists in database
+  async checkUserExists(email: string): Promise<boolean> {
+    try {
+      console.log(`Checking if user with email ${email} exists...`);
+      const response = await api.get(`/users?email=${email}`);
+      const exists = response.data.users && response.data.users.length > 0;
+      console.log(`User ${email} exists:`, exists);
+      return exists;
+    } catch (error) {
+      console.error('Error checking user existence:', error);
+      return false;
+    }
+  }
+
+  // Helper method to check if student exists in database
+  async checkStudentExists(studentNumber: string): Promise<boolean> {
+    try {
+      console.log(`Checking if student with number ${studentNumber} exists...`);
+      const response = await api.get('/students');
+      if (response.data.students) {
+        const exists = response.data.students.some((student: any) => student.studentNumber === studentNumber);
+        console.log(`Student ${studentNumber} exists:`, exists);
+        return exists;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking student existence:', error);
+      return false;
     }
   }
 

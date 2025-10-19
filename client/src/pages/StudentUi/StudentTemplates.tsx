@@ -82,7 +82,7 @@ const StudentTemplates: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-outfit">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
         <div className="flex items-center space-x-4">

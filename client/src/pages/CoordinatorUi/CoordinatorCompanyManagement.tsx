@@ -776,7 +776,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
           {/* Add Company Modal */}
           {showAddCompany && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              style={{ marginTop: "0px" }}
+            >
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -894,7 +897,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Location Fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Latitude
@@ -910,10 +914,9 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                          placeholder="0.000000"
+                          placeholder="e.g., 14.5995"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Longitude
@@ -929,16 +932,16 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                          placeholder="0.000000"
+                          placeholder="e.g., 120.9842"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Radius (meters)
                         </label>
                         <input
                           type="number"
+                          min="1"
                           value={companyForm.radiusMeters}
                           onChange={(e) =>
                             setCompanyForm((prev) => ({
@@ -949,6 +952,9 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           placeholder="100"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Default: 100 meters
+                        </p>
                       </div>
                     </div>
                   </div>

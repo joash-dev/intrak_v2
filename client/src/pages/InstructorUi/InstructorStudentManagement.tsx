@@ -118,6 +118,21 @@ const InstructorStudentManagement: React.FC = () => {
       status: "active",
       emailSent: false,
     });
+    console.log("Add student modal opened - cleared all validation errors");
+  };
+
+  const clearValidationError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+    // Also clear general create error when user starts typing
+    if (createError) {
+      setCreateError(null);
+    }
   };
 
   const validateForm = () => {
@@ -152,9 +167,12 @@ const InstructorStudentManagement: React.FC = () => {
   };
 
   const handleCreateStudent = async () => {
+    console.log("Form validation starting...");
     if (!validateForm()) {
+      console.log("Form validation failed:", fieldErrors);
       return;
     }
+    console.log("Form validation passed");
 
     // Prevent multiple submissions
     if (isCreating) {
@@ -168,7 +186,14 @@ const InstructorStudentManagement: React.FC = () => {
       setIsCreating(true);
       setCreateError(null);
 
-      console.log("Starting student creation process...");
+      console.log("Starting student creation process with data:", {
+        studentNumber: newStudent.studentNumber,
+        name: newStudent.name,
+        email: newStudent.email,
+        phone: newStudent.phone,
+        program: newStudent.program,
+        year: newStudent.year,
+      });
 
       // Create the student using the instructor service
       const result = await instructorService.createStudent({
@@ -192,6 +217,12 @@ const InstructorStudentManagement: React.FC = () => {
       await loadStudentsData();
     } catch (error: any) {
       console.error("Error creating student:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
 
       // Handle specific error messages
       let errorMessage = "Failed to create student";
@@ -201,6 +232,7 @@ const InstructorStudentManagement: React.FC = () => {
         errorMessage = error.response.data.message;
       }
 
+      console.log("Displaying error message:", errorMessage);
       setCreateError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -583,12 +615,13 @@ const InstructorStudentManagement: React.FC = () => {
                 <input
                   type="text"
                   value={newStudent.studentNumber}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setNewStudent({
                       ...newStudent,
                       studentNumber: e.target.value,
-                    })
-                  }
+                    });
+                    clearValidationError("studentNumber");
+                  }}
                   placeholder="22-UR-0592"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                     fieldErrors.studentNumber
@@ -611,9 +644,10 @@ const InstructorStudentManagement: React.FC = () => {
                 <input
                   type="text"
                   value={newStudent.name}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewStudent({ ...newStudent, name: e.target.value });
+                    clearValidationError("name");
+                  }}
                   placeholder="Juan Dela Cruz"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                     fieldErrors.name
@@ -636,9 +670,10 @@ const InstructorStudentManagement: React.FC = () => {
                 <input
                   type="email"
                   value={newStudent.email}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, email: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewStudent({ ...newStudent, email: e.target.value });
+                    clearValidationError("email");
+                  }}
                   placeholder="juan.delacruz@email.com"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                     fieldErrors.email
@@ -661,9 +696,10 @@ const InstructorStudentManagement: React.FC = () => {
                 <input
                   type="tel"
                   value={newStudent.phone}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, phone: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewStudent({ ...newStudent, phone: e.target.value });
+                    clearValidationError("phone");
+                  }}
                   placeholder="+63 912 345 6789"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                     fieldErrors.phone
@@ -698,9 +734,10 @@ const InstructorStudentManagement: React.FC = () => {
                 </label>
                 <select
                   value={newStudent.year}
-                  onChange={(e) =>
-                    setNewStudent({ ...newStudent, year: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewStudent({ ...newStudent, year: e.target.value });
+                    clearValidationError("year");
+                  }}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
                     fieldErrors.year
                       ? "border-red-500"

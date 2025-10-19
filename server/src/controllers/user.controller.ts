@@ -10,11 +10,14 @@ const prisma = new PrismaClient();
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
-    const { role, search, page = 1, limit = 20 } = req.query;
+    const { role, search, page = 1, limit = 20, email } = req.query;
 
     const where: any = {};
     if (role) where.role = role;
-    if (search) {
+    if (email) {
+      // Direct email lookup for validation purposes
+      where.email = email;
+    } else if (search) {
       where.OR = [
         { name: { contains: search as string, mode: 'insensitive' } },
         { email: { contains: search as string, mode: 'insensitive' } }

@@ -4,6 +4,23 @@ import { AuthRequest } from "../middleware/auth";
 
 const prisma = new PrismaClient();
 
+// Helper function for audit logging
+const auditLog = async (userId: string, action: string, meta: any, req: any) => {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action,
+        meta,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || 'Unknown'
+      }
+    });
+  } catch (error) {
+    console.error('Error creating audit log:', error);
+  }
+};
+
 // =============================================
 // COMPANY MANAGEMENT CONTROLLERS
 // =============================================

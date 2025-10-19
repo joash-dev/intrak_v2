@@ -10,7 +10,7 @@ export type Company = {
   contactNumber: string;
   latitude?: number;
   longitude?: number;
-  radiusMeters: number;
+  radiusMeters?: number;
   createdAt: string;
   updatedAt: string;
   students?: any[];
