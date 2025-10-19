@@ -25,6 +25,15 @@ router.get('/dashboard', adminController.getAdminDashboard);
 // Admin user management routes
 router.get('/instructors', adminController.getInstructors);
 
+// Admin system information route
+router.get('/system-info', adminController.getSystemInfo);
+
+// Public maintenance status check route
+router.get('/maintenance-status', adminController.checkMaintenanceStatus);
+
+// Emergency disable maintenance mode (public route for emergencies)
+router.post('/emergency-disable-maintenance', adminController.emergencyDisableMaintenance);
+
 // Profile photo routes (reuse from user controller)
 router.get('/profile-photo', userController.getCurrentUserProfilePhoto);
 router.post('/profile-photo/upload', profilePhotoUpload.single('photo'), userController.uploadProfilePhoto);

@@ -18,7 +18,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   iconBgColor,
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm font-outfit">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>

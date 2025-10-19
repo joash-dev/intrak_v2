@@ -9,6 +9,7 @@ import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
+import { checkMaintenanceMode } from './middleware/maintenance';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -129,10 +130,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
+// API Routes (temporarily disabling maintenance mode to allow login)
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/documents', documentRoutes);

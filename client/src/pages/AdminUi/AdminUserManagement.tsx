@@ -18,10 +18,7 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
 import { instructorService } from "../../services/instructorService";
-import ModernLoader, {
-  SkeletonCard,
-  TableSkeleton,
-} from "../../components/LoadingStates/ModernLoader";
+import { TableSkeleton } from "../../components/LoadingStates/ModernLoader";
 import toast from "react-hot-toast";
 
 const AdminUserManagement = () => {
@@ -380,7 +377,7 @@ const AdminUserManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-outfit">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl p-6 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -572,32 +569,32 @@ const AdminUserManagement = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => openEditModal(user)}
+                      <button
+                        onClick={() => openEditModal(user)}
                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
                         title="Edit User"
-                    >
+                      >
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                         <Edit className="w-4 h-4 relative z-10" />
-                    </button>
-                    {user.role === "STUDENT" && (
-                      <button
-                        onClick={() => handleAssignStudent(user)}
+                      </button>
+                      {user.role === "STUDENT" && (
+                        <button
+                          onClick={() => handleAssignStudent(user)}
                           className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
-                        title="Assign to Instructor"
-                      >
+                          title="Assign to Instructor"
+                        >
                           <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-green-400/20 to-green-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                           <UserCheck className="w-4 h-4 relative z-10" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => openDeleteModal(user)}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openDeleteModal(user)}
                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 overflow-hidden"
                         title="Delete User"
-                    >
+                      >
                         <div className="absolute inset-0 bg-gradient-to-r from-red-400/0 via-red-400/20 to-red-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
                         <Trash2 className="w-4 h-4 relative z-10" />
-                    </button>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1066,11 +1063,11 @@ const AdminUserManagement = () => {
               >
                 <option value="">Choose an instructor...</option>
                 {instructors.map((instructor) => (
-                    <option key={instructor.id} value={instructor.id}>
+                  <option key={instructor.id} value={instructor.id}>
                     {instructor.name} ({instructor.email}) -{" "}
                     {instructor._count.studentsAssigned} students
-                    </option>
-                  ))}
+                  </option>
+                ))}
               </select>
             </div>
 

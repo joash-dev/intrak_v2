@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/AuthUi/Login";
 import Dashboard from "./pages/StudentUi/Dashboard";
@@ -6,6 +6,8 @@ import DashboardCoordinator from "./pages/CoordinatorUi/DashboardCoordinator";
 import DashboardInstructor from "./pages/InstructorUi/DashboardInstructor";
 import DashboardIndustryPartner from "./pages/SupervisorUi/SupervisorDashboard";
 import AdminPage from "./pages/AdminUi/AdminPage";
+import MaintenancePage from "./pages/MaintenancePage";
+import { adminService } from "./services/adminService";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -42,6 +44,51 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <>{children}</>;
 };
 
+const MaintenanceWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const status = await adminService.checkMaintenanceStatus();
+        setMaintenanceMode(status.maintenanceMode);
+      } catch (error) {
+        console.error("Error checking maintenance status:", error);
+        setMaintenanceMode(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkMaintenance();
+  }, []);
+
+  // Show loading state while checking maintenance
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            Checking system status...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show maintenance page if maintenance mode is enabled
+  if (maintenanceMode) {
+    return <MaintenancePage />;
+  }
+
+  // Show normal app if maintenance mode is disabled
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -51,39 +98,48 @@ const App: React.FC = () => {
         <Route
           path="/student/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <Dashboard />
-            </ProtectedRoute>
+            <MaintenanceWrapper>
+              <ProtectedRoute allowedRoles={["student"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            </MaintenanceWrapper>
           }
         />
 
         <Route
           path="/coordinator/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["coordinator"]}>
-              <DashboardCoordinator />
-            </ProtectedRoute>
+            <MaintenanceWrapper>
+              <ProtectedRoute allowedRoles={["coordinator"]}>
+                <DashboardCoordinator />
+              </ProtectedRoute>
+            </MaintenanceWrapper>
           }
         />
 
         <Route
           path="/instructor/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["instructor"]}>
-              <DashboardInstructor />
-            </ProtectedRoute>
+            <MaintenanceWrapper>
+              <ProtectedRoute allowedRoles={["instructor"]}>
+                <DashboardInstructor />
+              </ProtectedRoute>
+            </MaintenanceWrapper>
           }
         />
 
         <Route
           path="/industry-partner/dashboard"
           element={
-            <ProtectedRoute allowedRoles={["industry_partner"]}>
-              <DashboardIndustryPartner />
-            </ProtectedRoute>
+            <MaintenanceWrapper>
+              <ProtectedRoute allowedRoles={["industry_partner"]}>
+                <DashboardIndustryPartner />
+              </ProtectedRoute>
+            </MaintenanceWrapper>
           }
         />
 
+        {/* Admin routes bypass maintenance mode */}
         <Route
           path="/admin"
           element={

@@ -102,9 +102,21 @@ export interface SystemInfo {
   serverLoad: number;
   memoryUsage: number;
   diskUsage: number;
+  databaseStatus?: string;
+  apiServerStatus?: string;
+  totalMemory?: number;
+  freeMemory?: number;
+  usedMemory?: number;
+  cpuModel?: string;
+  cpuCount?: number;
+  platform?: string;
+  arch?: string;
+  nodeVersion?: string;
+  environment?: string;
 }
 
 // Admin Service Class
+// Updated SystemInfo interface with real system metrics
 class AdminService {
   // Admin Profile Management
   async getAdminProfile(): Promise<{ user: AdminUser }> {
@@ -838,6 +850,25 @@ class AdminService {
         serverLoad: 45,
         memoryUsage: 68,
         diskUsage: 75
+      };
+    }
+  }
+
+  // Check maintenance mode status
+  async checkMaintenanceStatus(): Promise<{
+    maintenanceMode: boolean;
+    message: string;
+    lastUpdated: string | null;
+  }> {
+    try {
+      const response = await api.get('/admin/maintenance-status');
+      return response.data;
+    } catch (error) {
+      console.error('Error checking maintenance status:', error);
+      return {
+        maintenanceMode: false,
+        message: 'Unable to check maintenance status',
+        lastUpdated: null
       };
     }
   }

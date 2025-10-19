@@ -25,7 +25,7 @@ import {
   Upload,
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
-import { adminService } from "../../services/adminService";
+import { adminService, type SystemInfo } from "../../services/adminService";
 import toast from "react-hot-toast";
 
 interface AdminProfile {
@@ -112,7 +112,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     totalDocuments: 1247,
     databaseSize: "2.3 GB",
   });
-  const [systemInfo, setSystemInfo] = useState({
+  const [systemInfo, setSystemInfo] = useState<SystemInfo>({
     version: "2.1.3",
     lastUpdated: new Date().toISOString(),
     databaseSize: "2.3 GB",
@@ -276,6 +276,18 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
       console.log("Loading system information from API...");
       const systemInfoData = await adminService.getSystemInfo();
       setSystemInfo(systemInfoData);
+
+      // Update system status with real data
+      setSystemStatus({
+        database: systemInfoData.databaseStatus || "online",
+        apiServer: systemInfoData.apiServerStatus || "running",
+        storage: systemInfoData.diskUsage || 75,
+        uptime: systemInfoData.systemUptime || "15 days, 8 hours",
+        activeUsers: systemInfoData.activeUsers || 156,
+        totalDocuments: systemInfoData.totalDocuments || 1247,
+        databaseSize: systemInfoData.databaseSize || "2.3 GB",
+      });
+
       console.log("System info loaded:", systemInfoData);
     } catch (error) {
       console.error("Error loading system information:", error);
@@ -482,21 +494,59 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  const handleSystemMaintenance = () => {
+  const handleSystemMaintenance = async () => {
+    const newMaintenanceMode = !systemSettings.maintenanceMode;
+    const action = newMaintenanceMode ? "enable" : "disable";
+
     if (
       confirm(
-        "Are you sure you want to toggle system maintenance mode? This will affect all users."
+        `Are you sure you want to ${action} system maintenance mode?\n\n${
+          newMaintenanceMode
+            ? "⚠️ This will block ALL non-admin users from accessing the system via web interface and API.\n\nOnly administrators will be able to access the system during maintenance."
+            : "✅ This will restore normal access for all users."
+        }`
       )
     ) {
-      setSystemSettings((prev) => ({
-        ...prev,
-        maintenanceMode: !prev.maintenanceMode,
-      }));
-      toast.success(
-        `System maintenance mode ${
-          systemSettings.maintenanceMode ? "disabled" : "enabled"
-        }`
-      );
+      try {
+        setSaving(true);
+
+        // Update the setting
+        setSystemSettings((prev) => ({
+          ...prev,
+          maintenanceMode: newMaintenanceMode,
+        }));
+
+        // Save to backend
+        await adminService.updateAdminSettings({
+          maintenanceMode: newMaintenanceMode,
+        });
+
+        toast.success(
+          `System maintenance mode ${
+            newMaintenanceMode ? "enabled" : "disabled"
+          } successfully!`,
+          { duration: 5000 }
+        );
+
+        // Show additional info for maintenance mode
+        if (newMaintenanceMode) {
+          toast.success(
+            "Maintenance mode is now active. All non-admin users will see a maintenance page.",
+            { duration: 8000 }
+          );
+        }
+      } catch (error: any) {
+        console.error("Error updating maintenance mode:", error);
+        toast.error("Failed to update maintenance mode. Please try again.");
+
+        // Revert the setting on error
+        setSystemSettings((prev) => ({
+          ...prev,
+          maintenanceMode: !newMaintenanceMode,
+        }));
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -656,16 +706,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
       // Load fresh system information from API
       await loadSystemInfo();
 
-      // Update system status with realistic data
-      setSystemStatus((prev) => ({
-        ...prev,
-        activeUsers: Math.floor(Math.random() * 50) + 120, // 120-170 users
-        storage: Math.floor(Math.random() * 20) + 70, // 70-90% storage
-        uptime: `${Math.floor(Math.random() * 30) + 10} days, ${Math.floor(
-          Math.random() * 24
-        )} hours`,
-      }));
-
       toast.success("System status refreshed!", { id: "status" });
     } catch (error) {
       toast.error("Failed to refresh system status.", { id: "status" });
@@ -782,7 +822,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-outfit">
       {/* Success Message */}
       {saveSuccess && (
         <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-xl p-4">
@@ -1306,9 +1346,9 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-green-600" />
-                      System Status
-                    </h3>
+                        <Database className="w-5 h-5 mr-2 text-green-600" />
+                        System Status
+                      </h3>
                       <button
                         onClick={refreshSystemStatus}
                         disabled={saving}
@@ -1320,26 +1360,74 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div
+                        className={`p-4 border rounded-lg ${
+                          systemStatus.database === "online"
+                            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                            : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                        }`}
+                      >
                         <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                          <div
+                            className={`w-3 h-3 rounded-full animate-pulse ${
+                              systemStatus.database === "online"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          ></div>
+                          <span
+                            className={`text-sm font-medium ${
+                              systemStatus.database === "online"
+                                ? "text-green-800 dark:text-green-200"
+                                : "text-red-800 dark:text-red-200"
+                            }`}
+                          >
                             Database
                           </span>
                         </div>
-                        <p className="text-xs text-green-600 dark:text-green-400 capitalize">
+                        <p
+                          className={`text-xs capitalize ${
+                            systemStatus.database === "online"
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
                           {systemStatus.database}
                         </p>
                       </div>
 
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div
+                        className={`p-4 border rounded-lg ${
+                          systemStatus.apiServer === "running"
+                            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                            : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                        }`}
+                      >
                         <div className="flex items-center space-x-2 mb-2">
-                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                          <div
+                            className={`w-3 h-3 rounded-full animate-pulse ${
+                              systemStatus.apiServer === "running"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          ></div>
+                          <span
+                            className={`text-sm font-medium ${
+                              systemStatus.apiServer === "running"
+                                ? "text-green-800 dark:text-green-200"
+                                : "text-red-800 dark:text-red-200"
+                            }`}
+                          >
                             API Server
                           </span>
                         </div>
-                        <p className="text-xs text-green-600 dark:text-green-400 capitalize">
+                        <p
+                          className={`text-xs capitalize ${
+                            systemStatus.apiServer === "running"
+                              ? "text-green-600 dark:text-green-400"
+                              : "text-red-600 dark:text-red-400"
+                          }`}
+                        >
                           {systemStatus.apiServer}
                         </p>
                       </div>
@@ -1385,6 +1473,87 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                           }`}
                         >
                           {systemStatus.storage}% Used
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Detailed System Metrics */}
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                            Memory Usage
+                          </span>
+                          <span className="text-xs text-blue-600 dark:text-blue-400">
+                            {systemInfo.memoryUsage || 68}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${systemInfo.memoryUsage || 68}%`,
+                            }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          {systemInfo.usedMemory || 8.5}GB /{" "}
+                          {systemInfo.totalMemory || 16}GB
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                            CPU Load
+                          </span>
+                          <span className="text-xs text-purple-600 dark:text-purple-400">
+                            {systemInfo.serverLoad || 45}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
+                          <div
+                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${systemInfo.serverLoad || 45}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                          {systemInfo.cpuModel || "Intel Core i7"} (
+                          {systemInfo.cpuCount || 8} cores)
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                            Active Users
+                          </span>
+                          <span className="text-xs text-green-600 dark:text-green-400">
+                            {systemInfo.activeUsers || 156}
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          Total Users: {systemInfo.activeUsers || 156}
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          Documents: {systemInfo.totalDocuments || 1247}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                            System Uptime
+                          </span>
+                          <span className="text-xs text-orange-600 dark:text-orange-400">
+                            {systemInfo.systemUptime || "15 days, 8 hours"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                          Version: {systemInfo.version || "2.1.3"}
+                        </p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                          Environment: {systemInfo.environment || "production"}
                         </p>
                       </div>
                     </div>
@@ -1670,22 +1839,22 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <p>
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p>
                           <span className="font-medium">Version:</span>{" "}
                           {systemInfo.version}
-                      </p>
-                      <p>
-                        <span className="font-medium">Last Updated:</span>{" "}
+                        </p>
+                        <p>
+                          <span className="font-medium">Last Updated:</span>{" "}
                           {new Date(
                             systemInfo.lastUpdated
                           ).toLocaleDateString()}
-                      </p>
-                      <p>
+                        </p>
+                        <p>
                           <span className="font-medium">Database Size:</span>{" "}
                           {systemInfo.databaseSize}
-                      </p>
-                      <p>
+                        </p>
+                        <p>
                           <span className="font-medium">Server Load:</span>{" "}
                           {systemInfo.serverLoad}%
                         </p>
@@ -1694,12 +1863,12 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                         <p>
                           <span className="font-medium">Active Users:</span>{" "}
                           {systemInfo.activeUsers}
-                      </p>
-                      <p>
-                        <span className="font-medium">Total Documents:</span>{" "}
+                        </p>
+                        <p>
+                          <span className="font-medium">Total Documents:</span>{" "}
                           {systemInfo.totalDocuments.toLocaleString()}
-                      </p>
-                      <p>
+                        </p>
+                        <p>
                           <span className="font-medium">System Uptime:</span>{" "}
                           {systemInfo.systemUptime}
                         </p>

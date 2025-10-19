@@ -10,7 +10,7 @@ import {
   LogOut,
   Settings,
   Home,
-  Shield,
+  //Shield,
   Bell,
   Loader2,
   Calendar,
@@ -170,8 +170,8 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
                         }`}
                       ></div>
                       <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                      {alert.title}
-                    </p>
+                        {alert.title}
+                      </p>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">
                       {alert.message}
@@ -192,8 +192,8 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
             <Activity className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
-          Recent Activities
-        </h3>
+            Recent Activities
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
             Last 24 hours
           </span>
@@ -213,8 +213,8 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900 dark:text-white leading-5">
-                      {activity.description}
-                    </p>
+                          {activity.description}
+                        </p>
                         <div className="flex items-center space-x-2 mt-1">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {activity.user}
@@ -486,7 +486,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex h-screen overflow-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex h-screen overflow-hidden font-outfit">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
@@ -497,11 +497,13 @@ const AdminDashboard = () => {
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
+              <img
+                src="/just_logo.png"
+                alt="INTRAK Logo"
+                className="w-14 h-14 rounded-lg object-cover"
+              />
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
                   INTRAK
                 </h2>
                 <p className="text-xs text-gray-500">Admin Portal</p>
