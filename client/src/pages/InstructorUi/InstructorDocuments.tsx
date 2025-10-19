@@ -20,9 +20,9 @@ import toast from "react-hot-toast";
 
 const InstructorDocumentsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("pending");
+  const [filterType, setFilterType] = useState("");
+  const [filterPriority, setFilterPriority] = useState("");
   const [selectedDoc, setSelectedDoc] = useState<InstructorDocument | null>(
     null
   );
@@ -224,11 +224,10 @@ const InstructorDocumentsTab = () => {
       doc.documentType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === "all" || doc.status.toLowerCase() === filterStatus;
-    const matchesType = filterType === "all" || doc.documentType === filterType;
+    const matchesStatus = doc.status.toLowerCase() === filterStatus;
+    const matchesType = !filterType || doc.documentType === filterType;
     const matchesPriority =
-      filterPriority === "all" ||
+      !filterPriority ||
       getPriorityFromType(doc.documentType) === filterPriority;
 
     return matchesSearch && matchesStatus && matchesType && matchesPriority;
@@ -373,50 +372,56 @@ const InstructorDocumentsTab = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search by student name, document type, or filename..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
             />
           </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="all">All Types</option>
-            {documentTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="all">All Priority</option>
-            <option value="high">High Priority</option>
-            <option value="medium">Medium Priority</option>
-            <option value="low">Low Priority</option>
-          </select>
+
+          {/* Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium min-w-[140px]"
+            >
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium min-w-[140px]"
+            >
+              <option value="">All Types</option>
+              {documentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium min-w-[140px]"
+            >
+              <option value="">All Priority</option>
+              <option value="high">High Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
         </div>
       </div>
 

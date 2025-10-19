@@ -37,7 +37,7 @@ import {
   instructorService,
   type InstructorStudent,
 } from "../../services/instructorService";
-import { type Announcement } from "../../services/announcementService";
+//import { type Announcement } from "../../services/announcementService";
 import { settingsService } from "../../services/settingsService";
 
 // =============================================
@@ -45,15 +45,9 @@ import { settingsService } from "../../services/settingsService";
 // =============================================
 interface InstructorDashboardProps {
   setActiveTab: (tab: string) => void;
-  announcements?: Announcement[];
-  onTrackAnnouncementView?: (id: string) => void;
 }
 
-const InstructorDashboard = ({
-  setActiveTab,
-  announcements = [],
-  onTrackAnnouncementView,
-}: InstructorDashboardProps) => {
+const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] =
@@ -1279,13 +1273,7 @@ const InstructorPortal = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return (
-          <InstructorDashboard
-            setActiveTab={setActiveTab}
-            announcements={safeAnnouncements}
-            onTrackAnnouncementView={handleTrackAnnouncementView}
-          />
-        );
+        return <InstructorDashboard setActiveTab={setActiveTab} />;
       case "documents":
         return <InstructorDocumentsTab />;
       case "templates":
@@ -1308,7 +1296,7 @@ const InstructorPortal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-outfit">
       {/* Top Navigation Bar */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="px-4 sm:px-6 lg:px-8">
@@ -1322,14 +1310,16 @@ const InstructorPortal = () => {
                 <Menu className="w-6 h-6" />
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-white" />
-                </div>
+                <img
+                  src="/just_logo.png"
+                  alt="INTRAK Logo"
+                  className="w-10 h-10 rounded-lg object-cover"
+                />
                 <div className="hidden sm:block">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                    OJT Portal
+                  <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
+                    INTRAK
                   </h2>
-                  <p className="text-xs text-gray-500">Instructor</p>
+                  <p className="text-xs text-gray-500">Instructor Portal</p>
                 </div>
               </div>
             </div>
@@ -1523,16 +1513,18 @@ const InstructorPortal = () => {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Award className="w-6 h-6 text-white" />
-              </div>
+              <img
+                src="/just_logo.png"
+                alt="INTRAK Logo"
+                className="w-14 h-14 rounded-lg object-cover"
+              />
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  OJT Portal
+                <h2 className="text-xl font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
+                  INTRAK
                 </h2>
-                <p className="text-xs text-gray-500">Instructor Dashboard</p>
+                <p className="text-xs text-gray-500">Instructor Portal</p>
               </div>
             </div>
             {/* Only show close button on mobile */}

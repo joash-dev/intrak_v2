@@ -927,7 +927,7 @@ const CoordinatorPortal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-outfit">
       {/* Top Navigation Bar */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 lg:ml-72">
         <div className="px-4 sm:px-6 lg:px-8">
@@ -1053,14 +1053,16 @@ const CoordinatorPortal: React.FC = () => {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Award className="w-6 h-6 text-white" />
-              </div>
+              <img
+                src="/just_logo.png"
+                alt="INTRAK Logo"
+                className="w-14 h-14 rounded-lg object-cover"
+              />
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  OJT Portal
+                <h2 className="text-xl font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
+                  INTRAK
                 </h2>
-                <p className="text-xs text-gray-500">Coordinator Dashboard</p>
+                <p className="text-xs text-gray-500">Coordinator Portal</p>
               </div>
             </div>
             {/* Only show close button on mobile */}
