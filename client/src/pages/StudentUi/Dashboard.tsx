@@ -125,9 +125,16 @@ const OverviewTab = ({
         <p className="text-sm opacity-80">
           Student ID: {formatStudentId(data.student.studentNumber)}
         </p>
-        <p className="opacity-90">
-          Track your internship progress and manage your requirements
-        </p>
+        {data.student.company ? (
+          <div className="flex items-center space-x-2 mt-2">
+            <Building2 className="w-5 h-5 opacity-90" />
+            <p className="opacity-90 font-semibold">{data.student.company}</p>
+          </div>
+        ) : (
+          <p className="opacity-90">
+            Track your internship progress and manage your requirements
+          </p>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -447,6 +454,7 @@ const StudentDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showNoCompanyModal, setShowNoCompanyModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -473,6 +481,11 @@ const StudentDashboard = () => {
       setError(null);
       const dashboardData = await dashboardService.getDashboardData();
       setData(dashboardData);
+
+      // Show modal if student has no company
+      if (!dashboardData.student.company && activeTab === "overview") {
+        setShowNoCompanyModal(true);
+      }
 
       // Also refresh profile photo from server
       try {
@@ -1008,6 +1021,51 @@ const StudentDashboard = () => {
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Company Warning Modal */}
+      {showNoCompanyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-white to-orange-50 dark:from-gray-800 dark:to-orange-900/20 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-orange-400 dark:border-orange-600">
+            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mx-auto mb-6 shadow-lg animate-bounce">
+              <AlertTriangle className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-3">
+              No Company Assignment Yet!
+            </h3>
+            <p className="text-gray-700 dark:text-gray-300 text-center mb-6 leading-relaxed">
+              You haven't been assigned to a company yet. Browse available
+              companies and apply now to start your internship journey!
+            </p>
+
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>📌 Note:</strong> Your application will be reviewed by
+                your instructor. Once approved, you'll be assigned to the
+                company automatically!
+              </p>
+            </div>
+
+            <div className="flex flex-col space-y-3">
+              <button
+                onClick={() => {
+                  setShowNoCompanyModal(false);
+                  setActiveTab("companies");
+                }}
+                className="w-full inline-flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Building2 className="w-5 h-5 mr-2" />
+                Browse Companies & Apply Now
+              </button>
+              <button
+                onClick={() => setShowNoCompanyModal(false)}
+                className="w-full px-6 py-2.5 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                I'll Do This Later
               </button>
             </div>
           </div>

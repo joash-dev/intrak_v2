@@ -9,6 +9,7 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: string;
+    name: string;
   };
 }
 
@@ -37,14 +38,19 @@ export const authenticate = async (
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { id: true, email: true, role: true, active: true }
+      select: { id: true, email: true, role: true, name: true, active: true }
     });
 
     if (!user || !user.active) {
       return res.status(401).json({ message: 'Invalid or inactive user' });
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name
+    };
     console.log('✅ User authenticated:', user.email);
     
     next();

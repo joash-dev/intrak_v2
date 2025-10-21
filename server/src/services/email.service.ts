@@ -95,141 +95,20 @@ class EmailService {
     ` : '';
 
     const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Welcome to INTRAK</title>
-        <style>
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-          }
-          .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #3b82f6;
-          }
-          .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3b82f6;
-            margin-bottom: 10px;
-          }
-          .credentials {
-            background-color: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-          }
-          .credentials h3 {
-            margin-top: 0;
-            color: #1e40af;
-          }
-          .credential-item {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #ffffff;
-            border-radius: 5px;
-            border-left: 4px solid #3b82f6;
-          }
-          .credential-label {
-            font-weight: bold;
-            color: #374151;
-          }
-          .credential-value {
-            font-family: 'Courier New', monospace;
-            background-color: #f3f4f6;
-            padding: 5px 10px;
-            border-radius: 3px;
-            color: #1f2937;
-          }
-          .warning {
-            background-color: #fef3c7;
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-          }
-          .warning h4 {
-            margin-top: 0;
-            color: #92400e;
-          }
-          .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
-            color: #6b7280;
-            font-size: 14px;
-          }
-          .button {
-            display: inline-block;
-            background-color: #3b82f6;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            margin: 20px 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <div class="logo">INTRAK</div>
-            <h1>Welcome to INTRAK, ${userName}!</h1>
-            <p>Your ${roleDisplayName} account has been successfully created.</p>
-          </div>
-
-          <div class="credentials">
-            <h3>🔐 Your Account Credentials</h3>
-            <div class="credential-item">
-              <div class="credential-label">Email Address:</div>
-              <div class="credential-value">${userEmail}</div>
-            </div>
-            <div class="credential-item">
-              <div class="credential-label">Temporary Password:</div>
-              <div class="credential-value">${temporaryPassword}</div>
-            </div>
-            <div class="credential-item">
-              <div class="credential-label">Role:</div>
-              <div class="credential-value">${roleDisplayName}</div>
-            </div>
-            ${additionalInfoHtml}
-          </div>
-
-          <div class="warning">
-            <h4>⚠️ Important Security Notice</h4>
-            <p>This is a temporary password that you must change on your first login for security reasons. Please keep your credentials secure and do not share them with anyone.</p>
-          </div>
-
-          <div style="text-align: center;">
-            <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/login" class="button">Login to INTRAK</a>
-          </div>
-
-          <div class="footer">
-            <p>If you have any questions or need assistance, please contact your system administrator.</p>
-            <p>This is an automated message. Please do not reply to this email.</p>
-          </div>
-        </div>
-      </body>
-      </html>
+      <h1>Welcome to INTRAK, ${userName}!</h1>
+      <p>Your ${roleDisplayName} account has been successfully created.</p>
+      
+      <h2>Account Credentials:</h2>
+      <p><strong>Email:</strong> ${userEmail}</p>
+      <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+      <p><strong>Role:</strong> ${roleDisplayName}</p>
+      ${additionalInfoHtml}
+      
+      <p><strong>Important:</strong> This is a temporary password that you must change on your first login.</p>
+      
+      <p><a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/login">Login to INTRAK</a></p>
+      
+      <p>If you have any questions, please contact your system administrator.</p>
     `;
 
     const text = `

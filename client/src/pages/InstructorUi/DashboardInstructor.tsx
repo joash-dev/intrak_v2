@@ -23,6 +23,7 @@ import {
   Calendar,
   Upload,
   ClipboardList,
+  Send,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
@@ -33,6 +34,7 @@ import InstructorAttendanceVerification from "./InstructorAttendanceVerification
 import InstructorStudentManagement from "./InstructorStudentManagement";
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import InstructorSettings from "./InstructorSettings";
+import InstructorApplications from "./InstructorApplications";
 import {
   instructorService,
   type InstructorStudent,
@@ -1261,6 +1263,7 @@ const InstructorPortal = () => {
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
+    { id: "applications", label: "Company Applications", icon: Send },
     { id: "documents", label: "Document Review", icon: FileCheck },
     { id: "templates", label: "Document Templates", icon: Upload },
     { id: "checklist", label: "Document Checklist", icon: ClipboardList },
@@ -1274,6 +1277,8 @@ const InstructorPortal = () => {
     switch (activeTab) {
       case "dashboard":
         return <InstructorDashboard setActiveTab={setActiveTab} />;
+      case "applications":
+        return <InstructorApplications />;
       case "documents":
         return <InstructorDocumentsTab />;
       case "templates":

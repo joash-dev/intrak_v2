@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
 import { auditLog } from '../services/audit.service';
+import { logActivity } from './activity.controller';
 
 const prisma = new PrismaClient();
 
@@ -36,6 +37,24 @@ export const register = async (req: Request, res: Response) => {
     });
 
     await auditLog(user.id, 'USER_REGISTERED', { email }, req);
+
+    // Log activity for the dashboard
+    const roleDisplayNames: Record<string, string> = {
+      'STUDENT': 'student',
+      'INSTRUCTOR': 'instructor',
+      'COORDINATOR': 'coordinator',
+      'ADMIN': 'administrator',
+      'INDUSTRY_PARTNER': 'industry partner'
+    };
+    const roleDisplay = roleDisplayNames[user.role] || user.role.toLowerCase();
+    
+    await logActivity({
+      type: 'USER_REGISTERED',
+      description: `New ${roleDisplay} registered: ${user.name} (${user.email})`,
+      userId: user.id,
+      userName: 'System',
+      ipAddress: req.ip
+    });
 
     res.status(201).json({ user });
   } catch (error) {
@@ -101,6 +120,15 @@ export const login = async (req: Request, res: Response) => {
     console.log('Logging audit trail...');
     await auditLog(user.id, 'USER_LOGIN', { email }, req);
     console.log('Audit log created successfully');
+
+    // Log activity for the dashboard
+    await logActivity({
+      type: 'LOGIN',
+      description: `${user.name} logged in to the system`,
+      userId: user.id,
+      userName: user.name,
+      ipAddress: req.ip
+    });
 
     console.log('Sending response...');
     res.json({

@@ -55,6 +55,7 @@ const CoordinatorStudentManagement: React.FC = () => {
   const [instructorFilter, setInstructorFilter] = useState("all");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showMassAssignModal, setShowMassAssignModal] = useState(false);
+  const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedInstructor, setSelectedInstructor] = useState<string>("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -80,15 +81,23 @@ const CoordinatorStudentManagement: React.FC = () => {
     setShowAssignModal(true);
   };
 
-  const handleUnassignStudent = async (student: Student) => {
+  const handleUnassignStudent = (student: Student) => {
     if (!student.instructorId) return;
+    setSelectedStudent(student);
+    setShowUnassignModal(true);
+  };
+
+  const handleConfirmUnassign = async () => {
+    if (!selectedStudent || !selectedStudent.instructorId) return;
 
     try {
       setLoading(true);
-      await instructorService.unassignStudentFromInstructor(student.id);
+      await instructorService.unassignStudentFromInstructor(selectedStudent.id);
       toast.success(
-        `Student ${student.name} unassigned from instructor successfully`
+        `Student ${selectedStudent.name} unassigned from instructor successfully`
       );
+      setShowUnassignModal(false);
+      setSelectedStudent(null);
       await refetchStudents();
     } catch (error: any) {
       toast.error(error.message || "Failed to unassign student");
@@ -660,6 +669,59 @@ const CoordinatorStudentManagement: React.FC = () => {
                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                 ) : (
                   `Assign ${selectedStudents.length} Students`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unassign Confirmation Modal */}
+      {showUnassignModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
+              <UserX className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
+              Unassign Student
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
+              Are you sure you want to unassign{" "}
+              <span className="font-semibold">{selectedStudent.name}</span> from{" "}
+              <span className="font-semibold">
+                {selectedStudent.instructorName}
+              </span>
+              ?
+            </p>
+
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Note:</strong> This action will remove the instructor
+                assignment. The student will need to be reassigned manually.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowUnassignModal(false);
+                  setSelectedStudent(null);
+                }}
+                disabled={loading}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmUnassign}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : (
+                  "Unassign Student"
                 )}
               </button>
             </div>

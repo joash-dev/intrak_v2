@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { auditLog } from '../services/audit.service';
+import { logActivity } from './activity.controller';
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,15 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         role: true,
         active: true
       }
+    });
+
+    // Log activity
+    await logActivity({
+      type: 'USER_UPDATED',
+      description: `User profile updated: ${user.name} (${user.role})`,
+      userId: req.user!.id,
+      userName: req.user!.name,
+      ipAddress: req.ip
     });
 
     res.json({ user });
@@ -255,6 +265,15 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
       deletedUserName: user.name,
       deletedUserEmail: user.email 
     }, req);
+
+    // Log activity
+    await logActivity({
+      type: 'USER_DELETED',
+      description: `User account deleted: ${user.name} (${user.role})`,
+      userId: req.user!.id,
+      userName: req.user!.name,
+      ipAddress: req.ip
+    });
 
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {

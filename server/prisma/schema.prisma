@@ -76,6 +76,38 @@ enum AnnouncementAudience {
   PARTNERS
 }
 
+enum AlertType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActivityType {
+  USER_REGISTERED
+  USER_UPDATED
+  USER_DELETED
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
+  ATTENDANCE_LOGGED
+  EVALUATION_SUBMITTED
+  ANNOUNCEMENT_CREATED
+  COMPANY_ADDED
+  STUDENT_ASSIGNED
+  SETTINGS_UPDATED
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGED
+}
+
 
 model User {
   id           String   @id @default(uuid())
@@ -101,6 +133,7 @@ model User {
   refreshTokens     RefreshToken[]
   templatesUploaded DocumentTemplate[] @relation("TemplateUploader")
   adminSettings     AdminSettings?
+  applicationsReviewed CompanyApplication[] @relation("ApplicationReviewer")
 
   @@map("users")
 }
@@ -141,8 +174,16 @@ model Student {
   documents     Document[]
   attendanceLogs AttendanceLog[]
   evaluations   Evaluation[]
+  applications  CompanyApplication[]
 
   @@map("students")
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
 }
 
 model Company {
@@ -155,13 +196,39 @@ model Company {
   latitude      Float?
   longitude     Float?
   radiusMeters  Int      @default(100)
+  maxSlots      Int      @default(10) // Maximum number of students
+  description   String?  // Company description
+  industry      String?  // Industry type (e.g., IT, Healthcare, etc.)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   // Relations
-  students Student[]
+  students     Student[]
+  applications CompanyApplication[]
 
   @@map("companies")
+}
+
+model CompanyApplication {
+  id          String            @id @default(uuid())
+  studentId   String
+  companyId   String
+  status      ApplicationStatus @default(PENDING)
+  message     String?           // Application message from student
+  rejectionReason String?       // Reason for rejection (if rejected)
+  appliedAt   DateTime          @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?           // User ID of instructor/coordinator who reviewed
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviewer    User?    @relation("ApplicationReviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([studentId, companyId]) // A student can only apply once to a company
+  @@map("company_applications")
 }
 
 model Document {
@@ -311,4 +378,32 @@ model AdminSettings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("admin_settings")
+}
+
+model SystemAlert {
+  id          String        @id @default(uuid())
+  type        AlertType     @default(INFO)
+  priority    AlertPriority @default(MEDIUM)
+  title       String
+  message     String
+  resolved    Boolean       @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("system_alerts")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  type        ActivityType
+  description String
+  userId      String?
+  userName    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime     @default(now())
+
+  @@map("activities")
 }

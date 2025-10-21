@@ -25,6 +25,9 @@ import reportRoutes from './routes/report.routes';
 import auditRoutes from './routes/audit.routes';
 import emailRoutes from './routes/email.routes';
 import templateRoutes from './routes/template.routes';
+import activityRoutes from './routes/activity.routes';
+import alertRoutes from './routes/alert.routes';
+import companyApplicationRoutes from './routes/companyApplication.routes';
 
 dotenv.config();
 
@@ -144,6 +147,9 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/company-applications', companyApplicationRoutes);
 
 // 404 handler
 app.use((req, res) => {

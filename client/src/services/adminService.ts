@@ -573,203 +573,36 @@ class AdminService {
   // Get recent activities (realistic data)
   async getRecentActivities(): Promise<AdminActivity[]> {
     try {
-      // Realistic activities data based on actual system operations
-      const now = new Date();
-      return [
-        {
-          id: 'act-001',
-          type: 'USER_REGISTERED',
-          description: 'New student registered: Sarah Johnson (Computer Science)',
-          timestamp: new Date(now.getTime() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-          user: 'Coordinator'
-        },
-        {
-          id: 'act-002',
-          type: 'DOCUMENT_APPROVED',
-          description: 'MOA approved for TechCorp Solutions - 5 students assigned',
-          timestamp: new Date(now.getTime() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-          user: 'Coordinator'
-        },
-        {
-          id: 'act-003',
-          type: 'COMPANY_VERIFIED',
-          description: 'Company verification completed: InnovateTech Inc.',
-          timestamp: new Date(now.getTime() - 1.5 * 60 * 60 * 1000).toISOString(), // 1.5 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'act-004',
-          type: 'ATTENDANCE_SUBMITTED',
-          description: 'Weekly attendance submitted for 12 students at DataFlow Systems',
-          timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          user: 'Industry Partner'
-        },
-        {
-          id: 'act-005',
-          type: 'EVALUATION_COMPLETED',
-          description: 'Student evaluation completed: Michael Chen (Excellent rating)',
-          timestamp: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-          user: 'Industry Partner'
-        },
-        {
-          id: 'act-006',
-          type: 'PROFILE_UPDATED',
-          description: 'Student profile updated: Emily Rodriguez (Contact information)',
-          timestamp: new Date(now.getTime() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-          user: 'Student'
-        },
-        {
-          id: 'act-007',
-          type: 'DOCUMENT_UPLOADED',
-          description: 'Weekly report uploaded by David Kim at CloudTech Solutions',
-          timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          user: 'Student'
-        },
-        {
-          id: 'act-008',
-          type: 'SYSTEM_BACKUP',
-          description: 'Automated system backup completed successfully',
-          timestamp: new Date(now.getTime() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-          user: 'System'
-        },
-        {
-          id: 'act-009',
-          type: 'ANNOUNCEMENT_POSTED',
-          description: 'New announcement posted: "Internship Program Guidelines Updated"',
-          timestamp: new Date(now.getTime() - 7 * 60 * 60 * 1000).toISOString(), // 7 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'act-010',
-          type: 'COMPANY_ADDED',
-          description: 'New company registered: GreenTech Innovations (Pending verification)',
-          timestamp: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
-          user: 'System'
-        },
-        {
-          id: 'act-011',
-          type: 'INSTRUCTOR_ASSIGNED',
-          description: 'Instructor Dr. Lisa Wang assigned to 8 Computer Science students',
-          timestamp: new Date(now.getTime() - 9 * 60 * 60 * 1000).toISOString(), // 9 hours ago
-          user: 'Coordinator'
-        },
-        {
-          id: 'act-012',
-          type: 'SECURITY_LOGIN',
-          description: 'Admin login from new IP address: 192.168.1.100',
-          timestamp: new Date(now.getTime() - 10 * 60 * 60 * 1000).toISOString(), // 10 hours ago
-          user: 'Admin'
-        },
-        {
-          id: 'act-013',
-          type: 'DOCUMENT_REJECTED',
-          description: 'MOA rejected for CyberSoft Inc. - Missing required signatures',
-          timestamp: new Date(now.getTime() - 11 * 60 * 60 * 1000).toISOString(), // 11 hours ago
-          user: 'Coordinator'
-        },
-        {
-          id: 'act-014',
-          type: 'STUDENT_PLACED',
-          description: 'Student placement confirmed: Alex Thompson at FinTech Solutions',
-          timestamp: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-          user: 'Coordinator'
-        },
-        {
-          id: 'act-015',
-          type: 'SYSTEM_UPDATE',
-          description: 'System update applied: Version 2.1.3 - Bug fixes and performance improvements',
-          timestamp: new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(), // 13 hours ago
-          user: 'System'
-        }
-      ];
+      const response = await api.get('/activities', { params: { limit: 15 } });
+      return response.data.activities.map((activity: any) => ({
+        id: activity.id,
+        type: activity.type,
+        description: activity.description,
+        timestamp: activity.createdAt,
+        user: activity.userName || 'System'
+      }));
     } catch (error) {
       console.error('Error fetching recent activities:', error);
-      throw error;
+      return [];
     }
   }
 
   // Get system alerts
   async getSystemAlerts(): Promise<AdminAlert[]> {
     try {
-      // Realistic system alerts data
-      const now = new Date();
-      return [
-        {
-          id: 'alert-001',
-          type: 'warning',
-          title: 'Pending Document Reviews',
-          message: '47 documents awaiting coordinator approval across 12 companies',
-          priority: 'high',
-          createdAt: new Date(now.getTime() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-          resolved: false
-        },
-        {
-          id: 'alert-002',
-          type: 'info',
-          title: 'System Maintenance Scheduled',
-          message: 'Planned maintenance window: Sunday, Oct 20, 2024 from 2:00 AM to 4:00 AM EST',
-          priority: 'medium',
-          createdAt: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-          resolved: false
-        },
-        {
-          id: 'alert-003',
-          type: 'warning',
-          title: 'Incomplete Student Profiles',
-          message: '23 students have incomplete profile information affecting placement matching',
-          priority: 'medium',
-          createdAt: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          resolved: false
-        },
-        {
-          id: 'alert-004',
-          type: 'error',
-          title: 'Database Backup Failed',
-          message: 'Last night\'s automated backup failed. Manual backup required.',
-          priority: 'critical',
-          createdAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
-          resolved: false
-        },
-        {
-          id: 'alert-005',
-          type: 'success',
-          title: 'Security Update Applied',
-          message: 'Latest security patches have been successfully applied to all servers',
-          priority: 'low',
-          createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-          resolved: true
-        },
-        {
-          id: 'alert-006',
-          type: 'warning',
-          title: 'High Server Load',
-          message: 'Server CPU usage exceeded 85% for the past 2 hours during peak hours',
-          priority: 'medium',
-          createdAt: new Date(now.getTime() - 15 * 60 * 60 * 1000).toISOString(), // 15 hours ago
-          resolved: false
-        },
-        {
-          id: 'alert-007',
-          type: 'info',
-          title: 'New Company Registration',
-          message: '3 new companies have registered and are pending verification',
-          priority: 'low',
-          createdAt: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(), // 18 hours ago
-          resolved: false
-        },
-        {
-          id: 'alert-008',
-          type: 'warning',
-          title: 'Expired Certificates',
-          message: 'SSL certificates for staging environment expire in 7 days',
-          priority: 'medium',
-          createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), // 24 hours ago
-          resolved: false
-        }
-      ];
+      const response = await api.get('/alerts', { params: { resolved: false, limit: 20 } });
+      return response.data.alerts.map((alert: any) => ({
+        id: alert.id,
+        type: alert.type.toLowerCase(),
+        title: alert.title,
+        message: alert.message,
+        priority: alert.priority.toLowerCase(),
+        createdAt: alert.createdAt,
+        resolved: alert.resolved
+      }));
     } catch (error) {
       console.error('Error fetching system alerts:', error);
-      throw error;
+      return [];
     }
   }
 
