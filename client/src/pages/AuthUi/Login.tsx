@@ -167,7 +167,7 @@ const Login: React.FC = () => {
       </style>
       <div className="h-screen flex overflow-hidden">
         {/* Left Section - Login Form */}
-        <div className="flex-1 flex items-center justify-center bg-white p-8">
+        <div className="w-full lg:flex-1 flex items-center justify-center bg-white p-4 sm:p-6 lg:p-8">
           <div className="w-full max-w-md">
             {/* Top Gap */}
             <div className="h-4"></div>
@@ -339,8 +339,8 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Section - Image */}
-        <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+        {/* Right Section - Image (Hidden on Mobile/Tablet) */}
+        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center">
           <div className="relative">
             <img
               src="/intrak_light.jpg"

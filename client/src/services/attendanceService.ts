@@ -131,6 +131,47 @@ class AttendanceService {
     });
     return response.data.log;
   }
+
+  // Export DTR as PDF
+  async exportDTR(options?: {
+    month?: number;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<void> {
+    try {
+      const params = new URLSearchParams();
+      
+      if (options?.month) params.append('month', options.month.toString());
+      if (options?.year) params.append('year', options.year.toString());
+      if (options?.startDate) params.append('startDate', options.startDate);
+      if (options?.endDate) params.append('endDate', options.endDate);
+
+      const queryString = params.toString();
+      const url = `/attendance/export-dtr/me${queryString ? `?${queryString}` : ''}`;
+
+      const response = await api.get(url, {
+        responseType: 'blob'
+      });
+
+      // Create blob link to download
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      
+      // Generate filename
+      const monthYear = options?.month && options?.year 
+        ? `${options.year}-${options.month.toString().padStart(2, '0')}`
+        : new Date().toISOString().split('T')[0];
+      link.download = `Internship_TimeFrame_${monthYear}.pdf`;
+      
+      link.click();
+      window.URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error('Error exporting DTR:', error);
+      throw new Error('Failed to export DTR. Please try again.');
+    }
+  }
 }
 
 export const attendanceService = new AttendanceService();

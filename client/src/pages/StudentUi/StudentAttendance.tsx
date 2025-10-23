@@ -11,6 +11,7 @@ import {
   FileText,
   TrendingUp,
   Loader2,
+  Download,
 } from "lucide-react";
 import {
   attendanceService,
@@ -38,6 +39,7 @@ const StudentAttendanceTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [qrLoading, setQrLoading] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [hasTimeInToday, setHasTimeInToday] = useState(false);
   const [manualDate, setManualDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -209,6 +211,26 @@ const StudentAttendanceTab: React.FC = () => {
     }
   };
 
+  const handleExportDTR = async () => {
+    try {
+      setExportLoading(true);
+      const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11
+      const currentYear = currentDate.getFullYear();
+
+      await attendanceService.exportDTR({
+        month: currentMonth,
+        year: currentYear,
+      });
+
+      toast.success(`DTR for ${monthYear} exported successfully!`);
+    } catch (error) {
+      console.error("Error exporting DTR:", error);
+      toast.error("Failed to export DTR. Please try again.");
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   const days = getDaysInMonth(currentDate);
   const monthYear = currentDate.toLocaleDateString("en-US", {
     month: "long",
@@ -351,7 +373,7 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <button
           onClick={handleGenerateQR}
           disabled={qrLoading}
@@ -384,6 +406,26 @@ const StudentAttendanceTab: React.FC = () => {
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Enter time manually
+          </p>
+        </button>
+
+        <button
+          onClick={handleExportDTR}
+          disabled={exportLoading}
+          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
+        >
+          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            {exportLoading ? (
+              <Loader2 className="w-6 h-6 text-white animate-spin" />
+            ) : (
+              <Download className="w-6 h-6 text-white" />
+            )}
+          </div>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+            Export DTR
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Download as PDF
           </p>
         </button>
 

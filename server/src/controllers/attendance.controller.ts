@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRToken, verifyQRToken } from '../services/qr.service';
 import { auditLog } from '../services/audit.service';
+import { generateDTRPDF } from '../services/dtr.service';
 
 const prisma = new PrismaClient();
 
@@ -314,6 +315,80 @@ export const verifyGPS = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'GPS verification failed' });
+  }
+};
+
+// Export DTR as PDF
+export const exportDTR = async (req: AuthRequest, res: Response) => {
+  try {
+    let studentId = req.params.studentId;
+    const { month, year, startDate, endDate } = req.query;
+
+    // If studentId is "me", get the student ID from the authenticated user
+    if (studentId === 'me' || !studentId) {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const student = await prisma.student.findFirst({
+        where: { userId },
+        select: { id: true, user: { select: { name: true } } }
+      });
+
+      if (!student) {
+        return res.status(404).json({ message: 'Student profile not found' });
+      }
+
+      studentId = student.id;
+    }
+
+    // Permission check: Students can only export their own DTR
+    if (req.user?.role === 'STUDENT') {
+      const student = await prisma.student.findFirst({
+        where: { userId: req.user.id, id: studentId },
+      });
+
+      if (!student) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+    }
+
+    // Generate PDF
+    const pdfBuffer = await generateDTRPDF({
+      studentId,
+      month: month ? parseInt(month as string) : undefined,
+      year: year ? parseInt(year as string) : undefined,
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+    });
+
+    // Get student name for filename
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { user: { select: { name: true } }, studentNumber: true }
+    });
+
+    const fileName = `Internship_TimeFrame_${student?.studentNumber || studentId}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
+      action: 'DTR_EXPORTED',
+      studentId,
+      fileName
+    }, req);
+
+    // Send PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('DTR Export error:', error);
+    res.status(500).json({ 
+      message: 'Failed to export DTR',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
   }
 };
 

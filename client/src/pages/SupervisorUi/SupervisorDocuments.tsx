@@ -1,304 +1,214 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   Download,
   Eye,
   Search,
-  Filter,
   CheckCircle,
   Clock,
   XCircle,
   Calendar,
-  User,
-  Building2,
+  Loader2,
   FileCheck,
   AlertCircle,
-  ChevronDown,
-  ExternalLink,
 } from "lucide-react";
+import { supervisorService } from "../../services/supervisorService";
+import type { StudentDocument } from "../../services/supervisorService";
+import toast from "react-hot-toast";
 
-const ViewDocuments = () => {
+const SupervisorDocuments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [selectedStudent, setSelectedStudent] = useState("all");
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [selectedDocument, setSelectedDocument] =
+    useState<StudentDocument | null>(null);
 
-  const students = [
-    { id: "1", name: "Maria Santos", studentId: "2021-001" },
-    { id: "2", name: "Juan Dela Cruz", studentId: "2021-002" },
-    { id: "3", name: "Ana Reyes", studentId: "2021-003" },
-  ];
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
-  const documents = [
-    {
-      id: "1",
-      studentId: "2021-001",
-      studentName: "Maria Santos",
-      avatar: "MS",
-      title: "Weekly Progress Report - Week 8",
-      type: "report",
-      status: "submitted",
-      submittedDate: "2024-10-05",
-      submittedTime: "2:30 PM",
-      fileSize: "2.4 MB",
-      fileType: "PDF",
-      description:
-        "Weekly progress report covering tasks completed and challenges faced.",
-      requiresApproval: false,
-    },
-    {
-      id: "2",
-      studentId: "2021-001",
-      studentName: "Maria Santos",
-      avatar: "MS",
-      title: "Project Documentation - Phase 1",
-      type: "documentation",
-      status: "submitted",
-      submittedDate: "2024-10-03",
-      submittedTime: "10:15 AM",
-      fileSize: "5.8 MB",
-      fileType: "PDF",
-      description: "Complete documentation for project phase 1 implementation.",
-      requiresApproval: false,
-    },
-    {
-      id: "3",
-      studentId: "2021-002",
-      studentName: "Juan Dela Cruz",
-      avatar: "JD",
-      title: "Daily Time Record - September 2024",
-      type: "timesheet",
-      status: "submitted",
-      submittedDate: "2024-10-01",
-      submittedTime: "4:45 PM",
-      fileSize: "1.2 MB",
-      fileType: "PDF",
-      description: "Complete daily time record for the month of September.",
-      requiresApproval: false,
-    },
-    {
-      id: "4",
-      studentId: "2021-003",
-      studentName: "Ana Reyes",
-      avatar: "AR",
-      title: "Internship Completion Certificate Request",
-      type: "certificate",
-      status: "submitted",
-      submittedDate: "2024-09-28",
-      submittedTime: "9:00 AM",
-      fileSize: "892 KB",
-      fileType: "PDF",
-      description: "Request form for internship completion certificate.",
-      requiresApproval: false,
-    },
-    {
-      id: "5",
-      studentId: "2021-002",
-      studentName: "Juan Dela Cruz",
-      avatar: "JD",
-      title: "Technical Skills Assessment Report",
-      type: "report",
-      status: "submitted",
-      submittedDate: "2024-09-25",
-      submittedTime: "3:20 PM",
-      fileSize: "3.1 MB",
-      fileType: "PDF",
-      description:
-        "Self-assessment report on technical skills gained during internship.",
-      requiresApproval: false,
-    },
-    {
-      id: "6",
-      studentId: "2021-003",
-      studentName: "Ana Reyes",
-      avatar: "AR",
-      title: "Mid-term Evaluation Form",
-      type: "evaluation",
-      status: "submitted",
-      submittedDate: "2024-09-20",
-      submittedTime: "11:30 AM",
-      fileSize: "1.5 MB",
-      fileType: "PDF",
-      description: "Completed mid-term self-evaluation form.",
-      requiresApproval: false,
-    },
-  ];
-
-  const getStatusColor = (status) => {
-    const colors = {
-      submitted:
-        "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-      approved:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-      pending:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-    };
-    return colors[status] || colors["submitted"];
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const fetchedDocs = await supervisorService.getStudentDocuments();
+      setDocuments(fetchedDocs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusIcon = (status) => {
+  const stats = {
+    total: documents.length,
+    pending: documents.filter((doc) => doc.status === "PENDING").length,
+    approved: documents.filter((doc) => doc.status === "APPROVED").length,
+    rejected: documents.filter((doc) => doc.status === "REJECTED").length,
+  };
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case "approved":
-        return <CheckCircle className="w-4 h-4" />;
-      case "rejected":
-        return <XCircle className="w-4 h-4" />;
-      case "pending":
-        return <Clock className="w-4 h-4" />;
+      case "APPROVED":
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case "PENDING":
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      case "REJECTED":
+        return <XCircle className="w-5 h-5 text-red-600" />;
       default:
-        return <FileCheck className="w-4 h-4" />;
+        return <FileText className="w-5 h-5 text-gray-600" />;
     }
   };
 
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case "report":
-        return "📊";
-      case "documentation":
-        return "📝";
-      case "timesheet":
-        return "⏰";
-      case "certificate":
-        return "🎓";
-      case "evaluation":
-        return "⭐";
-      default:
-        return "📄";
-    }
-  };
-
-  const getTypeLabel = (type) => {
-    const labels = {
-      report: "Progress Report",
-      documentation: "Documentation",
-      timesheet: "Time Record",
-      certificate: "Certificate",
-      evaluation: "Evaluation",
-      other: "Other",
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      PENDING:
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+      APPROVED:
+        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+      REJECTED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
     };
-    return labels[type] || "Document";
+    return colors[status] || colors["PENDING"];
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const handleDownload = async (doc: StudentDocument) => {
+    try {
+      await supervisorService.downloadDocument(doc.id);
+      toast.success(`Downloading ${doc.filename}`);
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      toast.error("Failed to download document");
+    }
   };
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchQuery.toLowerCase());
+      doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.type.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === "all" || doc.type === filterType;
     const matchesStatus = filterStatus === "all" || doc.status === filterStatus;
-    const matchesStudent =
-      selectedStudent === "all" || doc.studentId === selectedStudent;
-    return matchesSearch && matchesType && matchesStatus && matchesStudent;
+    return matchesSearch && matchesType && matchesStatus;
   });
 
-  const stats = {
-    totalDocuments: documents.length,
-    submitted: documents.filter((d) => d.status === "submitted").length,
-    approved: documents.filter((d) => d.status === "approved").length,
-    pending: documents.filter((d) => d.status === "pending").length,
-  };
+  // Get unique document types
+  const documentTypes = Array.from(new Set(documents.map((doc) => doc.type)));
 
-  const handleDownload = (doc) => {
-    alert(`Downloading: ${doc.title}\nFile: ${doc.fileType} (${doc.fileSize})`);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading documents...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const handlePreview = (doc) => {
-    setSelectedDocument(doc);
-    setShowPreview(true);
-  };
-
-  const handleDownloadAll = () => {
-    const count = filteredDocuments.length;
-    alert(`Preparing to download ${count} document(s) as ZIP file...`);
-  };
+  const userString = localStorage.getItem("user");
+  const user = userString ? JSON.parse(userString) : null;
+  const supervisorName = user?.name || "Supervisor";
+  const companyName = user?.company || "Company";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Intern Documents
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              View and download documents submitted by interns
-            </p>
-          </div>
-          <button
-            onClick={handleDownloadAll}
-            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download All</span>
-          </button>
+    <div className="space-y-6">
+      {/* Gradient Header */}
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
+        <h1 className="text-3xl font-bold mb-2">Student Documents</h1>
+        <p className="text-blue-100 text-lg mb-1">Company: {companyName}</p>
+        <p className="text-blue-100">
+          View and download intern documents - Manage student submissions
+        </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total Documents
-                </p>
-                <p className="text-3xl font-bold text-purple-600 mt-1">
-                  {stats.totalDocuments}
-                </p>
-              </div>
-              <FileText className="w-8 h-8 text-purple-600 opacity-50" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Documents */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Documents
+            </p>
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <FileText className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Submitted
-                </p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">
-                  {stats.submitted}
-                </p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {stats.total}
+          </p>
+          <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+            Total documents
+          </span>
               </div>
-              <FileCheck className="w-8 h-8 text-blue-600 opacity-50" />
+
+        {/* Pending Review */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              Pending Review
+            </p>
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {stats.pending}
+          </p>
+          <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+            {stats.pending} pending
+          </span>
+              </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Approved
-                </p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
+        {/* Approved */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400">Approved</p>
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   {stats.approved}
                 </p>
+          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+            Approved docs
+          </span>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600 opacity-50" />
+
+        {/* Rejected */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400">Rejected</p>
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
           </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-l-4 border-yellow-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Pending
-                </p>
-                <p className="text-3xl font-bold text-yellow-600 mt-1">
-                  {stats.pending}
-                </p>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600 opacity-50" />
-            </div>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {stats.rejected}
+          </p>
+          <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+            Rejected docs
+          </span>
           </div>
         </div>
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
@@ -308,264 +218,205 @@ const ViewDocuments = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
               />
             </div>
-
-            <select
-              value={selectedStudent}
-              onChange={(e) => setSelectedStudent(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="all">All Students</option>
-              {students.map((student) => (
-                <option key={student.id} value={student.studentId}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">All Types</option>
-              <option value="report">Progress Reports</option>
-              <option value="documentation">Documentation</option>
-              <option value="timesheet">Time Records</option>
-              <option value="certificate">Certificates</option>
-              <option value="evaluation">Evaluations</option>
+            {documentTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
             </select>
-
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">All Status</option>
-              <option value="submitted">Submitted</option>
-              <option value="approved">Approved</option>
-              <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
             </select>
           </div>
         </div>
 
-        {/* Documents List */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Documents ({filteredDocuments.length})
-            </h2>
-          </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        Showing {filteredDocuments.length} of {documents.length} documents
+      </p>
 
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      {/* Documents Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredDocuments.map((doc) => (
               <div
                 key={doc.id}
-                className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start space-x-4 flex-1">
-                    {/* Icon */}
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-2xl flex-shrink-0">
-                      {getTypeIcon(doc.type)}
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start space-x-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  {getStatusIcon(doc.status)}
                     </div>
-
-                    {/* Document Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
-                          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                            {doc.title}
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    {doc.filename}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            {doc.description}
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {doc.studentName}
                           </p>
                         </div>
                       </div>
-
-                      {/* Meta Information */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                            {doc.avatar}
-                          </div>
-                          <span>{doc.studentName}</span>
-                        </div>
-
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            {doc.submittedDate} at {doc.submittedTime}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center space-x-1">
-                          <FileText className="w-4 h-4" />
-                          <span>
-                            {doc.fileType} • {doc.fileSize}
-                          </span>
-                        </div>
-
                         <span
-                          className={`inline-flex items-center space-x-1 text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
                             doc.status
                           )}`}
                         >
-                          {getStatusIcon(doc.status)}
-                          <span className="capitalize">{doc.status}</span>
-                        </span>
-
-                        <span className="text-xs px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full">
-                          {getTypeLabel(doc.type)}
+                {doc.status}
                         </span>
                       </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Type</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {doc.type}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Uploaded</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {formatDate(doc.uploadedAt)}
+                </p>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center space-x-2 flex-shrink-0">
+            {doc.remarks && (
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-xs text-gray-500 mb-1">Remarks</p>
+                <p className="text-sm text-gray-900 dark:text-white">
+                  {doc.remarks}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handlePreview(doc)}
-                      className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                      title="Preview"
+                onClick={() => setSelectedDocument(doc)}
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
                     >
-                      <Eye className="w-5 h-5" />
+                <Eye className="w-4 h-4" />
+                <span className="text-sm">View Details</span>
                     </button>
                     <button
                       onClick={() => handleDownload(doc)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                      title="Download"
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors"
                     >
-                      <Download className="w-5 h-5" />
+                <Download className="w-4 h-4" />
+                <span className="text-sm">Download</span>
                     </button>
-                  </div>
                 </div>
               </div>
             ))}
           </div>
 
           {filteredDocuments.length === 0 && (
-            <div className="text-center py-16">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
               <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
-                No documents found
-              </p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                Try adjusting your filters or search query
-              </p>
+          <p className="text-gray-500 dark:text-gray-400">No documents found</p>
             </div>
           )}
-        </div>
 
-        {/* Document Preview Modal */}
-        {showPreview && selectedDocument && (
+      {/* Document Detail Modal */}
+      {selectedDocument && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowPreview(false)}
+          onClick={() => setSelectedDocument(null)}
           >
             <div
-              className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center text-2xl">
-                      {getTypeIcon(selectedDocument.type)}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                        {selectedDocument.title}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Document Details
                       </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                            {selectedDocument.avatar}
-                          </div>
-                          <span>{selectedDocument.studentName}</span>
-                        </div>
-                        <span>•</span>
-                        <span>{selectedDocument.submittedDate}</span>
-                        <span>•</span>
-                        <span>
-                          {selectedDocument.fileType} •{" "}
-                          {selectedDocument.fileSize}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
                   <button
-                    onClick={() => setShowPreview(false)}
+                onClick={() => setSelectedDocument(null)}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   >
-                    <XCircle className="w-6 h-6" />
+                <XCircle className="w-5 h-5" />
                   </button>
                 </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                  {selectedDocument.studentName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)}
               </div>
-
-              {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="space-y-6">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Description
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedDocument.studentName}
                     </h4>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {selectedDocument.description}
-                    </p>
+                  <p className="text-sm text-gray-500">Student</p>
+                </div>
                   </div>
 
+              <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Document Type
-                    </h4>
-                    <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
-                      {getTypeLabel(selectedDocument.type)}
-                    </span>
+                  <p className="text-sm text-gray-500 mb-1">Filename</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedDocument.filename}
+                  </p>
                   </div>
-
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                      Status
-                    </h4>
+                  <p className="text-sm text-gray-500 mb-1">Status</p>
                     <span
-                      className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                    className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
                         selectedDocument.status
                       )}`}
                     >
-                      {getStatusIcon(selectedDocument.status)}
-                      <span className="capitalize">
                         {selectedDocument.status}
                       </span>
-                    </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Type</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedDocument.type}
+                  </p>
                   </div>
-
-                  {/* Preview Placeholder */}
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 mb-2">
-                      Document Preview
-                    </p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500">
-                      Preview functionality will be available here
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">MIME Type</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedDocument.mimeType}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Uploaded Date</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {formatDate(selectedDocument.uploadedAt)}
                     </p>
                   </div>
                 </div>
-              </div>
 
-              {/* Modal Footer */}
-              <div className="p-6 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setShowPreview(false)}
-                    className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
-                  >
-                    Close
-                  </button>
+              {selectedDocument.remarks && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-500 mb-2">Remarks</p>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {selectedDocument.remarks}
+                  </p>
+              </div>
+              )}
+
+              <div className="flex space-x-3 pt-4">
                   <button
                     onClick={() => handleDownload(selectedDocument)}
-                    className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                  className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     <Download className="w-5 h-5" />
                     <span>Download</span>
@@ -575,9 +426,8 @@ const ViewDocuments = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };
 
-export default ViewDocuments;
+export default SupervisorDocuments;

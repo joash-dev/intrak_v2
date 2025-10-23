@@ -1,0 +1,344 @@
+import api from './api';
+
+// Interfaces
+export interface SupervisorStudent {
+  id: string;
+  studentId: string;
+  studentNumber: string;
+  name: string;
+  email: string;
+  program: string;
+  year: number;
+  section: string;
+  startDate: string | null;
+  endDate: string | null;
+  totalHours: number;
+  completedHours: number;
+  attendanceRate: number;
+  tasksCompleted?: number;
+  totalTasks?: number;
+  lastEvaluation?: {
+    date: string;
+    overallRating: number;
+  };
+  status: 'active' | 'needs_attention' | 'completed';
+  lastActivity?: string;
+  pendingApprovals?: number;
+}
+
+export interface AttendanceLog {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentNumber: string;
+  date: string;
+  timeIn: string | null;
+  timeOut: string | null;
+  durationMinutes: number;
+  method: string;
+  location?: string;
+  coordinates?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  verified: boolean;
+  remarks: string | null;
+  submittedAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+}
+
+export interface StudentDocument {
+  id: string;
+  studentId: string;
+  studentName: string;
+  type: string;
+  filename: string;
+  mimeType: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  uploadedAt: string;
+  remarks: string | null;
+}
+
+export interface EvaluationData {
+  studentId: string;
+  technicalSkills: number;
+  workEthic: number;
+  communication: number;
+  teamwork: number;
+  problemSolving: number;
+  initiative: number;
+  punctuality: number;
+  qualityOfWork: number;
+  comments: string;
+  strengths?: string;
+  improvements?: string;
+  recommendation?: string;
+}
+
+class SupervisorService {
+  // Get students assigned to supervisor's company
+  async getMyStudents(): Promise<SupervisorStudent[]> {
+    try {
+      const response = await api.get('/students/');
+      
+      // Transform the data to match our interface
+      const students = response.data.students || response.data || [];
+      
+      return students.map((student: any) => ({
+        id: student.id,
+        studentId: student.studentNumber,
+        studentNumber: student.studentNumber,
+        name: student.user?.name || student.name || 'Unknown',
+        email: student.user?.email || student.email || '',
+        program: student.program,
+        year: student.year,
+        section: student.section,
+        startDate: student.startDate,
+        endDate: student.endDate,
+        totalHours: student.totalHours,
+        completedHours: student.completedHours || 0,
+        attendanceRate: student.attendanceRate || 0,
+        status: this.calculateStudentStatus(student),
+        lastActivity: student.lastActivity,
+        pendingApprovals: student.pendingApprovals || 0,
+      }));
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      throw error;
+    }
+  }
+
+  // Get attendance logs for review
+  async getAttendanceLogs(filters?: {
+    studentId?: string;
+    status?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<AttendanceLog[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.studentId) params.append('studentId', filters.studentId);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+      if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+
+      const response = await api.get(`/attendance?${params.toString()}`);
+      const logs = response.data.logs || response.data || [];
+
+      return logs.map((log: any) => ({
+        id: log.id,
+        studentId: log.studentId,
+        studentName: log.student?.user?.name || 'Unknown',
+        studentNumber: log.student?.studentNumber || '',
+        date: log.date,
+        timeIn: log.timeIn,
+        timeOut: log.timeOut,
+        durationMinutes: log.durationMinutes || 0,
+        method: log.method || 'MANUAL',
+        location: log.location,
+        coordinates: log.latitude && log.longitude 
+          ? `${log.latitude}° N, ${log.longitude}° E`
+          : undefined,
+        status: log.verified ? 'approved' : 'pending',
+        verified: log.verified,
+        remarks: log.remarks,
+        submittedAt: log.createdAt || log.date,
+        approvedAt: log.verifiedAt,
+        approvedBy: log.verifiedBy,
+      }));
+    } catch (error) {
+      console.error('Error fetching attendance logs:', error);
+      throw error;
+    }
+  }
+
+  // Approve attendance log
+  async approveAttendance(logId: string, remarks?: string): Promise<void> {
+    try {
+      await api.put(`/attendance/${logId}/verify`, {
+        verified: true,
+        remarks: remarks || 'Approved by supervisor',
+      });
+    } catch (error) {
+      console.error('Error approving attendance:', error);
+      throw error;
+    }
+  }
+
+  // Reject attendance log
+  async rejectAttendance(logId: string, reason: string): Promise<void> {
+    try {
+      await api.put(`/attendance/${logId}/verify`, {
+        verified: false,
+        remarks: reason,
+      });
+    } catch (error) {
+      console.error('Error rejecting attendance:', error);
+      throw error;
+    }
+  }
+
+  // Get student documents
+  async getStudentDocuments(studentId?: string): Promise<StudentDocument[]> {
+    try {
+      const url = studentId ? `/documents?studentId=${studentId}` : '/documents';
+      const response = await api.get(url);
+      const documents = response.data.documents || response.data || [];
+
+      return documents.map((doc: any) => ({
+        id: doc.id,
+        studentId: doc.studentId,
+        studentName: doc.student?.user?.name || 'Unknown',
+        type: doc.type,
+        filename: doc.filename,
+        mimeType: doc.mimeType,
+        status: doc.status,
+        uploadedAt: doc.uploadedAt,
+        remarks: doc.remarks,
+      }));
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      throw error;
+    }
+  }
+
+  // Download document
+  async downloadDocument(documentId: string): Promise<void> {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data]);
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      
+      // Get filename from response headers or use default
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'document';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/i);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+      
+      link.download = filename;
+      link.click();
+      window.URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      throw error;
+    }
+  }
+
+  // Submit evaluation for a student
+  async submitEvaluation(data: EvaluationData): Promise<void> {
+    try {
+      const overallRating = (
+        data.technicalSkills +
+        data.workEthic +
+        data.communication +
+        data.teamwork +
+        data.problemSolving +
+        data.initiative +
+        data.punctuality +
+        data.qualityOfWork
+      ) / 8;
+
+      await api.post('/evaluations', {
+        studentId: data.studentId,
+        overallRating,
+        technicalSkills: data.technicalSkills,
+        workEthic: data.workEthic,
+        communication: data.communication,
+        teamwork: data.teamwork,
+        problemSolving: data.problemSolving,
+        initiative: data.initiative,
+        punctuality: data.punctuality,
+        qualityOfWork: data.qualityOfWork,
+        comments: data.comments,
+        strengths: data.strengths,
+        improvements: data.improvements,
+        recommendation: data.recommendation,
+      });
+    } catch (error) {
+      console.error('Error submitting evaluation:', error);
+      throw error;
+    }
+  }
+
+  // Get evaluations history
+  async getEvaluations(studentId?: string): Promise<any[]> {
+    try {
+      const url = studentId ? `/evaluations?studentId=${studentId}` : '/evaluations';
+      const response = await api.get(url);
+      return response.data.evaluations || response.data || [];
+    } catch (error) {
+      console.error('Error fetching evaluations:', error);
+      throw error;
+    }
+  }
+
+  // Get dashboard statistics
+  async getDashboardStats(): Promise<any> {
+    try {
+      const students = await this.getMyStudents();
+      const attendanceLogs = await this.getAttendanceLogs({ status: 'pending' });
+      
+      const activeStudents = students.filter(s => s.status === 'active').length;
+      const pendingApprovals = attendanceLogs.filter(l => l.status === 'pending').length;
+      const avgAttendance = students.length > 0
+        ? students.reduce((sum, s) => sum + s.attendanceRate, 0) / students.length
+        : 0;
+
+      return {
+        totalInterns: students.length,
+        activeInterns: activeStudents,
+        pendingApprovals,
+        avgAttendance: avgAttendance.toFixed(1),
+        students,
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
+  }
+
+  // Helper: Calculate student status
+  private calculateStudentStatus(student: any): 'active' | 'needs_attention' | 'completed' {
+    if (student.completedHours >= student.totalHours) {
+      return 'completed';
+    }
+    
+    const attendanceRate = student.attendanceRate || 0;
+    if (attendanceRate < 85) {
+      return 'needs_attention';
+    }
+    
+    return 'active';
+  }
+
+  // Record QR scan for attendance
+  async recordQRAttendance(qrData: {
+    studentId: string;
+    action: 'time-in' | 'time-out';
+    location?: string;
+  }): Promise<void> {
+    try {
+      await api.post('/attendance/log', {
+        studentId: qrData.studentId,
+        method: 'QR',
+        action: qrData.action,
+        location: qrData.location || 'Company Office',
+        timeIn: qrData.action === 'time-in' ? new Date().toISOString() : undefined,
+        timeOut: qrData.action === 'time-out' ? new Date().toISOString() : undefined,
+      });
+    } catch (error) {
+      console.error('Error recording QR attendance:', error);
+      throw error;
+    }
+  }
+}
+
+export const supervisorService = new SupervisorService();
+export type { SupervisorStudent, AttendanceLog, StudentDocument, EvaluationData };
