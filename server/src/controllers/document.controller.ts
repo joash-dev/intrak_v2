@@ -1,13 +1,82 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { validateNASConnection, getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 import path from 'path';
 import fs from 'fs';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
 const uploadPath = getStoragePath();
+
+const getStudentIdForUser = async (userId: string): Promise<string | null> => {
+  const student = await prisma.student.findFirst({
+    where: { userId },
+    select: { id: true },
+  });
+
+  return student?.id ?? null;
+};
+
+const ensureDocumentAccess = async (req: AuthRequest, documentStudentId: string): Promise<boolean> => {
+  const role = req.user?.role;
+  const userId = req.user?.id;
+
+  if (!role || !userId) {
+    return false;
+  }
+
+  if (['ADMIN', 'COORDINATOR'].includes(role)) {
+    return true;
+  }
+
+  if (role === 'STUDENT') {
+    const studentId = await getStudentIdForUser(userId);
+    return studentId === documentStudentId;
+  }
+
+  if (role === 'INSTRUCTOR') {
+    const count = await prisma.student.count({
+      where: {
+        id: documentStudentId,
+        instructorId: userId,
+      },
+    });
+    return count > 0;
+  }
+
+  if (role === 'SUPERVISOR') {
+    const count = await prisma.student.count({
+      where: {
+        id: documentStudentId,
+        supervisorName: req.user?.name,
+      },
+    });
+    return count > 0;
+  }
+
+  return false;
+};
+
+const dispatchNotification = async (
+  recipientIds: Set<string>,
+  payload: { title: string; message: string; link?: string | null; type?: NotificationType },
+) => {
+  await Promise.all(
+    Array.from(recipientIds)
+      .filter(Boolean)
+      .map((userId) =>
+        notificationService.createNotification({
+          userId,
+          title: payload.title,
+          message: payload.message,
+          link: payload.link ?? null,
+          type: payload.type ?? NotificationType.OTHER,
+        }),
+      ),
+  );
+};
 
 export const uploadDocument = async (req: AuthRequest, res: Response) => {
   try {
@@ -278,22 +347,69 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { remarks } = req.body;
 
+    const existing = await prisma.document.findUnique({
+      where: { id },
+      include: {
+        student: { include: { user: { select: { id: true } }, instructor: { select: { id: true, name: true } } } },
+        uploadedBy: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (!(await ensureDocumentAccess(req, existing.studentId))) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
     const document = await prisma.document.update({
       where: { id },
       data: {
         status: 'APPROVED',
-        remarks,
-        reviewedAt: new Date()
-      }
+        remarks: remarks ?? existing.remarks,
+        reviewedAt: new Date(),
+      },
     });
+
+    if (remarks) {
+      await prisma.documentFeedback.create({
+        data: {
+          documentId: id,
+          authorId: req.user!.id,
+          message: remarks,
+          type: DocumentFeedbackType.APPROVAL_NOTE,
+          requiresAction: false,
+        },
+      });
+    }
 
     await auditLog(req.user!.id, 'DOCUMENT_APPROVED', {
       documentId: id,
-      remarks
+      remarks,
     }, req);
+
+    const recipients = new Set<string>();
+    const studentUserId = existing.student.user?.id;
+    if (studentUserId && studentUserId !== req.user!.id) {
+      recipients.add(studentUserId);
+    }
+    if (existing.uploadedBy?.id && existing.uploadedBy.id !== req.user!.id) {
+      recipients.add(existing.uploadedBy.id);
+    }
+
+    if (recipients.size > 0) {
+      await dispatchNotification(recipients, {
+        title: 'Document Approved',
+        message: `Your ${existing.type.toLowerCase().replace(/_/g, ' ')} has been approved.`,
+        link: `/documents/${id}`,
+        type: NotificationType.DOCUMENT,
+      });
+    }
 
     res.json({ document });
   } catch (error) {
+    console.error('Approve document error:', error);
     res.status(500).json({ message: 'Approval failed', error });
   }
 };
@@ -303,23 +419,210 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { remarks } = req.body;
 
+    const existing = await prisma.document.findUnique({
+      where: { id },
+      include: {
+        student: { include: { user: { select: { id: true } }, instructor: { select: { id: true } } } },
+        uploadedBy: { select: { id: true } },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (!(await ensureDocumentAccess(req, existing.studentId))) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const rejectionMessage = remarks || 'Document rejected';
+
     const document = await prisma.document.update({
       where: { id },
       data: {
         status: 'REJECTED',
-        remarks: remarks || 'Document rejected',
-        reviewedAt: new Date()
-      }
+        remarks: rejectionMessage,
+        reviewedAt: new Date(),
+      },
+    });
+
+    await prisma.documentFeedback.create({
+      data: {
+        documentId: id,
+        authorId: req.user!.id,
+        message: rejectionMessage,
+        type: DocumentFeedbackType.REQUEST_CHANGES,
+        requiresAction: true,
+      },
     });
 
     await auditLog(req.user!.id, 'DOCUMENT_REJECTED', {
       documentId: id,
-      remarks
+      remarks: rejectionMessage,
     }, req);
+
+    const recipients = new Set<string>();
+    const studentUserId = existing.student.user?.id;
+    if (studentUserId && studentUserId !== req.user!.id) {
+      recipients.add(studentUserId);
+    }
+    if (existing.uploadedBy?.id && existing.uploadedBy.id !== req.user!.id) {
+      recipients.add(existing.uploadedBy.id);
+    }
+
+    if (recipients.size > 0) {
+      await dispatchNotification(recipients, {
+        title: 'Document Rejected',
+        message: `Updates are required for your ${existing.type.toLowerCase().replace(/_/g, ' ')}.`,
+        link: `/documents/${id}`,
+        type: NotificationType.DOCUMENT,
+      });
+    }
 
     res.json({ document });
   } catch (error) {
+    console.error('Reject document error:', error);
     res.status(500).json({ message: 'Rejection failed', error });
+  }
+};
+
+export const getDocumentFeedback = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const document = await prisma.document.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        studentId: true,
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (!(await ensureDocumentAccess(req, document.studentId))) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const feedback = await prisma.documentFeedback.findMany({
+      where: { documentId: id },
+      include: {
+        author: {
+          select: { id: true, name: true, role: true, profilePhoto: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    res.json({ feedback });
+  } catch (error) {
+    console.error('Get document feedback error:', error);
+    res.status(500).json({ message: 'Failed to fetch document feedback' });
+  }
+};
+
+const resolveFeedbackType = (value?: string): DocumentFeedbackType => {
+  if (!value) {
+    return DocumentFeedbackType.COMMENT;
+  }
+  const normalized = value.toUpperCase();
+  return (Object.values(DocumentFeedbackType) as string[]).includes(normalized)
+    ? (normalized as DocumentFeedbackType)
+    : DocumentFeedbackType.COMMENT;
+};
+
+export const addDocumentFeedback = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { message, type, requiresAction } = req.body as {
+      message?: string;
+      type?: string;
+      requiresAction?: boolean;
+    };
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ message: 'Feedback message is required' });
+    }
+
+    const document = await prisma.document.findUnique({
+      where: { id },
+      include: {
+        student: {
+          include: {
+            user: { select: { id: true } },
+            instructor: { select: { id: true } },
+          },
+        },
+        uploadedBy: { select: { id: true } },
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (!(await ensureDocumentAccess(req, document.studentId))) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const feedbackType = resolveFeedbackType(type);
+
+    const feedback = await prisma.documentFeedback.create({
+      data: {
+        documentId: id,
+        authorId: req.user!.id,
+        message: message.trim(),
+        type: feedbackType,
+        requiresAction:
+          typeof requiresAction === 'boolean'
+            ? requiresAction
+            : feedbackType === DocumentFeedbackType.REQUEST_CHANGES,
+      },
+      include: {
+        author: { select: { id: true, name: true, role: true, profilePhoto: true } },
+      },
+    });
+
+    if (feedback.requiresAction) {
+      await prisma.document.update({
+        where: { id },
+        data: {
+          status: 'RESUBMISSION_REQUESTED',
+          remarks: message.trim(),
+        },
+      });
+    }
+
+    const recipients = new Set<string>();
+    const studentUserId = document.student.user?.id;
+    if (studentUserId && studentUserId !== req.user!.id) {
+      recipients.add(studentUserId);
+    }
+    if (document.uploadedBy?.id && document.uploadedBy.id !== req.user!.id) {
+      recipients.add(document.uploadedBy.id);
+    }
+    if (document.student.instructor?.id && document.student.instructor.id !== req.user!.id) {
+      recipients.add(document.student.instructor.id);
+    }
+
+    if (recipients.size > 0) {
+      const isRequestChanges = feedback.type === DocumentFeedbackType.REQUEST_CHANGES;
+      await dispatchNotification(recipients, {
+        title: isRequestChanges ? 'Document Needs Updates' : 'New Document Feedback',
+        message: isRequestChanges
+          ? `Changes were requested for ${document.type.toLowerCase().replace(/_/g, ' ')}.`
+          : `A new comment was added to ${document.type.toLowerCase().replace(/_/g, ' ')}.`,
+        link: `/documents/${id}`,
+        type: NotificationType.DOCUMENT,
+      });
+    }
+
+    res.status(201).json({ feedback });
+  } catch (error) {
+    console.error('Add document feedback error:', error);
+    res.status(500).json({ message: 'Failed to add document feedback' });
   }
 };
 

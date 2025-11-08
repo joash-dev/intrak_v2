@@ -1,541 +1,456 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  FileText,
-  Download,
-  Calendar,
-  TrendingUp,
-  Award,
-  Clock,
-  CheckCircle,
   AlertCircle,
-  Search,
-  Printer,
-  Mail,
-  Share2,
+  Calendar,
+  Clock,
+  Download,
   FileSpreadsheet,
-  File,
+  FileText,
+  Search,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { reportService } from "../../services/reportService";
+import type {
+  AttendanceReportLog,
+  AttendanceReportResponse,
+} from "../../services/reportService";
 
-interface Report {
-  id: string;
-  title: string;
-  type:
-    | "attendance"
-    | "progress"
-    | "evaluation"
-    | "timesheet"
-    | "comprehensive";
-  description: string;
-  dateRange: string;
-  generatedDate?: string;
-  status: "available" | "generating" | "scheduled";
-  formats: ("pdf" | "excel" | "csv")[];
-  icon: React.ReactNode;
-  color: string;
-}
+type DatePreset = "all" | "current_month" | "last_month" | "last_quarter";
 
-interface ReportTemplate {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  parameters: {
-    dateRange: boolean;
-    includeComments: boolean;
-    includeCharts: boolean;
-  };
-}
+const presetToRange = (preset: DatePreset): { from?: string; to?: string } => {
+  const now = new Date();
+
+  switch (preset) {
+    case "current_month": {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from: start.toISOString().split("T")[0] };
+    }
+    case "last_month": {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      return {
+        from: start.toISOString().split("T")[0],
+        to: end.toISOString().split("T")[0],
+      };
+    }
+    case "last_quarter": {
+      const quarter = Math.floor(now.getMonth() / 3);
+      const startQuarter = quarter - 1 < 0 ? 3 : quarter - 1;
+      const yearAdjustment = quarter - 1 < 0 ? -1 : 0;
+      const start = new Date(
+        now.getFullYear() + yearAdjustment,
+        startQuarter * 3,
+        1
+      );
+      const end = new Date(start.getFullYear(), start.getMonth() + 3, 0);
+      return {
+        from: start.toISOString().split("T")[0],
+        to: end.toISOString().split("T")[0],
+      };
+    }
+    case "all":
+    default:
+      return {};
+  }
+};
+
+const formatDateTime = (value: string | null) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+};
 
 const StudentReportsTab: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("current_month");
-  const [generating, setGenerating] = useState<string | null>(null);
+  const [report, setReport] = useState<AttendanceReportResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<"pdf" | "excel" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [datePreset, setDatePreset] = useState<DatePreset>("current_month");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showGenerator, setShowGenerator] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
-  // Available Reports
-  const reports: Report[] = [
-    {
-      id: "1",
-      title: "Attendance Summary Report",
-      type: "attendance",
-      description:
-        "Complete attendance records with clock-in/out times and hours worked",
-      dateRange: "September 1 - October 4, 2024",
-      generatedDate: "2024-10-04",
-      status: "available",
-      formats: ["pdf", "excel", "csv"],
-      icon: <Clock className="w-5 h-5" />,
-      color: "blue",
-    },
-    {
-      id: "2",
-      title: "Progress Evaluation Report",
-      type: "evaluation",
-      description:
-        "All evaluations with ratings, comments, and performance trends",
-      dateRange: "August 15 - October 4, 2024",
-      generatedDate: "2024-10-04",
-      status: "available",
-      formats: ["pdf", "excel"],
-      icon: <TrendingUp className="w-5 h-5" />,
-      color: "green",
-    },
-    {
-      id: "3",
-      title: "Comprehensive Internship Report",
-      type: "comprehensive",
-      description:
-        "Complete report including attendance, tasks, evaluations, and achievements",
-      dateRange: "Full Internship Period",
-      generatedDate: "2024-10-04",
-      status: "available",
-      formats: ["pdf"],
-      icon: <Award className="w-5 h-5" />,
-      color: "purple",
-    },
-    {
-      id: "4",
-      title: "Weekly Timesheet",
-      type: "timesheet",
-      description:
-        "Detailed breakdown of hours worked per day with task allocation",
-      dateRange: "September 30 - October 4, 2024",
-      generatedDate: "2024-10-04",
-      status: "available",
-      formats: ["pdf", "excel"],
-      icon: <Calendar className="w-5 h-5" />,
-      color: "orange",
-    },
-    {
-      id: "5",
-      title: "Mid-term Progress Report",
-      type: "progress",
-      description: "Performance assessment and learning outcomes achieved",
-      dateRange: "August 15 - September 15, 2024",
-      generatedDate: "2024-09-20",
-      status: "available",
-      formats: ["pdf"],
-      icon: <CheckCircle className="w-5 h-5" />,
-      color: "teal",
-    },
-  ];
+  const activeRange = useMemo(() => {
+    if (customFrom || customTo) {
+      return {
+        from: customFrom || undefined,
+        to: customTo || undefined,
+      };
+    }
+    return presetToRange(datePreset);
+  }, [customFrom, customTo, datePreset]);
 
-  // Report Templates
-  const templates: ReportTemplate[] = [
-    {
-      id: "attendance",
-      name: "Attendance Report",
-      description: "Generate custom attendance summary for any date range",
-      icon: <Clock className="w-6 h-6" />,
-      color: "blue",
-      parameters: {
-        dateRange: true,
-        includeComments: true,
-        includeCharts: true,
-      },
-    },
-    {
-      id: "evaluation",
-      name: "Evaluation Summary",
-      description: "Compile all evaluations with performance metrics",
-      icon: <TrendingUp className="w-6 h-6" />,
-      color: "green",
-      parameters: {
-        dateRange: true,
-        includeComments: true,
-        includeCharts: true,
-      },
-    },
-    {
-      id: "progress",
-      name: "Progress Report",
-      description: "Detailed progress report with goals and achievements",
-      icon: <FileText className="w-6 h-6" />,
-      color: "purple",
-      parameters: {
-        dateRange: true,
-        includeComments: true,
-        includeCharts: true,
-      },
-    },
-    {
-      id: "comprehensive",
-      name: "Complete Internship Report",
-      description: "All-in-one report with all data and analytics",
-      icon: <Award className="w-6 h-6" />,
-      color: "orange",
-      parameters: {
-        dateRange: false,
-        includeComments: true,
-        includeCharts: true,
-      },
-    },
-  ];
-
-  const stats = {
-    totalReports: reports.length,
-    recentlyGenerated: reports.filter((r) => r.generatedDate === "2024-10-04")
-      .length,
-    totalDownloads: 23,
-    lastGenerated: "2 hours ago",
-  };
-
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      blue: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300",
-      green:
-        "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
-      purple:
-        "bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300",
-      orange:
-        "bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300",
-      teal: "bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300",
-    };
-    return colors[color] || colors.blue;
-  };
-
-  const getBorderColor = (color: string) => {
-    const colors: Record<string, string> = {
-      blue: "border-blue-500",
-      green: "border-green-500",
-      purple: "border-purple-500",
-      orange: "border-orange-500",
-      teal: "border-teal-500",
-    };
-    return colors[color] || colors.blue;
-  };
-
-  const getFormatIcon = (format: string) => {
-    switch (format) {
-      case "pdf":
-        return <File className="w-4 h-4" />;
-      case "excel":
-        return <FileSpreadsheet className="w-4 h-4" />;
-      case "csv":
-        return <FileText className="w-4 h-4" />;
-      default:
-        return <FileText className="w-4 h-4" />;
+  const loadReport = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await reportService.fetchAttendanceReport(activeRange);
+      setReport(data);
+    } catch (err: any) {
+      console.error("Failed to fetch attendance report:", err);
+      const message =
+        err?.response?.data?.message || "Failed to load attendance report";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDownload = (reportId: string, format: string) => {
-    setGenerating(reportId);
-    setTimeout(() => {
-      setGenerating(null);
-      alert(`Downloaded report in ${format.toUpperCase()} format`);
-    }, 1500);
+  useEffect(() => {
+    loadReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datePreset]);
+
+  const handleApplyCustomRange = async () => {
+    if (customFrom && customTo && customFrom > customTo) {
+      toast.error('"From" date must be before "To" date.');
+      return;
+    }
+    await loadReport();
   };
 
-  const handleGenerateReport = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    setGenerating(templateId);
-    setTimeout(() => {
-      setGenerating(null);
-      setShowGenerator(false);
-      alert("Report generated successfully!");
-    }, 2000);
+  const handleDownload = async (format: "pdf" | "excel") => {
+    setDownloading(format);
+    try {
+      await reportService.downloadAttendanceReport(activeRange, format);
+      toast.success(
+        `Attendance report downloaded as ${format.toUpperCase()} successfully.`
+      );
+    } catch (err: any) {
+      console.error("Failed to download attendance report:", err);
+      const message =
+        err?.response?.data?.message || "Failed to download attendance report";
+      toast.error(message);
+    } finally {
+      setDownloading(null);
+    }
   };
 
-  const filteredReports = reports.filter(
-    (report) =>
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredLogs = useMemo(() => {
+    if (!report) return [];
+    if (!searchQuery) return report.logs;
+
+    const lower = searchQuery.toLowerCase();
+    return report.logs.filter((log) => {
+      const dateMatch = new Date(log.date)
+        .toLocaleDateString()
+        .toLowerCase()
+        .includes(lower);
+      const remarksMatch = (log.remarks || "").toLowerCase().includes(lower);
+      const methodMatch = (log.verificationMethod || "")
+        .toLowerCase()
+        .includes(lower);
+      return dateMatch || remarksMatch || methodMatch;
+    });
+  }, [report, searchQuery]);
+
+  const summaryCards = useMemo(() => {
+    if (!report) {
+      return [
+        {
+          label: "Total Attendance Logs",
+          value: "—",
+          sublabel: "Logs recorded",
+          color: "border-blue-500",
+        },
+        {
+          label: "Verified Logs",
+          value: "—",
+          sublabel: "Approved by coordinator",
+          color: "border-green-500",
+        },
+        {
+          label: "Total Hours Completed",
+          value: "—",
+          sublabel: "Hours in selected range",
+          color: "border-purple-500",
+        },
+        {
+          label: "Average Hours / Day",
+          value: "—",
+          sublabel: "Based on verified logs",
+          color: "border-amber-500",
+        },
+      ];
+    }
+
+    return [
+      {
+        label: "Total Attendance Logs",
+        value: report.summary.totalLogs.toString(),
+        sublabel: "Logs recorded",
+        color: "border-blue-500",
+      },
+      {
+        label: "Verified Logs",
+        value: report.summary.verifiedLogs.toString(),
+        sublabel: "Approved by coordinator",
+        color: "border-green-500",
+      },
+      {
+        label: "Total Hours Completed",
+        value: report.summary.totalHours.toFixed(2),
+        sublabel: "Hours in selected range",
+        color: "border-purple-500",
+      },
+      {
+        label: "Average Hours / Day",
+        value: report.summary.averageHoursPerDay.toFixed(2),
+        sublabel: "Based on verified logs",
+        color: "border-amber-500",
+      },
+    ];
+  }, [report]);
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Available Reports
-          </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">
-            {stats.totalReports}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">Ready to download</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-green-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Generated Today
-          </p>
-          <p className="text-2xl font-bold text-green-600">
-            {stats.recentlyGenerated}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">New reports</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-purple-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Total Downloads
-          </p>
-          <p className="text-2xl font-bold text-purple-600">
-            {stats.totalDownloads}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">All time</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 border-orange-500">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Last Generated
-          </p>
-          <p className="text-lg font-bold text-orange-600">
-            {stats.lastGenerated}
-          </p>
-          <p className="text-xs text-gray-500 mt-1">Most recent</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryCards.map((card) => (
+          <div
+            key={card.label}
+            className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-l-4 ${card.color}`}
+          >
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {card.label}
+            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {card.value}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">{card.sublabel}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
-        <div className="flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold mb-2">Generate Custom Report</h3>
-            <p className="text-purple-100">
-              Create a personalized report with your preferred date range and
-              format
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Attendance Report
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Download attendance summary or review detailed logs for the
+              selected period.
             </p>
           </div>
-          <button
-            onClick={() => setShowGenerator(!showGenerator)}
-            className="px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition-colors flex items-center space-x-2"
-          >
-            <FileText className="w-5 h-5" />
-            <span>Generate Report</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Report Generator Modal */}
-      {showGenerator && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border-2 border-purple-500">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-              Select Report Template
-            </h3>
+          <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => setShowGenerator(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={() => handleDownload("pdf")}
+              disabled={downloading === "pdf" || loading}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              ✕
+              <FileText className="w-4 h-4" />
+              <span>{downloading === "pdf" ? "Preparing..." : "Download PDF"}</span>
+            </button>
+            <button
+              onClick={() => handleDownload("excel")}
+              disabled={downloading === "excel" || loading}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>
+                {downloading === "excel" ? "Preparing..." : "Download Excel"}
+              </span>
             </button>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => handleGenerateReport(template.id)}
-                disabled={generating === template.id}
-                className={`p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
-                  selectedTemplate === template.id
-                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
-                }`}
-              >
-                <div className="flex items-start space-x-3">
-                  <div
-                    className={`p-2 rounded-lg ${getColorClasses(
-                      template.color
-                    )}`}
-                  >
-                    {template.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-                      {template.name}
-                    </h4>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {template.description}
-                    </p>
-                    {generating === template.id && (
-                      <div className="mt-2 flex items-center space-x-2 text-purple-600">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
-                        <span className="text-xs">Generating...</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </button>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Preset Range
+            </label>
+            <select
+              value={datePreset}
+              onChange={(e) => setDatePreset(e.target.value as DatePreset)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="all">All Time</option>
+              <option value="current_month">Current Month</option>
+              <option value="last_month">Last Month</option>
+              <option value="last_quarter">Last Quarter</option>
+            </select>
           </div>
 
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-              Report Options
-            </h4>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="rounded text-purple-600"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Include detailed comments
-                </span>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Custom From
               </label>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="rounded text-purple-600"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Include performance charts
-                </span>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Custom To
               </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded text-purple-600" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Include supervisor signatures
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleApplyCustomRange}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Apply Custom Range
+              </button>
+              <button
+                onClick={() => {
+                  setCustomFrom("");
+                  setCustomTo("");
+                  setDatePreset("current_month");
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Reset
+              </button>
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <Calendar className="w-4 h-4 mr-2" />
+                <span>
+                  Viewing{" "}
+                  {activeRange.from
+                    ? `from ${new Date(activeRange.from).toLocaleDateString()}`
+                    : "from the start"}{" "}
+                  {activeRange.to
+                    ? `to ${new Date(activeRange.to).toLocaleDateString()}`
+                    : "to present"}
                 </span>
-              </label>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Available Reports
-        </h2>
-        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Detailed Attendance Logs
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Filter and review all entries included in the generated report.
+            </p>
+          </div>
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search reports..."
+              placeholder="Search by date, method, or remarks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-          >
-            <option value="all">All Time</option>
-            <option value="current_month">Current Month</option>
-            <option value="last_month">Last Month</option>
-            <option value="last_quarter">Last Quarter</option>
-          </select>
         </div>
-      </div>
 
-      {/* Reports List */}
-      <div className="space-y-4">
-        {filteredReports.map((report) => (
-          <div
-            key={report.id}
-            className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border-l-4 ${getBorderColor(
-              report.color
-            )} transition-all hover:shadow-md`}
-          >
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div
-                    className={`p-3 rounded-lg ${getColorClasses(
-                      report.color
-                    )}`}
-                  >
-                    {report.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                      {report.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {report.description}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="inline-flex items-center text-xs px-3 py-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 rounded-full">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {report.dateRange}
-                      </span>
-                      {report.generatedDate && (
-                        <span className="inline-flex items-center text-xs px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Generated{" "}
-                          {new Date(report.generatedDate).toLocaleDateString()}
-                        </span>
-                      )}
-                      <span
-                        className={`inline-flex items-center text-xs px-3 py-1 rounded-full ${
-                          report.status === "available"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                        }`}
-                      >
-                        {report.status === "available" ? "Ready" : "Processing"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Download Options */}
-              <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                  Download as:
-                </span>
-                {report.formats.map((format) => (
-                  <button
-                    key={format}
-                    onClick={() => handleDownload(report.id, format)}
-                    disabled={generating === report.id}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                      format === "pdf"
-                        ? "bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900 dark:text-red-300"
-                        : format === "excel"
-                        ? "bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900 dark:text-green-300"
-                        : "bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {getFormatIcon(format)}
-                    <span className="text-sm">{format.toUpperCase()}</span>
-                    {generating === report.id ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-                    ) : (
-                      <Download className="w-4 h-4" />
-                    )}
-                  </button>
-                ))}
-                <div className="flex-1"></div>
-                <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <Printer className="w-4 h-4" />
-                  <span className="text-sm">Print</span>
-                </button>
-                <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <Mail className="w-4 h-4" />
-                  <span className="text-sm">Email</span>
-                </button>
-                <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <Share2 className="w-4 h-4" />
-                  <span className="text-sm">Share</span>
-                </button>
-              </div>
+        {loading ? (
+          <div className="flex items-center justify-center p-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Loading attendance logs...
+              </p>
             </div>
           </div>
-        ))}
+        ) : error ? (
+          <div className="p-12 text-center text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900/50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Time In
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Time Out
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Duration (hrs)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Method
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Remarks
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredLogs.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
+                      No attendance logs matched your filters.
+                    </td>
+                  </tr>
+                )}
+                {filteredLogs.map((log: AttendanceReportLog) => {
+                  const durationHours = (log.durationMinutes / 60).toFixed(2);
+                  const verifiedLabel = log.verified ? "Verified" : "Pending";
+                  const statusStyles = log.verified
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
+                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300";
+                  return (
+                    <tr key={`${log.date}-${log.timeIn}-${log.timeOut}`}>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {new Date(log.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {formatDateTime(log.timeIn)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {formatDateTime(log.timeOut)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {durationHours}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {(log.verificationMethod || "Manual")
+                            .toString()
+                            .replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${statusStyles}`}>
+                          {verifiedLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                        {log.remarks || "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {filteredReports.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
-            No reports found
-          </p>
-          <p className="text-sm text-gray-500">
-            Try adjusting your search or filters
-          </p>
-        </div>
-      )}
-
-      {/* Help Section */}
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
         <div className="flex items-start space-x-4">
           <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
@@ -543,17 +458,17 @@ const StudentReportsTab: React.FC = () => {
           </div>
           <div>
             <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-              Need Help?
+              Report Tips
             </h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-              Reports are automatically generated based on your internship
-              activities. You can download them in multiple formats for
-              submission to your institution or personal records.
+              The attendance report captures every log recorded in the system.
+              Use the PDF format for official submissions and the Excel format
+              for deeper analysis.
             </p>
             <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
-              <li>• PDF format is recommended for official submissions</li>
-              <li>• Excel/CSV formats allow further data analysis</li>
-              <li>• Reports are updated daily with your latest activities</li>
+              <li>• Adjust the date range to match required reporting periods.</li>
+              <li>• Verified logs indicate coordinator approval.</li>
+              <li>• Include additional remarks when logging attendance for clarity.</li>
             </ul>
           </div>
         </div>

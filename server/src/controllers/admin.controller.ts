@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
@@ -539,16 +539,14 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const [
       totalUsers,
       totalDocuments,
-      activeUsers,
-      dbSize
+      activeUsers
     ] = await Promise.all([
       prisma.user.count(),
       prisma.document.count(),
-      prisma.user.count({ where: { active: true } }),
-      // Database size calculation would require raw SQL query
-      // For now, we'll estimate based on document count
-      Promise.resolve(Math.round(prisma.document.count() * 0.5 / 1024 / 1024 * 100) / 100) // Estimate in MB
+      prisma.user.count({ where: { active: true } })
     ]);
+
+    const dbSize = Math.round((totalDocuments * 0.5) / 1024 / 1024 * 100) / 100; // Estimate in MB
 
     // Get server load (simplified)
     const loadAverage = os.loadavg();

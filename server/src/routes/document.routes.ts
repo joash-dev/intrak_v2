@@ -27,8 +27,14 @@ router.get('/', documentController.getDocuments);
 router.get('/student', documentController.getStudentDocuments);
 router.get('/:id', documentController.getDocumentById);
 router.get('/:id/download', documentController.downloadDocument);
+router.get('/:id/feedback', documentController.getDocumentFeedback);
 router.put('/:id/approve', authorize(['COORDINATOR', 'INSTRUCTOR']), documentController.approveDocument);
 router.put('/:id/reject', authorize(['COORDINATOR', 'INSTRUCTOR']), documentController.rejectDocument);
+router.post(
+  '/:id/feedback',
+  authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR', 'SUPERVISOR', 'STUDENT']),
+  documentController.addDocumentFeedback,
+);
 router.delete('/:id', authorize(['ADMIN', 'STUDENT']), documentController.deleteDocument);
 
 export default router;

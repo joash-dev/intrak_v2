@@ -28,15 +28,18 @@ import templateRoutes from './routes/template.routes';
 import activityRoutes from './routes/activity.routes';
 import alertRoutes from './routes/alert.routes';
 import companyApplicationRoutes from './routes/companyApplication.routes';
+import notificationRoutes from './routes/notification.routes';
 
 dotenv.config();
 
 // Verify JWT secrets
-console.log('🔑 JWT_SECRET loaded:', !!process.env.JWT_SECRET);
-console.log('🔑 JWT_SECRET length:', process.env.JWT_SECRET?.length);
 if (!process.env.JWT_SECRET) {
-  console.error('❌ JWT_SECRET missing in .env!');
-  process.exit(1);
+  if (process.env.NODE_ENV === 'test') {
+    process.env.JWT_SECRET = 'test-secret';
+  } else {
+    console.error('❌ JWT_SECRET missing in .env!');
+    process.exit(1);
+  }
 }
 
 const app = express();
@@ -50,13 +53,13 @@ const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       process.env.CORS_ORIGIN || 'http://localhost:5173',
       'http://localhost:3000',
       'http://localhost:5173'
     ];
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -125,8 +128,8 @@ app.get('/api/test-auth', authenticate, (req: AuthRequest, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development'
@@ -150,6 +153,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/company-applications', companyApplicationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -159,18 +163,22 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log('========================================');
-  console.log(`🚀 INTRAK Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
-  console.log('========================================');
-  console.log('');
-  console.log('📋 Available endpoints:');
-  console.log('   POST   /api/auth/login');
-  console.log('   POST   /api/auth/register');
-  console.log('   GET    /api/test-auth (test authentication)');
-  console.log('   GET    /api/users (requires auth)');
-  console.log('   GET    /health');
-  console.log('');
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log('========================================');
+    console.log(`🚀 INTRAK Server running on port ${PORT}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+    console.log('========================================');
+    console.log('');
+    console.log('📋 Available endpoints:');
+    console.log('   POST   /api/auth/login');
+    console.log('   POST   /api/auth/register');
+    console.log('   GET    /api/test-auth (test authentication)');
+    console.log('   GET    /api/users (requires auth)');
+    console.log('   GET    /health');
+    console.log('');
+  });
+}
+
+export default app;

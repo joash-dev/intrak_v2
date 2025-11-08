@@ -121,7 +121,8 @@ class SupervisorService {
       if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
       if (filters?.dateTo) params.append('dateTo', filters.dateTo);
 
-      const response = await api.get(`/attendance?${params.toString()}`);
+      const query = params.toString();
+      const response = await api.get(`/attendance${query ? `?${query}` : ""}`);
       const logs = response.data.logs || response.data || [];
 
       return logs.map((log: any) => ({
@@ -133,7 +134,7 @@ class SupervisorService {
         timeIn: log.timeIn,
         timeOut: log.timeOut,
         durationMinutes: log.durationMinutes || 0,
-        method: log.method || 'MANUAL',
+        method: log.verificationMethod || log.method || 'MANUAL',
         location: log.location,
         coordinates: log.latitude && log.longitude 
           ? `${log.latitude}° N, ${log.longitude}° E`
@@ -335,6 +336,19 @@ class SupervisorService {
       });
     } catch (error) {
       console.error('Error recording QR attendance:', error);
+      throw error;
+    }
+  }
+
+  async verifyAttendanceWithQR(payload: {
+    token: string;
+    latitude?: number;
+    longitude?: number;
+  }): Promise<void> {
+    try {
+      await api.post('/attendance/qr/verify', payload);
+    } catch (error) {
+      console.error('Error verifying QR attendance:', error);
       throw error;
     }
   }

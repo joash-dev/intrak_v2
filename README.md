@@ -227,7 +227,7 @@ npx prisma db seed        # Seed database with sample data
 npx prisma studio         # Open Prisma Studio (database GUI)
 
 # Testing
-npm test             # Run tests
+npm test             # Run Jest API tests (attendance & reports)
 npm run test:watch   # Run tests in watch mode
 ```
 
@@ -369,6 +369,7 @@ npx prisma migrate deploy
 - **Document Management**: Upload, view, and track document status
 - **Document Templates**: Download required document templates
 - **Attendance Tracking**: Multiple logging methods (QR, GPS, Manual)
+- **Reports**: Generate attendance summaries (PDF/Excel) with detailed log review
 - **Evaluations**: View instructor and supervisor evaluations
 - **Reports**: Generate personal progress reports
 - **Settings**: Profile management with photo upload
@@ -391,6 +392,7 @@ npx prisma migrate deploy
 - **Student Monitoring**: Monitor student progress and performance
 - **Student Evaluations**: Submit comprehensive student evaluations
 - **Document Templates**: Upload and manage document templates
+- **Compliance Reporting**: Export cohort compliance reports per company (Excel)
 - **Settings**: Profile management with dark/light mode preferences
 
 #### Advanced Features

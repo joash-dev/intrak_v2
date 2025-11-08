@@ -96,7 +96,11 @@ export const getAttendance = async (req: AuthRequest, res: Response) => {
     const where: any = {};
 
     // Check if user is a coordinator or instructor - they can see all attendance logs
-    if (req.user?.role === 'COORDINATOR' || req.user?.role === 'INSTRUCTOR') {
+    if (
+      req.user?.role === 'COORDINATOR' ||
+      req.user?.role === 'INSTRUCTOR' ||
+      req.user?.role === 'SUPERVISOR'
+    ) {
       // Coordinators and instructors can see all attendance logs
       // Only filter by studentId if specifically provided
       if (studentId && studentId !== 'all') {
@@ -189,6 +193,10 @@ export const generateQR = async (req: AuthRequest, res: Response) => {
 export const verifyQR = async (req: AuthRequest, res: Response) => {
   try {
     const { token, latitude, longitude } = req.body;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'QR token is required' });
+    }
     const qrToken = await verifyQRToken(token);
 
     if (!qrToken) {

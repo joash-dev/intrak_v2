@@ -58,6 +58,7 @@ enum DocumentStatus {
   PENDING
   APPROVED
   REJECTED
+  RESUBMISSION_REQUESTED
 }
 
 enum VerificationMethod {
@@ -108,6 +109,21 @@ enum ActivityType {
   PASSWORD_CHANGED
 }
 
+enum DocumentFeedbackType {
+  COMMENT
+  REQUEST_CHANGES
+  APPROVAL_NOTE
+  STUDENT_RESPONSE
+}
+
+enum NotificationType {
+  DOCUMENT
+  ATTENDANCE
+  SYSTEM
+  ALERT
+  OTHER
+}
+
 
 model User {
   id           String   @id @default(uuid())
@@ -134,6 +150,8 @@ model User {
   templatesUploaded DocumentTemplate[] @relation("TemplateUploader")
   adminSettings     AdminSettings?
   applicationsReviewed CompanyApplication[] @relation("ApplicationReviewer")
+  feedbackAuthored   DocumentFeedback[] @relation("DocumentFeedbackAuthor")
+  notifications      Notification[]     @relation("UserNotifications")
 
   @@map("users")
 }
@@ -196,9 +214,9 @@ model Company {
   latitude      Float?
   longitude     Float?
   radiusMeters  Int      @default(100)
-  maxSlots      Int      @default(10) // Maximum number of students
-  description   String?  // Company description
-  industry      String?  // Industry type (e.g., IT, Healthcare, etc.)
+  maxSlots      Int      @default(10)
+  description   String?
+  industry      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -252,6 +270,7 @@ model Document {
   // Relations
   student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   uploadedBy   User    @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  feedback     DocumentFeedback[]
 
   @@map("documents")
 }
@@ -319,6 +338,37 @@ model Announcement {
   createdBy User @relation(fields: [createdById], references: [id])
 
   @@map("announcements")
+}
+
+model DocumentFeedback {
+  id           String               @id @default(uuid())
+  documentId   String
+  authorId     String
+  message      String
+  type         DocumentFeedbackType @default(COMMENT)
+  requiresAction Boolean            @default(false)
+  createdAt    DateTime             @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author   User     @relation("DocumentFeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("document_feedback")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(OTHER)
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }
 
 model AuditLog {

@@ -5,7 +5,6 @@ import {
   Award,
   AlertCircle,
   CheckCircle,
-  Building2,
   Search,
   Eye,
   Bell,
@@ -18,7 +17,6 @@ import {
   Loader2,
   User,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { supervisorService } from "../../services/supervisorService";
 import type { SupervisorStudent } from "../../services/supervisorService";
@@ -218,27 +216,33 @@ const SupervisorOverview = () => {
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search interns..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="needs_attention">Needs Attention</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-            </div>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search interns..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="needs_attention">Needs Attention</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-900/40 dark:text-red-200 rounded-lg px-4 py-3">
+          <p>{error}</p>
+        </div>
+      )}
 
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Showing {filteredInterns.length} of {interns.length} interns
@@ -256,7 +260,7 @@ const SupervisorOverview = () => {
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                   {intern.name
                     .split(" ")
-                    .map((n) => n[0])
+                    .map((namePart: string) => namePart[0] ?? "")
                     .join("")
                     .substring(0, 2)}
                       </div>
@@ -333,7 +337,6 @@ const SupervisorDashboard = () => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const navigate = useNavigate();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const userString = localStorage.getItem("user");
@@ -520,7 +523,7 @@ const SupervisorDashboard = () => {
                             <span className="text-white font-semibold">
                               {companyName
                                 .split(" ")
-                                .map((n) => n[0])
+                                .map((namePart: string) => namePart[0] ?? "")
                                 .join("")
                                 .substring(0, 2)}
                             </span>

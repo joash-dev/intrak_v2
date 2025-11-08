@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   Clock,
   AlertCircle,
@@ -9,10 +9,12 @@ import {
   Download,
   Loader2,
   Calendar,
+  QrCode,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type { AttendanceLog } from "../../services/supervisorService";
 import toast from "react-hot-toast";
+import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 
 const SupervisorAttendance = () => {
   const [activeTab, setActiveTab] = useState("logs");
@@ -21,12 +23,7 @@ const SupervisorAttendance = () => {
   const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
-
-  useEffect(() => {
-    fetchAttendanceLogs();
-  }, [filterStatus]);
-
-  const fetchAttendanceLogs = async () => {
+  const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLoading(true);
       const filters: any = {};
@@ -41,7 +38,11 @@ const SupervisorAttendance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus]);
+
+  useEffect(() => {
+    fetchAttendanceLogs();
+  }, [fetchAttendanceLogs]);
 
   const stats = {
     pending: logs.filter((log) => log.status === "pending").length,
@@ -86,7 +87,7 @@ const SupervisorAttendance = () => {
       try {
         await supervisorService.approveAttendance(log.id);
         toast.success(`Attendance approved for ${log.studentName}`);
-        fetchAttendanceLogs();
+        await fetchAttendanceLogs();
       } catch (error) {
         console.error("Error approving attendance:", error);
         toast.error("Failed to approve attendance");
@@ -102,13 +103,174 @@ const SupervisorAttendance = () => {
       try {
         await supervisorService.rejectAttendance(log.id, reason);
         toast.success(`Attendance rejected for ${log.studentName}`);
-        fetchAttendanceLogs();
+        await fetchAttendanceLogs();
       } catch (error) {
         console.error("Error rejecting attendance:", error);
         toast.error("Failed to reject attendance");
       }
     }
   };
+
+  const [scannerKey, setScannerKey] = useState(0);
+  const [scannedToken, setScannedToken] = useState<string | null>(null);
+  const [manualToken, setManualToken] = useState("");
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
+  const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const isProcessingRef = useRef(false);
+
+  const stopScanner = useCallback(() => {
+    if (scannerControlsRef.current) {
+      scannerControlsRef.current.stop();
+      scannerControlsRef.current = null;
+    }
+    if (codeReaderRef.current) {
+      try {
+        const reader = codeReaderRef.current as unknown as {
+          reset?: () => void;
+        };
+        reader.reset?.();
+      } catch (error) {
+        console.warn("Failed to reset QR reader", error);
+      }
+      codeReaderRef.current = null;
+    }
+  }, []);
+
+  const requestCoordinates = useCallback(async () => {
+    if (!("geolocation" in navigator)) {
+      return undefined;
+    }
+
+    return new Promise<{ latitude: number; longitude: number } | undefined>(
+      (resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          () => resolve(undefined),
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+          }
+        );
+      }
+    );
+  }, []);
+
+  const handleTokenVerification = useCallback(
+    async (rawToken: string) => {
+      const token = rawToken.trim();
+      if (!token) {
+        setScanError("QR code did not contain a valid token.");
+        return;
+      }
+
+      if (isProcessingRef.current) {
+        return;
+      }
+      isProcessingRef.current = true;
+
+      stopScanner();
+      setScanLoading(true);
+      setScanError(null);
+
+      try {
+        const coords = await requestCoordinates();
+        await supervisorService.verifyAttendanceWithQR({
+          token,
+          latitude: coords?.latitude,
+          longitude: coords?.longitude,
+        });
+        setScannedToken(token);
+        setManualToken("");
+        toast.success("Attendance verified via QR code");
+        await fetchAttendanceLogs();
+      } catch (error: any) {
+        const message =
+          error?.response?.data?.message ||
+          (error instanceof Error ? error.message : "Failed to verify QR code");
+        setScanError(message);
+        toast.error(message);
+        setScannedToken(null);
+        setScannerKey((prev) => prev + 1);
+      } finally {
+        setScanLoading(false);
+        isProcessingRef.current = false;
+      }
+    },
+    [fetchAttendanceLogs, requestCoordinates, stopScanner]
+  );
+
+  const restartScanner = useCallback(() => {
+    stopScanner();
+    setScannedToken(null);
+    setScanError(null);
+    setManualToken("");
+    setScannerKey((prev) => prev + 1);
+    isProcessingRef.current = false;
+  }, [stopScanner]);
+
+  const handleManualSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!manualToken.trim()) {
+      setScanError("Please enter a QR token before verifying.");
+      return;
+    }
+    handleTokenVerification(manualToken);
+  };
+
+  useEffect(() => {
+    if (activeTab !== "scanner") {
+      stopScanner();
+      return;
+    }
+
+    const startScanner = async () => {
+      if (!videoRef.current) {
+        setScanError(
+          "Camera preview is not available. Please ensure your device has an active camera."
+        );
+        return;
+      }
+
+      setScanError(null);
+      const codeReader = new BrowserMultiFormatReader();
+      codeReaderRef.current = codeReader;
+
+      try {
+        const controls = await codeReader.decodeFromVideoDevice(
+          undefined,
+          videoRef.current,
+          (result) => {
+            if (result) {
+              handleTokenVerification(result.getText());
+            }
+          }
+        );
+        scannerControlsRef.current = controls;
+      } catch (error: any) {
+        const message =
+          error?.message ||
+          "Unable to access the camera. Please allow camera permissions and try again.";
+        setScanError(message);
+        toast.error(message);
+        stopScanner();
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      stopScanner();
+      isProcessingRef.current = false;
+    };
+  }, [activeTab, handleTokenVerification, scannerKey, stopScanner]);
 
   const formatTime = (timeString: string | null) => {
     if (!timeString) return "--";
@@ -228,8 +390,134 @@ const SupervisorAttendance = () => {
             Total hours
           </span>
                 </div>
-              </div>
+      </div>
 
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm flex items-center gap-2">
+        <button
+          onClick={() => setActiveTab("logs")}
+          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
+            activeTab === "logs"
+              ? "bg-purple-600 text-white shadow"
+              : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>Attendance Logs</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("scanner");
+            restartScanner();
+          }}
+          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
+            activeTab === "scanner"
+              ? "bg-purple-600 text-white shadow"
+              : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+          }`}
+        >
+          <QrCode className="w-4 h-4" />
+          <span>QR Scanner</span>
+        </button>
+      </div>
+
+      {activeTab === "scanner" && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Scan Intern QR Code
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Position the intern&apos;s QR code inside the frame or enter the token manually below.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="relative bg-black rounded-xl overflow-hidden min-h-[320px] flex items-center justify-center">
+              {!scannedToken && (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  playsInline
+                  muted
+                  autoPlay
+                />
+              )}
+              {scannedToken && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-center px-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center space-x-2 text-green-300 font-semibold">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>QR token verified</span>
+                    </div>
+                    <p className="text-sm break-all">{scannedToken}</p>
+                    <button
+                      type="button"
+                      onClick={restartScanner}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    >
+                      Scan Another Intern
+                    </button>
+                  </div>
+                </div>
+              )}
+              {scanLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Loader2 className="w-10 h-10 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {scanError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-900/40 dark:text-red-200 rounded-lg px-4 py-3">
+                  {scanError}
+                </div>
+              )}
+              <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 border border-gray-200 dark:border-gray-700 space-y-3">
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                  <QrCode className="w-4 h-4" />
+                  <span>Manual Token Entry</span>
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  If the camera is unavailable, type the code displayed on the intern&apos;s device.
+                </p>
+                <form onSubmit={handleManualSubmit} className="space-y-3">
+                  <input
+                    type="text"
+                    value={manualToken}
+                    onChange={(e) => setManualToken(e.target.value)}
+                    placeholder="Enter QR token manually"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    disabled={scanLoading}
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      disabled={scanLoading || !manualToken.trim()}
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Verify Token
+                    </button>
+                    <button
+                      type="button"
+                      onClick={restartScanner}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Tip: Allow camera access when prompted for the most seamless scanning experience.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "logs" && (
+        <>
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
@@ -405,6 +693,8 @@ const SupervisorAttendance = () => {
                 </div>
               )}
             </div>
+        </>
+      )}
 
       {/* Detail Modal */}
       {selectedLog && (

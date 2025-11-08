@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   FileText,
   Download,
@@ -15,8 +15,7 @@ import type { DocumentTemplate } from "../../services/templateService";
 import { toast } from "react-hot-toast";
 
 const InstructorTemplateManagement: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("category");
 
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
@@ -27,22 +26,119 @@ const InstructorTemplateManagement: React.FC = () => {
     useState<DocumentTemplate | null>(null);
   const [uploading, setUploading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
-    name?: boolean;
     category?: boolean;
-    type?: boolean;
-    file?: boolean;
+    files?: boolean;
   }>({});
+
+  type TemplateUploadEntry = {
+    id: string;
+    file: File;
+    name: string;
+    type: string;
+  };
 
   // Upload form state
   const [uploadForm, setUploadForm] = useState({
-    name: "",
     description: "",
     category:
       (category as "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT") ||
       "PRE_DEPLOYMENT",
-    type: "",
-    file: null as File | null,
+    files: [] as TemplateUploadEntry[],
   });
+
+  const [fileValidationMap, setFileValidationMap] = useState<
+    Record<string, { name?: boolean; type?: boolean }>
+  >({});
+
+  const generateUploadEntryId = () =>
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  const documentTypeOptions =
+    templateService.getDocumentTypeOptionsByCategory(uploadForm.category);
+
+  const handleFileSelection = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    setUploadForm((prev) => ({
+      ...prev,
+      files: [
+        ...prev.files,
+        ...selectedFiles.map((file) => ({
+          id: generateUploadEntryId(),
+          file,
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          type: "",
+        })),
+      ],
+    }));
+    clearValidationError("files");
+    event.target.value = "";
+  };
+
+  const handleRemoveFile = (id: string) => {
+    if (uploadForm.files.length === 1) {
+      clearValidationError("files");
+    }
+
+    setUploadForm((prev) => ({
+      ...prev,
+      files: prev.files.filter((entry) => entry.id !== id),
+    }));
+    setFileValidationMap((prev) => {
+      if (!prev[id]) return prev;
+      const updated = { ...prev };
+      delete updated[id];
+      return updated;
+    });
+  };
+
+  const handleFileFieldChange = (
+    id: string,
+    field: "name" | "type",
+    value: string
+  ) => {
+    setUploadForm((prev) => ({
+      ...prev,
+      files: prev.files.map((entry) =>
+        entry.id === id ? { ...entry, [field]: value } : entry
+      ),
+    }));
+
+    setFileValidationMap((prev) => {
+      if (!prev[id]) return prev;
+      const entryErrors = { ...prev[id] };
+      if (value.trim()) {
+        delete entryErrors[field];
+      } else {
+        entryErrors[field] = true;
+      }
+
+      const updated = { ...prev };
+      if (Object.keys(entryErrors).length === 0) {
+        delete updated[id];
+      } else {
+        updated[id] = entryErrors;
+      }
+      return updated;
+    });
+  };
+
+  const handleCategoryChange = (
+    value: "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT"
+  ) => {
+    setUploadForm((prev) => ({
+      ...prev,
+      category: value,
+      files: prev.files.map((entry) => ({ ...entry, type: "" })),
+    }));
+    setFileValidationMap({});
+    clearValidationError("category");
+  };
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -57,9 +153,12 @@ const InstructorTemplateManagement: React.FC = () => {
 
   // Update upload form category when URL category changes
   useEffect(() => {
-    if (category) {
-      setUploadForm((prev) => ({ ...prev, category: category as any }));
-    }
+    setUploadForm((prev) => ({
+      ...prev,
+      category:
+        (category as "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT") ||
+        "PRE_DEPLOYMENT",
+    }));
   }, [category]);
 
   const fetchTemplates = async () => {
@@ -77,26 +176,44 @@ const InstructorTemplateManagement: React.FC = () => {
 
   const validateForm = () => {
     const errors: typeof validationErrors = {};
+    const fileErrors: Record<string, { name?: boolean; type?: boolean }> = {};
 
-    if (!uploadForm.name.trim()) {
-      errors.name = true;
-    }
     if (!uploadForm.category) {
       errors.category = true;
     }
-    if (!uploadForm.type.trim()) {
-      errors.type = true;
-    }
-    if (!uploadForm.file) {
-      errors.file = true;
+
+    if (uploadForm.files.length === 0) {
+      errors.files = true;
     }
 
+    uploadForm.files.forEach((entry) => {
+      const entryErrors: { name?: boolean; type?: boolean } = {};
+      if (!entry.name.trim()) {
+        entryErrors.name = true;
+      }
+      if (!entry.type.trim()) {
+        entryErrors.type = true;
+      }
+      if (Object.keys(entryErrors).length > 0) {
+        fileErrors[entry.id] = entryErrors;
+      }
+    });
+
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    setFileValidationMap(fileErrors);
+
+    return (
+      Object.keys(errors).length === 0 && Object.keys(fileErrors).length === 0
+    );
   };
 
   const clearValidationError = (field: keyof typeof validationErrors) => {
-    setValidationErrors((prev) => ({ ...prev, [field]: false }));
+    setValidationErrors((prev) => {
+      if (!prev[field]) return prev;
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
   };
 
   const handleUpload = async () => {
@@ -107,23 +224,31 @@ const InstructorTemplateManagement: React.FC = () => {
 
     try {
       setUploading(true);
-      await templateService.uploadTemplate({
-        name: uploadForm.name,
-        description: uploadForm.description || undefined,
-        category: uploadForm.category,
-        type: uploadForm.type,
-        file: uploadForm.file!, // Non-null assertion since we validated it exists
-      });
 
-      toast.success("Template uploaded successfully");
+      await Promise.all(
+        uploadForm.files.map((entry) =>
+          templateService.uploadTemplate({
+            name: entry.name.trim(),
+            description: uploadForm.description.trim() || undefined,
+            category: uploadForm.category,
+            type: entry.type.trim(),
+            file: entry.file,
+          })
+        )
+      );
+
+      toast.success(
+        uploadForm.files.length > 1
+          ? `${uploadForm.files.length} templates uploaded successfully`
+          : "Template uploaded successfully"
+      );
       setShowUploadModal(false);
       setValidationErrors({});
+      setFileValidationMap({});
       setUploadForm({
-        name: "",
         description: "",
         category: "PRE_DEPLOYMENT",
-        type: "",
-        file: null,
+        files: [],
       });
       fetchTemplates();
     } catch (error: any) {
@@ -219,7 +344,7 @@ const InstructorTemplateManagement: React.FC = () => {
           <div className="flex items-center space-x-4">
             {category && (
               <button
-                onClick={() => navigate("/instructor/templates")}
+                onClick={() => setSearchParams({})}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -248,14 +373,17 @@ const InstructorTemplateManagement: React.FC = () => {
           </div>
           <button
             onClick={() => {
-              if (category) {
-                setUploadForm((prev) => ({
-                  ...prev,
-                  category: category as any,
-                }));
-              }
-              setShowUploadModal(true);
-            }}
+            setUploadForm({
+              description: "",
+              category:
+                (category as "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT") ||
+                "PRE_DEPLOYMENT",
+              files: [],
+            });
+            setValidationErrors({});
+            setFileValidationMap({});
+            setShowUploadModal(true);
+          }}
             className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
@@ -265,7 +393,7 @@ const InstructorTemplateManagement: React.FC = () => {
       </div>
 
       {/* Category Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* View All Card */}
         <div
           className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
@@ -273,22 +401,22 @@ const InstructorTemplateManagement: React.FC = () => {
               ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
           }`}
-          onClick={() => navigate("/instructor/templates")}
+          onClick={() => setSearchParams({})}
         >
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
               <FileText className="w-6 h-6 text-purple-600 dark:text-purple-300" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                All Templates
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {templates.length} template{templates.length !== 1 ? "s" : ""}
-              </p>
-            </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              All Templates
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {templates.length} template{templates.length !== 1 ? "s" : ""}
+            </p>
           </div>
-          <div className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center font-medium text-sm">
+          </div>
+          <div className="w-full mt-10 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center font-medium text-sm">
             View All
           </div>
         </div>
@@ -300,9 +428,7 @@ const InstructorTemplateManagement: React.FC = () => {
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
           }`}
-          onClick={() =>
-            navigate("/instructor/templates?category=PRE_DEPLOYMENT")
-          }
+          onClick={() => setSearchParams({ category: "PRE_DEPLOYMENT" })}
         >
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
@@ -328,10 +454,13 @@ const InstructorTemplateManagement: React.FC = () => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setUploadForm((prev) => ({
-                ...prev,
+              setUploadForm({
+                description: "",
                 category: "PRE_DEPLOYMENT",
-              }));
+                files: [],
+              });
+              setValidationErrors({});
+              setFileValidationMap({});
               setShowUploadModal(true);
             }}
             className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium text-sm"
@@ -347,9 +476,7 @@ const InstructorTemplateManagement: React.FC = () => {
               ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-yellow-300"
           }`}
-          onClick={() =>
-            navigate("/instructor/templates?category=UPON_APPROVAL")
-          }
+          onClick={() => setSearchParams({ category: "UPON_APPROVAL" })}
         >
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center">
@@ -372,7 +499,13 @@ const InstructorTemplateManagement: React.FC = () => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setUploadForm((prev) => ({ ...prev, category: "UPON_APPROVAL" }));
+              setUploadForm({
+                description: "",
+                category: "UPON_APPROVAL",
+                files: [],
+              });
+              setValidationErrors({});
+              setFileValidationMap({});
               setShowUploadModal(true);
             }}
             className="w-full px-4 py-2 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg transition-colors font-medium text-sm"
@@ -388,7 +521,7 @@ const InstructorTemplateManagement: React.FC = () => {
               ? "border-green-500 bg-green-50 dark:bg-green-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-green-300"
           }`}
-          onClick={() => navigate("/instructor/templates?category=POST_OJT")}
+          onClick={() => setSearchParams({ category: "POST_OJT" })}
         >
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center">
@@ -410,7 +543,13 @@ const InstructorTemplateManagement: React.FC = () => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setUploadForm((prev) => ({ ...prev, category: "POST_OJT" }));
+              setUploadForm({
+                description: "",
+                category: "POST_OJT",
+                files: [],
+              });
+              setValidationErrors({});
+              setFileValidationMap({});
               setShowUploadModal(true);
             }}
             className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-sm"
@@ -502,9 +641,6 @@ const InstructorTemplateManagement: React.FC = () => {
                           Type
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                           Uploaded By
                         </th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
@@ -542,27 +678,6 @@ const InstructorTemplateManagement: React.FC = () => {
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
                               {templateService.getDocumentTypeDisplay(
                                 template.type
-                              )}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                template.isActive
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
-                              }`}
-                            >
-                              {template.isActive ? (
-                                <>
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Active
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle className="w-3 h-3 mr-1" />
-                                  Inactive
-                                </>
                               )}
                             </span>
                           </td>
@@ -610,59 +725,32 @@ const InstructorTemplateManagement: React.FC = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 mt-0"
-          style={{ marginTop: "0px" }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Upload Document Template
-            </h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 mt-0">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Upload Document Template
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Choose the appropriate category, optionally add a description, then upload one or more files. Each file can be renamed and assigned a document type before submission.
+              </p>
+            </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Template Name *
-                </label>
-                <input
-                  type="text"
-                  value={uploadForm.name}
-                  onChange={(e) => {
-                    setUploadForm({ ...uploadForm, name: e.target.value });
-                    clearValidationError("name");
-                  }}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    validationErrors.name
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-200 dark:border-gray-600"
-                  }`}
-                  placeholder="Enter template name"
-                />
-                {validationErrors.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Template name is required
-                  </p>
-                )}
-              </div>
-
+            <div className="space-y-5 overflow-y-auto px-6 py-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Document Category *
                 </label>
                 <select
                   value={uploadForm.category}
-                  onChange={(e) => {
-                    const category = e.target.value as
-                      | "PRE_DEPLOYMENT"
-                      | "UPON_APPROVAL"
-                      | "POST_OJT";
-                    setUploadForm({
-                      ...uploadForm,
-                      category,
-                      type: "", // Reset type when category changes
-                    });
-                    clearValidationError("category");
-                  }}
+                  onChange={(e) =>
+                    handleCategoryChange(
+                      e.target.value as
+                        | "PRE_DEPLOYMENT"
+                        | "UPON_APPROVAL"
+                        | "POST_OJT"
+                    )
+                  }
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                     validationErrors.category
                       ? "border-red-500 dark:border-red-500"
@@ -684,38 +772,6 @@ const InstructorTemplateManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Document Type *
-                </label>
-                <select
-                  value={uploadForm.type}
-                  onChange={(e) => {
-                    setUploadForm({ ...uploadForm, type: e.target.value });
-                    clearValidationError("type");
-                  }}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    validationErrors.type
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-200 dark:border-gray-600"
-                  }`}
-                >
-                  <option value="">Select document type</option>
-                  {templateService
-                    .getDocumentTypeOptionsByCategory(uploadForm.category)
-                    .map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                </select>
-                {validationErrors.type && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Document type is required
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <textarea
@@ -726,7 +782,7 @@ const InstructorTemplateManagement: React.FC = () => {
                       description: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   rows={3}
                   placeholder="Enter template description (optional)"
                 />
@@ -734,40 +790,130 @@ const InstructorTemplateManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Template File *
+                  Template Files *
                 </label>
                 <input
                   type="file"
-                  onChange={(e) => {
-                    setUploadForm({
-                      ...uploadForm,
-                      file: e.target.files?.[0] || null,
-                    });
-                    clearValidationError("file");
-                  }}
+                  multiple
+                  onChange={handleFileSelection}
                   className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    validationErrors.file
+                    validationErrors.files
                       ? "border-red-500 dark:border-red-500"
                       : "border-gray-200 dark:border-gray-600"
                   }`}
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
                 />
-                {validationErrors.file && (
+                {validationErrors.files && (
                   <p className="text-red-500 text-sm mt-1">
-                    Template file is required
+                    Please select at least one file to upload
                   </p>
                 )}
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Supported formats: PDF, DOC, DOCX, XLS, XLSX
+                  Supported formats: PDF, DOC, DOCX, XLS, XLSX. You can select multiple files.
                 </p>
               </div>
+
+              {uploadForm.files.length > 0 && (
+                <div className="space-y-4">
+                  {uploadForm.files.map((entry, index) => {
+                    const entryErrors = fileValidationMap[entry.id] || {};
+                    return (
+                      <div
+                        key={entry.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/40 space-y-4"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              File {index + 1}: {entry.file.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {(entry.file.size / (1024 * 1024)).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveFile(entry.id)}
+                            className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              Template Name *
+                            </label>
+                            <input
+                              type="text"
+                              value={entry.name}
+                              onChange={(e) =>
+                                handleFileFieldChange(entry.id, "name", e.target.value)
+                              }
+                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                                entryErrors.name
+                                  ? "border-red-500 dark:border-red-500"
+                                  : "border-gray-200 dark:border-gray-600"
+                              }`}
+                              placeholder="Enter template name"
+                            />
+                            {entryErrors.name && (
+                              <p className="text-red-500 text-xs mt-1">
+                                Template name is required
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              Document Type *
+                            </label>
+                            <select
+                              value={entry.type}
+                              onChange={(e) =>
+                                handleFileFieldChange(entry.id, "type", e.target.value)
+                              }
+                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+                                entryErrors.type
+                                  ? "border-red-500 dark:border-red-500"
+                                  : "border-gray-200 dark:border-gray-600"
+                              }`}
+                            >
+                              <option value="">Select document type</option>
+                              {documentTypeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            {entryErrors.type && (
+                              <p className="text-red-500 text-xs mt-1">
+                                Document type is required
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
               <button
                 onClick={() => {
                   setShowUploadModal(false);
                   setValidationErrors({});
+                  setFileValidationMap({});
+                  setUploadForm({
+                    description: "",
+                    category:
+                      (category as
+                        | "PRE_DEPLOYMENT"
+                        | "UPON_APPROVAL"
+                        | "POST_OJT") || "PRE_DEPLOYMENT",
+                    files: [],
+                  });
                 }}
                 className="px-6 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               >

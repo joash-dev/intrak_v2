@@ -12,7 +12,11 @@ router.get('/', attendanceController.getAttendance);
 router.get('/qr/:studentId', attendanceController.generateQR);
 router.post('/qr/verify', attendanceController.verifyQR);
 router.post('/gps', attendanceController.verifyGPS);
-router.put('/:id/verify', authorize(['INSTRUCTOR']), attendanceController.verifyAttendance);
+router.put(
+  '/:id/verify',
+  authorize(['SUPERVISOR', 'COORDINATOR']),
+  attendanceController.verifyAttendance
+);
 router.get('/export-dtr/:studentId', attendanceController.exportDTR);
 
 export default router;

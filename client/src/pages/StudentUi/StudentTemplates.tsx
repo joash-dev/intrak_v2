@@ -14,7 +14,6 @@ const StudentTemplates: React.FC = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
   useEffect(() => {
@@ -53,11 +52,10 @@ const StudentTemplates: React.FC = () => {
     const matchesSearch =
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || template.type === filterType;
     const matchesCategory =
       filterCategory === "all" || template.category === filterCategory;
 
-    return matchesSearch && matchesType && matchesCategory;
+    return matchesSearch && matchesCategory;
   });
 
   // Group templates by category
@@ -70,7 +68,6 @@ const StudentTemplates: React.FC = () => {
     return acc;
   }, {} as Record<string, DocumentTemplate[]>);
 
-  const documentTypeOptions = templateService.getDocumentTypeOptions();
   const categoryOptions = templateService.getCategoryOptions();
 
   if (loading) {
@@ -129,20 +126,6 @@ const StudentTemplates: React.FC = () => {
               ))}
             </select>
           </div>
-          <div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">All Types</option>
-              {documentTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 
@@ -165,94 +148,113 @@ const StudentTemplates: React.FC = () => {
         <div className="space-y-8">
           {Object.entries(groupedTemplates).map(
             ([category, categoryTemplates]) => (
-              <div key={category} className="space-y-4">
-                {/* Category Header */}
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`p-2 rounded-lg ${
-                      category === "PRE_DEPLOYMENT"
-                        ? "bg-blue-100 dark:bg-blue-900/20"
-                        : category === "UPON_APPROVAL"
-                        ? "bg-yellow-100 dark:bg-yellow-900/20"
-                        : "bg-green-100 dark:bg-green-900/20"
-                    }`}
-                  >
-                    <FileText
-                      className={`w-5 h-5 ${
+              <div
+                key={category}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden"
+              >
+                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`p-2 rounded-lg ${
                         category === "PRE_DEPLOYMENT"
-                          ? "text-blue-600 dark:text-blue-400"
+                          ? "bg-blue-100 dark:bg-blue-900/20"
                           : category === "UPON_APPROVAL"
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : "text-green-600 dark:text-green-400"
+                          ? "bg-yellow-100 dark:bg-yellow-900/20"
+                          : "bg-green-100 dark:bg-green-900/20"
                       }`}
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {templateService.getCategoryDisplay(category)}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {categoryTemplates.length} template
-                      {categoryTemplates.length !== 1 ? "s" : ""} available
-                    </p>
+                    >
+                      <FileText
+                        className={`w-5 h-5 ${
+                          category === "PRE_DEPLOYMENT"
+                            ? "text-blue-600 dark:text-blue-400"
+                            : category === "UPON_APPROVAL"
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-green-600 dark:text-green-400"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {templateService.getCategoryDisplay(category)}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {categoryTemplates.length} template
+                        {categoryTemplates.length !== 1 ? "s" : ""} available
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Templates Grid for this Category */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {categoryTemplates.map((template) => (
-                    <div
-                      key={template.id}
-                      className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-xl">
-                            <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                              {template.name}
-                            </h3>
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Template Name
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Type
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Uploaded By
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Published
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                          Download
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {categoryTemplates.map((template) => (
+                        <tr
+                          key={template.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                                <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                  {template.name}
+                                </div>
+                                {template.description && (
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    {template.description}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
                               {templateService.getDocumentTypeDisplay(
                                 template.type
                               )}
                             </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                            Active
-                          </span>
-                        </div>
-                      </div>
-
-                      {template.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-                          {template.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        <span>
-                          Uploaded by {template.uploadedBy?.name || "Unknown"}
-                        </span>
-                        <span>
-                          {new Date(template.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => handleDownload(template)}
-                        className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download Template</span>
-                      </button>
-                    </div>
-                  ))}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {template.uploadedBy?.name || "Unknown"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(template.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleDownload(template)}
+                              className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )

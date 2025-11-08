@@ -30,7 +30,6 @@ import InstructorDocumentsTab from "./InstructorDocuments";
 import InstructorMonitoringTab from "./InstructorStudent";
 import InstructorEvaluationsTab from "./InstructorEvaluation";
 import DocumentChecklistTab from "./InstructorDocumentChecklist";
-import InstructorAttendanceVerification from "./InstructorAttendanceVerification";
 import InstructorStudentManagement from "./InstructorStudentManagement";
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import InstructorSettings from "./InstructorSettings";
@@ -563,86 +562,6 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
-          {/* Recent Activities */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div>
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mr-3 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-white" />
-                  </div>
-                  Recent Activities
-                </h3>
-              </div>
-
-              <div className="space-y-3">
-                {activities.length > 0 ? (
-                  activities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200"
-                    >
-                      {/* Left accent line */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-green-500 rounded-l-lg"></div>
-
-                      <div className="flex items-start space-x-3 ml-2">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center ${getActivityColor(
-                            activity.type
-                          )}`}
-                        >
-                          {getActivityIcon(activity.type)}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                              {activity.studentName}
-                            </p>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                              {new Date(activity.timestamp).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </div>
-                          </div>
-
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                            {activity.action}
-                          </p>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                              {new Date(
-                                activity.timestamp
-                              ).toLocaleDateString()}
-                            </span>
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                    <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Activity className="w-8 h-8 text-purple-500 dark:text-purple-400" />
-                    </div>
-                    <h4 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                      No Recent Activities
-                    </h4>
-                    <p className="text-sm max-w-xs mx-auto">
-                      Student activities and system events will appear here
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Quick Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
@@ -665,6 +584,22 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                   </span>
                   <span className="text-xs text-green-600 dark:text-green-300">
                     Check submitted files
+                  </span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("applications")}
+                className="w-full flex items-center space-x-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 border border-blue-200 dark:border-blue-700 group"
+              >
+                <div className="p-2 bg-blue-500 rounded-lg group-hover:bg-blue-600 transition-colors">
+                  <Building2 className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-left">
+                  <span className="text-sm font-semibold block text-blue-900 dark:text-blue-100">
+                    Company Applications
+                  </span>
+                  <span className="text-xs text-blue-600 dark:text-blue-300">
+                    Approve or reject placements
                   </span>
                 </div>
               </button>
@@ -697,22 +632,6 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                   </span>
                   <span className="text-xs text-indigo-600 dark:text-indigo-300">
                     Track completion status
-                  </span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab("evaluations")}
-                className="w-full flex items-center space-x-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 border border-blue-200 dark:border-blue-700 group"
-              >
-                <div className="p-2 bg-blue-500 rounded-lg group-hover:bg-blue-600 transition-colors">
-                  <Award className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-left">
-                  <span className="text-sm font-semibold block text-blue-900 dark:text-blue-100">
-                    Submit Evaluation
-                  </span>
-                  <span className="text-xs text-blue-600 dark:text-blue-300">
-                    Rate student performance
                   </span>
                 </div>
               </button>
@@ -757,6 +676,78 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Recent Activities below student management */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mr-3 flex items-center justify-center">
+              <Activity className="w-4 h-4 text-white" />
+            </div>
+            Recent Activities
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          {activities.length > 0 ? (
+            activities.map((activity) => (
+              <div
+                key={activity.id}
+                className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-green-500 rounded-l-lg"></div>
+
+                <div className="flex items-start space-x-3 ml-2">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${getActivityColor(
+                      activity.type
+                    )}`}
+                  >
+                    {getActivityIcon(activity.type)}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {activity.studentName}
+                      </p>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                        {new Date(activity.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                      {activity.action}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                        {new Date(activity.timestamp).toLocaleDateString()}
+                      </span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Activity className="w-8 h-8 text-purple-500 dark:text-purple-400" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                No Recent Activities
+              </h4>
+              <p className="text-sm max-w-xs mx-auto">
+                Student activities and system events will appear here
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1262,15 +1253,53 @@ const InstructorPortal = () => {
   }
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "applications", label: "Company Applications", icon: Send },
-    { id: "documents", label: "Document Review", icon: FileCheck },
-    { id: "templates", label: "Document Templates", icon: Upload },
-    { id: "checklist", label: "Document Checklist", icon: ClipboardList },
-    { id: "monitoring", label: "Student Monitoring", icon: TrendingUp },
-    { id: "attendance", label: "Attendance Verification", icon: Clock },
-    { id: "students", label: "Student Management", icon: Users },
-    { id: "evaluations", label: "Evaluations", icon: Award },
+    {
+      id: "overview",
+      icon: Home,
+      label: "Dashboard",
+      description: "Overview of your assigned students"
+    },
+    {
+      id: "documents",
+      icon: FileCheck,
+      label: "Document Review"
+    },
+    {
+      id: "applications",
+      icon: Building2,
+      label: "Company Applications",
+      description: "Approve student company requests"
+    },
+    {
+      id: "templates",
+      icon: Upload,
+      label: "Document Templates",
+      description: "Manage document templates"
+    },
+    {
+      id: "checklist",
+      icon: ClipboardList,
+      label: "Document Checklist",
+      description: "Track document completion status"
+    },
+    {
+      id: "monitoring",
+      icon: TrendingUp,
+      label: "Student Monitoring",
+      description: "Monitor student progress"
+    },
+    {
+      id: "students",
+      icon: Users,
+      label: "Student Management",
+      description: "Manage assigned students"
+    },
+    {
+      id: "evaluations",
+      icon: Award,
+      label: "Evaluations",
+      description: "Submit student evaluations"
+    }
   ];
 
   const renderContent = () => {
@@ -1287,8 +1316,6 @@ const InstructorPortal = () => {
         return <DocumentChecklistTab />;
       case "monitoring":
         return <InstructorMonitoringTab />;
-      case "attendance":
-        return <InstructorAttendanceVerification />;
       case "students":
         return <InstructorStudentManagement />;
       case "evaluations":
@@ -1565,6 +1592,11 @@ const InstructorPortal = () => {
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
+                  {item.badge && (
+                    <span className="ml-auto px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
