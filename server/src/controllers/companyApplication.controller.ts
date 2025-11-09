@@ -28,7 +28,13 @@ export const getAllApplications = async (req: AuthRequest, res: Response) => {
             }
           }
         },
-        company: true,
+        company: {
+          include: {
+            students: {
+              select: { id: true }
+            }
+          }
+        },
         reviewer: {
           select: {
             name: true,

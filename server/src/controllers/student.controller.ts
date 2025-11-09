@@ -22,6 +22,43 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
+    if (req.user?.role === 'INDUSTRY_PARTNER') {
+      const supervisorCompanies = await prisma.company.findMany({
+        where: { supervisorId: req.user.id },
+        select: { id: true },
+      });
+
+      if (supervisorCompanies.length === 0) {
+        return res.json({
+          students: [],
+          pagination: {
+            total: 0,
+            page: Number(page),
+            limit: Number(limit),
+            pages: 0,
+          },
+        });
+      }
+
+      const supervisedIds = supervisorCompanies.map((company) => company.id);
+
+      if (where.companyId) {
+        if (typeof where.companyId === 'string' && !supervisedIds.includes(where.companyId)) {
+          return res.json({
+            students: [],
+            pagination: {
+              total: 0,
+              page: Number(page),
+              limit: Number(limit),
+              pages: 0,
+            },
+          });
+        }
+      } else {
+        where.companyId = { in: supervisedIds };
+      }
+    }
+
     const [students, total] = await Promise.all([
       prisma.student.findMany({
         where,

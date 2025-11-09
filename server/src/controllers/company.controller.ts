@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { AuthRequest } from "../middleware/auth";
 
 const prisma = new PrismaClient();
@@ -21,6 +23,12 @@ const auditLog = async (userId: string, action: string, meta: any, req: any) => 
   }
 };
 
+const generateTemporaryPassword = (): string => {
+  const base = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+  const core = base.slice(0, 8);
+  return `${core}A1!`;
+};
+
 // =============================================
 // COMPANY MANAGEMENT CONTROLLERS
 // =============================================
@@ -33,17 +41,20 @@ export const getAllCompanies = async (req: AuthRequest, res: Response) => {
         students: {
           include: {
             user: {
-              select: { name: true, email: true }
-            }
-          }
+              select: { name: true, email: true },
+            },
+          },
+        },
+        supervisor: {
+          select: { id: true, name: true, email: true },
         },
         _count: {
           select: {
-            students: true
-          }
-        }
+            students: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" },
     });
 
     res.json({ companies });
@@ -64,16 +75,19 @@ export const getCompanyById = async (req: AuthRequest, res: Response) => {
         students: {
           include: {
             user: {
-              select: { name: true, email: true }
-            }
-          }
+              select: { name: true, email: true },
+            },
+          },
+        },
+        supervisor: {
+          select: { id: true, name: true, email: true },
         },
         _count: {
           select: {
-            students: true
-          }
-        }
-      }
+            students: true,
+          },
+        },
+      },
     });
 
     if (!company) {
@@ -98,7 +112,8 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
       contactNumber,
       latitude,
       longitude,
-      radiusMeters
+      radiusMeters,
+      maxSlots
     } = req.body;
 
     // Validate required fields
@@ -126,16 +141,20 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
         contactNumber,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
-        radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100
+        radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
+        maxSlots: maxSlots ? parseInt(maxSlots) : undefined,
       },
       include: {
         students: true,
+        supervisor: {
+          select: { id: true, name: true, email: true },
+        },
         _count: {
           select: {
-            students: true
-          }
-        }
-      }
+            students: true,
+          },
+        },
+      },
     });
 
     // Log the action
@@ -168,7 +187,8 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
       contactNumber,
       latitude,
       longitude,
-      radiusMeters
+      radiusMeters,
+      maxSlots
     } = req.body;
 
     // Check if company exists
@@ -204,16 +224,20 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
         contactNumber,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
-        radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100
+        radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
+        maxSlots: typeof maxSlots === 'number' ? maxSlots : maxSlots ? parseInt(maxSlots) : existingCompany.maxSlots,
       },
       include: {
         students: true,
+        supervisor: {
+          select: { id: true, name: true, email: true },
+        },
         _count: {
           select: {
-            students: true
-          }
-        }
-      }
+            students: true,
+          },
+        },
+      },
     });
 
     // Log the action
@@ -439,33 +463,135 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
     const updatedMOA = await prisma.document.update({
       where: { id },
       data: {
-        status: 'APPROVED',
-        remarks: notes || moa.remarks
+        status: "APPROVED",
+        remarks: notes || moa.remarks,
       },
       include: {
         student: {
           include: {
             user: {
-              select: { name: true, email: true }
+              select: { name: true, email: true },
             },
             company: {
               select: {
                 id: true,
                 name: true,
                 contactEmail: true,
-                contactPerson: true
-              }
-            }
-          }
+                contactPerson: true,
+                supervisorId: true,
+                supervisor: {
+                  select: { id: true, name: true, email: true, role: true },
+                },
+              },
+            },
+          },
         },
         uploadedBy: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
+      },
+    });
+
+    let supervisorAccount: {
+      created: boolean;
+      email: string;
+      temporaryPassword?: string;
+    } | null = null;
+
+    const company = updatedMOA.student?.company;
+
+    if (company && company.contactEmail) {
+      let supervisorUser =
+        company.supervisorId && company.supervisor
+          ? company.supervisor
+          : await prisma.user.findUnique({
+              where: { email: company.contactEmail },
+            });
+
+      let temporaryPassword: string | undefined;
+      let accountCreated = false;
+
+      if (!supervisorUser) {
+        const tempPassword = generateTemporaryPassword();
+        const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+        supervisorUser = await prisma.user.create({
+          data: {
+            email: company.contactEmail,
+            name: company.contactPerson || `${company.name} Supervisor`,
+            passwordHash,
+            role: "INDUSTRY_PARTNER",
+          },
+        });
+
+        temporaryPassword = tempPassword;
+        accountCreated = true;
+      } else if (supervisorUser.role !== "INDUSTRY_PARTNER") {
+        supervisorUser = await prisma.user.update({
+          where: { id: supervisorUser.id },
+          data: { role: "INDUSTRY_PARTNER" },
+        });
       }
+
+      if (company.supervisorId !== supervisorUser.id) {
+        await prisma.company.update({
+          where: { id: company.id },
+          data: { supervisorId: supervisorUser.id },
+        });
+      }
+
+      if (
+        updatedMOA.student &&
+        (!updatedMOA.student.supervisorName ||
+          !updatedMOA.student.supervisorName.trim())
+      ) {
+        await prisma.student.update({
+          where: { id: updatedMOA.student.id },
+          data: { supervisorName: company.contactPerson },
+        });
+      }
+
+      supervisorAccount = {
+        created: accountCreated,
+        email: supervisorUser.email,
+        temporaryPassword,
+      };
+    }
+
+    const refreshedMOA = await prisma.document.findUnique({
+      where: { id },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: { name: true, email: true },
+            },
+            company: {
+              select: {
+                id: true,
+                name: true,
+                contactEmail: true,
+                contactPerson: true,
+                supervisorId: true,
+                supervisor: {
+                  select: { id: true, name: true, email: true, role: true },
+                },
+              },
+            },
+          },
+        },
+        uploadedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     // Log the action
@@ -483,7 +609,7 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    res.json({ moa: updatedMOA });
+    res.json({ moa: refreshedMOA, supervisorAccount });
   } catch (error: any) {
     console.error('Error approving MOA:', error);
     res.status(500).json({ message: 'Failed to approve MOA', error: error.message });

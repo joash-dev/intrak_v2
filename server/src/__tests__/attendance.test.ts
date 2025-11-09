@@ -30,7 +30,7 @@ jest.mock('../middleware/auth', () => ({
   authenticate: (req: any, _res: any, next: any) => {
     req.user = {
       id: 'supervisor-1',
-      role: 'SUPERVISOR',
+      role: 'INDUSTRY_PARTNER',
       email: 'supervisor@example.com',
     };
     next();

@@ -4,7 +4,7 @@ export interface Document {
   id: string;
   type: string;
   filename: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RESUBMISSION_REQUESTED';
   uploadedAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;
@@ -23,6 +23,28 @@ export interface DocumentStats {
   approved: number;
   pending: number;
   rejected: number;
+}
+
+export type DocumentFeedbackType =
+  | 'COMMENT'
+  | 'REQUEST_CHANGES'
+  | 'APPROVAL_NOTE'
+  | 'STUDENT_RESPONSE';
+
+export interface DocumentFeedbackAuthor {
+  id: string;
+  name: string;
+  role: string;
+  profilePhoto?: string | null;
+}
+
+export interface DocumentFeedbackEntry {
+  id: string;
+  message: string;
+  type: DocumentFeedbackType;
+  requiresAction: boolean;
+  createdAt: string;
+  author: DocumentFeedbackAuthor | null;
 }
 
 class DocumentService {
@@ -86,6 +108,23 @@ class DocumentService {
     return response.data.document;
   }
 
+  async getDocumentFeedback(documentId: string): Promise<DocumentFeedbackEntry[]> {
+    const response = await api.get(`/documents/${documentId}/feedback`);
+    return response.data.feedback ?? [];
+  }
+
+  async addDocumentFeedback(
+    documentId: string,
+    payload: {
+      message: string;
+      type?: DocumentFeedbackType;
+      requiresAction?: boolean;
+    },
+  ): Promise<DocumentFeedbackEntry> {
+    const response = await api.post(`/documents/${documentId}/feedback`, payload);
+    return response.data.feedback;
+  }
+
   // Calculate document stats from documents array
   calculateStats(documents: Document[]): DocumentStats {
     if (!documents || !Array.isArray(documents)) {
@@ -100,7 +139,7 @@ class DocumentService {
     return {
       total: documents.length,
       approved: documents.filter(d => d.status === 'APPROVED').length,
-      pending: documents.filter(d => d.status === 'PENDING').length,
+      pending: documents.filter(d => d.status === 'PENDING' || d.status === 'RESUBMISSION_REQUESTED').length,
       rejected: documents.filter(d => d.status === 'REJECTED').length,
     };
   }
@@ -130,32 +169,31 @@ class DocumentService {
   getDocumentCategory(documentType: string): 'PRE_DEPLOYMENT' | 'UPON_APPROVAL' | 'POST_OJT' {
     const preDeploymentTypes = [
       'RECORD_FILE',
-      'APPLICATION_FOR_INTERNSHIP',
-      'MEDICAL_CERTIFICATE_PSYCHOLOGICAL_TEST',
-      'CERTIFICATION_OF_UNITS_EARNED',
+      'APPLICATION_INTERNSHIP',
+      'MEDICAL_CERTIFICATE',
+      'CERTIFICATION_UNITS',
       'INTERNSHIP_RESUME',
       'CONSENT_FORM',
       'ENDORSEMENT_LETTER',
-      'INTERNSHIP_RELEASE_FORM'
+      'INTERNSHIP_RELEASE'
     ];
 
     const uponApprovalTypes = [
-      'MEMORANDUM_OF_AGREEMENT',
       'INTERNSHIP_AGREEMENT',
-      'TRAINING_AGREEMENT_LIABILITY_WAIVER'
+      'TRAINING_AGREEMENT'
     ];
 
     const postOjtTypes = [
-      'INTERNSHIP_EVALUATION_FORM',
-      'CERTIFICATE_OF_TRAINING_COMPLETION',
-      'INTERNSHIP_NARRATIVE_REPORT',
-      'PHOTOCOPY_OF_DAILY_TIME_RECORD',
-      'INTERNSHIP_TIME_FRAMES',
-      'PRACTICUM_INTERNSHIP_WEEKLY_REPORTS',
-      'STUDENT_TRAINEES_FEEDBACK_FORM',
-      'TRAINING_SUPERVISORS_FEEDBACK_FORM',
-      'EVALUATION_INSTRUMENT_SELF_RATEE',
-      'EVALUATION_INSTRUMENT_STUDENT'
+      'INTERNSHIP_EVALUATION',
+      'CERTIFICATE_COMPLETION',
+      'NARRATIVE_REPORT',
+      'DTR_PHOTOCOPY',
+      'TIME_FRAMES',
+      'WEEKLY_REPORTS',
+      'STUDENT_FEEDBACK',
+      'SUPERVISOR_FEEDBACK',
+      'AGENCY_SELF_EVALUATION',
+      'AGENCY_STUDENT_EVALUATION'
     ];
 
     if (preDeploymentTypes.includes(documentType)) {

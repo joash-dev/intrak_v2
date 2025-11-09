@@ -379,6 +379,7 @@ const SupervisorEvaluation = () => {
         {showEvaluationForm && selectedIntern && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          style={{ margin: "0" }}
           onClick={() => !submitting && setShowEvaluationForm(false)}
         >
           <div

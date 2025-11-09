@@ -37,6 +37,8 @@ export interface InstructorStudent {
   lastActivity: string;
   year: number;
   section?: string;
+  documentsPending?: number;
+  attendanceAlerts?: number;
 }
 
 export interface InstructorActivity {
@@ -68,7 +70,7 @@ export interface InstructorDocument {
   fileSize: string;
   submittedDate: string;
   dueDate?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'RESUBMISSION_REQUESTED';
   description?: string;
   remarks?: string | null;
   reviewedDate?: string;
@@ -585,7 +587,7 @@ class InstructorService {
       // Transform the API response to match InstructorDocument interface
       return documents.map((doc: any) => ({
         id: doc.id,
-        studentId: doc.student?.id || '',
+        studentId: doc.student?.studentNumber || doc.student?.id || '',
         studentName: doc.student?.user?.name || 'Unknown',
         studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
         company: doc.student?.company?.name || 'No Company',
@@ -658,7 +660,7 @@ class InstructorService {
       
       return {
         id: doc.id,
-        studentId: doc.student?.id || '',
+        studentId: doc.student?.studentNumber || doc.student?.id || '',
         studentName: doc.student?.user?.name || 'Unknown',
         studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
         company: doc.student?.company?.name || 'No Company',

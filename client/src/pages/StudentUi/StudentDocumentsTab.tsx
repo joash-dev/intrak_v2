@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { documentService } from "../../services/documentService";
 import type { Document, DocumentStats } from "../../services/documentService";
+import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 
 // Remove duplicate interface since we're importing it from service
 
@@ -40,7 +41,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedType, setSelectedType] = useState<string>(
-    "APPLICATION_FOR_INTERNSHIP"
+    "APPLICATION_INTERNSHIP"
   );
   const [selectedCategory, setSelectedCategory] =
     useState<string>("PRE_DEPLOYMENT");
@@ -54,19 +55,19 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       category: "PRE_DEPLOYMENT",
     },
     {
-      value: "APPLICATION_FOR_INTERNSHIP",
+      value: "APPLICATION_INTERNSHIP",
       label: "Application for Internship (Form FM-AA-INT-01)",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
     {
-      value: "MEDICAL_CERTIFICATE_PSYCHOLOGICAL_TEST",
+      value: "MEDICAL_CERTIFICATE",
       label: "Medical Certificate and Psychological Test",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
     {
-      value: "CERTIFICATION_OF_UNITS_EARNED",
+      value: "CERTIFICATION_UNITS",
       label:
         "Certification of Units Earned for Practicum/Internship (Form FM-AA-INT-02)",
       required: true,
@@ -91,7 +92,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       category: "PRE_DEPLOYMENT",
     },
     {
-      value: "INTERNSHIP_RELEASE_FORM",
+      value: "INTERNSHIP_RELEASE",
       label: "Internship Release Form (Form FM-AA-INT-12)",
       required: true,
       category: "PRE_DEPLOYMENT",
@@ -99,19 +100,13 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
     // II. UPON APPROVAL OF COMPANY
     {
-      value: "MEMORANDUM_OF_AGREEMENT",
-      label: "Memorandum of Agreement (MOA) (Form FM-AA-INT-10)",
-      required: true,
-      category: "UPON_APPROVAL",
-    },
-    {
       value: "INTERNSHIP_AGREEMENT",
-      label: "Internship Agreement (Form FM-AA-INT-10)",
+      label: "Memorandum / Internship Agreement (Form FM-AA-INT-10)",
       required: true,
       category: "UPON_APPROVAL",
     },
     {
-      value: "TRAINING_AGREEMENT_LIABILITY_WAIVER",
+      value: "TRAINING_AGREEMENT",
       label: "Training Agreement and Liability Waiver Form (Form FM-AA-INT-15)",
       required: false,
       category: "UPON_APPROVAL",
@@ -119,13 +114,13 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
     // III. POST-OJT Requirements
     {
-      value: "INTERNSHIP_EVALUATION_FORM",
+      value: "INTERNSHIP_EVALUATION",
       label: "Internship Evaluation Form (Form FM-AA-INT-11)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "CERTIFICATE_OF_TRAINING_COMPLETION",
+      value: "CERTIFICATE_COMPLETION",
       label: "Certificate of Training Completion [from the HTE/Agency]",
       required: true,
       category: "POST_OJT",
@@ -137,44 +132,44 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       category: "POST_OJT",
     },
     {
-      value: "PHOTOCOPY_OF_DAILY_TIME_RECORD",
+      value: "DTR_PHOTOCOPY",
       label: "Photocopy of Daily Time Record",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "INTERNSHIP_TIME_FRAMES",
+      value: "TIME_FRAMES",
       label: "Internship Time Frames (Form FM-AA-INT-14)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "PRACTICUM_INTERNSHIP_WEEKLY_REPORTS",
+      value: "WEEKLY_REPORTS",
       label: "Practicum/Internship Weekly Reports (Form FM-AA-INT-16)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "STUDENT_TRAINEES_FEEDBACK_FORM",
+      value: "STUDENT_FEEDBACK",
       label: "Student-Trainees Feedback Form[s] (Form FM-AA-INT-17)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "TRAINING_SUPERVISORS_FEEDBACK_FORM",
+      value: "SUPERVISOR_FEEDBACK",
       label: "Training Supervisor's Feedback Form[s] (Form FM-AA-INT-18)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "EVALUATION_INSTRUMENT_SELF_RATEE",
+      value: "AGENCY_SELF_EVALUATION",
       label:
         "Evaluation Instrument of PSU Partner Agencies (Self Ratee) (Form FM-AA-INT-19b)",
       required: true,
       category: "POST_OJT",
     },
     {
-      value: "EVALUATION_INSTRUMENT_STUDENT",
+      value: "AGENCY_STUDENT_EVALUATION",
       label:
         "Evaluation Instrument of PSU Partner Agencies (Student) (Form FM-AA-INT-19c)",
       required: true,
@@ -354,7 +349,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       // Reset form
       setSelectedFile(null);
-      setSelectedType("APPLICATION_FOR_INTERNSHIP");
+      setSelectedType("APPLICATION_INTERNSHIP");
       setSelectedCategory("PRE_DEPLOYMENT");
       setUploadModalOpen(false);
       setUploadProgress(0);
@@ -414,6 +409,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
       case "REJECTED":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      case "RESUBMISSION_REQUESTED":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -427,6 +424,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
         return <AlertCircle className="w-5 h-5 text-yellow-500" />;
       case "REJECTED":
         return <XCircle className="w-5 h-5 text-red-500" />;
+      case "RESUBMISSION_REQUESTED":
+        return <AlertCircle className="w-5 h-5 text-orange-500" />;
       default:
         return null;
     }
@@ -719,7 +718,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                                 doc.status
                               )}`}
                             >
-                              {doc.status}
+                              {doc.status.replace(/_/g, " ")}
                             </span>
                           </div>
                           {doc.remarks && (
@@ -787,7 +786,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* Upload Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -955,7 +954,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* View Modal */}
       {viewModalOpen && selectedDoc && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -988,7 +987,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                       selectedDoc.status
                     )}`}
                   >
-                    {selectedDoc.status}
+                    {selectedDoc.status.replace(/_/g, " ")}
                   </span>
                 </div>
                 <div>
@@ -1032,13 +1031,24 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               {selectedDoc.remarks && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
-                    Coordinator Remarks:
+                    Reviewer Remarks:
                   </p>
                   <p className="text-sm text-red-600 dark:text-red-400">
                     {selectedDoc.remarks}
                   </p>
                 </div>
               )}
+
+              <DocumentFeedbackPanel
+                documentId={selectedDoc.id}
+                allowFeedback
+                defaultType="STUDENT_RESPONSE"
+                typeOptions={["STUDENT_RESPONSE", "COMMENT"]}
+                allowTypeSelection
+                showRequiresActionToggle={false}
+                submitLabel="Send response"
+                messagePlaceholder="Reply to the reviewer or ask for clarification..."
+              />
 
               <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-8 bg-gray-50 dark:bg-gray-700 text-center">
                 <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />

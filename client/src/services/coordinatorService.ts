@@ -1,6 +1,6 @@
 import api from './api';
 import { companyService } from './companyService';
-import type { Company, MOA, MOAStats } from './companyService';
+import type { Company, MOA, MOAStats, ApproveMOAResult } from './companyService';
 
 // Types for coordinator data
 export interface CoordinatorStats {
@@ -632,7 +632,7 @@ class CoordinatorService {
   // Note: MOA creation and update are handled through the document upload system
 
   // Approve MOA
-  async approveMOA(id: string, notes?: string): Promise<MOA> {
+  async approveMOA(id: string, notes?: string): Promise<ApproveMOAResult> {
     return companyService.approveMOA(id, notes);
   }
 

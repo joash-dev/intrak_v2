@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   FileCheck,
@@ -33,8 +35,15 @@ import CoordinatorCompanyManagement from "./CoordinatorCompanyManagement";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
 import CoordinatorStudentManagement from "./CoordinatorStudentManagement";
-import { coordinatorService } from "../../services/coordinatorService";
+import {
+  coordinatorService,
+  type CoordinatorActivity,
+} from "../../services/coordinatorService";
 import { settingsService } from "../../services/settingsService";
+import {
+  notificationService,
+  type NotificationItem,
+} from "../../services/notificationService";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -64,7 +73,19 @@ const formatStudentId = (studentNumber: string) => {
 // =============================================
 // COORDINATOR DASHBOARD COMPONENT
 // =============================================
-const CoordinatorDashboard: React.FC = () => {
+interface CoordinatorDashboardProps {
+  notifications: NotificationItem[];
+  notificationsLoading: boolean;
+  onNotificationClick: (notification: NotificationItem) => void;
+  onMarkAllNotificationsRead: () => void;
+}
+
+const CoordinatorDashboard = ({
+  notifications,
+  notificationsLoading,
+  onNotificationClick,
+  onMarkAllNotificationsRead,
+}: CoordinatorDashboardProps) => {
   // const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -95,21 +116,24 @@ const CoordinatorDashboard: React.FC = () => {
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
   );
 
-  const { data: activities = [], loading: activitiesLoading } =
-    useOptimizedData(
-      () => coordinatorService.getRecentActivities(),
-      [],
-      { ttl: 2 * 60 * 1000 } // 2 minutes cache
-    );
+  const { data: activities, loading: activitiesLoading } = useOptimizedData(
+    () => coordinatorService.getRecentActivities(),
+    [],
+    { ttl: 2 * 60 * 1000 } // 2 minutes cache
+  );
 
-  const { data: alerts = [], loading: alertsLoading } = useOptimizedData(
+  const { data: alerts, loading: alertsLoading } = useOptimizedData(
     () => coordinatorService.getAlerts(),
     [],
     { ttl: 1 * 60 * 1000 } // 1 minute cache
   );
 
   const loading =
-    studentsLoading || statsLoading || activitiesLoading || alertsLoading;
+    studentsLoading ||
+    statsLoading ||
+    activitiesLoading ||
+    alertsLoading ||
+    notificationsLoading;
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -147,6 +171,103 @@ const CoordinatorDashboard: React.FC = () => {
     }
   };
 
+  const getNotificationVisuals = (type: string): {
+    container: string;
+    title: string;
+    message: string;
+    iconBg: string;
+    badge: string;
+    icon: ReactNode;
+  } => {
+    switch (type) {
+      case "DOCUMENT":
+        return {
+          container: "border-purple-500 bg-purple-50 dark:bg-purple-900/20",
+          title: "text-purple-900 dark:text-purple-100",
+          message: "text-purple-700 dark:text-purple-200",
+          iconBg:
+            "bg-purple-100 dark:bg-purple-800 text-purple-600 dark:text-purple-200",
+          badge:
+            "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
+          icon: <FileCheck className="w-4 h-4" />,
+        };
+      case "ATTENDANCE":
+        return {
+          container: "border-green-500 bg-green-50 dark:bg-green-900/20",
+          title: "text-green-900 dark:text-green-100",
+          message: "text-green-700 dark:text-green-200",
+          iconBg:
+            "bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-200",
+          badge:
+            "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
+          icon: <Clock className="w-4 h-4" />,
+        };
+      case "ALERT":
+        return {
+          container: "border-red-500 bg-red-50 dark:bg-red-900/20",
+          title: "text-red-900 dark:text-red-100",
+          message: "text-red-700 dark:text-red-200",
+          iconBg:
+            "bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-200",
+          badge:
+            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200",
+          icon: <AlertCircle className="w-4 h-4" />,
+        };
+      case "SYSTEM":
+        return {
+          container: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
+          title: "text-blue-900 dark:text-blue-100",
+          message: "text-blue-700 dark:text-blue-200",
+          iconBg:
+            "bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-200",
+          badge:
+            "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
+          icon: <Bell className="w-4 h-4" />,
+        };
+      default:
+        return {
+          container: "border-gray-400 bg-gray-50 dark:bg-gray-800/40",
+          title: "text-gray-900 dark:text-gray-100",
+          message: "text-gray-700 dark:text-gray-300",
+          iconBg:
+            "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-200",
+          badge:
+            "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
+          icon: <Bell className="w-4 h-4" />,
+        };
+    }
+  };
+
+  const formatNotificationType = (type: string) => {
+    switch (type) {
+      case "DOCUMENT":
+        return "Document";
+      case "ATTENDANCE":
+        return "Attendance";
+      case "ALERT":
+        return "Alert";
+      case "SYSTEM":
+        return "System";
+      default:
+        return type
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+  };
+
+  const formatNotificationTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "document":
@@ -182,6 +303,55 @@ const CoordinatorDashboard: React.FC = () => {
   //     <ArrowDownRight className="w-4 h-4 text-red-600" />
   //   );
   // };
+
+  const activityList = Array.isArray(activities) ? activities : [];
+  const alertList = Array.isArray(alerts) ? alerts : [];
+
+  const mapNotificationStatus = (
+    notification: NotificationItem
+  ): CoordinatorActivity["status"] => {
+    const lowerMessage = notification.message.toLowerCase();
+    if (lowerMessage.includes("reject")) {
+      return "rejected";
+    }
+    if (lowerMessage.includes("approve")) {
+      return "approved";
+    }
+    return "pending";
+  };
+
+  const notificationActivities: CoordinatorActivity[] = notifications.map(
+    (notification) => {
+      const mappedType: CoordinatorActivity["type"] = (() => {
+        switch (notification.type) {
+          case "DOCUMENT":
+            return "document";
+          case "ATTENDANCE":
+            return "attendance";
+          case "ALERT":
+            return "task";
+          case "SYSTEM":
+          default:
+            return "task";
+        }
+      })();
+
+      return {
+        id: `notification-${notification.id}`,
+        type: mappedType,
+        student: notification.title,
+        action: notification.message,
+        timestamp: notification.createdAt,
+        status: mapNotificationStatus(notification),
+      };
+    }
+  );
+
+  const activityFeed = [...activityList, ...notificationActivities]
+    .sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+    .slice(0, 10);
 
   const filteredStudents = (students || []).filter((student) => {
     const matchesSearch =
@@ -390,7 +560,7 @@ const CoordinatorDashboard: React.FC = () => {
           </button>
         </div>
         <div className="space-y-4">
-          {(alerts || []).map((alert) => (
+          {alertList.map((alert) => (
             <div
               key={alert.id}
               className={`border-l-4 rounded-2xl p-5 hover:shadow-md transition-all duration-200 ${getAlertColor(
@@ -430,6 +600,109 @@ const CoordinatorDashboard: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Notification Center */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Notification Center
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Feedback updates and approval alerts
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onMarkAllNotificationsRead}
+            disabled={notifications.length === 0}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-all duration-200 font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Mark all as read
+          </button>
+        </div>
+        <div className="space-y-4">
+          {notificationsLoading ? (
+            <div className="flex items-center justify-center py-10 text-sm text-gray-500 dark:text-gray-400">
+              Loading notifications...
+            </div>
+          ) : notifications.length > 0 ? (
+            notifications.map((notification) => {
+              const { container, title, message, iconBg, badge, icon } =
+                getNotificationVisuals(notification.type);
+
+              return (
+                <div
+                  key={notification.id}
+                  className={`border-l-4 rounded-2xl p-5 hover:shadow-md transition-all duration-200 cursor-pointer ${container} ${
+                    notification.read ? "" : "shadow-lg"
+                  }`}
+                  onClick={() => onNotificationClick(notification)}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}
+                    >
+                      {icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <h4
+                          className={`font-semibold text-base ${title} truncate`}
+                        >
+                          {notification.title}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          {!notification.read && (
+                            <span className="inline-block w-2 h-2 bg-purple-500 rounded-full"></span>
+                          )}
+                          <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                            {formatNotificationTimestamp(notification.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className={`text-sm mt-2 leading-relaxed ${message}`}>
+                        {notification.message}
+                      </p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${badge}`}
+                        >
+                          {formatNotificationType(notification.type)}
+                        </span>
+                        {notification.link && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onNotificationClick(notification);
+                            }}
+                            className="text-xs font-medium text-indigo-600 dark:text-indigo-300 hover:underline"
+                          >
+                            View details
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+              <Bell className="w-6 h-6 mb-3 text-gray-400" />
+              <p className="font-medium">No notifications yet</p>
+              <p className="text-xs mt-1">
+                You’ll see document feedback updates and approvals here.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -758,8 +1031,20 @@ const CoordinatorPortal: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const {
+    data: notificationsData,
+    loading: notificationsLoading,
+    refresh: refreshNotifications,
+  } = useOptimizedData<NotificationItem[]>(
+    () => notificationService.getNotifications({ limit: 15 }),
+    [],
+    { ttl: 60 * 1000 }
+  );
+  const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{
@@ -780,6 +1065,12 @@ const CoordinatorPortal: React.FC = () => {
       window.removeEventListener("popstate", preventBackButton);
     };
   }, []);
+
+  useEffect(() => {
+    if (notificationsData) {
+      setLocalNotifications(notificationsData);
+    }
+  }, [notificationsData]);
 
   // Load current user data
   useEffect(() => {
@@ -862,14 +1153,15 @@ const CoordinatorPortal: React.FC = () => {
     checkAuth();
   }, []);
 
-  // Close user menu when clicking outside
+  // Close menus when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showUserMenu) {
-        const target = event.target as Element;
-        if (!target.closest(".user-menu-dropdown")) {
-          setShowUserMenu(false);
-        }
+      const target = event.target as Element;
+      if (showUserMenu && !target.closest(".user-menu-dropdown")) {
+        setShowUserMenu(false);
+      }
+      if (showNotifications && !target.closest(".notifications-dropdown")) {
+        setShowNotifications(false);
       }
     };
 
@@ -877,7 +1169,7 @@ const CoordinatorPortal: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showUserMenu]);
+  }, [showUserMenu, showNotifications]);
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
@@ -887,6 +1179,61 @@ const CoordinatorPortal: React.FC = () => {
     { id: "announcements", label: "Announcements", icon: MessageSquare },
     //{ id: "settings", label: "Settings", icon: Settings },
   ];
+
+  const handleNotificationClick = async (notification: NotificationItem) => {
+    try {
+      if (!notification.read) {
+        await notificationService.markAsRead(notification.id);
+        setLocalNotifications((prev) =>
+          prev.map((item) =>
+            item.id === notification.id ? { ...item, read: true } : item
+          )
+        );
+        refreshNotifications();
+      }
+
+      if (notification.link) {
+        const link = notification.link;
+        if (/^https?:\/\//i.test(link)) {
+          window.open(link, "_blank", "noopener,noreferrer");
+        } else {
+          const normalizedLink = link.startsWith("/") ? link : `/${link}`;
+          navigate(normalizedLink);
+        }
+      }
+    } catch (error) {
+      console.error("Error handling notification interaction", error);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setLocalNotifications((prev) =>
+        prev.map((item) => ({ ...item, read: true }))
+      );
+      refreshNotifications();
+    } catch (error) {
+      console.error("Failed to mark all notifications as read", error);
+    }
+  };
+
+  const unreadNotificationCount = localNotifications.filter(
+    (notification) => !notification.read
+  ).length;
+
+  const formatDropdownTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const handleLogout = () => {
     // Clear authentication state
@@ -910,7 +1257,14 @@ const CoordinatorPortal: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <CoordinatorDashboard />;
+        return (
+          <CoordinatorDashboard
+            notifications={localNotifications}
+            notificationsLoading={notificationsLoading}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+          />
+        );
       case "students":
         return <CoordinatorStudentManagement />;
       case "documents":
@@ -922,7 +1276,14 @@ const CoordinatorPortal: React.FC = () => {
       case "settings":
         return <CoordinatorSettingsTab />;
       default:
-        return <CoordinatorDashboard />;
+        return (
+          <CoordinatorDashboard
+            notifications={localNotifications}
+            notificationsLoading={notificationsLoading}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+          />
+        );
     }
   };
 
@@ -944,10 +1305,108 @@ const CoordinatorPortal: React.FC = () => {
 
             {/* Right: Notifications + User */}
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative notifications-dropdown">
+                <button
+                  onClick={() => setShowNotifications((prev) => !prev)}
+                  className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadNotificationCount > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full"></span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-3 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
+                    <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Notifications
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          Recent approvals, feedback, and alerts
+                        </p>
+                      </div>
+                      {unreadNotificationCount > 0 && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
+                          {unreadNotificationCount} new
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                      {notificationsLoading ? (
+                        <div className="px-5 py-8 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                          Loading notifications...
+                        </div>
+                      ) : localNotifications.length > 0 ? (
+                        localNotifications.map((notification) => (
+                          <button
+                            key={notification.id}
+                            onClick={() => {
+                              handleNotificationClick(notification);
+                              setShowNotifications(false);
+                            }}
+                            className={`w-full text-left px-5 py-4 transition-colors ${
+                              notification.read
+                                ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {notification.title}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {formatDropdownTimestamp(notification.createdAt)}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-3">
+                              {notification.message}
+                            </p>
+                            {notification.type && (
+                              <span className="mt-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                {notification.type.replace(/_/g, " ")}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                          You're all caught up! No new notifications.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          await handleMarkAllNotificationsRead();
+                          setShowNotifications(false);
+                        }}
+                        disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
+                        className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Mark all as read
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveTab("dashboard");
+                          setShowNotifications(false);
+                        }}
+                        className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-blue-600 text-white hover:from-purple-600 hover:to-blue-700 transition-colors"
+                      >
+                        View dashboard
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User Avatar Dropdown */}
               <div className="relative user-menu-dropdown">

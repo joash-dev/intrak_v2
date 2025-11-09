@@ -1,0 +1,149 @@
+[1mdiff --git a/client/src/pages/StudentUi/Dashboard.tsx b/client/src/pages/StudentUi/Dashboard.tsx[m
+[1mindex 1d9c704e..a5e341e9 100644[m
+[1m--- a/client/src/pages/StudentUi/Dashboard.tsx[m
+[1m+++ b/client/src/pages/StudentUi/Dashboard.tsx[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-import { useState, useEffect } from "react";[m
+[32m+[m[32mimport { useState, useEffect, useCallback } from "react";[m
+ import {[m
+   FileText,[m
+   Clock,[m
+[36m@@ -21,6 +21,7 @@[m [mimport {[m
+   Download,[m
+   Loader2,[m
+ } from "lucide-react";[m
+[32m+[m[32mimport { useNavigate } from "react-router-dom";[m
+ import StudentDocumentsTab from "./StudentDocumentsTab";[m
+ import StudentTemplates from "./StudentTemplates";[m
+ import StudentAttendanceTab from "./StudentAttendance";[m
+[36m@@ -32,6 +33,10 @@[m [mimport { dashboardService } from "../../services/dashboardService";[m
+ import type { DashboardData } from "../../services/dashboardService";[m
+ import { documentService } from "../../services/documentService";[m
+ import { settingsService } from "../../services/settingsService";[m
+[32m+[m[32mimport {[m
+[32m+[m[32m  notificationService,[m
+[32m+[m[32m  type NotificationItem,[m
+[32m+[m[32m} from "../../services/notificationService";[m
+ import api from "../../services/api";[m
+ import toast from "react-hot-toast";[m
+ [m
+[36m@@ -85,9 +90,17 @@[m [mconst formatStudentId = (studentNumber: string) => {[m
+ const OverviewTab = ({[m
+   data,[m
+   setActiveTab,[m
+[32m+[m[32m  notifications,[m
+[32m+[m[32m  notificationsLoading,[m
+[32m+[m[32m  onNotificationClick,[m
+[32m+[m[32m  onMarkAllNotificationsRead,[m
+ }: {[m
+   data: DashboardData;[m
+   setActiveTab: (tab: string) => void;[m
+[32m+[m[32m  notifications: NotificationItem[];[m
+[32m+[m[32m  notificationsLoading: boolean;[m
+[32m+[m[32m  onNotificationClick: (notification: NotificationItem) => void;[m
+[32m+[m[32m  onMarkAllNotificationsRead: () => Promise<void>;[m
+ }) => {[m
+   const progress =[m
+     data.student.totalHours && data.student.totalHours > 0[m
+[36m@@ -115,6 +128,41 @@[m [mconst OverviewTab = ({[m
+         ).toFixed(1)[m
+       : "N/A";[m
+ [m
+[32m+[m[32m  const unreadCount = notifications.filter((notification) => !notification.read).length;[m
+[32m+[m
+[32m+[m[32m  const formatNotificationTimestamp = (timestamp: string) => {[m
+[32m+[m[32m    const date = new Date(timestamp);[m
+[32m+[m[32m    if (Number.isNaN(date.getTime())) {[m
+[32m+[m[32m      return "";[m
+[32m+[m[32m    }[m
+[32m+[m[32m    return date.toLocaleString(undefined, {[m
+[32m+[m[32m      month: "short",[m
+[32m+[m[32m      day: "numeric",[m
+[32m+[m[32m      hour: "2-digit",[m
+[32m+[m[32m      minute: "2-digit",[m
+[32m+[m[32m    });[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const getNotificationAccent = (type: string) => {[m
+[32m+[m[32m    switch (type) {[m
+[32m+[m[32m      case "DOCUMENT":[m
+[32m+[m[32m        return {[m
+[32m+[m[32m          badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",[m
+[32m+[m[32m          iconBg: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-200",[m
+[32m+[m[32m        };[m
+[32m+[m[32m      case "ATTENDANCE":[m
+[32m+[m[32m        return {[m
+[32m+[m[32m          badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",[m
+[32m+[m[32m          iconBg: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-200",[m
+[32m+[m[32m        };[m
+[32m+[m[32m      default:[m
+[32m+[m[32m        return {[m
+[32m+[m[32m          badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",[m
+[32m+[m[32m          iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200",[m
+[32m+[m[32m        };[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+   return ([m
+     <div className="space-y-6">[m
+       {/* Welcome Section */}[m
+[36m@@ -217,6 +265,84 @@[m [mconst OverviewTab = ({[m
+         </div>[m
+       </div>[m
+ [m
+[32m+[m[32m      {/* Notification Center */}[m
+[32m+[m[32m      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">[m
+[32m+[m[32m        <div className="flex items-center justify-between mb-4">[m
+[32m+[m[32m          <div>[m
+[32m+[m[32m            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">[m
+[32m+[m[32m              Notification Center[m
+[32m+[m[32m            </h3>[m
+[32m+[m[32m            <p className="text-sm text-gray-600 dark:text-gray-400">[m
+[32m+[m[32m              Stay on top of document feedback and approvals[m
+[32m+[m[32m            </p>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m          <button[m
+[32m+[m[32m            onClick={onMarkAllNotificationsRead}[m
+[32m+[m[32m            disabled={notifications.length === 0 || unreadCount === 0}[m
+[32m+[m[32m            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"[m
+[32m+[m[32m          >[m
+[32m+[m[32m            Mark all as read[m
+[32m+[m[32m          </button>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m        {notificationsLoading ? ([m
+[32m+[m[32m          <div className="flex items-center justify-center py-8">[m
+[32m+[m[32m            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        ) : notifications.length > 0 ? ([m
+[32m+[m[32m          <div className="space-y-3">[m
+[32m+[m[32m            {notifications.map((notification) => {[m
+[32m+[m[32m              const { badge, iconBg } = getNotificationAccent(notification.type);[m
+[32m+[m[32m              return ([m
+[32m+[m[32m                <button[m
+[32m+[m[32m                  key={notification.id}[m
+[32m+[m[32m                  onClick={() => onNotificationClick(notification)}[m
+[32m+[m[32m                  className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${[m
+[32m+[m[32m                    notification.read[m
+[32m+[m[32m                      ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"[m
+[32m+[m[32m                      : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"[m
+[32m+[m[32m                  }`}[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  <div className="flex items-start justify-between gap-3">[m
+[32m+[m[32m                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>[m
+[32m+[m[32m                      <Bell className="w-4 h-4" />[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                    <div className="flex-1 min-w-0">[m
+[32m+[m[32m                      <div className="flex items-center justify-between gap-2">[m
+[32m+[m[32m                        <h4 className="font-semibold text-gray-900 dark:text-white truncate">[m
+[32m+[m[32m                          {notification.title}[m
+[32m+[m[32m                        </h4>[m
+[32m+[m[32m                        {!notification.read && ([m
+[32m+[m[32m                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">[m
+[32m+[m[32m                            New[m
+[32m+[m[32m                          </span>[m
+[32m+[m[32m                        )}[m
+[32m+[m[32m                      </div>[m
+[32m+[m[32m                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">[m
+[32m+[m[32m                        {notification.message}[m
+[32m+[m[32m                      </p>[m
+[32m+[m[32m                      <div className="mt-3 flex items-center justify-betwee

@@ -578,14 +578,15 @@ const SupervisorDashboard = () => {
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 lg:hidden"
+          style={{ margin: "0" }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Confirm Logout

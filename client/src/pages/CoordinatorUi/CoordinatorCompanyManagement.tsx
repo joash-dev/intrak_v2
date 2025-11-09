@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { coordinatorService } from "../../services/coordinatorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
+import toast from "react-hot-toast";
 
 // Import types from the service
 import type { Company, MOA } from "../../services/companyService";
@@ -61,6 +62,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
     latitude: "",
     longitude: "",
     radiusMeters: 100,
+    maxSlots: 0,
   });
 
   // Optimized data fetching with caching
@@ -157,12 +159,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
   // Handle MOA approval
   const handleApproveMOA = async (moaId: string) => {
     try {
-      await coordinatorService.approveMOA(moaId, "Approved by coordinator");
-      // Refresh MOAs data
-      await refreshMOAs();
+      const result = await coordinatorService.approveMOA(
+        moaId,
+        "Approved by coordinator"
+      );
+      await Promise.all([refreshMOAs(), refreshCompanies(), refreshStudents()]);
+
+      if (
+        result?.supervisorAccount?.created &&
+        result.supervisorAccount.temporaryPassword
+      ) {
+        toast.success(
+          `MOA approved. Supervisor account created for ${result.supervisorAccount.email}. Temporary password: ${result.supervisorAccount.temporaryPassword}`
+        );
+      } else if (result?.supervisorAccount) {
+        toast.success(
+          `MOA approved. Supervisor ${result.supervisorAccount.email} is linked to the company.`
+        );
+      } else {
+        toast.success("MOA approved successfully.");
+      }
     } catch (error) {
       console.error("Error approving MOA:", error);
-      // You could add a toast notification here
+      toast.error("Failed to approve MOA. Please try again.");
     }
   };
 
@@ -177,7 +196,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
       }
     } catch (error) {
       console.error("Error rejecting MOA:", error);
-      // You could add a toast notification here
+      toast.error("Failed to reject MOA. Please try again.");
     }
   };
 
@@ -208,6 +227,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
         latitude: "",
         longitude: "",
         radiusMeters: 100,
+        maxSlots: 0,
       });
 
       // Refresh companies data
@@ -777,8 +797,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
           {/* Add Company Modal */}
           {showAddCompany && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              style={{ marginTop: "0px" }}
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              style={{ margin: "0" }}
             >
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -897,63 +917,27 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Location Fields */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    {/* Capacity Field */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Latitude
+                          Number of Slots
                         </label>
                         <input
                           type="number"
-                          step="any"
-                          value={companyForm.latitude}
+                          min="0"
+                          value={companyForm.maxSlots}
                           onChange={(e) =>
                             setCompanyForm((prev) => ({
                               ...prev,
-                              latitude: e.target.value,
+                              maxSlots: parseInt(e.target.value) || 0,
                             }))
                           }
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                          placeholder="e.g., 14.5995"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Longitude
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={companyForm.longitude}
-                          onChange={(e) =>
-                            setCompanyForm((prev) => ({
-                              ...prev,
-                              longitude: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                          placeholder="e.g., 120.9842"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Radius (meters)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={companyForm.radiusMeters}
-                          onChange={(e) =>
-                            setCompanyForm((prev) => ({
-                              ...prev,
-                              radiusMeters: parseInt(e.target.value) || 100,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                          placeholder="100"
+                          placeholder="Enter available slots"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Default: 100 meters
+                          Set how many interns this company can accept.
                         </p>
                       </div>
                     </div>
@@ -995,7 +979,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
           {/* Add MOA Modal */}
           {showAddMOA && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -1333,7 +1317,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
           {/* Delete Company Confirmation Modal */}
           {showDeleteConfirm && companyToDelete && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center space-x-2">

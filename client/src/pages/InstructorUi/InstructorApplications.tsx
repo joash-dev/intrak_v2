@@ -417,7 +417,7 @@ const InstructorApplications: React.FC = () => {
 
       {/* Approve Modal */}
       {showApproveModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
               <CheckCircle className="w-6 h-6 text-green-600" />
@@ -474,7 +474,7 @@ const InstructorApplications: React.FC = () => {
 
       {/* Reject Modal */}
       {showRejectModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <XCircle className="w-6 h-6 text-red-600" />

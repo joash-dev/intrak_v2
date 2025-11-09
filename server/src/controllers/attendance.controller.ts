@@ -95,21 +95,35 @@ export const getAttendance = async (req: AuthRequest, res: Response) => {
     let { studentId, dateFrom, dateTo } = req.query;
     const where: any = {};
 
-    // Check if user is a coordinator or instructor - they can see all attendance logs
-    if (
-      req.user?.role === 'COORDINATOR' ||
-      req.user?.role === 'INSTRUCTOR' ||
-      req.user?.role === 'SUPERVISOR'
-    ) {
-      // Coordinators and instructors can see all attendance logs
-      // Only filter by studentId if specifically provided
+    const role = req.user?.role;
+    const userId = req.user?.id;
+
+    if (role === 'COORDINATOR' || role === 'INSTRUCTOR') {
+      if (studentId && studentId !== 'all') {
+        where.studentId = studentId as string;
+      }
+    } else if (role === 'INDUSTRY_PARTNER') {
+      const supervisedCompanies = await prisma.company.findMany({
+        where: { supervisorId: userId || '' },
+        select: { id: true },
+      });
+
+      if (supervisedCompanies.length === 0) {
+        return res.json({ logs: [] });
+      }
+
+      const companyIds = supervisedCompanies.map((company) => company.id);
+
+      where.student = {
+        companyId: { in: companyIds },
+      };
+
       if (studentId && studentId !== 'all') {
         where.studentId = studentId as string;
       }
     } else {
       // For students, only show their own attendance logs
       if (studentId === 'me' || !studentId) {
-        const userId = req.user?.id;
         if (!userId) {
           return res.status(401).json({ message: 'User not authenticated' });
         }
@@ -143,11 +157,11 @@ export const getAttendance = async (req: AuthRequest, res: Response) => {
         student: {
           select: {
             studentNumber: true,
-            user: { select: { name: true } }
-          }
-        }
+            user: { select: { name: true } },
+          },
+        },
       },
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'desc' },
     });
 
     res.json({ logs });

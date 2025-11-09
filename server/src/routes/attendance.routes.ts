@@ -14,7 +14,7 @@ router.post('/qr/verify', attendanceController.verifyQR);
 router.post('/gps', attendanceController.verifyGPS);
 router.put(
   '/:id/verify',
-  authorize(['SUPERVISOR', 'COORDINATOR']),
+  authorize(['INDUSTRY_PARTNER', 'COORDINATOR']),
   attendanceController.verifyAttendance
 );
 router.get('/export-dtr/:studentId', attendanceController.exportDTR);

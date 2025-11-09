@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   FileText,
   Clock,
@@ -21,6 +21,7 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import StudentDocumentsTab from "./StudentDocumentsTab";
 import StudentTemplates from "./StudentTemplates";
 import StudentAttendanceTab from "./StudentAttendance";
@@ -32,6 +33,10 @@ import { dashboardService } from "../../services/dashboardService";
 import type { DashboardData } from "../../services/dashboardService";
 import { documentService } from "../../services/documentService";
 import { settingsService } from "../../services/settingsService";
+import {
+  notificationService,
+  type NotificationItem,
+} from "../../services/notificationService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -85,9 +90,17 @@ const formatStudentId = (studentNumber: string) => {
 const OverviewTab = ({
   data,
   setActiveTab,
+  notifications,
+  notificationsLoading,
+  onNotificationClick,
+  onMarkAllNotificationsRead,
 }: {
   data: DashboardData;
   setActiveTab: (tab: string) => void;
+  notifications: NotificationItem[];
+  notificationsLoading: boolean;
+  onNotificationClick: (notification: NotificationItem) => void;
+  onMarkAllNotificationsRead: () => Promise<void>;
 }) => {
   const progress =
     data.student.totalHours && data.student.totalHours > 0
@@ -114,6 +127,41 @@ const OverviewTab = ({
           data.evaluations.length
         ).toFixed(1)
       : "N/A";
+
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+  const formatNotificationTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getNotificationAccent = (type: string) => {
+    switch (type) {
+      case "DOCUMENT":
+        return {
+          badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
+          iconBg: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-200",
+        };
+      case "ATTENDANCE":
+        return {
+          badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
+          iconBg: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-200",
+        };
+      default:
+        return {
+          badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
+          iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200",
+        };
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -215,6 +263,84 @@ const OverviewTab = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Notification Center */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Notification Center
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Stay on top of document feedback and approvals
+            </p>
+          </div>
+          <button
+            onClick={onMarkAllNotificationsRead}
+            disabled={notifications.length === 0 || unreadCount === 0}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Mark all as read
+          </button>
+        </div>
+        {notificationsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+          </div>
+        ) : notifications.length > 0 ? (
+          <div className="space-y-3">
+            {notifications.map((notification) => {
+              const { badge, iconBg } = getNotificationAccent(notification.type);
+              return (
+                <button
+                  key={notification.id}
+                  onClick={() => onNotificationClick(notification)}
+                  className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${
+                    notification.read
+                      ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
+                      <Bell className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-semibold text-gray-900 dark:text-white truncate">
+                          {notification.title}
+                        </h4>
+                        {!notification.read && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">
+                        {notification.message}
+                      </p>
+                      <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium ${badge}`}>
+                          {notification.type.replace(/_/g, " ")}
+                        </span>
+                        <span>{formatNotificationTimestamp(notification.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+            <Bell className="w-6 h-6 mb-3 text-gray-400" />
+            <p className="font-medium">No new notifications</p>
+            <p className="text-xs mt-1">
+              Once your submissions are reviewed, updates will appear here.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Progress Bar */}
@@ -449,6 +575,7 @@ const OverviewTab = ({
 
 // Main Dashboard Component
 const StudentDashboard = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<DashboardData>(defaultDashboardData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -460,6 +587,8 @@ const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   // Prevent back button after logout
   useEffect(() => {
@@ -506,6 +635,110 @@ const StudentDashboard = () => {
       }
     }
   };
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setNotificationsLoading(true);
+      const items = await notificationService.getNotifications({ limit: 15 });
+      setNotifications(Array.isArray(items) ? items : []);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  const handleInternalNavigation = useCallback(
+    (rawLink: string) => {
+      if (!rawLink) {
+        return false;
+      }
+
+      let link = rawLink.trim();
+      if (link.startsWith("/")) {
+        link = link.replace(/^\/+/, "");
+      }
+      if (link.startsWith("student/")) {
+        link = link.replace(/^student\/+/, "");
+      }
+
+      const tabMap: Record<string, string> = {
+        documents: "documents",
+        templates: "templates",
+        companies: "companies",
+        attendance: "attendance",
+        evaluations: "evaluations",
+        reports: "reports",
+        settings: "settings",
+        overview: "overview",
+      };
+
+      const matchedEntry = Object.entries(tabMap).find(([key]) =>
+        link.toLowerCase().startsWith(key)
+      );
+
+      if (matchedEntry) {
+        const [, tab] = matchedEntry;
+        setActiveTab(tab);
+        return true;
+      }
+
+      return false;
+    },
+    [setActiveTab]
+  );
+
+  const handleNotificationClick = useCallback(
+    async (notification: NotificationItem) => {
+      try {
+        if (!notification.read) {
+          await notificationService.markAsRead(notification.id);
+          setNotifications((prev) =>
+            prev.map((item) =>
+              item.id === notification.id ? { ...item, read: true } : item
+            )
+          );
+        }
+
+        if (notification.link) {
+          const link = notification.link;
+          if (/^https?:\/\//i.test(link)) {
+            window.open(link, "_blank", "noopener,noreferrer");
+          } else {
+            if (handleInternalNavigation(link)) {
+              // handled by tab navigation
+            } else {
+              let normalizedLink = link.startsWith("/") ? link : `/${link}`;
+              if (!normalizedLink.startsWith("/student")) {
+                normalizedLink = `/student${normalizedLink}`;
+              }
+              navigate(normalizedLink.replace(/\/{2,}/g, "/"));
+            }
+          }
+        } else {
+          if (notification.type === "DOCUMENT") {
+            setActiveTab("documents");
+          } else if (notification.type === "ATTENDANCE") {
+            setActiveTab("attendance");
+          }
+        }
+      } catch (error) {
+        console.error("Error handling notification interaction", error);
+      } finally {
+        setShowNotifications(false);
+      }
+    },
+    [handleInternalNavigation, navigate]
+  );
+
+  const handleMarkAllNotificationsRead = useCallback(async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+    } catch (error) {
+      console.error("Failed to mark notifications as read", error);
+    }
+  }, []);
 
   // Check authentication and fetch data on mount
   useEffect(() => {
@@ -560,6 +793,12 @@ const StudentDashboard = () => {
       refreshDashboardData(true); // Show loading spinner for initial load
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadNotifications();
+    }
+  }, [isAuthenticated, loadNotifications]);
 
   // Refresh data when returning from settings (with debouncing)
   useEffect(() => {
@@ -633,8 +872,25 @@ const StudentDashboard = () => {
     setShowUserMenu(!showUserMenu);
   };
 
-  const getNotificationCount = () => {
-    return Array.isArray(data.announcements) ? data.announcements.length : 0;
+  const unreadNotificationCount = notifications.filter(
+    (notification) => !notification.read
+  ).length;
+  const announcementCount = Array.isArray(data.announcements)
+    ? data.announcements.length
+    : 0;
+  const totalNotificationCount = unreadNotificationCount + announcementCount;
+
+  const formatNotificationTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const getPriorityColor = (priority?: string) => {
@@ -714,7 +970,16 @@ const StudentDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
-        return <OverviewTab data={data} setActiveTab={setActiveTab} />;
+        return (
+          <OverviewTab
+            data={data}
+            setActiveTab={setActiveTab}
+            notifications={notifications}
+            notificationsLoading={notificationsLoading}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+          />
+        );
       case "documents":
         return <StudentDocumentsTab onDocumentsChange={refreshDocuments} />;
       case "templates":
@@ -732,7 +997,16 @@ const StudentDashboard = () => {
       case "settings":
         return <Setting onProfileUpdate={refreshDashboardData} />;
       default:
-        return <OverviewTab data={data} setActiveTab={setActiveTab} />;
+        return (
+          <OverviewTab
+            data={data}
+            setActiveTab={setActiveTab}
+            notifications={notifications}
+            notificationsLoading={notificationsLoading}
+            onNotificationClick={handleNotificationClick}
+            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+          />
+        );
     }
   };
 
@@ -812,7 +1086,7 @@ const StudentDashboard = () => {
                   className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
-                  {getNotificationCount() > 0 && (
+                  {totalNotificationCount > 0 && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
@@ -828,76 +1102,137 @@ const StudentDashboard = () => {
                             Notifications
                           </h3>
                         </div>
-                        <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium">
-                          {getNotificationCount()} announcement
-                          {getNotificationCount() !== 1 ? "s" : ""}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
+                            {unreadNotificationCount} unread updates
+                          </span>
+                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 rounded-full text-xs font-medium">
+                            {announcementCount} announcement{announcementCount === 1 ? "" : "s"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-3">
-                      {Array.isArray(data.announcements) &&
-                      data.announcements.length > 0 ? (
-                        <div className="space-y-3">
-                          {data.announcements.map((announcement) => (
-                            <div
-                              key={announcement.id}
-                              className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
-                            >
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center space-x-2">
-                                  {announcement.priority === "HIGH" && (
-                                    <AlertTriangle className="w-5 h-5 text-red-500" />
-                                  )}
-                                  <h4 className="font-semibold text-gray-900 dark:text-white text-base">
-                                    {announcement.title}
-                                  </h4>
-                                </div>
-                                {announcement.priority && (
-                                  <span
-                                    className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                                      announcement.priority
-                                    )}`}
-                                  >
-                                    {announcement.priority}
-                                  </span>
-                                )}
-                              </div>
-                              <p
-                                className="text-sm text-gray-600 dark:text-gray-400 mb-3 overflow-hidden leading-relaxed"
-                                style={{
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 3,
-                                  WebkitBoxOrient: "vertical",
-                                }}
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <div className="p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Document Updates
+                          </h4>
+                          <button
+                            onClick={async () => {
+                              await handleMarkAllNotificationsRead();
+                              loadNotifications();
+                            }}
+                            disabled={notifications.length === 0 || unreadNotificationCount === 0}
+                            className="text-xs font-semibold text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                          >
+                            Mark all read
+                          </button>
+                        </div>
+                        {notificationsLoading ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                          </div>
+                        ) : notifications.length > 0 ? (
+                          <div className="space-y-3">
+                            {notifications.map((notification) => (
+                              <button
+                                key={notification.id}
+                                onClick={() => handleNotificationClick(notification)}
+                                className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
+                                  notification.read
+                                    ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow"
+                                }`}
                               >
-                                {announcement.content}
-                              </p>
-                              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                <Calendar className="w-4 h-4 mr-2" />
-                                {new Date(announcement.date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  }
-                                )}
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {notification.title}
+                                  </p>
+                                  {!notification.read && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
+                                      New
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">
+                                  {notification.message}
+                                </p>
+                                <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                                  <span>{notification.type.replace(/_/g, " ")}</span>
+                                  <span>{formatNotificationTimestamp(notification.createdAt)}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
+                            No document updates yet.
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                          Announcements
+                        </h4>
+                        {Array.isArray(data.announcements) &&
+                        data.announcements.length > 0 ? (
+                          <div className="space-y-3">
+                            {data.announcements.map((announcement) => (
+                              <div
+                                key={announcement.id}
+                                className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+                              >
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center space-x-2">
+                                    {announcement.priority === "HIGH" && (
+                                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                                    )}
+                                    <h4 className="font-semibold text-gray-900 dark:text-white text-base">
+                                      {announcement.title}
+                                    </h4>
+                                  </div>
+                                  {announcement.priority && (
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                                        announcement.priority
+                                      )}`}
+                                    >
+                                      {announcement.priority}
+                                    </span>
+                                  )}
+                                </div>
+                                <p
+                                  className="text-sm text-gray-600 dark:text-gray-400 mb-3 overflow-hidden leading-relaxed"
+                                  style={{
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 3,
+                                    WebkitBoxOrient: "vertical",
+                                  }}
+                                >
+                                  {announcement.content}
+                                </p>
+                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  {new Date(announcement.date).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    }
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                          <Bell className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg font-medium mb-2">
-                            No announcements available
-                          </p>
-                          <p className="text-sm opacity-75">
-                            Check back later for updates
-                          </p>
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
+                            No announcements yet.
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -990,14 +1325,15 @@ const StudentDashboard = () => {
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 lg:hidden"
+          style={{ margin: "0" }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <LogOut className="w-6 h-6 text-red-600" />
@@ -1029,7 +1365,7 @@ const StudentDashboard = () => {
 
       {/* No Company Warning Modal */}
       {showNoCompanyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ margin: "0" }}>
           <div className="bg-gradient-to-br from-white to-orange-50 dark:from-gray-800 dark:to-orange-900/20 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-orange-400 dark:border-orange-600">
             <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mx-auto mb-6 shadow-lg animate-bounce">
               <AlertTriangle className="w-8 h-8 text-white" />

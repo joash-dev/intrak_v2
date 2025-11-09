@@ -725,7 +725,7 @@ const InstructorTemplateManagement: React.FC = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 mt-0">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -933,7 +933,7 @@ const InstructorTemplateManagement: React.FC = () => {
 
       {/* Edit Modal */}
       {showEditModal && selectedTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Edit Template

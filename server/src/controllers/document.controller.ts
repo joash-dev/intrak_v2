@@ -46,11 +46,13 @@ const ensureDocumentAccess = async (req: AuthRequest, documentStudentId: string)
     return count > 0;
   }
 
-  if (role === 'SUPERVISOR') {
+  if (role === 'INDUSTRY_PARTNER') {
     const count = await prisma.student.count({
       where: {
         id: documentStudentId,
-        supervisorName: req.user?.name,
+        company: {
+          supervisorId: userId,
+        },
       },
     });
     return count > 0;
@@ -237,7 +239,10 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
           student: {
             select: {
               studentNumber: true,
-              user: { select: { name: true } }
+              user: { select: { name: true } },
+              company: {
+                select: { name: true }
+              }
             }
           },
           uploadedBy: {
@@ -350,7 +355,12 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
     const existing = await prisma.document.findUnique({
       where: { id },
       include: {
-        student: { include: { user: { select: { id: true } }, instructor: { select: { id: true, name: true } } } },
+        student: {
+          include: {
+            user: { select: { id: true, name: true } },
+            instructor: { select: { id: true, name: true } },
+          },
+        },
         uploadedBy: { select: { id: true, name: true } },
       },
     });
@@ -407,6 +417,31 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    if (req.user?.role === 'INSTRUCTOR') {
+      const coordinators = await prisma.user.findMany({
+        where: { role: 'COORDINATOR', active: true },
+        select: { id: true },
+      });
+
+      const coordinatorRecipients = new Set<string>();
+      coordinators.forEach(({ id: coordinatorId }) => {
+        if (coordinatorId && coordinatorId !== req.user!.id) {
+          coordinatorRecipients.add(coordinatorId);
+        }
+      });
+
+      if (coordinatorRecipients.size > 0) {
+        await dispatchNotification(coordinatorRecipients, {
+          title: 'Document Approved',
+          message: `${existing.student.user?.name ?? 'A student'}'s ${existing.type
+            .toLowerCase()
+            .replace(/_/g, ' ')} was approved by ${req.user?.name ?? 'an instructor'}.`,
+          link: `/documents/${id}`,
+          type: NotificationType.DOCUMENT,
+        });
+      }
+    }
+
     res.json({ document });
   } catch (error) {
     console.error('Approve document error:', error);
@@ -422,7 +457,12 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
     const existing = await prisma.document.findUnique({
       where: { id },
       include: {
-        student: { include: { user: { select: { id: true } }, instructor: { select: { id: true } } } },
+        student: {
+          include: {
+            user: { select: { id: true, name: true } },
+            instructor: { select: { id: true } },
+          },
+        },
         uploadedBy: { select: { id: true } },
       },
     });

@@ -32,7 +32,7 @@ router.put('/:id/approve', authorize(['COORDINATOR', 'INSTRUCTOR']), documentCon
 router.put('/:id/reject', authorize(['COORDINATOR', 'INSTRUCTOR']), documentController.rejectDocument);
 router.post(
   '/:id/feedback',
-  authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR', 'SUPERVISOR', 'STUDENT']),
+  authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR', 'INDUSTRY_PARTNER', 'STUDENT']),
   documentController.addDocumentFeedback,
 );
 router.delete('/:id', authorize(['ADMIN', 'STUDENT']), documentController.deleteDocument);

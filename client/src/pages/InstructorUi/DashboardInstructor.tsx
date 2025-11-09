@@ -5,7 +5,6 @@ import {
   Award,
   FileText,
   TrendingUp,
-  AlertCircle,
   CheckCircle,
   Building2,
   Search,
@@ -23,7 +22,6 @@ import {
   Calendar,
   Upload,
   ClipboardList,
-  Send,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
@@ -37,18 +35,29 @@ import InstructorApplications from "./InstructorApplications";
 import {
   instructorService,
   type InstructorStudent,
+  type InstructorActivity,
 } from "../../services/instructorService";
 //import { type Announcement } from "../../services/announcementService";
 import { settingsService } from "../../services/settingsService";
+import {
+  notificationService,
+  type NotificationItem,
+} from "../../services/notificationService";
 
 // =============================================
 // INSTRUCTOR DASHBOARD COMPONENT
 // =============================================
 interface InstructorDashboardProps {
   setActiveTab: (tab: string) => void;
+  notifications: NotificationItem[];
+  notificationsLoading: boolean;
 }
 
-const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
+const InstructorDashboard = ({
+  setActiveTab,
+  notifications,
+  notificationsLoading,
+}: InstructorDashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] =
@@ -74,29 +83,26 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
     { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
-  const { data: alertsData, loading: alertsLoading } = useOptimizedData(
-    () => instructorService.getAlerts(),
-    [],
-    { ttl: 1 * 60 * 1000 } // 1 minute cache
-  );
-
-  // Provide safe defaults
   const students = studentsData || [];
-  const stats = statsData || {
-    totalStudents: 0,
-    activeStudents: 0,
-    atRiskStudents: 0,
-    completedStudents: 0,
-    avgAttendance: 0,
-    avgRating: 0,
-    documentsPending: 0,
-    evaluationsPending: 0,
-  };
+  const stats =
+    statsData ||
+    {
+      totalStudents: 0,
+      activeStudents: 0,
+      atRiskStudents: 0,
+      completedStudents: 0,
+      avgAttendance: 0,
+      avgRating: 0,
+      documentsPending: 0,
+      evaluationsPending: 0,
+    };
   const activities = activitiesData || [];
-  const alerts = alertsData || [];
 
   const loading =
-    studentsLoading || statsLoading || activitiesLoading || alertsLoading;
+    studentsLoading ||
+    statsLoading ||
+    activitiesLoading ||
+    notificationsLoading;
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -144,7 +150,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
     }
   };
 
-  const filteredStudents = (students || []).filter((student) => {
+  const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -153,6 +159,40 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
       filterStatus === "all" || student.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const notificationActivities: InstructorActivity[] = notifications.map(
+    (notification) => {
+      let type: InstructorActivity["type"] = "task";
+      if (notification.type === "DOCUMENT") {
+        type = "submission";
+      } else if (notification.type === "ATTENDANCE") {
+        type = "attendance";
+      }
+
+      return {
+        id: `notification-${notification.id}`,
+        studentName: notification.title,
+        action: notification.message,
+        type,
+        timestamp: notification.createdAt,
+      };
+    }
+  );
+
+  const activityFeed = [...activities, ...notificationActivities]
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+    .slice(0, 10);
+
+  const compactActivityFeed = activityFeed.slice(0, 5);
+
+  useEffect(() => {
+    if (notifications) {
+      // setLocalNotifications(notifications); // This line is removed as per the edit hint
+    }
+  }, [notifications]);
 
   // Show loading state
   if (loading) {
@@ -290,83 +330,6 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
         </div>
       </div>
 
-      {/* System Alerts */}
-      {alerts.length > 0 && (
-        <div className="space-y-3">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`border-l-4 rounded-lg p-4 ${
-                alert.type === "error"
-                  ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                  : alert.type === "warning"
-                  ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500"
-                  : alert.type === "info"
-                  ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500"
-                  : "bg-green-50 dark:bg-green-900/20 border-green-500"
-              }`}
-            >
-              <div className="flex items-start space-x-3">
-                <AlertCircle
-                  className={`w-5 h-5 mt-0.5 ${
-                    alert.type === "error"
-                      ? "text-red-600"
-                      : alert.type === "warning"
-                      ? "text-yellow-600"
-                      : alert.type === "info"
-                      ? "text-blue-600"
-                      : "text-green-600"
-                  }`}
-                />
-                <div className="flex-1">
-                  <h4
-                    className={`font-semibold text-sm ${
-                      alert.type === "error"
-                        ? "text-red-900 dark:text-red-100"
-                        : alert.type === "warning"
-                        ? "text-yellow-900 dark:text-yellow-100"
-                        : alert.type === "info"
-                        ? "text-blue-900 dark:text-blue-100"
-                        : "text-green-900 dark:text-green-100"
-                    }`}
-                  >
-                    {alert.title}
-                  </h4>
-                  <p
-                    className={`text-sm mt-1 ${
-                      alert.type === "error"
-                        ? "text-red-700 dark:text-red-300"
-                        : alert.type === "warning"
-                        ? "text-yellow-700 dark:text-yellow-300"
-                        : alert.type === "info"
-                        ? "text-blue-700 dark:text-blue-300"
-                        : "text-green-700 dark:text-green-300"
-                    }`}
-                  >
-                    {alert.message}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {alert.timestamp}
-                    {alert.studentId && ` • Student: ${alert.studentId}`}
-                  </p>
-                </div>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    alert.priority === "high"
-                      ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                      : alert.priority === "medium"
-                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                      : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                  }`}
-                >
-                  {alert.priority}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Students List */}
         <div className="lg:col-span-2">
@@ -376,6 +339,9 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Student Management
                 </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Track progress and review assigned students
+                </p>
               </div>
               <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
                 <div className="relative flex-1 md:w-64">
@@ -391,7 +357,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 min-w-[120px] text-sm"
+                  className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 min-w-[140px] text-sm"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -403,7 +369,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
 
             <div className="space-y-6">
               {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
+                filteredStudents.slice(0, 3).map((student) => (
                   <div
                     key={student.id}
                     className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800"
@@ -477,12 +443,14 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                               className="bg-white h-1.5 rounded-full transition-all duration-500"
                               style={{
                                 width: `${
-                                  (student.hoursCompleted /
-                                    student.requiredHours) *
-                                  100
+                                  student.requiredHours
+                                    ? (student.hoursCompleted /
+                                        student.requiredHours) *
+                                      100
+                                    : 0
                                 }%`,
                               }}
-                            ></div>
+                            />
                           </div>
                         </div>
                       </div>
@@ -543,9 +511,7 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                     No Students Assigned
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-                    You don't have any students assigned to you yet. Students
-                    will appear here once they are added to the system and
-                    assigned to your supervision.
+                    You don't have any students assigned to you yet. Students will appear here once they are added to the system and assigned to your supervision.
                   </p>
                   <button
                     onClick={() => setActiveTab("students")}
@@ -556,6 +522,20 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
                   </button>
                 </div>
               )}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+              <button
+                onClick={() => setActiveTab("students")}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+              >
+                {filteredStudents.length > 3
+                  ? "View More Students"
+                  : filteredStudents.length > 0
+                  ? "Manage Students"
+                  : "Add Students"}
+                <Users className="w-4 h-4 ml-2" />
+              </button>
             </div>
           </div>
         </div>
@@ -637,7 +617,6 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
               </button>
               <button
                 onClick={() => {
-                  // Generate report functionality
                   const reportData = {
                     students: students ? students.length : 0,
                     activeStudents: stats.activeStudents,
@@ -676,78 +655,60 @@ const InstructorDashboard = ({ setActiveTab }: InstructorDashboardProps) => {
               </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Recent Activities below student management */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mr-3 flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
-            Recent Activities
-          </h3>
-        </div>
-
-        <div className="space-y-3">
-          {activities.length > 0 ? (
-            activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200"
+          {/* Recent Activities (Compact) */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-white" />
+                </span>
+                <span>Recent Activities</span>
+              </h3>
+              <button
+                onClick={() => setActiveTab("monitoring")}
+                className="text-sm font-medium text-purple-600 dark:text-purple-300 hover:text-purple-700"
               >
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-green-400 to-green-500 rounded-l-lg"></div>
-
-                <div className="flex items-start space-x-3 ml-2">
+                View all
+              </button>
+            </div>
+            <div className="space-y-3">
+              {compactActivityFeed.length > 0 ? (
+                compactActivityFeed.map((activity) => (
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${getActivityColor(
-                      activity.type
-                    )}`}
+                    key={activity.id}
+                    className="flex items-start space-x-3 border border-gray-100 dark:border-gray-700 rounded-lg p-3"
                   >
-                    {getActivityIcon(activity.type)}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${getActivityColor(
+                        activity.type
+                      )}`}
+                    >
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {activity.studentName}
                       </p>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                        {new Date(activity.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
-                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {activity.action}
+                      </p>
                     </div>
-
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                      {activity.action}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-                        {new Date(activity.timestamp).toLocaleDateString()}
-                      </span>
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    </div>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(activity.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
+                  No recent activity yet
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Activity className="w-8 h-8 text-purple-500 dark:text-purple-400" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
-                No Recent Activities
-              </h4>
-              <p className="text-sm max-w-xs mx-auto">
-                Student activities and system events will appear here
-              </p>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -1083,30 +1044,21 @@ const InstructorPortal = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const {
+    data: notificationsData,
+    loading: notificationsLoading,
+    refresh: refreshNotifications,
+  } = useOptimizedData<NotificationItem[]>(
+    () => notificationService.getNotifications({ limit: 15 }),
+    [],
+    { ttl: 60 * 1000 }
+  );
+  const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
     initials: string;
   } | null>(null);
-
-  // Fetch announcements for the entire portal
-  const { data: announcements } = useOptimizedData(
-    () => instructorService.getAnnouncements(),
-    [],
-    { ttl: 5 * 60 * 1000 } // 5 minutes cache
-  );
-
-  // Ensure announcements is always an array
-  const safeAnnouncements = announcements || [];
-
-  // Handle announcement view tracking
-  const handleTrackAnnouncementView = async (announcementId: string) => {
-    try {
-      await instructorService.trackAnnouncementView(announcementId);
-    } catch (error) {
-      console.warn("Failed to track announcement view:", error);
-    }
-  };
 
   // Prevent back button after logout
   useEffect(() => {
@@ -1238,6 +1190,12 @@ const InstructorPortal = () => {
     };
   }, [showUserMenu, showNotifications]);
 
+  useEffect(() => {
+    if (notificationsData) {
+      setLocalNotifications(notificationsData);
+    }
+  }, [notificationsData]);
+
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem("isAuthenticated");
@@ -1305,7 +1263,13 @@ const InstructorPortal = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
-        return <InstructorDashboard setActiveTab={setActiveTab} />;
+        return (
+          <InstructorDashboard
+            setActiveTab={setActiveTab}
+            notifications={localNotifications}
+            notificationsLoading={notificationsLoading}
+          />
+        );
       case "applications":
         return <InstructorApplications />;
       case "documents":
@@ -1323,7 +1287,13 @@ const InstructorPortal = () => {
       case "settings":
         return <InstructorSettings onBack={() => setActiveTab("dashboard")} />;
       default:
-        return <InstructorDashboard setActiveTab={setActiveTab} />;
+        return (
+          <InstructorDashboard
+            setActiveTab={setActiveTab}
+            notifications={localNotifications}
+            notificationsLoading={notificationsLoading}
+          />
+        );
     }
   };
 
@@ -1364,7 +1334,7 @@ const InstructorPortal = () => {
                   className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
-                  {safeAnnouncements.length > 0 && (
+                  {localNotifications.some((n) => !n.read) && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
@@ -1377,43 +1347,51 @@ const InstructorPortal = () => {
                         Notifications
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {safeAnnouncements.length} new announcements
+                        {localNotifications.filter((n) => !n.read).length} new notifications
                       </p>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                      {safeAnnouncements.length > 0 ? (
-                        safeAnnouncements.slice(0, 5).map((announcement) => (
+                      {localNotifications.length > 0 ? (
+                        localNotifications.map((notification) => (
                           <div
-                            key={announcement.id}
-                            className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                            onClick={() => {
-                              handleTrackAnnouncementView(announcement.id);
-                              setShowNotifications(false);
+                            key={notification.id}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                              notification.read ? "opacity-70" : ""
+                            }`}
+                            onClick={async () => {
+                              if (!notification.read) {
+                                try {
+                                  await notificationService.markAsRead(notification.id);
+                                  setLocalNotifications((prev) =>
+                                    prev.map((item) =>
+                                      item.id === notification.id
+                                        ? { ...item, read: true }
+                                        : item
+                                    )
+                                  );
+                                  refreshNotifications();
+                                } catch (error) {
+                                  console.error('Failed to mark notification as read', error);
+                                }
+                              }
+                              if (notification.link) {
+                                window.open(notification.link, '_blank');
+                              }
                             }}
                           >
                             <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0">
-                                <div
-                                  className={`w-2 h-2 rounded-full mt-2 ${
-                                    announcement.type === "urgent"
-                                      ? "bg-red-500"
-                                      : announcement.type === "warning"
-                                      ? "bg-yellow-500"
-                                      : "bg-blue-500"
-                                  }`}
-                                ></div>
+                              <div className="flex-shrink-0 mt-1">
+                                <Activity className="w-4 h-4 text-purple-500" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                  {announcement.title}
+                                  {notification.title}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                  {announcement.content}
+                                  {notification.message}
                                 </p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                  {new Date(
-                                    announcement.createdAt
-                                  ).toLocaleDateString()}
+                                  {new Date(notification.createdAt).toLocaleString()}
                                 </p>
                               </div>
                             </div>
@@ -1428,13 +1406,30 @@ const InstructorPortal = () => {
                         </div>
                       )}
                     </div>
-                    {safeAnnouncements.length > 5 && (
-                      <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-                        <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium w-full text-left">
-                          View all notifications
-                        </button>
-                      </div>
-                    )}
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                      <button
+                        onClick={async () => {
+                          try {
+                            await notificationService.markAllAsRead();
+                            setLocalNotifications((prev) =>
+                              prev.map((item) => ({ ...item, read: true }))
+                            );
+                            refreshNotifications();
+                          } catch (error) {
+                            console.error('Failed to mark notifications as read', error);
+                          }
+                        }}
+                        className="text-sm text-purple-600 dark:text-purple-300 hover:text-purple-700"
+                      >
+                        Mark all as read
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('monitoring')}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700"
+                      >
+                        View activity log
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1592,11 +1587,6 @@ const InstructorPortal = () => {
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
-                  {item.badge && (
-                    <span className="ml-auto px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
                 </button>
               );
             })}

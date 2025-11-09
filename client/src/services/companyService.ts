@@ -11,6 +11,13 @@ export type Company = {
   latitude?: number;
   longitude?: number;
   radiusMeters?: number;
+  maxSlots?: number;
+  supervisorId?: string | null;
+  supervisor?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
   students?: any[];
@@ -56,6 +63,17 @@ export type MOAStats = {
   pending: number;
   rejected: number;
   expiring: number;
+};
+
+export type SupervisorAccountInfo = {
+  created: boolean;
+  email: string;
+  temporaryPassword?: string;
+};
+
+export type ApproveMOAResult = {
+  moa: MOA;
+  supervisorAccount: SupervisorAccountInfo | null;
 };
 
 class CompanyService {
@@ -161,10 +179,10 @@ class CompanyService {
   // These methods are not implemented as MOAs are created as documents by students
 
   // Approve MOA
-  async approveMOA(id: string, notes?: string): Promise<MOA> {
+  async approveMOA(id: string, notes?: string): Promise<ApproveMOAResult> {
     try {
       const response = await api.patch(`/companies/moas/${id}/approve`, { notes });
-      return response.data.moa;
+      return response.data;
     } catch (error: any) {
       console.error('Error approving MOA:', error);
       throw new Error(error.response?.data?.message || 'Failed to approve MOA');
@@ -281,4 +299,4 @@ class CompanyService {
 export const companyService = new CompanyService();
 
 // Re-export types for external use
-export type { Company, MOA, MOAStats };
+export type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorAccountInfo };

@@ -5,18 +5,21 @@ import {
   Download,
   CheckCircle,
   XCircle,
+  AlertCircle,
   Clock,
   Search,
   Calendar,
   Building2,
   X,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
 import {
   instructorService,
   type InstructorDocument,
 } from "../../services/instructorService";
 import toast from "react-hot-toast";
+import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 
 const InstructorDocumentsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +37,31 @@ const InstructorDocumentsTab = () => {
   const [documents, setDocuments] = useState<InstructorDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [feedbackDoc, setFeedbackDoc] = useState<InstructorDocument | null>(
+    null
+  );
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
+  const formatStudentNumber = (value?: string | null) => {
+    if (!value) return "";
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    const upper = trimmed.toUpperCase();
+    if (/^\d{2}-UR-\d{4}$/.test(upper)) {
+      return upper;
+    }
+    if (/^\d{2}UR\d{4}$/.test(upper)) {
+      return `${upper.slice(0, 2)}-UR-${upper.slice(4)}`;
+    }
+    const digits = upper.replace(/[^0-9]/g, "");
+    if (digits.length === 6) {
+      return `${digits.slice(0, 2)}-UR-${digits.slice(2)}`;
+    }
+    if (digits.length >= 4) {
+      return `${digits.slice(0, 2)}-UR-${digits.slice(-4)}`;
+    }
+    return upper;
+  };
 
   // Load documents on component mount
   useEffect(() => {
@@ -56,7 +84,9 @@ const InstructorDocumentsTab = () => {
   };
 
   const stats = {
-    pending: documents.filter((d) => d.status === "PENDING").length,
+    pending: documents.filter(
+      (d) => d.status !== "APPROVED" && d.status !== "REJECTED"
+    ).length,
     approved: documents.filter((d) => d.status === "APPROVED").length,
     rejected: documents.filter((d) => d.status === "REJECTED").length,
     total: documents.length,
@@ -71,6 +101,8 @@ const InstructorDocumentsTab = () => {
       APPROVED:
         "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
       REJECTED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+      RESUBMISSION_REQUESTED:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
     };
     return colors[status] || colors.PENDING;
   };
@@ -83,6 +115,8 @@ const InstructorDocumentsTab = () => {
         return <CheckCircle className="w-4 h-4" />;
       case "REJECTED":
         return <XCircle className="w-4 h-4" />;
+      case "RESUBMISSION_REQUESTED":
+        return <AlertCircle className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
@@ -115,6 +149,11 @@ const InstructorDocumentsTab = () => {
     setReviewAction(action);
     setShowReviewModal(true);
     setFeedback("");
+  };
+
+  const openFeedbackModal = (doc: InstructorDocument) => {
+    setFeedbackDoc(doc);
+    setShowFeedbackModal(true);
   };
 
   const submitReview = async () => {
@@ -224,7 +263,12 @@ const InstructorDocumentsTab = () => {
       doc.documentType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = doc.status.toLowerCase() === filterStatus;
+    const normalizedStatus = doc.status.toLowerCase();
+    const matchesStatus =
+      filterStatus === "pending"
+        ? normalizedStatus === "pending" ||
+          normalizedStatus === "resubmission_requested"
+        : normalizedStatus === filterStatus;
     const matchesType = !filterType || doc.documentType === filterType;
     const matchesPriority =
       !filterPriority ||
@@ -427,7 +471,9 @@ const InstructorDocumentsTab = () => {
 
       {/* Documents List */}
       <div className="space-y-4">
-        {filteredDocuments.map((doc) => (
+        {filteredDocuments.map((doc) => {
+          const formattedStudentId = formatStudentNumber(doc.studentId);
+          return (
           <div
             key={doc.id}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
@@ -444,9 +490,11 @@ const InstructorDocumentsTab = () => {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         {doc.studentName}
                       </h3>
-                      <span className="text-sm text-gray-500">
-                        ({doc.studentId})
-                      </span>
+                      {formattedStudentId && (
+                        <span className="text-sm text-gray-500">
+                          ({formattedStudentId})
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                       <span className="flex items-center space-x-1">
@@ -470,7 +518,7 @@ const InstructorDocumentsTab = () => {
                   )}`}
                 >
                   {getStatusIcon(doc.status)}
-                  <span>{doc.status.toLowerCase()}</span>
+                  <span>{doc.status.replace(/_/g, " ").toLowerCase()}</span>
                 </span>
               </div>
 
@@ -557,6 +605,13 @@ const InstructorDocumentsTab = () => {
                     <Download className="w-4 h-4" />
                     <span className="text-sm">Download</span>
                   </button>
+                <button
+                  onClick={() => openFeedbackModal(doc)}
+                  className="flex items-center space-x-2 px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="text-sm">Feedback</span>
+                </button>
                 </div>
 
                 {doc.status === "PENDING" && (
@@ -580,7 +635,8 @@ const InstructorDocumentsTab = () => {
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {filteredDocuments.length === 0 && (
@@ -597,104 +653,189 @@ const InstructorDocumentsTab = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {reviewAction === "approve"
-                  ? "Approve Document"
-                  : "Reject Document"}
-              </h3>
+         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {reviewAction === "approve"
+                    ? "Approve Document"
+                    : "Reject Document"}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Review the submission details before continuing.
+                </p>
+              </div>
               <button
                 onClick={() => setShowReviewModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 pb-6 space-y-5">
+              {/* Document Summary */}
+              <div className="bg-white dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg p-4">
+                <div className="flex items-start space-x-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                    {selectedDoc.studentAvatar}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {selectedDoc.studentName}
+                    </p>
+                  {formatStudentNumber(selectedDoc.studentId) && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ID: {formatStudentNumber(selectedDoc.studentId)}
+                    </p>
+                  )}
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedDoc.company}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <FileText className="w-4 h-4 text-gray-400" />
+                  <p className="font-medium text-gray-900 dark:text-white text-sm">
+                    {selectedDoc.documentType}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  {selectedDoc.fileName}
+                </p>
+              </div>
+
+              <DocumentFeedbackPanel
+                documentId={selectedDoc.id}
+                className="p-0 border border-gray-100 dark:border-gray-700 rounded-lg"
+                allowFeedback={false}
+                hideHeader
+                compact
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                  <span className="font-medium text-gray-800 dark:text-white">Status:</span>
+                  <span
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(
+                      selectedDoc.status.toUpperCase()
+                    )}`}
+                  >
+                    {getStatusIcon(selectedDoc.status.toUpperCase())}
+                    <span>{selectedDoc.status.replace(/_/g, " ").toLowerCase()}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                  <span className="font-medium text-gray-800 dark:text-white">Submitted:</span>
+                  <span>{selectedDoc.submittedDate}</span>
+                </div>
+                {selectedDoc.reviewedDate && (
+                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                    <span className="font-medium text-gray-800 dark:text-white">Last Reviewed:</span>
+                    <span>{selectedDoc.reviewedDate}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Feedback Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {reviewAction === "approve"
+                    ? "Feedback (Optional)"
+                    : "Rejection Reason (Required)"}
+                </label>
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder={
+                    reviewAction === "approve"
+                      ? "Add feedback or comments..."
+                      : "Please explain why this document is being rejected..."
+                  }
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitReview}
+                  disabled={
+                    (reviewAction === "reject" && !feedback.trim()) || submitting
+                  }
+                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${
+                    reviewAction === "approve"
+                      ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
+                      : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
+                  } disabled:cursor-not-allowed`}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : reviewAction === "approve" ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Approve Document</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4" />
+                      <span>Reject Document</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFeedbackModal && feedbackDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                    {feedbackDoc.studentAvatar}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Feedback for {feedbackDoc.studentName}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {feedbackDoc.documentType} • {feedbackDoc.fileName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFeedbackModal(false);
+                  setFeedbackDoc(null);
+                }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Document Summary */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-              <div className="flex items-start space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
-                  {selectedDoc.studentAvatar}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedDoc.studentName}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedDoc.company}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 mb-2">
-                <FileText className="w-4 h-4 text-gray-400" />
-                <p className="font-medium text-gray-900 dark:text-white text-sm">
-                  {selectedDoc.documentType}
-                </p>
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {selectedDoc.fileName}
-              </p>
-            </div>
-
-            {/* Feedback Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {reviewAction === "approve"
-                  ? "Feedback (Optional)"
-                  : "Rejection Reason (Required)"}
-              </label>
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder={
-                  reviewAction === "approve"
-                    ? "Add feedback or comments..."
-                    : "Please explain why this document is being rejected..."
-                }
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+            <div className="p-6">
+              <DocumentFeedbackPanel
+                documentId={feedbackDoc.id}
+                allowFeedback
+                onFeedbackAdded={() => {
+                  loadDocuments();
+                }}
               />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => setShowReviewModal(false)}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitReview}
-                disabled={
-                  (reviewAction === "reject" && !feedback.trim()) || submitting
-                }
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                  reviewAction === "approve"
-                    ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
-                    : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                } disabled:cursor-not-allowed`}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : reviewAction === "approve" ? (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Approve Document</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject Document</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
         </div>

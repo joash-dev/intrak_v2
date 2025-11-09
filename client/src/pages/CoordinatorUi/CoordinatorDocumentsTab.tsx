@@ -12,9 +12,11 @@ import {
   Building2,
   FileText,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
 // Import document service
 import { documentService } from "../../services/documentService";
+import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 
 interface Document {
   id: string;
@@ -61,6 +63,8 @@ const CoordinatorDocumentsTab: React.FC = () => {
     null
   );
   const [remarks, setRemarks] = useState("");
+  const [feedbackDoc, setFeedbackDoc] = useState<Document | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // State for API data
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -161,7 +165,9 @@ const CoordinatorDocumentsTab: React.FC = () => {
   };
 
   const stats = {
-    pending: documents.filter((d) => d.status === "PENDING").length,
+    pending: documents.filter(
+      (d) => d.status === "PENDING" || d.status === "RESUBMISSION_REQUESTED"
+    ).length,
     approved: documents.filter((d) => d.status === "APPROVED").length,
     rejected: documents.filter((d) => d.status === "REJECTED").length,
     total: documents.length,
@@ -180,6 +186,8 @@ const CoordinatorDocumentsTab: React.FC = () => {
         "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
       rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
       resubmission_required:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+      RESUBMISSION_REQUESTED:
         "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
     };
     return colors[status] || colors.PENDING;
@@ -214,6 +222,11 @@ const CoordinatorDocumentsTab: React.FC = () => {
     setReviewAction(action);
     setShowReviewModal(true);
     setRemarks("");
+  };
+
+  const openFeedbackModal = (doc: Document) => {
+    setFeedbackDoc(doc);
+    setShowFeedbackModal(true);
   };
 
   const submitReview = async () => {
@@ -277,6 +290,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
     const matchesStatus =
       filterStatus === "all" ||
       (filterStatus === "pending" && doc.status === "PENDING") ||
+      (filterStatus === "pending" && doc.status === "RESUBMISSION_REQUESTED") ||
       (filterStatus === "approved" && doc.status === "APPROVED") ||
       (filterStatus === "rejected" && doc.status === "REJECTED");
 
@@ -566,8 +580,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
               {/* Action Buttons */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2">
-                  <button className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
+              <div className="flex items-center space-x-2">
+                  <button
+                    className="flex items-center space-x-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors"
+                  >
                     <Eye className="w-4 h-4" />
                     <span className="text-sm">Preview</span>
                   </button>
@@ -577,6 +593,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   >
                     <Download className="w-4 h-4" />
                     <span className="text-sm">Download</span>
+                  </button>
+                  <button
+                    onClick={() => openFeedbackModal(doc)}
+                    className="flex items-center space-x-2 px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span className="text-sm">Feedback</span>
                   </button>
                 </div>
 
@@ -618,7 +641,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -659,6 +682,14 @@ const CoordinatorDocumentsTab: React.FC = () => {
                 {selectedDoc.fileName}
               </p>
             </div>
+
+            <DocumentFeedbackPanel
+              documentId={selectedDoc.id}
+              className="mb-6"
+              allowFeedback={false}
+              hideHeader
+              compact
+            />
 
             {/* Remarks Input */}
             <div className="mb-6">
@@ -716,6 +747,48 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFeedbackModal && feedbackDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                    {feedbackDoc.studentAvatar}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Feedback for {feedbackDoc.studentName}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {feedbackDoc.documentType} • {feedbackDoc.fileName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFeedbackModal(false);
+                  setFeedbackDoc(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <DocumentFeedbackPanel
+                documentId={feedbackDoc.id}
+                allowFeedback
+                onFeedbackAdded={() => {
+                  fetchDocuments();
+                }}
+              />
             </div>
           </div>
         </div>

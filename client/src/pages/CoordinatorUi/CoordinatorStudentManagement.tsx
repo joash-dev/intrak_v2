@@ -533,7 +533,7 @@ const CoordinatorStudentManagement: React.FC = () => {
 
       {/* Assignment Modal */}
       {showAssignModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
               <UserCheck className="w-6 h-6 text-green-600" />
@@ -594,7 +594,7 @@ const CoordinatorStudentManagement: React.FC = () => {
 
       {/* Mass Assignment Modal */}
       {showMassAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4">
               <UserCheck className="w-6 h-6 text-blue-600" />
@@ -678,7 +678,7 @@ const CoordinatorStudentManagement: React.FC = () => {
 
       {/* Unassign Confirmation Modal */}
       {showUnassignModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <UserX className="w-6 h-6 text-red-600" />

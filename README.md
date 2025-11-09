@@ -471,6 +471,10 @@ docker-compose up -d
 cd server
 npm test
 
+# Specific backend suites
+npm test -- companyApplication.test.ts
+npm test -- documentFeedback.test.ts
+
 # Frontend tests
 cd client
 npm test
