@@ -1,3 +1,4 @@
+import type { AxiosResponse } from 'axios';
 import api from './api';
 
 // Types for Company and MOA
@@ -74,6 +75,18 @@ export type SupervisorAccountInfo = {
 export type ApproveMOAResult = {
   moa: MOA;
   supervisorAccount: SupervisorAccountInfo | null;
+};
+
+export type SupervisorProvisionResult = {
+  created: boolean;
+  supervisor: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  temporaryPassword?: string;
+  emailSent: boolean;
+  emailMessage?: string;
 };
 
 class CompanyService {
@@ -213,6 +226,27 @@ class CompanyService {
     }
   }
 
+  async downloadMOA(id: string): Promise<AxiosResponse<Blob>> {
+    try {
+      return await api.get(`/documents/${id}/download`, {
+        responseType: 'blob',
+      });
+    } catch (error: any) {
+      console.error('Error downloading MOA:', error);
+      throw new Error(error.response?.data?.message || 'Failed to download MOA');
+    }
+  }
+
+  async createSupervisorAccount(companyId: string): Promise<SupervisorProvisionResult> {
+    try {
+      const response = await api.post(`/companies/${companyId}/supervisor`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating supervisor account:', error);
+      throw new Error(error.response?.data?.message || 'Failed to create supervisor account');
+    }
+  }
+
   // =============================================
   // UTILITY METHODS
   // =============================================
@@ -299,4 +333,4 @@ class CompanyService {
 export const companyService = new CompanyService();
 
 // Re-export types for external use
-export type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorAccountInfo };
+export type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorAccountInfo, SupervisorProvisionResult };

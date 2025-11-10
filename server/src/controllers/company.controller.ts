@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { AuthRequest } from "../middleware/auth";
+import { emailService } from "../services/email.service";
 
 const prisma = new PrismaClient();
 
@@ -27,6 +28,112 @@ const generateTemporaryPassword = (): string => {
   const base = crypto.randomBytes(12).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
   const core = base.slice(0, 8);
   return `${core}A1!`;
+};
+
+type SupervisorProvisionSuccess = {
+  created: boolean;
+  supervisorUser: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  companyName: string;
+  contactPerson: string | null;
+  temporaryPassword?: string;
+};
+
+type SupervisorProvisionError = {
+  error: {
+    status: number;
+    message: string;
+  };
+};
+
+const provisionSupervisorAccount = async (
+  companyId: string
+): Promise<SupervisorProvisionSuccess | SupervisorProvisionError> => {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    include: {
+      supervisor: true,
+    },
+  });
+
+  if (!company) {
+    return { error: { status: 404, message: 'Company not found' } };
+  }
+
+  if (!company.contactEmail || !company.contactEmail.trim()) {
+    return {
+      error: {
+        status: 400,
+        message:
+          'Company contact email is required before creating a supervisor account. Please update the company record with a valid email address.',
+      },
+    };
+  }
+
+  if (company.supervisorId && company.supervisor) {
+    return {
+      created: false,
+      supervisorUser: {
+        id: company.supervisor.id,
+        name: company.supervisor.name,
+        email: company.supervisor.email,
+      },
+      companyName: company.name,
+      contactPerson: company.contactPerson,
+      temporaryPassword: undefined,
+    };
+  }
+
+  let supervisorUser = await prisma.user.findUnique({
+    where: { email: company.contactEmail },
+  });
+
+  let temporaryPassword: string | undefined;
+  let created = false;
+
+  if (!supervisorUser) {
+    const tempPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+    supervisorUser = await prisma.user.create({
+      data: {
+        email: company.contactEmail,
+        name: company.contactPerson || `${company.name} Supervisor`,
+        passwordHash,
+        role: 'INDUSTRY_PARTNER',
+      },
+    });
+
+    temporaryPassword = tempPassword;
+    created = true;
+  } else if (supervisorUser.role !== 'INDUSTRY_PARTNER') {
+    return {
+      error: {
+        status: 400,
+        message: `The contact email ${company.contactEmail} already belongs to a ${supervisorUser.role.toLowerCase()}. Please use a unique supervisor email for this company.`,
+      },
+    };
+  }
+
+  await prisma.company.update({
+    where: { id: company.id },
+    data: { supervisorId: supervisorUser.id },
+  });
+
+  return {
+    created,
+    supervisorUser: {
+      id: supervisorUser.id,
+      name: supervisorUser.name,
+      email: supervisorUser.email,
+    },
+    companyName: company.name,
+    contactPerson: company.contactPerson,
+    temporaryPassword,
+  };
 };
 
 // =============================================
@@ -496,70 +603,19 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    let supervisorAccount: {
-      created: boolean;
-      email: string;
-      temporaryPassword?: string;
-    } | null = null;
-
     const company = updatedMOA.student?.company;
 
-    if (company && company.contactEmail) {
-      let supervisorUser =
-        company.supervisorId && company.supervisor
-          ? company.supervisor
-          : await prisma.user.findUnique({
-              where: { email: company.contactEmail },
-            });
-
-      let temporaryPassword: string | undefined;
-      let accountCreated = false;
-
-      if (!supervisorUser) {
-        const tempPassword = generateTemporaryPassword();
-        const passwordHash = await bcrypt.hash(tempPassword, 12);
-
-        supervisorUser = await prisma.user.create({
-          data: {
-            email: company.contactEmail,
-            name: company.contactPerson || `${company.name} Supervisor`,
-            passwordHash,
-            role: "INDUSTRY_PARTNER",
-          },
-        });
-
-        temporaryPassword = tempPassword;
-        accountCreated = true;
-      } else if (supervisorUser.role !== "INDUSTRY_PARTNER") {
-        supervisorUser = await prisma.user.update({
-          where: { id: supervisorUser.id },
-          data: { role: "INDUSTRY_PARTNER" },
-        });
-      }
-
-      if (company.supervisorId !== supervisorUser.id) {
-        await prisma.company.update({
-          where: { id: company.id },
-          data: { supervisorId: supervisorUser.id },
-        });
-      }
-
-      if (
-        updatedMOA.student &&
-        (!updatedMOA.student.supervisorName ||
-          !updatedMOA.student.supervisorName.trim())
-      ) {
-        await prisma.student.update({
-          where: { id: updatedMOA.student.id },
-          data: { supervisorName: company.contactPerson },
-        });
-      }
-
-      supervisorAccount = {
-        created: accountCreated,
-        email: supervisorUser.email,
-        temporaryPassword,
-      };
+    if (
+      company &&
+      updatedMOA.student &&
+      (!updatedMOA.student.supervisorName ||
+        !updatedMOA.student.supervisorName.trim()) &&
+      company.contactPerson
+    ) {
+      await prisma.student.update({
+        where: { id: updatedMOA.student.id },
+        data: { supervisorName: company.contactPerson },
+      });
     }
 
     const refreshedMOA = await prisma.document.findUnique({
@@ -609,7 +665,7 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    res.json({ moa: refreshedMOA, supervisorAccount });
+    res.json({ moa: refreshedMOA, supervisorAccount: null });
   } catch (error: any) {
     console.error('Error approving MOA:', error);
     res.status(500).json({ message: 'Failed to approve MOA', error: error.message });
@@ -697,6 +753,98 @@ export const rejectMOA = async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error rejecting MOA:', error);
     res.status(500).json({ message: 'Failed to reject MOA', error: error.message });
+  }
+};
+
+export const createSupervisorAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const result = await provisionSupervisorAccount(id);
+
+    if ('error' in result) {
+      return res.status(result.error.status).json({ message: result.error.message });
+    }
+
+    const { supervisorUser, created, temporaryPassword, companyName, contactPerson } = result;
+
+    const supervisorDisplayName =
+      supervisorUser.name || contactPerson || `${companyName} Supervisor`;
+    const loginUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/login`;
+
+    let emailSent = false;
+    let emailMessage = "";
+
+    try {
+      if (created && temporaryPassword) {
+        emailSent = await emailService.sendUserWelcomeEmail(
+          supervisorUser.email,
+          supervisorDisplayName,
+          "INDUSTRY_PARTNER",
+          temporaryPassword
+        );
+        emailMessage = emailSent
+          ? `Supervisor credentials emailed to ${supervisorUser.email}.`
+          : `Supervisor account created, but the email to ${supervisorUser.email} could not be sent.`;
+      } else {
+        const subject = `Supervisor account linked to ${companyName}`;
+        const html = `
+          <h1>Supervisor Account Linked</h1>
+          <p>Hello ${supervisorDisplayName},</p>
+          <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong>.</p>
+          <p>You can sign in using your existing INTRAK credentials.</p>
+          <p><a href="${loginUrl}" target="_blank" rel="noopener">Login to INTRAK</a></p>
+          <p>If you did not expect this change, please contact the coordinator immediately.</p>
+        `;
+        const text = `Supervisor Account Linked\n\nYour email ${supervisorUser.email} is now linked as the supervisor for ${companyName}.\nSign in with your existing INTRAK credentials at ${loginUrl}.`;
+
+        emailSent = await emailService.sendEmail({
+          to: supervisorUser.email,
+          subject,
+          html,
+          text,
+        });
+        emailMessage = emailSent
+          ? `Supervisor notification emailed to ${supervisorUser.email}.`
+          : `Supervisor account linked, but the notification email to ${supervisorUser.email} could not be sent.`;
+      }
+    } catch (emailError) {
+      console.error("Error sending supervisor account email:", emailError);
+      emailSent = false;
+      emailMessage = `Supervisor account processed, but sending email to ${supervisorUser.email} failed.`;
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user?.id || 'system',
+        action: created ? 'CREATE_SUPERVISOR_ACCOUNT' : 'LINK_SUPERVISOR_ACCOUNT',
+        meta: {
+          companyId: id,
+          supervisorEmail: supervisorUser.email,
+          emailSent,
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || 'Unknown',
+      },
+    });
+
+    res.json({
+      created,
+      supervisor: {
+        id: supervisorUser.id,
+        name: supervisorUser.name,
+        email: supervisorUser.email,
+      },
+      temporaryPassword,
+      emailSent,
+      emailMessage,
+    });
+  } catch (error: any) {
+    console.error('Error creating supervisor account:', error);
+    res.status(500).json({
+      message: 'Failed to create supervisor account',
+      error: error.message,
+    });
   }
 };
 

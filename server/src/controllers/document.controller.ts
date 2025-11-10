@@ -94,7 +94,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { studentId, type } = req.body;
+    const { studentId, type, companyId } = req.body;
 
     // Validate required fields
     if (!type) {
@@ -124,11 +124,32 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
     // Verify student exists
     const student = await prisma.student.findUnique({
-      where: { id: targetStudentId }
+      where: { id: targetStudentId },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
+    }
+
+    const normalizedCompanyId =
+      typeof companyId === 'string' && companyId.trim().length > 0
+        ? companyId.trim()
+        : undefined;
+
+    if (normalizedCompanyId && student.companyId !== normalizedCompanyId) {
+      return res.status(400).json({
+        message: `Selected student is not assigned to the chosen company${
+          student.company?.name ? ` (${student.company.name})` : ''
+        }.`,
+      });
     }
 
     // Calculate file size in MB

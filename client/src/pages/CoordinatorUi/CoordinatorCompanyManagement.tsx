@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Building2,
   FileText,
@@ -10,7 +10,6 @@ import {
   Search,
   // Filter,
   Plus,
-  Edit,
   Trash2,
   Eye,
   Download,
@@ -18,8 +17,10 @@ import {
   // RefreshCw,
   Loader2,
   X,
+  UserPlus,
 } from "lucide-react";
 import { coordinatorService } from "../../services/coordinatorService";
+import type { CoordinatorStudent } from "../../services/coordinatorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import toast from "react-hot-toast";
 
@@ -32,9 +33,39 @@ const CoordinatorCompanyManagement: React.FC = () => {
   const [moaStatusFilter, setMoaStatusFilter] = useState("all");
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [showAddMOA, setShowAddMOA] = useState(false);
-  // const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedMOA, setSelectedMOA] = useState<MOA | null>(null);
-  const [selectedStudentForMOA, setSelectedStudentForMOA] = useState<any>(null);
+  const [selectedStudentForMOA, setSelectedStudentForMOA] =
+    useState<CoordinatorStudent | null>(null);
+  const [showMOAPreview, setShowMOAPreview] = useState(false);
+  const [previewingMOAId, setPreviewingMOAId] = useState<string | null>(null);
+  const [downloadingMOAId, setDownloadingMOAId] = useState<string | null>(null);
+  const [showCompanyMOAsModal, setShowCompanyMOAsModal] = useState(false);
+  const [companyForMOAModal, setCompanyForMOAModal] = useState<Company | null>(
+    null
+  );
+  const [companyMOAsSnapshot, setCompanyMOAsSnapshot] = useState<MOA[]>([]);
+  const [loadingCompanyMOAs, setLoadingCompanyMOAs] = useState(false);
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
+  const [previewMimeType, setPreviewMimeType] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [creatingSupervisorId, setCreatingSupervisorId] = useState<string | null>(
+    null
+  );
+  const [supervisorError, setSupervisorError] = useState<{
+    companyId: string;
+    message: string;
+  } | null>(null);
+
+  const renderSupervisorError = (companyId: string) => {
+    if (supervisorError?.companyId === companyId) {
+      return (
+        <div className="mt-3 rounded-lg border border-red-200 dark:border-red-700 bg-red-50/70 dark:bg-red-900/20 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+          {supervisorError.message}
+        </div>
+      );
+    }
+    return null;
+  };
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -49,8 +80,20 @@ const CoordinatorCompanyManagement: React.FC = () => {
     title: "",
     description: "",
     studentId: "",
+    companyId: "",
     file: null as File | null,
   });
+
+  const resetMOAForm = () => {
+    setMoaForm({
+      title: "",
+      description: "",
+      studentId: "",
+      companyId: "",
+      file: null,
+    });
+    setSelectedStudentForMOA(null);
+  };
 
   // Add Company form state
   const [companyForm, setCompanyForm] = useState({
@@ -70,7 +113,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
     data: companies = [],
     loading: companiesLoading,
     refresh: refreshCompanies,
-  } = useOptimizedData(
+  } = useOptimizedData<Company[]>(
     () => coordinatorService.getAllCompanies(),
     [],
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
@@ -80,7 +123,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
     data: students = [],
     loading: studentsLoading,
     refresh: refreshStudents,
-  } = useOptimizedData(
+  } = useOptimizedData<CoordinatorStudent[]>(
     () => coordinatorService.getAllStudents(),
     [],
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
@@ -90,13 +133,40 @@ const CoordinatorCompanyManagement: React.FC = () => {
     data: moas = [],
     loading: moasLoading,
     refresh: refreshMOAs,
-  } = useOptimizedData(
+  } = useOptimizedData<MOA[]>(
     () => coordinatorService.getAllMOAs(),
     [],
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
   );
 
   const loading = companiesLoading || studentsLoading || moasLoading;
+
+  const studentsWithCompanies = useMemo(
+    () =>
+      (students || []).filter(
+        (student) =>
+          student.companyId &&
+          student.company &&
+          student.company !== "No Company"
+      ),
+    [students]
+  );
+
+  const filteredStudentsForMOA = useMemo(() => {
+    if (!moaForm.companyId) {
+      return studentsWithCompanies;
+    }
+    return studentsWithCompanies.filter(
+      (student) => student.companyId === moaForm.companyId
+    );
+  }, [studentsWithCompanies, moaForm.companyId]);
+
+  const selectedCompany = useMemo(
+    () =>
+      (companies || []).find((company) => company.id === moaForm.companyId) ||
+      null,
+    [companies, moaForm.companyId]
+  );
 
   // Filter companies based on search and status
   const filteredCompanies = (companies || []).filter((company) => {
@@ -156,6 +226,14 @@ const CoordinatorCompanyManagement: React.FC = () => {
     return diffDays > 365; // More than 1 year old
   };
 
+  const urgentMOAs = useMemo(
+    () =>
+      (moas || []).filter(
+        (moa) => isExpiringSoon(moa.uploadedAt) || isExpired(moa.uploadedAt)
+      ),
+    [moas]
+  );
+
   // Handle MOA approval
   const handleApproveMOA = async (moaId: string) => {
     try {
@@ -164,24 +242,27 @@ const CoordinatorCompanyManagement: React.FC = () => {
         "Approved by coordinator"
       );
       await Promise.all([refreshMOAs(), refreshCompanies(), refreshStudents()]);
+      toast.success("MOA approved successfully.");
 
-      if (
-        result?.supervisorAccount?.created &&
-        result.supervisorAccount.temporaryPassword
-      ) {
-        toast.success(
-          `MOA approved. Supervisor account created for ${result.supervisorAccount.email}. Temporary password: ${result.supervisorAccount.temporaryPassword}`
+      if (result?.moa) {
+        setCompanyMOAsSnapshot((prev) =>
+          prev.map((existing) =>
+            existing.id === result.moa.id ? (result.moa as MOA) : existing
+          )
         );
-      } else if (result?.supervisorAccount) {
-        toast.success(
-          `MOA approved. Supervisor ${result.supervisorAccount.email} is linked to the company.`
-        );
-      } else {
-        toast.success("MOA approved successfully.");
+      }
+
+      if (selectedMOA?.id === moaId) {
+        setSelectedMOA(null);
+        setShowMOAPreview(false);
       }
     } catch (error) {
       console.error("Error approving MOA:", error);
-      toast.error("Failed to approve MOA. Please try again.");
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to approve MOA. Please try again.";
+      toast.error(message);
     }
   };
 
@@ -189,10 +270,25 @@ const CoordinatorCompanyManagement: React.FC = () => {
   const handleRejectMOA = async (moaId: string) => {
     try {
       const reason = prompt("Please provide a reason for rejection:");
-      if (reason) {
+      if (!reason) {
+        return;
+      }
+
         await coordinatorService.rejectMOA(moaId, reason);
-        // Refresh MOAs data
-        await refreshMOAs();
+      await Promise.all([refreshMOAs(), refreshCompanies(), refreshStudents()]);
+      toast.success("MOA rejected.");
+
+      setCompanyMOAsSnapshot((prev) =>
+        prev.map((existing) =>
+          existing.id === moaId
+            ? { ...existing, status: "REJECTED", remarks: reason }
+            : existing
+        )
+      );
+
+      if (selectedMOA?.id === moaId) {
+        setSelectedMOA(null);
+        setShowMOAPreview(false);
       }
     } catch (error) {
       console.error("Error rejecting MOA:", error);
@@ -245,32 +341,36 @@ const CoordinatorCompanyManagement: React.FC = () => {
     e.preventDefault();
     setIsAddingMOA(true);
     try {
+      if (!moaForm.companyId) {
+        toast.error("Please select the company this MOA belongs to.");
+        return;
+      }
+      if (!moaForm.studentId) {
+        toast.error("Please select the student associated with this MOA.");
+        return;
+      }
       if (!moaForm.file) {
-        alert("Please select a file to upload");
+        toast.error("Please select a file to upload.");
         return;
       }
       const formData = new FormData();
       formData.append("title", moaForm.title);
       formData.append("description", moaForm.description);
       formData.append("studentId", moaForm.studentId);
+      formData.append("companyId", moaForm.companyId);
       formData.append("file", moaForm.file);
       formData.append("type", "MOA");
 
       await coordinatorService.uploadMOA(formData);
+      toast.success("MOA uploaded successfully.");
+      resetMOAForm();
       setShowAddMOA(false);
-      setSelectedStudentForMOA(null);
-      setMoaForm({
-        title: "",
-        description: "",
-        studentId: "",
-        file: null,
-      });
 
-      // Refresh MOAs data
-      await refreshMOAs();
+      // Refresh related data
+      await Promise.all([refreshMOAs(), refreshCompanies(), refreshStudents()]);
     } catch (error) {
       console.error("Error uploading MOA:", error);
-      alert("Failed to upload MOA. Please try again.");
+      toast.error("Failed to upload MOA. Please try again.");
     } finally {
       setIsAddingMOA(false);
     }
@@ -324,6 +424,168 @@ const CoordinatorCompanyManagement: React.FC = () => {
     setDeleteConfirmText("");
   };
 
+  const handlePreviewMOA = async (moaId: string) => {
+    try {
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        setPreviewObjectUrl(null);
+      }
+      setPreviewingMOAId(moaId);
+      setSelectedMOA(null);
+      setPreviewError(null);
+      setPreviewMimeType(null);
+      setShowMOAPreview(true);
+      const detailedMOA = await coordinatorService.getMOAById(moaId);
+      setSelectedMOA(detailedMOA);
+
+      const response = await coordinatorService.downloadMOA(moaId);
+      const blob = response.data;
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewObjectUrl(objectUrl);
+      setPreviewMimeType(
+        response.headers["content-type"] || "application/octet-stream"
+      );
+    } catch (error) {
+      console.error("Error loading MOA details:", error);
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load MOA preview. Please try again."
+      );
+      toast.error("Failed to load MOA preview.");
+    } finally {
+      setPreviewingMOAId(null);
+    }
+  };
+
+  const handleDownloadMOA = async (moa: MOA) => {
+    try {
+      setDownloadingMOAId(moa.id);
+      const response = await coordinatorService.downloadMOA(moa.id);
+
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"] || "application/octet-stream",
+      });
+
+      let filename =
+        moa.title?.replace(/[^a-z0-9-_]+/gi, "_") || "moa-document";
+      const disposition = response.headers["content-disposition"];
+      if (disposition) {
+        const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        if (match && match[1]) {
+          filename = decodeURIComponent(match[1]);
+        }
+      } else if (moa.filepath) {
+        const pathParts = moa.filepath.split(/[\\/]/);
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart) {
+          filename = lastPart;
+        }
+      }
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      toast.success("MOA download started.");
+    } catch (error) {
+      console.error("Error downloading MOA:", error);
+      toast.error("Failed to download MOA. Please try again.");
+    } finally {
+      setDownloadingMOAId(null);
+    }
+  };
+
+  const closePreviewModal = () => {
+    setShowMOAPreview(false);
+    setSelectedMOA(null);
+    if (previewObjectUrl) {
+      URL.revokeObjectURL(previewObjectUrl);
+    }
+    setPreviewObjectUrl(null);
+    setPreviewMimeType(null);
+    setPreviewError(null);
+  };
+
+  const closeCompanyMOAModal = () => {
+    setShowCompanyMOAsModal(false);
+    setCompanyMOAsSnapshot([]);
+    setCompanyForMOAModal(null);
+    setLoadingCompanyMOAs(false);
+  };
+
+  const handleViewAllCompanyMOAs = async (company: Company) => {
+    try {
+      setLoadingCompanyMOAs(true);
+      setCompanyForMOAModal(company);
+      setCompanyMOAsSnapshot([]);
+      const allCompanyMOAs =
+        (await coordinatorService.getAllMOAs({ companyId: company.id })) || [];
+
+      if (allCompanyMOAs.length === 0) {
+        toast.error("This company has no MOA documents yet.");
+        setCompanyForMOAModal(null);
+        setLoadingCompanyMOAs(false);
+        return;
+      }
+
+      setCompanyMOAsSnapshot(allCompanyMOAs);
+      setShowCompanyMOAsModal(true);
+    } catch (error) {
+      console.error("Error loading MOAs for company:", error);
+      toast.error("Failed to load MOAs for this company. Please try again.");
+      setCompanyForMOAModal(null);
+    } finally {
+      setLoadingCompanyMOAs(false);
+    }
+  };
+
+  const handleCreateSupervisorAccount = async (company: Company) => {
+    let errorMessage: string | null = null;
+    try {
+      setCreatingSupervisorId(company.id);
+      setSupervisorError(null);
+      const result = await coordinatorService.createSupervisorAccount(
+        company.id
+      );
+
+      await Promise.all([refreshCompanies(), refreshStudents()]);
+
+      if (result.emailSent) {
+        toast.success(
+          result.emailMessage ||
+            `Email has been sent to ${result.supervisor.email}.` +
+              (result.created && result.temporaryPassword
+                ? ` Temporary password: ${result.temporaryPassword}`
+                : "")
+        );
+      } else {
+        toast(
+          result.emailMessage ||
+            `Supervisor account processed, but the email to ${result.supervisor.email} could not be sent.`,
+          { icon: "⚠️" }
+        );
+      }
+    } catch (error) {
+      console.error("Error creating supervisor account:", error);
+      errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to create supervisor account. Please try again.";
+      setSupervisorError({
+        companyId: company.id,
+        message: errorMessage,
+      });
+      toast.error(errorMessage);
+    } finally {
+      setCreatingSupervisorId(null);
+    }
+  };
+
   if (loading || (!companies && !moas)) {
     return (
       <div className="space-y-6">
@@ -367,7 +629,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
               </div>
               <div className="mt-4 sm:mt-0 flex space-x-3">
                 <button
-                  onClick={() => setShowAddMOA(true)}
+                  onClick={() => {
+                    resetMOAForm();
+                    setShowAddMOA(true);
+                  }}
                   className="group relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-sm overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-purple-400/20 to-purple-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -431,95 +696,77 @@ const CoordinatorCompanyManagement: React.FC = () => {
           </div>
 
           {/* MOA Alerts */}
-          <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden">
-            <div className="p-6">
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          {urgentMOAs.length > 0 ? (
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                      <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      MOA Alerts
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Monitor urgent MOA activities and deadlines
+                    </p>
                   </div>
                 </div>
+                <div className="mt-6 space-y-3">
+                  {urgentMOAs.map((moa) => (
+                    <div
+                      key={moa.id}
+                      className={`p-4 rounded-xl border-l-4 ${
+                        isExpired(moa.uploadedAt)
+                          ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                          : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {moa.title} - {moa.student?.company?.name || "Unknown Company"}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {isExpired(moa.uploadedAt) ? "Expired" : "Expiring soon"} · Uploaded{" "}
+                            {new Date(moa.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            View
+                          </button>
+                          {!isExpired(moa.uploadedAt) && (
+                            <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                              Renew
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
+              <div className="p-4 flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    MOA Alerts
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Monitor urgent MOA activities and deadlines
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    All MOAs are up to date
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    No urgent alerts at this time
                   </p>
                 </div>
               </div>
-              <div className="mt-6">
-                {moas &&
-                moas.filter(
-                  (moa) =>
-                    isExpiringSoon(moa.uploadedAt) || isExpired(moa.uploadedAt)
-                ).length > 0 ? (
-                  <div className="space-y-3">
-                    {moas &&
-                      moas
-                        .filter(
-                          (moa) =>
-                            isExpiringSoon(moa.uploadedAt) ||
-                            isExpired(moa.uploadedAt)
-                        )
-                        .map((moa) => (
-                          <div
-                            key={moa.id}
-                            className={`p-4 rounded-xl border-l-4 ${
-                              isExpired(moa.uploadedAt)
-                                ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                                : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {moa.title} -{" "}
-                                  {moa.student?.company?.name ||
-                                    "Unknown Company"}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  {isExpired(moa.uploadedAt)
-                                    ? "Expired"
-                                    : "Expiring soon"}{" "}
-                                  - Uploaded{" "}
-                                  {new Date(
-                                    moa.uploadedAt
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="flex space-x-2">
-                                <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                  View
-                                </button>
-                                {!isExpired(moa.uploadedAt) && (
-                                  <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                    Renew
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="w-8 h-8 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        All MOAs are up to date
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        No urgent alerts at this time
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
+          )}
 
           {/* Companies with MOAs - Unified Cards */}
           <div className="space-y-6">
@@ -546,7 +793,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   );
 
                   // Check for urgent MOAs (expiring or expired)
-                  const urgentMOAs = companyMOAs.filter(
+                  const companyUrgentMOAs = companyMOAs.filter(
                     (moa) =>
                       isExpiringSoon(moa.uploadedAt) ||
                       isExpired(moa.uploadedAt)
@@ -558,17 +805,17 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:scale-[1.02] hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden"
                     >
                       {/* Glass morphism overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       {/* Company Header */}
                       <div className="relative p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                          <div className="md:flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3 space-y-2 sm:space-y-0">
+                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
                                 <Building2 className="w-5 h-5 text-white" />
                               </div>
                               <div>
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white break-words">
                                   {company.name}
                                 </h4>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -586,30 +833,78 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                   )}
                               </div>
                             </div>
-                            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                              <p className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                                <span>{company.contactEmail}</span>
-                              </p>
-                              <p className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                                <span>{company.contactNumber}</span>
-                              </p>
-                              <p className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
-                                <span className="truncate">
-                                  {company.address}
+                            <div className="space-y-2 sm:space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                              <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                                <span className="flex items-center space-x-2">
+                                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                                  <span className="truncate">{company.contactEmail}</span>
                                 </span>
                               </p>
+                              <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                                <span className="flex items-center space-x-2">
+                                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                                  <span className="truncate">{company.contactNumber}</span>
+                                </span>
+                              </p>
+                              <div className="flex items-start space-x-2">
+                                <span className="w-2 h-2 bg-purple-400 rounded-full mt-1"></span>
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className="block truncate text-sm text-gray-600 dark:text-gray-400"
+                                    title={company.address || "No address provided"}
+                                  >
+                                    {company.address || "No address provided"}
+                                  </p>
+                                  {company.address && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toast(company.address)}
+                                      className="mt-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                                    >
+                                      View full address
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
+
+                            {company.supervisor ? (
+                              <div className="mt-4 rounded-lg border border-green-200 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20 px-4 py-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-300">
+                                    Supervisor Linked
+                                  </p>
+                                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-300 shrink-0 ml-3" />
+                                </div>
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white break-words">
+                                    {company.supervisor.name ||
+                                      company.supervisor.email}
+                                  </p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 break-words">
+                                    {company.supervisor.email}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleCreateSupervisorAccount(company)}
+                                disabled={creatingSupervisorId === company.id}
+                                className="mt-4 inline-flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
+                              >
+                                {creatingSupervisorId === company.id ? (
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                )}
+                                {creatingSupervisorId === company.id
+                                  ? "Creating Supervisor..."
+                                  : "Create Supervisor Account"}
+                              </button>
+                            )}
+                            {renderSupervisorError(company.id)}
                           </div>
-                          <div className="flex space-x-2">
-                            <button className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors">
-                              <Edit className="w-4 h-4" />
-                            </button>
+                          <div className="flex items-center justify-end">
                             <button
                               onClick={() => openDeleteConfirm(company)}
                               disabled={Boolean(
@@ -637,24 +932,40 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
                       {/* MOAs Section */}
                       <div className="p-6">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                           <h5 className="text-sm font-medium text-gray-900 dark:text-white flex items-center space-x-2">
                             <FileText className="w-4 h-4" />
                             <span>MOAs ({companyMOAs.length})</span>
-                            {urgentMOAs.length > 0 && (
+                            {companyUrgentMOAs.length > 0 && (
                               <span className="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-full">
-                                {urgentMOAs.length} urgent
+                                {companyUrgentMOAs.length} urgent
                               </span>
                             )}
                           </h5>
-                          <button className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium">
-                            View All
+                          <button
+                            type="button"
+                            onClick={() => handleViewAllCompanyMOAs(company)}
+                            className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium inline-flex items-center space-x-1 disabled:opacity-60"
+                            disabled={
+                              loadingCompanyMOAs &&
+                              companyForMOAModal?.id === company.id
+                            }
+                          >
+                            {loadingCompanyMOAs &&
+                            companyForMOAModal?.id === company.id ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Loading…</span>
+                              </>
+                            ) : (
+                              <span>View All</span>
+                            )}
                           </button>
                         </div>
 
                         {companyMOAs.length > 0 ? (
                           <div className="space-y-3">
-                            {companyMOAs.slice(0, 3).map((moa) => {
+                            {companyMOAs.slice(0, 2).map((moa) => {
                               const statusInfo = getStatusInfo(moa.status);
                               const StatusIcon = statusInfo.icon;
                               const isExpiring = isExpiringSoon(moa.uploadedAt);
@@ -671,7 +982,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                       : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600"
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                     <div className="flex-1 min-w-0">
                                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                         {moa.title}
@@ -703,17 +1014,18 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                         ).toLocaleDateString()}
                                       </p>
                                     </div>
-                                    <div className="flex space-x-1 ml-2">
+                                    <div className="flex items-center space-x-1">
                                       <button
-                                        onClick={() => {
-                                          // Fire preview functionality
-                                          setSelectedMOA(moa);
-                                          setShowAddMOA(true); // Reuse modal for preview
-                                        }}
-                                        className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                        onClick={() => handlePreviewMOA(moa.id)}
+                                        className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                         title="Preview MOA"
+                                        disabled={previewingMOAId === moa.id}
                                       >
+                                        {previewingMOAId === moa.id ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
                                         <Eye className="w-3.5 h-3.5" />
+                                        )}
                                       </button>
                                       {moa.status === "PENDING" && (
                                         <>
@@ -738,19 +1050,25 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                         </>
                                       )}
                                       <button
-                                        className="p-1.5 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded transition-colors"
+                                        onClick={() => handleDownloadMOA(moa)}
+                                        className="p-1.5 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                         title="Download"
+                                        disabled={downloadingMOAId === moa.id}
                                       >
+                                        {downloadingMOAId === moa.id ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
                                         <Download className="w-3.5 h-3.5" />
+                                        )}
                                       </button>
                                     </div>
                                   </div>
                                 </div>
                               );
                             })}
-                            {companyMOAs.length > 3 && (
+                            {companyMOAs.length > 2 && (
                               <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
-                                +{companyMOAs.length - 3} more MOAs
+                                +{companyMOAs.length - 2} more MOAs
                               </p>
                             )}
                           </div>
@@ -977,33 +1295,153 @@ const CoordinatorCompanyManagement: React.FC = () => {
             </div>
           )}
 
-          {/* Add MOA Modal */}
-          {showAddMOA && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+          {/* Company MOAs Modal */}
+          {showCompanyMOAsModal && companyForMOAModal && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              style={{ margin: "0" }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {selectedMOA ? "MOA Preview" : "Add New MOA"}
+                      {companyForMOAModal.name} — MOA Documents
                   </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {companyMOAsSnapshot.length} document
+                      {companyMOAsSnapshot.length === 1 ? "" : "s"} found
+                    </p>
+                  </div>
                   <button
-                    onClick={() => {
-                      setShowAddMOA(false);
-                      setSelectedMOA(null);
-                      setSelectedStudentForMOA(null);
-                    }}
+                    onClick={closeCompanyMOAModal}
                     className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                {selectedMOA ? (
-                  // MOA Preview Content (existing preview modal content)
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)] space-y-4">
+                  {companyMOAsSnapshot.map((moa) => {
+                    const statusInfo = getStatusInfo(moa.status);
+                    const StatusIcon = statusInfo.icon;
+                    const isLoadingPreview = previewingMOAId === moa.id;
+                    const isLoadingDownload = downloadingMOAId === moa.id;
+
+                    return (
+                      <div
+                        key={moa.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50/80 dark:bg-gray-800/60"
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {moa.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Uploaded:{" "}
+                              {new Date(moa.uploadedAt).toLocaleDateString()}
+                            </p>
+                            <div className="mt-2 flex items-center space-x-2">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
+                              >
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {moa.status}
+                              </span>
+                              {moa.student?.user?.name && (
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  Student: {moa.student.user.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePreviewMOA(moa.id)}
+                              className="inline-flex items-center px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              disabled={isLoadingPreview}
+                            >
+                              {isLoadingPreview ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                  Loading…
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="w-3.5 h-3.5 mr-1" />
+                                  Preview
+                                </>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadMOA(moa)}
+                              className="inline-flex items-center px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              disabled={isLoadingDownload}
+                            >
+                              {isLoadingDownload ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                  Preparing…
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-3.5 h-3.5 mr-1" />
+                                  Download
+                                </>
+                              )}
+                            </button>
+                            {moa.status === "PENDING" && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveMOA(moa.id)}
+                                  className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRejectMOA(moa.id)}
+                                  className="inline-flex items-center px-3 py-1.5 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                                >
+                                  <XCircle className="w-3.5 h-3.5 mr-1" />
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MOA Preview Modal */}
+          {showMOAPreview && selectedMOA && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    MOA Preview
+                  </h3>
+                  <button
+                    onClick={closePreviewModal}
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
                   <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                     <div className="space-y-6">
-                      {/* MOA Header Info */}
                       <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4">
-                        <div className="flex items-start justify-between">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
                           <div>
                             <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                               {selectedMOA.title}
@@ -1014,8 +1452,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <span className="text-gray-600 dark:text-gray-400">
                                   Company:{" "}
                                   <span className="font-medium text-gray-900 dark:text-white">
-                                    {selectedMOA.student?.company?.name ||
-                                      "Unknown Company"}
+                                  {selectedMOA.student?.company?.name || "Unknown Company"}
                                   </span>
                                 </span>
                               </p>
@@ -1024,9 +1461,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <span className="text-gray-600 dark:text-gray-400">
                                   Uploaded:{" "}
                                   <span className="font-medium text-gray-900 dark:text-white">
-                                    {new Date(
-                                      selectedMOA.uploadedAt
-                                    ).toLocaleDateString()}
+                                  {new Date(selectedMOA.uploadedAt).toLocaleDateString()}
                                   </span>
                                 </span>
                               </p>
@@ -1043,28 +1478,42 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                   </span>
                                 </span>
                               </p>
+                            {selectedMOA.uploadedBy && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Uploaded by {selectedMOA.uploadedBy.name} ({selectedMOA.uploadedBy.email})
+                              </p>
+                            )}
                             </div>
                           </div>
-                          <div className="flex space-x-2">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleDownloadMOA(selectedMOA)}
+                            disabled={downloadingMOAId === selectedMOA.id}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                          >
+                            {downloadingMOAId === selectedMOA.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Preparing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Download className="w-4 h-4" />
+                                <span>Download</span>
+                              </>
+                            )}
+                          </button>
                             {selectedMOA.status === "PENDING" && (
                               <>
                                 <button
-                                  onClick={() => {
-                                    handleApproveMOA(selectedMOA.id);
-                                    setSelectedMOA(null);
-                                    setShowAddMOA(false);
-                                  }}
+                                onClick={() => handleApproveMOA(selectedMOA.id)}
                                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                                 >
                                   <CheckCircle className="w-4 h-4" />
                                   <span>Approve</span>
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    handleRejectMOA(selectedMOA.id);
-                                    setSelectedMOA(null);
-                                    setShowAddMOA(false);
-                                  }}
+                                onClick={() => handleRejectMOA(selectedMOA.id)}
                                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
                                 >
                                   <XCircle className="w-4 h-4" />
@@ -1072,38 +1521,73 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 </button>
                               </>
                             )}
-                            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
-                              <Download className="w-4 h-4" />
-                              <span>Download</span>
-                            </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* MOA Content Preview */}
-                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                        <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                          Document Preview
-                        </h5>
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-600">
-                          <div className="text-center py-12">
-                            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500 dark:text-gray-400 mb-4">
-                              MOA Document Preview
+                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                      <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                        Document Preview
+                      </h5>
+                      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 min-h-[420px] flex items-center justify-center relative overflow-hidden">
+                        {previewError ? (
+                          <div className="text-center px-6 py-12">
+                            <FileText className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                            <p className="text-sm text-red-500 dark:text-red-400 font-medium">
+                              {previewError}
                             </p>
-                            <p className="text-sm text-gray-400 dark:text-gray-500">
-                              File: {selectedMOA.filepath}
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              You can still download the file to view it locally.
                             </p>
-                            <div className="mt-4">
-                              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                Open Full Document
+                            {selectedMOA && (
+                              <button
+                                onClick={() => handleDownloadMOA(selectedMOA)}
+                                className="mt-4 inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download Document
                               </button>
-                            </div>
+                            )}
                           </div>
-                        </div>
+                        ) : previewObjectUrl ? (
+                          previewMimeType?.includes("pdf") ? (
+                            <iframe
+                              title={`Preview ${selectedMOA.title}`}
+                              src={previewObjectUrl}
+                              className="w-full h-full min-h-[420px]"
+                            />
+                          ) : (
+                            <div className="text-center px-6 py-12">
+                              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                In-browser preview is not available for this file
+                                type ({previewMimeType || "unknown"}).
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Please download the file to view it.
+                              </p>
+                              {selectedMOA && (
+                                <button
+                                  onClick={() => handleDownloadMOA(selectedMOA)}
+                                  className="mt-4 inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Document
+                                </button>
+                              )}
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                            <Loader2 className="w-10 h-10 animate-spin mb-3" />
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Loading document preview…
+                            </p>
+                          </div>
+                        )}
                       </div>
+                    </div>
 
-                      {/* MOA Details */}
                       {selectedMOA.description && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                           <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -1127,8 +1611,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       )}
                     </div>
                   </div>
-                ) : (
-                  // Add MOA Form
+              </div>
+            </div>
+          )}
+
+          {/* Add MOA Modal */}
+          {showAddMOA && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Add New MOA
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowAddMOA(false);
+                      resetMOAForm();
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
                   <form
                     onSubmit={handleAddMOA}
                     className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]"
@@ -1171,55 +1676,96 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         />
                       </div>
 
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Company *
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        Select the partner company this MOA belongs to.
+                      </p>
+                      <select
+                        required
+                        value={moaForm.companyId}
+                        onChange={(e) => {
+                          const companyId = e.target.value;
+                          setMoaForm((prev) => ({
+                            ...prev,
+                            companyId,
+                            studentId: "",
+                          }));
+                          setSelectedStudentForMOA(null);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Select a company</option>
+                        {(companies?.length ?? 0) > 0 ? (
+                          (companies ?? []).map((company) => (
+                             <option key={company.id} value={company.id}>
+                               {company.name}
+                             </option>
+                           ))
+                        ) : (
+                          <option value="" disabled>
+                            No companies available
+                          </option>
+                        )}
+                      </select>
+                    </div>
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Student *
                         </label>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                          Only students assigned to companies are shown. The MOA
-                          will be created for the selected student-company pair.
+                        Only students assigned to the selected company are available.
                         </p>
                         <select
                           required
                           value={moaForm.studentId}
                           onChange={(e) => {
                             const studentId = e.target.value;
-                            const selectedStudent = students?.find(
+                          const selectedStudent = filteredStudentsForMOA.find(
                               (s) => s.id === studentId
                             );
-                            setSelectedStudentForMOA(selectedStudent);
+                          setSelectedStudentForMOA(selectedStudent ?? null);
                             setMoaForm((prev) => ({
                               ...prev,
-                              studentId: studentId,
+                            studentId,
                             }));
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                        >
-                          <option value="">Select a student</option>
-                          {students &&
-                            students
-                              .filter(
-                                (student) =>
-                                  student.company &&
-                                  student.company !== "No Company"
-                              )
-                              .map((student) => (
+                        disabled={!moaForm.companyId || filteredStudentsForMOA.length === 0}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:bg-gray-100 disabled:cursor-not-allowed dark:disabled:bg-gray-700/40"
+                      >
+                        <option value="">
+                          {moaForm.companyId
+                            ? filteredStudentsForMOA.length > 0
+                              ? "Select a student"
+                              : "No students assigned to this company yet"
+                            : "Select a company first"}
+                        </option>
+                        {filteredStudentsForMOA.map((student) => (
                                 <option key={student.id} value={student.id}>
-                                  {student.name} ({student.studentNumber}) -{" "}
-                                  {student.company}
+                            {student.name} ({student.studentNumber}) - {student.company}
                                 </option>
                               ))}
-                          {students &&
-                            students.filter(
-                              (student) =>
-                                student.company &&
-                                student.company !== "No Company"
-                            ).length === 0 && (
-                              <option value="" disabled>
-                                No students assigned to companies yet
-                              </option>
-                            )}
                         </select>
+
+                      {selectedCompany && (
+                        <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                            <span className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                              Selected Company
+                            </span>
+                          </div>
+                          <p className="text-sm text-purple-800 dark:text-purple-200 mt-1">
+                            {selectedCompany.name}
+                          </p>
+                          <p className="text-xs text-purple-700 dark:text-purple-300">
+                            Contact: {selectedCompany.contactPerson || "N/A"} ({selectedCompany.contactEmail || "N/A"})
+                          </p>
+                        </div>
+                      )}
 
                         {/* Show selected student's company info */}
                         {selectedStudentForMOA && (
@@ -1231,13 +1777,12 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               </span>
                             </div>
                             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                              <strong>{selectedStudentForMOA.name}</strong> is
-                              assigned to{" "}
+                            <strong>{selectedStudentForMOA.name}</strong> is assigned to{" "}
                               <strong>{selectedStudentForMOA.company}</strong>
                             </p>
                             <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                              Student ID: {selectedStudentForMOA.studentNumber}{" "}
-                              | Program: {selectedStudentForMOA.program}
+                            Student ID: {selectedStudentForMOA.studentNumber} | Program:{" "}
+                            {selectedStudentForMOA.program}
                             </p>
                           </div>
                         )}
@@ -1283,7 +1828,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
                     <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <button
                         type="button"
-                        onClick={() => setShowAddMOA(false)}
+                      onClick={() => {
+                        setShowAddMOA(false);
+                        resetMOAForm();
+                      }}
                         className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                       >
                         Cancel
@@ -1310,7 +1858,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       </button>
                     </div>
                   </form>
-                )}
               </div>
             </div>
           )}

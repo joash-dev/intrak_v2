@@ -146,18 +146,18 @@ const CoordinatorReportsTab: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
               <Users className="w-6 h-6 text-blue-600 dark:text-blue-300" />
-            </div>
+        </div>
             <span className="text-xs font-medium text-blue-600 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/40 px-2 py-1 rounded-full">
               Students
             </span>
-          </div>
+      </div>
           <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
             {summary.totalStudents}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Students in report
-          </p>
-        </div>
+              </p>
+            </div>
         <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
@@ -172,8 +172,8 @@ const CoordinatorReportsTab: React.FC = () => {
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Average completion rate
-          </p>
-        </div>
+              </p>
+            </div>
         <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
@@ -188,8 +188,8 @@ const CoordinatorReportsTab: React.FC = () => {
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Approved documents
-          </p>
-        </div>
+              </p>
+            </div>
         <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-amber-100 dark:bg-amber-900 rounded-lg">
@@ -198,27 +198,27 @@ const CoordinatorReportsTab: React.FC = () => {
             <span className="text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/40 px-2 py-1 rounded-full">
               Hours
             </span>
-          </div>
+            </div>
           <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
             {summary.totalCompletedHours}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Hours completed across cohort
           </p>
+          </div>
         </div>
-      </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
+            <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Compliance Overview
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
               Review student compliance across partner companies and export the
               results for documentation.
-            </p>
-          </div>
+              </p>
+            </div>
           <button
             onClick={handleDownload}
             disabled={downloading || loading}
@@ -227,7 +227,7 @@ const CoordinatorReportsTab: React.FC = () => {
             <Download className="w-4 h-4" />
             <span>{downloading ? "Preparing..." : "Download Excel"}</span>
           </button>
-        </div>
+      </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-1">
@@ -253,15 +253,15 @@ const CoordinatorReportsTab: React.FC = () => {
               Search Students
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
                 placeholder="Search by name, student number, company..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+            />
+          </div>
           </div>
           <div className="md:col-span-1 flex items-end">
             <label className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
@@ -281,15 +281,15 @@ const CoordinatorReportsTab: React.FC = () => {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+      <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Student Compliance Breakdown
-            </h3>
+                </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Filter and review compliance metrics for each intern.
             </p>
-          </div>
         </div>
+      </div>
 
         {loading ? (
           <div className="flex items-center justify-center p-12">
@@ -362,33 +362,33 @@ const CoordinatorReportsTab: React.FC = () => {
                         <div className="font-semibold">{item.studentName}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           {item.studentNumber} • {item.email}
-                        </div>
-                      </td>
+                      </div>
+                    </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                         {item.companyName || "Not Assigned"}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                         {item.completedHours} / {item.totalHours}
-                      </td>
+                    </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`font-semibold ${progressColor}`}>
                           {item.progress}%
                         </span>
-                      </td>
+                    </td>
                       <td className="px-4 py-3 text-sm">
                         <span
                           className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${documentsBadgeColor}`}
                         >
                           {item.documentsApproved}/{item.documentsSubmitted}
                         </span>
-                      </td>
+                    </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                         {item.evaluationsCompleted}
-                      </td>
+                    </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                         {item.averageRating ?? "—"}
-                      </td>
-                    </tr>
+                    </td>
+                  </tr>
                   );
                 })}
               </tbody>
@@ -401,8 +401,8 @@ const CoordinatorReportsTab: React.FC = () => {
         <div className="flex items-start space-x-4">
           <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <AlertCircle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
-          </div>
-          <div>
+                </div>
+                <div>
             <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
               Compliance Tracking Tips
             </h4>
@@ -415,9 +415,9 @@ const CoordinatorReportsTab: React.FC = () => {
               <li>• “At risk” highlights students with low progress and incomplete documents.</li>
               <li>• Export the report after every review meeting for documentation.</li>
             </ul>
+            </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

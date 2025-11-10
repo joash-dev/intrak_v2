@@ -352,77 +352,79 @@ const CoordinatorDocumentsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Review Documents
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Review and approve student document submissions
-        </p>
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Review Documents
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Review and approve student document submissions
+          </p>
+        </div>
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-2">
+          <FileCheck className="w-4 h-4" />
+          <span>{stats.total} documents</span>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-yellow-100 dark:border-yellow-800 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-yellow-100 dark:bg-yellow-900 opacity-60" />
+          <div className="relative p-5 space-y-3">
+            <Clock className="w-8 h-8 text-yellow-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Pending Review
               </p>
-              <p className="text-3xl font-bold text-yellow-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.pending}
               </p>
             </div>
-            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-green-100 dark:border-green-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-green-100 dark:bg-green-900 opacity-60" />
+          <div className="relative p-5 space-y-3">
+            <CheckCircle className="w-8 h-8 text-green-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Approved
               </p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.approved}
               </p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-red-100 dark:border-red-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-red-100 dark:bg-red-900 opacity-60" />
+          <div className="relative p-5 space-y-3">
+            <XCircle className="w-8 h-8 text-red-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Rejected
               </p>
-              <p className="text-3xl font-bold text-red-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.rejected}
               </p>
             </div>
-            <div className="p-3 bg-red-100 dark:bg-red-900 rounded-lg">
-              <XCircle className="w-6 h-6 text-red-600 dark:text-red-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-purple-100 dark:bg-purple-900 opacity-60" />
+          <div className="relative p-5 space-y-3">
+            <FileCheck className="w-8 h-8 text-purple-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Total Documents
               </p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.total}
               </p>
-            </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <FileCheck className="w-6 h-6 text-purple-600 dark:text-purple-300" />
             </div>
           </div>
         </div>

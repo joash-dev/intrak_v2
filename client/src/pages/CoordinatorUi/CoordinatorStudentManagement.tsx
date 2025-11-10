@@ -11,6 +11,7 @@ import {
   Loader2,
   Eye,
   // Edit,
+  X,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import {
@@ -18,6 +19,7 @@ import {
   type CoordinatorStudent,
 } from "../../services/coordinatorService";
 import { instructorService } from "../../services/instructorService";
+import type { Company } from "../../services/companyService";
 import toast from "react-hot-toast";
 
 // Utility function to format student ID
@@ -60,6 +62,11 @@ const CoordinatorStudentManagement: React.FC = () => {
   const [selectedInstructor, setSelectedInstructor] = useState<string>("");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showStudentDetailsModal, setShowStudentDetailsModal] = useState(false);
+  const [detailStudent, setDetailStudent] = useState<Student | null>(null);
+  const [detailCompanyId, setDetailCompanyId] = useState<string>("");
+  const [detailSaving, setDetailSaving] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   // Fetch students
   const {
@@ -75,6 +82,14 @@ const CoordinatorStudentManagement: React.FC = () => {
     useOptimizedData(() => coordinatorService.getInstructors(), [], {
       ttl: 5 * 60 * 1000,
     });
+
+  const {
+    data: companies = [],
+    loading: companiesLoading,
+    refresh: refreshCompanies,
+  } = useOptimizedData(() => coordinatorService.getAllCompanies(), [], {
+    ttl: 5 * 60 * 1000,
+  });
 
   const handleAssignStudent = (student: Student) => {
     setSelectedStudent(student);
@@ -222,7 +237,8 @@ const CoordinatorStudentManagement: React.FC = () => {
     return matchesSearch && matchesStatus && matchesInstructor;
   });
 
-  const isLoading = studentsLoading || instructorsLoading;
+  const combinedLoading =
+    studentsLoading || instructorsLoading || companiesLoading;
 
   // Debug logging
   console.log("CoordinatorStudentManagement render:", {
@@ -230,11 +246,11 @@ const CoordinatorStudentManagement: React.FC = () => {
     instructors: instructors?.length || 0,
     studentsLoading,
     instructorsLoading,
-    isLoading,
+    combinedLoading,
   });
 
   // Early return if data is not ready
-  if (!students && !instructors && isLoading) {
+  if (!students && !instructors && combinedLoading) {
     return (
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -369,6 +385,121 @@ const CoordinatorStudentManagement: React.FC = () => {
         </div>
       )}
 
+      {/* Student Details Modal */}
+      {showStudentDetailsModal && detailStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Student Details
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Manage company assignment for {detailStudent.name}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowStudentDetailsModal(false);
+                  setDetailStudent(null);
+                  setDetailError(null);
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 space-y-1">
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {detailStudent.name}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Student No: {formatStudentId(detailStudent.studentNumber)}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Program: {detailStudent.program}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company Assignment
+                </label>
+                <select
+                  value={detailCompanyId}
+                  onChange={(e) => setDetailCompanyId(e.target.value)}
+                  disabled={companiesLoading}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">No Company (Unassigned)</option>
+                  {companies.map((company: Company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {detailError && (
+                <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50/70 dark:bg-red-900/20 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+                  {detailError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowStudentDetailsModal(false);
+                  setDetailStudent(null);
+                  setDetailError(null);
+                }}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!detailStudent) return;
+                  try {
+                    setDetailSaving(true);
+                    await coordinatorService.updateStudentCompany(
+                      detailStudent.id,
+                      detailCompanyId || null
+                    );
+                    toast.success("Student company assignment updated.");
+                    setShowStudentDetailsModal(false);
+                    setDetailStudent(null);
+                    setDetailError(null);
+                    await Promise.all([refetchStudents(), refreshCompanies()]);
+                  } catch (error: any) {
+                    const message =
+                      error?.message ||
+                      "Failed to update student company assignment.";
+                    setDetailError(message);
+                    toast.error(message);
+                  } finally {
+                    setDetailSaving(false);
+                  }
+                }}
+                disabled={detailSaving}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {detailSaving ? (
+                  <span className="inline-flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </span>
+                ) : (
+                  "Save Changes"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Students Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
@@ -407,7 +538,7 @@ const CoordinatorStudentManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {isLoading ? (
+              {combinedLoading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
@@ -516,6 +647,12 @@ const CoordinatorStudentManagement: React.FC = () => {
                           </button>
                         )}
                         <button
+                          onClick={() => {
+                            setDetailStudent(student);
+                            setDetailCompanyId(student.companyId || "");
+                            setDetailError(null);
+                            setShowStudentDetailsModal(true);
+                          }}
                           className="text-blue-600 hover:text-blue-900"
                           title="View details"
                         >
@@ -581,7 +718,7 @@ const CoordinatorStudentManagement: React.FC = () => {
                 disabled={!selectedInstructor || loading}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                {isLoading ? (
+                {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                 ) : (
                   "Assign Student"

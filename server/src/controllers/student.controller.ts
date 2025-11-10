@@ -64,7 +64,7 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
         where,
         include: {
           user: { select: { name: true, email: true } },
-          company: { select: { name: true } },
+          company: { select: { id: true, name: true } },
           instructor: { select: { id: true, name: true, email: true } }
         },
         skip,

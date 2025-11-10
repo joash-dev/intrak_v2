@@ -4,6 +4,7 @@ import app from '../index';
 
 const attendanceLogFindMany = jest.fn();
 const attendanceLogCreate = jest.fn();
+const companyFindMany = jest.fn() as jest.Mock;
 const studentFindUnique = jest.fn();
 const studentFindFirst = jest.fn();
 const qRTokenUpdate = jest.fn();
@@ -18,6 +19,9 @@ jest.mock('@prisma/client', () => {
       student: {
         findUnique: (...args: any[]) => studentFindUnique(...args),
         findFirst: (...args: any[]) => studentFindFirst(...args),
+      },
+      company: {
+        findMany: (...args: any[]) => companyFindMany(...args),
       },
       qRToken: {
         update: (...args: any[]) => qRTokenUpdate(...args),
@@ -68,6 +72,7 @@ jest.mock('../services/report.service', () => ({
 describe('Attendance routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    companyFindMany.mockImplementation(async () => [{ id: 'company-1' }]);
   });
 
   test('returns attendance logs for supervisor', async () => {
@@ -134,6 +139,7 @@ describe('Attendance routes', () => {
 describe('Report routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    companyFindMany.mockImplementation(async () => [{ id: 'company-1' }]);
   });
 
   test('serves attendance report JSON', async () => {

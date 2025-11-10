@@ -1,6 +1,7 @@
 import api from './api';
 import { companyService } from './companyService';
-import type { Company, MOA, MOAStats, ApproveMOAResult } from './companyService';
+import type { AxiosResponse } from 'axios';
+import type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorProvisionResult } from './companyService';
 
 // Types for coordinator data
 export interface CoordinatorStats {
@@ -27,6 +28,7 @@ export interface CoordinatorStudent {
   studentNumber: string;
   phone?: string;
   company: string;
+  companyId?: string | null;
   status: 'active' | 'pending' | 'completed' | 'inactive';
   attendance: number;
   tasks: {
@@ -91,6 +93,7 @@ class CoordinatorService {
         studentNumber: student.studentNumber,
         phone: '', // Not available in current API
         company: student.company?.name || 'No Company',
+        companyId: student.company?.id || null,
         status: this.mapStudentStatus(student),
         attendance: 0, // Would need separate API call
         tasks: { completed: 0, total: 0 }, // Would need separate API call
@@ -222,6 +225,7 @@ class CoordinatorService {
         studentNumber: student.studentNumber,
         phone: '',
         company: student.company?.name || 'No Company',
+        companyId: student.company?.id || null,
         status: this.mapStudentStatus(student),
         attendance: 0,
         tasks: { completed: 0, total: 0 },
@@ -284,7 +288,10 @@ class CoordinatorService {
         id: instructor.id,
         name: instructor.name,
         email: instructor.email,
-        studentsAssigned: instructor.studentsAssigned || 0,
+        studentsAssigned:
+          instructor.studentsAssigned ??
+          instructor._count?.studentsAssigned ??
+          0,
         active: instructor.active
       }));
     } catch (error) {
@@ -307,6 +314,7 @@ class CoordinatorService {
         studentNumber: student.studentNumber,
         phone: '',
         company: student.company?.name || 'No Company',
+        companyId: student.company?.id || null,
         status: this.mapStudentStatus(student),
         attendance: 0,
         tasks: { completed: 0, total: 0 },
@@ -437,6 +445,7 @@ class CoordinatorService {
         studentNumber: studentData.studentNumber,
         phone: '',
         company: studentData.company || 'No Company',
+        companyId: null,
         status: 'pending',
         attendance: 0,
         tasks: { completed: 0, total: 0 },
@@ -629,8 +638,6 @@ class CoordinatorService {
     return companyService.getMOAById(id);
   }
 
-  // Note: MOA creation and update are handled through the document upload system
-
   // Approve MOA
   async approveMOA(id: string, notes?: string): Promise<ApproveMOAResult> {
     return companyService.approveMOA(id, notes);
@@ -639,6 +646,21 @@ class CoordinatorService {
   // Reject MOA
   async rejectMOA(id: string, reason: string): Promise<MOA> {
     return companyService.rejectMOA(id, reason);
+  }
+
+  async downloadMOA(id: string): Promise<AxiosResponse<Blob>> {
+    return companyService.downloadMOA(id);
+  }
+
+  async createSupervisorAccount(companyId: string): Promise<SupervisorProvisionResult> {
+    return companyService.createSupervisorAccount(companyId);
+  }
+
+  async updateStudentCompany(studentId: string, companyId: string | null): Promise<void> {
+    await api.put(`/students/${studentId}`, {
+      companyId: companyId || null,
+      supervisorName: companyId ? undefined : null,
+    });
   }
 
   // Note: MOA deletion is handled through the document management system

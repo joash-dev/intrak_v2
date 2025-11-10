@@ -36,13 +36,18 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           name: true,
           role: true,
           active: true,
-          createdAt: true
+          createdAt: true,
+          _count: {
+            select: {
+              studentsAssigned: true,
+            },
+          },
         },
         skip,
         take: Number(limit),
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       }),
-      prisma.user.count({ where })
+      prisma.user.count({ where }),
     ]);
 
     res.json({

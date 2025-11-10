@@ -24,6 +24,9 @@ router.put("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyCon
 // Delete company (Admin, Coordinator)
 router.delete("/:id", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.deleteCompany);
 
+// Create or link supervisor account (Admin, Coordinator)
+router.post("/:id/supervisor", authenticate, authorize(["ADMIN", "COORDINATOR"]), companyController.createSupervisorAccount);
+
 // =============================================
 // MOA ROUTES (Using Document model)
 // =============================================

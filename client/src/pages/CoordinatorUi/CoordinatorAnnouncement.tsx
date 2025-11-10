@@ -236,9 +236,9 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Announcements
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -247,7 +247,7 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-xl transition-colors font-medium"
+          className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-xl transition-colors font-medium shadow-sm"
         >
           <Plus className="w-5 h-5" />
           <span>New Announcement</span>
@@ -256,64 +256,62 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-purple-100 dark:bg-purple-900 opacity-50" />
+          <div className="relative p-5 space-y-3">
+            <MessageSquare className="w-8 h-8 text-purple-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Total Announcements
               </p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.total}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-              <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900 opacity-50" />
+          <div className="relative p-5 space-y-3">
+            <Pin className="w-8 h-8 text-blue-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pinned</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Pinned
+              </p>
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.pinned}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Pin className="w-6 h-6 text-blue-600 dark:text-blue-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-green-100 dark:border-green-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-green-100 dark:bg-green-900 opacity-50" />
+          <div className="relative p-5 space-y-3">
+            <Calendar className="w-8 h-8 text-green-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 This Week
               </p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.thisWeek}
               </p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Calendar className="w-6 h-6 text-green-600 dark:text-green-300" />
-            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-orange-500">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-orange-100 dark:border-orange-900 shadow-sm">
+          <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-orange-100 dark:bg-orange-900 opacity-50" />
+          <div className="relative p-5 space-y-3">
+            <Eye className="w-8 h-8 text-orange-500" />
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Avg. Views
               </p>
-              <p className="text-3xl font-bold text-orange-600 mt-1">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
                 {stats.avgViews}
               </p>
-            </div>
-            <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-              <Eye className="w-6 h-6 text-orange-600 dark:text-orange-300" />
             </div>
           </div>
         </div>
