@@ -51,8 +51,14 @@ export const getAttendanceReportData = async (
     where: { id: studentId },
     include: {
       user: { select: { name: true, email: true } },
-      company: { select: { name: true, address: true, contactPerson: true } },
-      supervisor: { select: { user: { select: { name: true } } } },
+      company: {
+        select: {
+          name: true,
+          address: true,
+          contactPerson: true,
+          supervisor: { select: { name: true } },
+        },
+      },
     },
   });
 
@@ -102,7 +108,8 @@ export const getAttendanceReportData = async (
       program: student.program,
       companyName: student.company?.name,
       companyAddress: student.company?.address,
-      supervisorName: student.supervisor?.user.name,
+      supervisorName:
+        student.company?.supervisor?.name ?? student.supervisorName ?? null,
       totalHoursRequired: student.totalHours,
       completedHours: student.completedHours,
     },
@@ -420,7 +427,8 @@ export const generateAttendanceReportExcel = async (
     });
   });
 
-  return workbook.xlsx.writeBuffer();
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 };
 
 export interface ComplianceReportDataItem {
@@ -582,6 +590,7 @@ export const generateComplianceReportExcel = async (
     }
   });
 
-  return workbook.xlsx.writeBuffer();
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 };
 
