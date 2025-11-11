@@ -29,6 +29,7 @@ import activityRoutes from './routes/activity.routes';
 import alertRoutes from './routes/alert.routes';
 import companyApplicationRoutes from './routes/companyApplication.routes';
 import notificationRoutes from './routes/notification.routes';
+import coordinatorRoutes from './routes/coordinator.routes';
 
 dotenv.config();
 
@@ -154,6 +155,7 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/company-applications', companyApplicationRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/coordinator', coordinatorRoutes);
 
 // 404 handler
 app.use((req, res) => {

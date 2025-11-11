@@ -116,6 +116,21 @@ const provisionSupervisorAccount = async (
         message: `The contact email ${company.contactEmail} already belongs to a ${supervisorUser.role.toLowerCase()}. Please use a unique supervisor email for this company.`,
       },
     };
+  } else {
+    temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+    const trimmedContact = company.contactPerson?.trim();
+
+    supervisorUser = await prisma.user.update({
+      where: { id: supervisorUser.id },
+      data: {
+        passwordHash,
+        name:
+          trimmedContact && trimmedContact.length > 0
+            ? trimmedContact
+            : supervisorUser.name,
+      },
+    });
   }
 
   await prisma.company.update({
@@ -777,26 +792,30 @@ export const createSupervisorAccount = async (req: AuthRequest, res: Response) =
 
     try {
       if (created && temporaryPassword) {
-        emailSent = await emailService.sendUserWelcomeEmail(
-          supervisorUser.email,
-          supervisorDisplayName,
-          "INDUSTRY_PARTNER",
-          temporaryPassword
-        );
-        emailMessage = emailSent
-          ? `Supervisor credentials emailed to ${supervisorUser.email}.`
-          : `Supervisor account created, but the email to ${supervisorUser.email} could not be sent.`;
-      } else {
-        const subject = `Supervisor account linked to ${companyName}`;
+        const subject = `INTRAK: Supervisor Account Created for ${companyName}`;
         const html = `
-          <h1>Supervisor Account Linked</h1>
-          <p>Hello ${supervisorDisplayName},</p>
-          <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong>.</p>
-          <p>You can sign in using your existing INTRAK credentials.</p>
-          <p><a href="${loginUrl}" target="_blank" rel="noopener">Login to INTRAK</a></p>
-          <p>If you did not expect this change, please contact the coordinator immediately.</p>
+          <h1>Welcome to INTRAK${contactPerson ? `, ${contactPerson}` : ""}!</h1>
+          <p>Your supervisor account for <strong>${companyName}</strong> has been created.</p>
+          <h2>Account Credentials</h2>
+          <p><strong>Email:</strong> ${supervisorUser.email}</p>
+          <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+          <p class="text-sm"><em>Please change this password immediately after your first login.</em></p>
+          <p>You can sign in using the button below:</p>
+          <p><a href="${loginUrl}" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background-color:#6b21a8;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:bold;">Login to INTRAK</a></p>
+          <p>If you did not expect this account, please contact the coordinator right away.</p>
         `;
-        const text = `Supervisor Account Linked\n\nYour email ${supervisorUser.email} is now linked as the supervisor for ${companyName}.\nSign in with your existing INTRAK credentials at ${loginUrl}.`;
+        const text = `Supervisor Account Created
+
+Your supervisor account for ${companyName} has been created.
+
+ACCOUNT CREDENTIALS
+Email: ${supervisorUser.email}
+Temporary Password: ${temporaryPassword}
+
+Login here: ${loginUrl}
+
+Please change this password immediately after your first login. If you did not expect this account, contact the coordinator.
+`;
 
         emailSent = await emailService.sendEmail({
           to: supervisorUser.email,
@@ -805,8 +824,54 @@ export const createSupervisorAccount = async (req: AuthRequest, res: Response) =
           text,
         });
         emailMessage = emailSent
-          ? `Supervisor notification emailed to ${supervisorUser.email}.`
-          : `Supervisor account linked, but the notification email to ${supervisorUser.email} could not be sent.`;
+          ? `Supervisor account created and credentials sent to ${supervisorUser.email}.`
+          : `Supervisor account created, but failed to send credentials email to ${supervisorUser.email}.`;
+      } else {
+        const subject = `INTRAK: Supervisor Account Linked to ${companyName}`;
+        const html = `
+          <h1>Supervisor Account Linked</h1>
+          <p>Hello ${supervisorDisplayName},</p>
+          <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong> in the INTRAK system.</p>
+          <p>
+            ${temporaryPassword
+              ? `Use the temporary password below to sign in. Please change it immediately after logging in.`
+              : `You can sign in using your existing INTRAK credentials.`}
+          </p>
+          <p><a href="${loginUrl}" target="_blank" rel="noopener">Login to INTRAK</a></p>
+          ${
+            temporaryPassword
+              ? `<div style="margin-top:16px;padding:12px;border-radius:8px;background:#f3e8ff;color:#5b21b6;font-weight:600;">
+                  Temporary Password: ${temporaryPassword}
+                 </div>
+                 <p style="font-size:12px;color:#6b7280;">For security, update this password after your first login.</p>`
+              : ''
+          }
+          <p>If you did not expect this change, please contact the coordinator immediately.</p>
+        `;
+        const text = `Supervisor Account Linked
+ 
+ Your email ${supervisorUser.email} is now linked as the supervisor for ${companyName}.
+ ${
+   temporaryPassword
+     ? `Sign in using the temporary password below (change it immediately after logging in).
+
+Temporary Password: ${temporaryPassword}
+
+`
+     : ''
+ }Sign in${temporaryPassword ? ' at' : ' with your existing credentials at'} ${loginUrl}.
+ 
+ This is an automated message. Please do not reply to this email.`;
+ 
+        emailSent = await emailService.sendEmail({
+          to: supervisorUser.email,
+          subject,
+          html,
+          text,
+        });
+        emailMessage = emailSent
+          ? `Supervisor account linked and credentials sent to ${supervisorUser.email}.`
+          : `Supervisor account linked, but failed to send credential email to ${supervisorUser.email}.`;
       }
     } catch (emailError) {
       console.error("Error sending supervisor account email:", emailError);

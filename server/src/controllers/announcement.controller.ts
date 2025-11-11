@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 
 const prisma = new PrismaClient();
@@ -56,6 +56,35 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
       },
       include: { createdBy: { select: { name: true, role: true } } }
     });
+
+    const audienceRoleMap: Record<string, Role[]> = {
+      ALL: [Role.ADMIN, Role.COORDINATOR, Role.INSTRUCTOR, Role.STUDENT, Role.INDUSTRY_PARTNER],
+      STUDENTS: [Role.STUDENT],
+      COORDINATORS: [Role.COORDINATOR],
+      INSTRUCTORS: [Role.INSTRUCTOR],
+      INDUSTRY_PARTNERS: [Role.INDUSTRY_PARTNER],
+    };
+
+    const targetRoles = audienceRoleMap[audience || 'ALL'] || audienceRoleMap.ALL;
+
+    if (targetRoles.length > 0) {
+      const usersToNotify = await prisma.user.findMany({
+        where: { role: { in: targetRoles } },
+        select: { id: true },
+      });
+
+      if (usersToNotify.length > 0) {
+        await prisma.notification.createMany({
+          data: usersToNotify.map((user) => ({
+            userId: user.id,
+            title,
+            message: content,
+            type: NotificationType.SYSTEM,
+            link: null,
+          })),
+        });
+      }
+    }
 
     res.status(201).json({ announcement });
   } catch (error) {

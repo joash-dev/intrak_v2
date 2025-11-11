@@ -149,6 +149,7 @@ model User {
   refreshTokens     RefreshToken[]
   templatesUploaded DocumentTemplate[] @relation("TemplateUploader")
   adminSettings     AdminSettings?
+  coordinatorSettings CoordinatorSettings?
   applicationsReviewed CompanyApplication[] @relation("ApplicationReviewer")
   feedbackAuthored   DocumentFeedback[] @relation("DocumentFeedbackAuthor")
   notifications      Notification[]     @relation("UserNotifications")
@@ -431,6 +432,24 @@ model AdminSettings {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("admin_settings")
+}
+
+model CoordinatorSettings {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique
+  autoApproveDocuments     Boolean  @default(false)
+  requireDocumentReview    Boolean  @default(true)
+  attendanceReminderTime   String   @default("09:00")
+  defaultAnnouncementAudience String @default("ALL")
+  enableBulkOperations     Boolean  @default(true)
+  showAdvancedMetrics      Boolean  @default(false)
+  notificationFrequency    String   @default("immediate")
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coordinator_settings")
 }
 
 model SystemAlert {

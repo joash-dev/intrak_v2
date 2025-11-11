@@ -17,6 +17,8 @@ import {
 // Import document service
 import { documentService } from "../../services/documentService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
+import { formatDistanceToNow } from "date-fns";
+import { formatDate, formatDateTime } from "../../services/localeService";
 
 interface Document {
   id: string;
@@ -98,15 +100,15 @@ const CoordinatorDocumentsTab: React.FC = () => {
         fileSize: doc.fileSizeMB || "Unknown",
         fileType: getFileTypeFromFilename(doc.filename),
         submittedDate: doc.uploadedAt
-          ? new Date(doc.uploadedAt).toLocaleString()
-          : "Unknown",
+          ? formatDateTime(doc.uploadedAt)
+          : "Not available",
         dueDate: "Not Set", // This would need to be added to the API
         priority: getPriorityFromType(doc.type),
         description: `${doc.type} submitted by student`,
         reviewedBy: doc.uploadedBy?.name,
         reviewedDate: doc.reviewedAt
-          ? new Date(doc.reviewedAt).toLocaleString()
-          : undefined,
+          ? formatDateTime(doc.reviewedAt)
+          : "Pending",
       }));
 
       setDocuments(transformedDocuments);
@@ -506,7 +508,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                       <span className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          Due: {doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : "Not Set"}
+                          Due: {doc.dueDate ? formatDate(doc.dueDate) : "Not Set"}
                         </span>
                       </span>
                     </div>
@@ -551,10 +553,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
               {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
-                    className={`border-l-4 rounded-xl p-4 mb-4 ${
+                    className={`rounded-2xl border p-4 mb-4 ${
                       doc.status === "APPROVED"
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                        : "border-red-500 bg-red-50 dark:bg-red-900/20"
+                        ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
+                        : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
                     }`}
                   >
                     <div className="flex items-start space-x-3">

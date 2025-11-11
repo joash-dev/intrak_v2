@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MessageSquare,
   Plus,
@@ -22,7 +22,20 @@ import {
   type Announcement,
 } from "../../services/announcementService";
 
-const CoordinatorAnnouncementsTab: React.FC = () => {
+type AudienceOption =
+  | "ALL"
+  | "STUDENTS"
+  | "COORDINATORS"
+  | "INSTRUCTORS"
+  | "INDUSTRY_PARTNERS";
+
+interface CoordinatorAnnouncementsTabProps {
+  defaultAudience?: AudienceOption;
+}
+
+const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = ({
+  defaultAudience = "ALL",
+}) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +47,7 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     content: "",
-    audience: "ALL" as
-      | "ALL"
-      | "STUDENTS"
-      | "COORDINATORS"
-      | "INSTRUCTORS"
-      | "INDUSTRY_PARTNERS",
+    audience: defaultAudience as AudienceOption,
     type: "info" as "info" | "warning" | "success" | "urgent",
     isPinned: false,
   });
@@ -66,6 +74,15 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
   useEffect(() => {
     fetchAnnouncements();
   }, []);
+
+  useEffect(() => {
+    if (!showCreateModal) {
+      setNewAnnouncement((prev) => ({
+        ...prev,
+        audience: defaultAudience,
+      }));
+    }
+  }, [defaultAudience, showCreateModal]);
 
   // Track views for all announcements when they are loaded
   useEffect(() => {
@@ -140,7 +157,7 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
       setNewAnnouncement({
         title: "",
         content: "",
-        audience: "ALL",
+        audience: defaultAudience,
         type: "info",
         isPinned: false,
       });
@@ -246,7 +263,13 @@ const CoordinatorAnnouncementsTab: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setNewAnnouncement((prev) => ({
+              ...prev,
+              audience: defaultAudience,
+            }));
+            setShowCreateModal(true);
+          }}
           className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-xl transition-colors font-medium shadow-sm"
         >
           <Plus className="w-5 h-5" />

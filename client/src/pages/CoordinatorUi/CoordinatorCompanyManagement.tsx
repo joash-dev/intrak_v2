@@ -18,8 +18,12 @@ import {
   Loader2,
   X,
   UserPlus,
+  MailCheck,
+  Copy,
+  SquarePen,
 } from "lucide-react";
 import { coordinatorService } from "../../services/coordinatorService";
+import { formatDate } from "../../services/localeService";
 import type { CoordinatorStudent } from "../../services/coordinatorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import toast from "react-hot-toast";
@@ -55,6 +59,18 @@ const CoordinatorCompanyManagement: React.FC = () => {
     companyId: string;
     message: string;
   } | null>(null);
+  const [supervisorSuccessModal, setSupervisorSuccessModal] = useState<
+    | {
+        companyName: string;
+        supervisorName: string;
+        supervisorEmail: string;
+        temporaryPassword?: string;
+        emailSent: boolean;
+        emailMessage?: string;
+        wasCreated: boolean;
+      }
+    | null
+  >(null);
 
   const renderSupervisorError = (companyId: string) => {
     if (supervisorError?.companyId === companyId) {
@@ -96,7 +112,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
   };
 
   // Add Company form state
-  const [companyForm, setCompanyForm] = useState({
+  const createEmptyCompanyForm = () => ({
     name: "",
     address: "",
     contactPerson: "",
@@ -105,8 +121,44 @@ const CoordinatorCompanyManagement: React.FC = () => {
     latitude: "",
     longitude: "",
     radiusMeters: 100,
-    maxSlots: 0,
+    maxSlots: "0",
   });
+  const [companyForm, setCompanyForm] = useState(createEmptyCompanyForm);
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+
+  const resetCompanyForm = () => {
+    setCompanyForm(createEmptyCompanyForm());
+    setEditingCompanyId(null);
+  };
+
+  const isEditingCompany = Boolean(editingCompanyId);
+
+  const handleOpenAddCompany = () => {
+    resetCompanyForm();
+    setShowAddCompany(true);
+  };
+
+  const openEditCompany = (company: Company) => {
+    setEditingCompanyId(company.id);
+    setCompanyForm({
+      name: company.name || "",
+      address: company.address || "",
+      contactPerson: company.contactPerson || "",
+      contactEmail: company.contactEmail || "",
+      contactNumber: company.contactNumber || "",
+      latitude:
+        company.latitude !== undefined && company.latitude !== null
+          ? String(company.latitude)
+          : "",
+      longitude:
+        company.longitude !== undefined && company.longitude !== null
+          ? String(company.longitude)
+          : "",
+      radiusMeters: company.radiusMeters ?? 100,
+      maxSlots: (company.maxSlots ?? 0).toString(),
+    });
+    setShowAddCompany(true);
+  };
 
   // Optimized data fetching with caching
   const {
@@ -297,12 +349,15 @@ const CoordinatorCompanyManagement: React.FC = () => {
   };
 
   // Handle Add Company form submission
-  const handleAddCompany = async (e: React.FormEvent) => {
+  const handleSubmitCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAddingCompany(true);
     try {
+      const maxSlotsValue = parseInt(companyForm.maxSlots, 10);
+      const { maxSlots, ...restCompanyForm } = companyForm;
+
       const companyData = {
-        ...companyForm,
+        ...restCompanyForm,
         latitude: companyForm.latitude
           ? parseFloat(companyForm.latitude)
           : undefined,
@@ -310,27 +365,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
           ? parseFloat(companyForm.longitude)
           : undefined,
         radiusMeters: parseInt(companyForm.radiusMeters.toString()),
+        maxSlots: Number.isNaN(maxSlotsValue) ? 0 : maxSlotsValue,
       };
 
+      if (isEditingCompany && editingCompanyId) {
+        await coordinatorService.updateCompany(editingCompanyId, companyData);
+        toast.success("Company updated successfully.");
+      } else {
       await coordinatorService.createCompany(companyData);
+        toast.success("Company added successfully.");
+      }
+
       setShowAddCompany(false);
-      setCompanyForm({
-        name: "",
-        address: "",
-        contactPerson: "",
-        contactEmail: "",
-        contactNumber: "",
-        latitude: "",
-        longitude: "",
-        radiusMeters: 100,
-        maxSlots: 0,
-      });
+      resetCompanyForm();
 
       // Refresh companies data
       await refreshCompanies();
     } catch (error) {
-      console.error("Error creating company:", error);
-      alert("Failed to create company. Please try again.");
+      console.error("Error saving company:", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to save company. Please try again.";
+      toast.error(message);
     } finally {
       setIsAddingCompany(false);
     }
@@ -570,6 +627,22 @@ const CoordinatorCompanyManagement: React.FC = () => {
           { icon: "⚠️" }
         );
       }
+
+      setSupervisorSuccessModal({
+        companyName: company.name,
+        supervisorName:
+          result.supervisor.name ||
+          company.contactPerson ||
+          result.supervisor.email,
+        supervisorEmail: result.supervisor.email,
+        temporaryPassword:
+          result.created && result.temporaryPassword
+            ? result.temporaryPassword
+            : undefined,
+        emailSent: result.emailSent,
+        emailMessage: result.emailMessage,
+        wasCreated: result.created,
+      });
     } catch (error) {
       console.error("Error creating supervisor account:", error);
       errorMessage =
@@ -583,6 +656,20 @@ const CoordinatorCompanyManagement: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setCreatingSupervisorId(null);
+    }
+  };
+
+  const handleCopyToClipboard = async (value: string) => {
+    try {
+      if (navigator?.clipboard) {
+        await navigator.clipboard.writeText(value);
+        toast.success("Copied to clipboard");
+      } else {
+        throw new Error("Clipboard not available");
+      }
+    } catch (error) {
+      console.error("Clipboard copy failed:", error);
+      toast.error("Failed to copy. Please copy manually.");
     }
   };
 
@@ -640,7 +727,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   <span className="relative z-10">Add MOA</span>
                 </button>
                 <button
-                  onClick={() => setShowAddCompany(true)}
+                  onClick={handleOpenAddCompany}
                   className="group relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -697,75 +784,75 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
           {/* MOA Alerts */}
           {urgentMOAs.length > 0 ? (
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
-                      <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      MOA Alerts
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Monitor urgent MOA activities and deadlines
-                    </p>
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl border border-orange-200 dark:border-orange-800 overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
-                <div className="mt-6 space-y-3">
-                  {urgentMOAs.map((moa) => (
-                    <div
-                      key={moa.id}
-                      className={`p-4 rounded-xl border-l-4 ${
-                        isExpired(moa.uploadedAt)
-                          ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                          : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {moa.title} - {moa.student?.company?.name || "Unknown Company"}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {isExpired(moa.uploadedAt) ? "Expired" : "Expiring soon"} · Uploaded{" "}
-                            {new Date(moa.uploadedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                            View
-                          </button>
-                          {!isExpired(moa.uploadedAt) && (
-                            <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                              Renew
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    MOA Alerts
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Monitor urgent MOA activities and deadlines
+                  </p>
                 </div>
               </div>
-            </div>
-          ) : (
+                <div className="mt-6 space-y-3">
+                  {urgentMOAs.map((moa) => (
+                          <div
+                            key={moa.id}
+                            className={`p-4 rounded-xl border-l-4 ${
+                              isExpired(moa.uploadedAt)
+                                ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                                : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
+                            }`}
+                          >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                            {moa.title} - {moa.student?.company?.name || "Unknown Company"}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {isExpired(moa.uploadedAt) ? "Expired" : "Expiring soon"} · Uploaded{" "}
+                            {formatDate(moa.uploadedAt)}
+                                </p>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                  View
+                                </button>
+                                {!isExpired(moa.uploadedAt) && (
+                                  <button className="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    Renew
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                </div>
+              </div>
+                  </div>
+                ) : (
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
               <div className="p-4 flex items-center space-x-4">
                 <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
+                      </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    All MOAs are up to date
-                  </p>
+                        All MOAs are up to date
+                      </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    No urgent alerts at this time
-                  </p>
-                </div>
+                        No urgent alerts at this time
+                      </p>
+                    </div>
+                  </div>
               </div>
-            </div>
           )}
 
           {/* Companies with MOAs - Unified Cards */}
@@ -836,13 +923,13 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             <div className="space-y-2 sm:space-y-1 text-sm text-gray-600 dark:text-gray-400">
                               <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                                 <span className="flex items-center space-x-2">
-                                  <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                                   <span className="truncate">{company.contactEmail}</span>
                                 </span>
                               </p>
                               <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                                 <span className="flex items-center space-x-2">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                                <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
                                   <span className="truncate">{company.contactNumber}</span>
                                 </span>
                               </p>
@@ -850,7 +937,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <span className="w-2 h-2 bg-purple-400 rounded-full mt-1"></span>
                                 <div className="flex-1 min-w-0">
                                   <p
-                                    className="block truncate text-sm text-gray-600 dark:text-gray-400"
+                                    className="block max-w-full text-sm text-gray-600 dark:text-gray-400 truncate"
                                     title={company.address || "No address provided"}
                                   >
                                     {company.address || "No address provided"}
@@ -864,12 +951,12 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                       View full address
                                     </button>
                                   )}
-                                </div>
-                              </div>
+                            </div>
+                          </div>
                             </div>
 
                             {company.supervisor ? (
-                              <div className="mt-4 rounded-lg border border-green-200 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20 px-4 py-3">
+                              <div className="mt-4 w-full rounded-lg border border-green-200 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20 px-4 py-3">
                                 <div className="flex items-center justify-between">
                                   <p className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-300">
                                     Supervisor Linked
@@ -890,7 +977,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               <button
                                 onClick={() => handleCreateSupervisorAccount(company)}
                                 disabled={creatingSupervisorId === company.id}
-                                className="mt-4 inline-flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
+                                className="mt-4 inline-flex w-full items-center justify-center px-3 py-2 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 {creatingSupervisorId === company.id ? (
                                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -900,11 +987,18 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 {creatingSupervisorId === company.id
                                   ? "Creating Supervisor..."
                                   : "Create Supervisor Account"}
-                              </button>
+                            </button>
                             )}
                             {renderSupervisorError(company.id)}
                           </div>
-                          <div className="flex items-center justify-end">
+                          <div className="flex flex-col items-end space-y-2">
+                            <button
+                              onClick={() => openEditCompany(company)}
+                              className="p-2 rounded-lg text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
+                              title="Edit Company"
+                            >
+                              <SquarePen className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => openDeleteConfirm(company)}
                               disabled={Boolean(
@@ -914,7 +1008,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               className={`p-2 rounded-lg transition-colors ${
                                 company._count?.students &&
                                 company._count.students > 0
-                                  ? "text-gray-400 cursor-not-allowed"
+                                  ? "text-red-400/60 cursor-not-allowed"
                                   : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                               }`}
                               title={
@@ -1009,9 +1103,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                         )}
                                       </div>
                                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {new Date(
-                                          moa.uploadedAt
-                                        ).toLocaleDateString()}
+                                        {formatDate(moa.uploadedAt)}
                                       </p>
                                     </div>
                                     <div className="flex items-center space-x-1">
@@ -1100,7 +1192,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       internships and MOAs.
                     </p>
                     <button
-                      onClick={() => setShowAddCompany(true)}
+                      onClick={handleOpenAddCompany}
                       className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
                     >
                       <Plus className="w-5 h-5 mr-2" />
@@ -1124,7 +1216,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
                     Add New Company
                   </h3>
                   <button
-                    onClick={() => setShowAddCompany(false)}
+                    onClick={() => {
+                      setShowAddCompany(false);
+                      resetCompanyForm();
+                    }}
                     className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -1132,7 +1227,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                 </div>
 
                 <form
-                  onSubmit={handleAddCompany}
+                  onSubmit={handleSubmitCompany}
                   className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]"
                 >
                   <div className="space-y-4">
@@ -1243,15 +1338,19 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         </label>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="0"
                           value={companyForm.maxSlots}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (/^\d*$/.test(raw)) {
                             setCompanyForm((prev) => ({
                               ...prev,
-                              maxSlots: parseInt(e.target.value) || 0,
-                            }))
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                maxSlots: raw,
+                              }));
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="Enter available slots"
                         />
                         <p className="text-xs text-gray-500 mt-1">
@@ -1264,7 +1363,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       type="button"
-                      onClick={() => setShowAddCompany(false)}
+                      onClick={() => {
+                        setShowAddCompany(false);
+                        resetCompanyForm();
+                      }}
                       className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                     >
                       Cancel
@@ -1339,7 +1441,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             </h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               Uploaded:{" "}
-                              {new Date(moa.uploadedAt).toLocaleDateString()}
+                              {formatDate(moa.uploadedAt)}
                             </p>
                             <div className="mt-2 flex items-center space-x-2">
                               <span
@@ -1461,7 +1563,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <span className="text-gray-600 dark:text-gray-400">
                                   Uploaded:{" "}
                                   <span className="font-medium text-gray-900 dark:text-white">
-                                  {new Date(selectedMOA.uploadedAt).toLocaleDateString()}
+                                  {formatDate(selectedMOA.uploadedAt)}
                                   </span>
                                 </span>
                               </p>
@@ -1525,10 +1627,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         </div>
                       </div>
 
-                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                      <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                        Document Preview
-                      </h5>
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                        <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                          Document Preview
+                        </h5>
                       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 min-h-[420px] flex items-center justify-center relative overflow-hidden">
                         {previewError ? (
                           <div className="text-center px-6 py-12">
@@ -1548,7 +1650,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 Download Document
                               </button>
                             )}
-                          </div>
+                            </div>
                         ) : previewObjectUrl ? (
                           previewMimeType?.includes("pdf") ? (
                             <iframe
@@ -1575,7 +1677,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                   Download Document
                                 </button>
                               )}
-                            </div>
+                          </div>
                           )
                         ) : (
                           <div className="flex flex-col items-center justify-center py-16 text-gray-400">
@@ -1585,8 +1687,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             </p>
                           </div>
                         )}
+                        </div>
                       </div>
-                    </div>
 
                       {selectedMOA.description && (
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
@@ -1710,7 +1812,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           </option>
                         )}
                       </select>
-                    </div>
+                      </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1980,6 +2082,107 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {supervisorSuccessModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+              <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+                <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                  <div className="flex items-center space-x-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      <CheckCircle className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Supervisor Account {supervisorSuccessModal.wasCreated ? "Created" : "Linked"}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {supervisorSuccessModal.companyName}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSupervisorSuccessModal(null)}
+                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 px-6 py-6">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {supervisorSuccessModal.wasCreated
+                        ? "A new supervisor account has been created and linked to this company."
+                        : "The supervisor email is now linked to this company."}
+                    </p>
+                    <p className="mt-3 flex items-center space-x-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <MailCheck className="h-4 w-4" />
+                      <span>
+                        {supervisorSuccessModal.emailSent
+                          ? supervisorSuccessModal.emailMessage || "Confirmation email sent successfully."
+                          : supervisorSuccessModal.emailMessage || "Email notification could not be sent. Please contact support."}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Supervisor Name
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {supervisorSuccessModal.supervisorName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Supervisor Email
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {supervisorSuccessModal.supervisorEmail}
+                      </p>
+                    </div>
+                    {supervisorSuccessModal.temporaryPassword && (
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          Temporary Password
+                        </p>
+                        <div className="mt-2 flex items-center justify-between rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-sm font-semibold text-purple-900 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-100">
+                          <span>{supervisorSuccessModal.temporaryPassword}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleCopyToClipboard(
+                                supervisorSuccessModal.temporaryPassword || ""
+                              )
+                            }
+                            className="ml-3 inline-flex items-center space-x-1 rounded-md border border-purple-300 bg-white px-2 py-1 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-50 dark:border-purple-600 dark:bg-purple-800/60 dark:text-purple-200 dark:hover:bg-purple-700/40"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copy</span>
+                          </button>
+                        </div>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          Share this password securely with the supervisor and remind them to change it on first login.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-800/60">
+                  <button
+                    type="button"
+                    onClick={() => setSupervisorSuccessModal(null)}
+                    className="rounded-lg px-4 py-2 text-sm font-medium text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>

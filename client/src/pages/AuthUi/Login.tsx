@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -10,6 +10,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import api from "../../services/api";
+import { settingsService } from "../../services/settingsService";
+import i18n from "i18next";
 
 // Import Outfit font
 const outfitFont = {
@@ -30,6 +32,12 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({ email: false, password: false });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const appPrefs = settingsService.loadAppPreferences();
+    settingsService.applyTheme(appPrefs.theme);
+    i18n.changeLanguage(appPrefs.language || "en");
+  }, []);
 
   // Validation functions
   const validateEmail = (email: string): string | null => {

@@ -3,6 +3,16 @@ import { companyService } from './companyService';
 import type { AxiosResponse } from 'axios';
 import type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorProvisionResult } from './companyService';
 
+export interface CoordinatorSettings {
+  autoApproveDocuments: boolean;
+  requireDocumentReview: boolean;
+  attendanceReminderTime: string;
+  defaultAnnouncementAudience: string;
+  enableBulkOperations: boolean;
+  showAdvancedMetrics: boolean;
+  notificationFrequency: string;
+}
+
 // Types for coordinator data
 export interface CoordinatorStats {
   totalStudents: number;
@@ -209,6 +219,31 @@ class CoordinatorService {
         ratings: 0,
       },
     };
+  }
+
+  async getCoordinatorSettings(): Promise<CoordinatorSettings> {
+    try {
+      const response = await api.get('/coordinator/settings');
+      return response.data.settings;
+    } catch (error) {
+      console.error('Error fetching coordinator settings:', error);
+      return {
+        autoApproveDocuments: false,
+        requireDocumentReview: true,
+        attendanceReminderTime: '09:00',
+        defaultAnnouncementAudience: 'ALL',
+        enableBulkOperations: true,
+        showAdvancedMetrics: false,
+        notificationFrequency: 'immediate',
+      };
+    }
+  }
+
+  async updateCoordinatorSettings(
+    settings: CoordinatorSettings,
+  ): Promise<CoordinatorSettings> {
+    const response = await api.put('/coordinator/settings', settings);
+    return response.data.settings;
   }
 
   // Get student by ID

@@ -25,6 +25,10 @@ import {
   //Upload,
   Palette,
   Monitor,
+  Clock,
+  Megaphone,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import {
   settingsService,
@@ -33,15 +37,23 @@ import {
   type NotificationPreferences,
   type AppPreferences,
 } from "../../services/settingsService";
+import {
+  coordinatorService,
+  type CoordinatorSettings as CoordinatorSettingsResponse,
+} from "../../services/coordinatorService";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 interface CoordinatorSettingsTabProps {
   onProfileUpdate?: () => void;
+  onCoordinatorSettingsUpdate?: (settings: CoordinatorSettingsResponse) => void;
 }
 
 const CoordinatorSettingsTab = ({
   onProfileUpdate,
+  onCoordinatorSettingsUpdate,
 }: CoordinatorSettingsTabProps) => {
+  const { t, i18n } = useTranslation();
   const [activeSection, setActiveSection] = useState("profile");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -86,15 +98,21 @@ const CoordinatorSettingsTab = ({
     theme: "auto",
   });
 
+  const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
+    null
+  );
+
+  const closeHelpModal = () => setHelpModal(null);
+
   // Coordinator-specific settings
-  const [coordinatorSettings, setCoordinatorSettings] = useState({
+  const [coordinatorSettings, setCoordinatorSettings] = useState<CoordinatorSettingsResponse>({
     autoApproveDocuments: false,
     requireDocumentReview: true,
     attendanceReminderTime: "09:00",
     defaultAnnouncementAudience: "ALL",
     enableBulkOperations: true,
     showAdvancedMetrics: false,
-    notificationFrequency: "immediate", // immediate, daily, weekly
+    notificationFrequency: "immediate",
   });
 
   // Load user data on component mount
@@ -151,9 +169,6 @@ const CoordinatorSettingsTab = ({
       (appPrefs.theme as "light" | "dark" | "system") || "system";
     setTheme(savedTheme);
 
-    // Apply the theme immediately
-    settingsService.applyTheme(savedTheme === "system" ? "auto" : savedTheme);
-
     // Load saved profile photo from server
     try {
       const serverPhoto = await settingsService.getProfilePhoto();
@@ -163,6 +178,9 @@ const CoordinatorSettingsTab = ({
     } catch (error) {
       console.error("Error loading profile photo in settings:", error);
     }
+
+    const language = (appPrefs.language as string) || "en";
+    i18n.changeLanguage(language);
   };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
@@ -182,15 +200,13 @@ const CoordinatorSettingsTab = ({
     settingsService.applyTheme(newTheme === "system" ? "auto" : newTheme);
   };
 
-  const loadCoordinatorSettings = () => {
-    // Load coordinator-specific settings from localStorage
-    const saved = localStorage.getItem("coordinatorSettings");
-    if (saved) {
-      try {
-        setCoordinatorSettings(JSON.parse(saved));
-      } catch (error) {
-        console.error("Error loading coordinator settings:", error);
-      }
+  const loadCoordinatorSettings = async () => {
+    try {
+      const settings = await coordinatorService.getCoordinatorSettings();
+      setCoordinatorSettings(settings);
+      onCoordinatorSettingsUpdate?.(settings);
+    } catch (error) {
+      console.error("Error loading coordinator settings:", error);
     }
   };
 
@@ -214,19 +230,27 @@ const CoordinatorSettingsTab = ({
         return;
       }
 
-      await settingsService.updateProfile({
+      const updatedProfile = await settingsService.updateProfile({
         name: profileData.name,
         email: profileData.email,
+        phone: profileData.phone,
+        emergencyContact: profileData.emergencyContact,
+        emergencyName: profileData.emergencyName,
       });
 
-      // Reload user data to get the latest information
-      await loadUserData();
-
-      // Update localStorage with new user data
-      const updatedUserData = await settingsService.getCurrentUserProfile();
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = { ...currentUser, ...updatedUserData };
+      const updatedUser = { ...currentUser, ...updatedProfile };
       localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      window.dispatchEvent(
+        new CustomEvent("profileUpdated", {
+          detail: {
+            user: updatedUser,
+          },
+        })
+      );
+
+      await loadUserData();
 
       // Notify parent component to refresh dashboard data
       if (onProfileUpdate) {
@@ -234,7 +258,7 @@ const CoordinatorSettingsTab = ({
       }
 
       setSaveSuccess(true);
-      toast.success("Profile updated successfully");
+      toast.success(t("settings.saved"));
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
       console.error("Error updating profile:", error);
@@ -271,7 +295,7 @@ const CoordinatorSettingsTab = ({
         newPassword: "",
         confirmPassword: "",
       });
-      toast.success("Password changed successfully");
+      toast.success(t("settings.security.passwordChanged"));
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
       console.error("Error changing password:", error);
@@ -284,26 +308,38 @@ const CoordinatorSettingsTab = ({
   const handleSaveNotifications = () => {
     settingsService.saveNotificationPreferences(notifications);
     setSaveSuccess(true);
-    toast.success("Notification preferences saved");
+    toast.success(t("settings.notifications.saved"));
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleSavePreferences = () => {
     settingsService.saveAppPreferences(preferences);
     settingsService.applyTheme(preferences.theme);
+    i18n.changeLanguage(preferences.language);
     setSaveSuccess(true);
-    toast.success("Preferences saved");
+    toast.success(t("settings.preferences.saved"));
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const handleSaveCoordinatorSettings = () => {
-    localStorage.setItem(
-      "coordinatorSettings",
-      JSON.stringify(coordinatorSettings)
-    );
-    setSaveSuccess(true);
-    toast.success("Coordinator settings saved");
-    setTimeout(() => setSaveSuccess(false), 3000);
+  const handleSaveCoordinatorSettings = async () => {
+    try {
+      setSaving(true);
+      const updated = await coordinatorService.updateCoordinatorSettings(
+        coordinatorSettings,
+      );
+      setCoordinatorSettings(updated);
+      onCoordinatorSettingsUpdate?.(updated);
+      setSaveSuccess(true);
+      toast.success(t("settings.coordinator.saveSuccess"));
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: any) {
+      console.error("Error saving coordinator settings:", error);
+      toast.error(
+        error?.response?.data?.message || t("errors.saveCoordinatorSettings"),
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleRemovePhoto = async () => {
@@ -318,7 +354,7 @@ const CoordinatorSettingsTab = ({
         })
       );
 
-      toast.success("Profile photo removed successfully!");
+      toast.success(t("settings.saved"));
     } catch (error) {
       console.error("Error removing photo:", error);
       toast.error("Failed to remove profile photo");
@@ -359,7 +395,7 @@ const CoordinatorSettingsTab = ({
         })
       );
 
-      toast.success("Profile photo updated successfully!");
+      toast.success(t("settings.saved"));
 
       // Reset the file input
       event.target.value = "";
@@ -373,38 +409,14 @@ const CoordinatorSettingsTab = ({
     }
   };
 
-  const handleExportData = () => {
-    // Export coordinator data
-    const exportData = {
-      profile: profileData,
-      settings: coordinatorSettings,
-      preferences: preferences,
-      notifications: notifications,
-      exportDate: new Date().toISOString(),
-    };
-
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `coordinator-settings-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-
-    toast.success("Settings exported successfully!");
-  };
-
   const sections = [
-    { id: "profile", label: "Profile Information", icon: User },
-    { id: "security", label: "Security", icon: Lock },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "appearance", label: "Appearance", icon: Palette },
-    { id: "preferences", label: "Preferences", icon: Globe },
-    { id: "coordinator", label: "Coordinator Settings", icon: Settings },
-    { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "profile", label: t("navigation.profile"), icon: User },
+    { id: "security", label: t("navigation.security"), icon: Lock },
+    { id: "notifications", label: t("navigation.notifications"), icon: Bell },
+    { id: "appearance", label: t("navigation.appearance"), icon: Palette },
+    { id: "preferences", label: t("navigation.preferences"), icon: Globe },
+    { id: "coordinator", label: t("navigation.coordinator"), icon: Settings },
+    { id: "help", label: t("navigation.help"), icon: HelpCircle },
   ];
 
   if (loading) {
@@ -412,9 +424,7 @@ const CoordinatorSettingsTab = ({
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading settings...
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">{t("settings.loading")}</p>
         </div>
       </div>
     );
@@ -424,12 +434,23 @@ const CoordinatorSettingsTab = ({
     <div className="space-y-6">
       {/* Success Message */}
       {saveSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-              Settings saved successfully!
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-3xl border border-emerald-200 bg-white p-6 text-center shadow-2xl dark:border-emerald-800/60 dark:bg-gray-900">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-200">
+              {t("settings.saved")}
+            </h3>
+            <p className="mt-2 text-sm text-emerald-600/80 dark:text-emerald-200/80">
+              {t("general.updatedJustNow")}
             </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="mt-6 inline-flex items-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+            >
+              {t("general.dismiss")}
+            </button>
           </div>
         </div>
       )}
@@ -487,10 +508,10 @@ const CoordinatorSettingsTab = ({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Profile Information
+                    {t("settings.profile.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Update your personal information
+                    {t("settings.profile.subtitle")}
                   </p>
                 </div>
 
@@ -524,10 +545,10 @@ const CoordinatorSettingsTab = ({
                       {uploadingPhoto ? (
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Uploading...</span>
+                          <span>{t("settings.profile.uploading")}</span>
                         </div>
                       ) : (
-                        "Change Photo"
+                        t("settings.profile.changePhoto")
                       )}
                       <input
                         type="file"
@@ -538,14 +559,14 @@ const CoordinatorSettingsTab = ({
                       />
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      JPG, PNG or GIF. Max size 2MB
+                      {t("settings.profile.photoHint")}
                     </p>
                     {profilePhotoPreview && (
                       <button
                         onClick={handleRemovePhoto}
                         className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       >
-                        Remove Photo
+                        {t("settings.profile.removePhoto")}
                       </button>
                     )}
                   </div>
@@ -554,7 +575,7 @@ const CoordinatorSettingsTab = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Full Name
+                      {t("settings.profile.name")}
                     </label>
                     <input
                       type="text"
@@ -579,7 +600,7 @@ const CoordinatorSettingsTab = ({
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Mail className="w-4 h-4 inline mr-1" />
-                      Email Address
+                      {t("settings.profile.email")}
                     </label>
                     <input
                       type="email"
@@ -606,7 +627,7 @@ const CoordinatorSettingsTab = ({
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Phone className="w-4 h-4 inline mr-1" />
-                      Phone Number
+                      {t("settings.profile.phone")}
                     </label>
                     <input
                       type="tel"
@@ -622,7 +643,7 @@ const CoordinatorSettingsTab = ({
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
                       }`}
-                      placeholder="Optional"
+                      placeholder={t("general.optional")}
                     />
                     {errors.phone && (
                       <p className="text-red-500 text-xs mt-1">
@@ -634,12 +655,12 @@ const CoordinatorSettingsTab = ({
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Emergency Contact
+                    {t("settings.profile.emergencyTitle")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Name
+                        {t("settings.profile.contactName")}
                       </label>
                       <input
                         type="text"
@@ -651,13 +672,13 @@ const CoordinatorSettingsTab = ({
                           })
                         }
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                        placeholder="Optional"
+                        placeholder={t("general.optional")}
                       />
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Number
+                        {t("settings.profile.contactNumber")}
                       </label>
                       <input
                         type="tel"
@@ -669,7 +690,7 @@ const CoordinatorSettingsTab = ({
                           })
                         }
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                        placeholder="Optional"
+                        placeholder={t("general.optional")}
                       />
                     </div>
                   </div>
@@ -678,31 +699,32 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveProfile}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
+                    disabled={saving}
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
+                    <span>{t("settings.profile.saveProfile")}</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Security - Same as Student */}
+            {/* Security Tab */}
             {activeSection === "security" && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Security Settings
+                    {t("settings.security.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Manage your password and security preferences
+                    {t("settings.security.subtitle")}
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Current Password
+                      {t("settings.security.currentPassword")}
                     </label>
                     <div className="relative">
                       <input
@@ -733,7 +755,7 @@ const CoordinatorSettingsTab = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      New Password
+                      {t("settings.security.newPassword")}
                     </label>
                     <div className="relative">
                       <input
@@ -766,7 +788,7 @@ const CoordinatorSettingsTab = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Confirm New Password
+                      {t("settings.security.confirmPassword")}
                     </label>
                     <input
                       type="password"
@@ -784,22 +806,22 @@ const CoordinatorSettingsTab = ({
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Two-Factor Authentication
+                    {t("settings.security.twoFactorTitle")}
                   </h3>
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-purple-600" />
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          Enable 2FA
+                          {t("settings.security.enable2FA")}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Add an extra layer of security
+                          {t("settings.security.twoFactorDescription")}
                         </p>
                       </div>
                     </div>
                     <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
-                      Enable
+                      {t("settings.security.enableButton")}
                     </button>
                   </div>
                 </div>
@@ -813,12 +835,12 @@ const CoordinatorSettingsTab = ({
                     {saving ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Updating...</span>
+                        <span>{t("settings.security.updating")}</span>
                       </>
                     ) : (
                       <>
                         <Lock className="w-4 h-4" />
-                        <span>Update Password</span>
+                        <span>{t("settings.security.updatePassword")}</span>
                       </>
                     )}
                   </button>
@@ -831,10 +853,10 @@ const CoordinatorSettingsTab = ({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Notification Preferences
+                    {t("settings.notifications.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Choose how you want to be notified
+                    {t("settings.notifications.subtitle")}
                   </p>
                 </div>
 
@@ -842,10 +864,10 @@ const CoordinatorSettingsTab = ({
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Document Approvals
+                        {t("settings.notifications.documentApprovals")}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Get notified when documents are approved or rejected
+                        {t("settings.notifications.documentApprovalsHint")}
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -867,10 +889,10 @@ const CoordinatorSettingsTab = ({
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Attendance Alerts
+                        {t("settings.notifications.attendanceAlerts")}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Get notified about attendance issues and anomalies
+                        {t("settings.notifications.attendanceAlertsHint")}
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -892,10 +914,10 @@ const CoordinatorSettingsTab = ({
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        System Announcements
+                        {t("settings.notifications.systemAnnouncements")}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Important system updates and maintenance notices
+                        {t("settings.notifications.systemAnnouncementsHint")}
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -917,10 +939,10 @@ const CoordinatorSettingsTab = ({
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Push Notifications
+                        {t("settings.notifications.pushNotifications")}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Receive push notifications in browser
+                        {t("settings.notifications.pushNotificationsHint")}
                       </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -931,31 +953,6 @@ const CoordinatorSettingsTab = ({
                           setNotifications({
                             ...notifications,
                             pushNotifications: e.target.checked,
-                          })
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        SMS Alerts
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Critical updates via text message
-                      </p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifications.smsAlerts}
-                        onChange={(e) =>
-                          setNotifications({
-                            ...notifications,
-                            smsAlerts: e.target.checked,
                           })
                         }
                         className="sr-only peer"
@@ -982,10 +979,10 @@ const CoordinatorSettingsTab = ({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Appearance Settings
+                    {t("settings.appearance.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Customize your interface appearance
+                    {t("settings.appearance.subtitle")}
                   </p>
                 </div>
 
@@ -993,7 +990,7 @@ const CoordinatorSettingsTab = ({
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      Theme Settings
+                      {t("settings.appearance.theme")}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">
                       Choose your preferred theme appearance
@@ -1107,83 +1104,90 @@ const CoordinatorSettingsTab = ({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    General Preferences
+                    {t("settings.preferences.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Customize your portal experience
+                    {t("settings.preferences.subtitle")}
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Globe className="w-4 h-4 inline mr-1" />
-                      Language
+                      {t("settings.preferences.language")}
                     </label>
-                    <select
-                      value={preferences.language}
-                      onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          language: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="en">English</option>
-                      <option value="fil">Filipino</option>
-                      <option value="es">Spanish</option>
-                    </select>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <select
+                        value={preferences.language}
+                        onChange={(e) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            language: e.target.value as any,
+                          }))
+                        }
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="en">{t("language.english")}</option>
+                        <option value="fil">{t("language.filipino")}</option>
+                        <option value="es">{t("language.spanish")}</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      Date Format
+                      {t("settings.preferences.dateFormat")}
                     </label>
-                    <select
-                      value={preferences.dateFormat}
-                      onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          dateFormat: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                    </select>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <select
+                        value={preferences.dateFormat}
+                        onChange={(e) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            dateFormat: e.target.value,
+                          }))
+                        }
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="MM/DD/YYYY">{t("dateFormats.mmddyyyy")}</option>
+                        <option value="DD/MM/YYYY">{t("dateFormats.ddmmyyyy")}</option>
+                        <option value="YYYY-MM-DD">{t("dateFormats.yyyymmdd")}</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Time Format
+                      {t("settings.preferences.timeFormat")}
                     </label>
-                    <select
-                      value={preferences.timeFormat}
-                      onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          timeFormat: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="12hr">12 Hour (AM/PM)</option>
-                      <option value="24hr">24 Hour</option>
-                    </select>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <select
+                        value={preferences.timeFormat}
+                        onChange={(e) =>
+                          setPreferences((prev) => ({
+                            ...prev,
+                            timeFormat: e.target.value,
+                          }))
+                        }
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="12hr">{t("timeFormats.hour12")}</option>
+                        <option value="24hr">{t("timeFormats.hour24")}</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
                   <button
                     onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Preferences</span>
+                    <span>{t("settings.preferences.save")}</span>
                   </button>
                 </div>
               </div>
@@ -1194,10 +1198,10 @@ const CoordinatorSettingsTab = ({
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Coordinator Settings
+                    {t("settings.coordinator.title")}
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Manage coordinator-specific preferences and workflows
+                    {t("settings.coordinator.subtitle")}
                   </p>
                 </div>
 
@@ -1206,17 +1210,17 @@ const CoordinatorSettingsTab = ({
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                       <FileText className="w-5 h-5 mr-2 text-purple-600" />
-                      Document Management
+                      {t("settings.coordinator.document.title")}
                     </h3>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            Auto-approve Documents
+                            {t("settings.coordinator.document.autoApprove")}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Automatically approve documents that meet criteria
+                            {t("settings.coordinator.document.autoApproveHint")}
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -1227,6 +1231,9 @@ const CoordinatorSettingsTab = ({
                               setCoordinatorSettings({
                                 ...coordinatorSettings,
                                 autoApproveDocuments: e.target.checked,
+                                requireDocumentReview: e.target.checked
+                                  ? false
+                                  : coordinatorSettings.requireDocumentReview,
                               })
                             }
                             className="sr-only peer"
@@ -1238,10 +1245,10 @@ const CoordinatorSettingsTab = ({
                       <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            Require Document Review
+                            {t("settings.coordinator.document.requireReview")}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            All documents must be manually reviewed
+                            {t("settings.coordinator.document.requireReviewHint")}
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -1252,6 +1259,9 @@ const CoordinatorSettingsTab = ({
                               setCoordinatorSettings({
                                 ...coordinatorSettings,
                                 requireDocumentReview: e.target.checked,
+                                autoApproveDocuments: e.target.checked
+                                  ? false
+                                  : coordinatorSettings.autoApproveDocuments,
                               })
                             }
                             className="sr-only peer"
@@ -1262,52 +1272,20 @@ const CoordinatorSettingsTab = ({
                     </div>
                   </div>
 
-                  {/* Attendance Management */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Activity className="w-5 h-5 mr-2 text-green-600" />
-                      Attendance Management
-                    </h3>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Attendance Reminder Time
-                        </label>
-                        <input
-                          type="time"
-                          value={coordinatorSettings.attendanceReminderTime}
-                          onChange={(e) =>
-                            setCoordinatorSettings({
-                              ...coordinatorSettings,
-                              attendanceReminderTime: e.target.value,
-                            })
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                        />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Time to send daily attendance reminders
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Announcement Settings */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Bell className="w-5 h-5 mr-2 text-blue-600" />
-                      Announcement Settings
+                      <Megaphone className="w-5 h-5 mr-2 text-amber-600" />
+                      {t("settings.coordinator.announcement.title")}
                     </h3>
 
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Default Announcement Audience
+                          {t("settings.coordinator.announcement.defaultAudience")}
                         </label>
                         <select
-                          value={
-                            coordinatorSettings.defaultAnnouncementAudience
-                          }
+                          value={coordinatorSettings.defaultAnnouncementAudience}
                           onChange={(e) =>
                             setCoordinatorSettings({
                               ...coordinatorSettings,
@@ -1316,14 +1294,20 @@ const CoordinatorSettingsTab = ({
                           }
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         >
-                          <option value="ALL">All Users</option>
-                          <option value="STUDENTS">Students Only</option>
-                          <option value="COORDINATORS">
-                            Coordinators Only
+                          <option value="ALL">
+                            {t("settings.coordinator.announcement.allUsers")}
                           </option>
-                          <option value="INSTRUCTORS">Instructors Only</option>
+                          <option value="STUDENTS">
+                            {t("settings.coordinator.announcement.studentsOnly")}
+                          </option>
+                          <option value="COORDINATORS">
+                            {t("settings.coordinator.announcement.coordinatorsOnly")}
+                          </option>
+                          <option value="INSTRUCTORS">
+                            {t("settings.coordinator.announcement.instructorsOnly")}
+                          </option>
                           <option value="INDUSTRY_PARTNERS">
-                            Industry Partners Only
+                            {t("settings.coordinator.announcement.industryPartnersOnly")}
                           </option>
                         </select>
                       </div>
@@ -1333,18 +1317,18 @@ const CoordinatorSettingsTab = ({
                   {/* System Preferences */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Settings className="w-5 h-5 mr-2 text-orange-600" />
-                      System Preferences
+                      <SlidersHorizontal className="w-5 h-5 mr-2 text-sky-600" />
+                      {t("settings.coordinator.system.title")}
                     </h3>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            Enable Bulk Operations
+                            {t("settings.coordinator.system.bulkOperations")}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Allow bulk approval/rejection of documents
+                            {t("settings.coordinator.system.bulkOperationsHint")}
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -1366,10 +1350,10 @@ const CoordinatorSettingsTab = ({
                       <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            Show Advanced Metrics
+                            {t("settings.coordinator.system.advancedMetrics")}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Display detailed analytics and reports
+                            {t("settings.coordinator.system.advancedMetricsHint")}
                           </p>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
@@ -1390,7 +1374,7 @@ const CoordinatorSettingsTab = ({
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Notification Frequency
+                          {t("settings.coordinator.system.notificationFrequency")}
                         </label>
                         <select
                           value={coordinatorSettings.notificationFrequency}
@@ -1402,10 +1386,49 @@ const CoordinatorSettingsTab = ({
                           }
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         >
-                          <option value="immediate">Immediate</option>
-                          <option value="daily">Daily Summary</option>
-                          <option value="weekly">Weekly Summary</option>
+                          <option value="immediate">
+                            {t("settings.coordinator.system.frequencyImmediate")}
+                          </option>
+                          <option value="daily">
+                            {t("settings.coordinator.system.frequencyDaily")}
+                          </option>
+                          <option value="weekly">
+                            {t("settings.coordinator.system.frequencyWeekly")}
+                          </option>
                         </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Attendance Management */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                      <Activity className="w-5 h-5 mr-2 text-green-600" />
+                      {t("settings.coordinator.attendance.title")}
+                    </h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          {t("settings.coordinator.attendance.reminderLabel")}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            value={coordinatorSettings.attendanceReminderTime}
+                            onChange={(e) =>
+                              setCoordinatorSettings({
+                                ...coordinatorSettings,
+                                attendanceReminderTime: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          />
+                          <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          {t("settings.coordinator.attendance.reminderHint")}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1414,10 +1437,10 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveCoordinatorSettings}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Coordinator Settings</span>
+                    <span>{t("settings.coordinator.save")}</span>
                   </button>
                 </div>
               </div>
@@ -1436,9 +1459,10 @@ const CoordinatorSettingsTab = ({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <a
-                    href="#"
-                    className="p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("faq")}
+                    className="p-6 text-left bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <HelpCircle className="w-8 h-8 text-purple-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
@@ -1447,10 +1471,10 @@ const CoordinatorSettingsTab = ({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Find answers to common questions
                     </p>
-                  </a>
+                  </button>
 
                   <a
-                    href="#"
+                    href="mailto:intraksystem@gmail.com?subject=INTRAK%20Support%20Request"
                     className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <Mail className="w-8 h-8 text-blue-600 mb-3" />
@@ -1458,13 +1482,14 @@ const CoordinatorSettingsTab = ({
                       Contact Support
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Email: support@intrak.edu
+                      Email: intraksystem@gmail.com
                     </p>
                   </a>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("guide")}
+                    className="p-6 text-left bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <FileText className="w-8 h-8 text-green-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
@@ -1473,11 +1498,12 @@ const CoordinatorSettingsTab = ({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Learn how to use coordinator features
                     </p>
-                  </a>
+                  </button>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("privacy")}
+                    className="p-6 text-left bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <Shield className="w-8 h-8 text-yellow-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
@@ -1486,21 +1512,14 @@ const CoordinatorSettingsTab = ({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Read our privacy terms
                     </p>
-                  </a>
+                  </button>
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Data Management
+                      App Information
                     </h3>
-                    <button
-                      onClick={handleExportData}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Export Settings</span>
-                    </button>
                   </div>
                 </div>
 
@@ -1527,8 +1546,130 @@ const CoordinatorSettingsTab = ({
           </div>
         </div>
       </div>
+
+      {helpModal && <HelpModalContent variant={helpModal} onClose={closeHelpModal} />}
     </div>
   );
 };
 
 export default CoordinatorSettingsTab;
+
+const HelpModalContent: React.FC<{
+  variant: "faq" | "guide" | "privacy";
+  onClose: () => void;
+}> = ({ variant, onClose }) => {
+  const titles = {
+    faq: "Frequently Asked Questions",
+    guide: "Coordinator Quick Guide",
+    privacy: "Privacy Overview",
+  } as const;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      style={{ marginTop: 0 }}
+    >
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          aria-label="Close help dialog"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="px-6 pb-6 pt-7 space-y-4">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {titles[variant]}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {variant === "faq" && "Quick answers to the most common coordinator questions."}
+              {variant === "guide" && "Follow these steps to get the most out of the coordinator dashboard."}
+              {variant === "privacy" && "A short summary of how INTRAK handles coordinator data."}
+            </p>
+          </div>
+
+          {variant === "faq" && (
+            <ul className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+              <li>
+                <p className="font-semibold">How do I approve a company MOA?</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Open the Document Review tab, filter by "MOA", review the submission, then choose Approve or
+                  Request Changes with remarks.
+                </p>
+              </li>
+              <li>
+                <p className="font-semibold">Can I resend supervisor credentials?</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Yes. In Company Management, open the company card and click "Create Supervisor Account" again to
+                  trigger a new temporary password email.
+                </p>
+              </li>
+              <li>
+                <p className="font-semibold">Where can I monitor student progress?</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Use the Student Management tab to view assignments, attendance, and evaluation scores, or drill into
+                  the dashboard metrics for quick insights.
+                </p>
+              </li>
+            </ul>
+          )}
+
+          {variant === "guide" && (
+            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <div>
+                <p className="font-semibold">1. Review your dashboard daily</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  The dashboard highlights urgent alerts, pending approvals, and recent activities so you always know
+                  what needs attention first.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">2. Manage companies and supervisors</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Keep company records up-to-date, upload or approve MOAs, and provision supervisor accounts straight
+                  from Company Management.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">3. Automate document workflows</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Configure auto-approval rules in Coordinator Settings to match your review process and reduce manual
+                  tasks.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {variant === "privacy" && (
+            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <p>
+                INTRAK collects coordinator profile details, notification preferences, and audit logs to support
+                compliance and communication.
+              </p>
+              <p>
+                We do not share coordinator information outside the OJT management team. Access is role-restricted and
+                monitored via audit trails.
+              </p>
+              <p>
+                Need a full copy of the policy? Email us at intraksystem@gmail.com and we will send the latest PDF
+                version.
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

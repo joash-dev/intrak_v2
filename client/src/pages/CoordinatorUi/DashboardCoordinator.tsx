@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import type { ReactNode } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -10,13 +9,10 @@ import {
   XCircle,
   Building2,
   Award,
-  ArrowUpRight,
-  ArrowDownRight,
   Search,
   BarChart3,
   Activity,
   Bell,
-  UserCheck,
   FileText,
   Menu,
   X,
@@ -35,15 +31,14 @@ import CoordinatorCompanyManagement from "./CoordinatorCompanyManagement";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
 import CoordinatorStudentManagement from "./CoordinatorStudentManagement";
-import {
-  coordinatorService,
-  type CoordinatorActivity,
-} from "../../services/coordinatorService";
+import { coordinatorService } from "../../services/coordinatorService";
 import { settingsService } from "../../services/settingsService";
+import { formatDateTime } from "../../services/localeService";
 import {
   notificationService,
   type NotificationItem,
 } from "../../services/notificationService";
+import { useTranslation } from "react-i18next";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -74,18 +69,13 @@ const formatStudentId = (studentNumber: string) => {
 // COORDINATOR DASHBOARD COMPONENT
 // =============================================
 interface CoordinatorDashboardProps {
-  notifications: NotificationItem[];
   notificationsLoading: boolean;
-  onNotificationClick: (notification: NotificationItem) => void;
-  onMarkAllNotificationsRead: () => void;
 }
 
 const CoordinatorDashboard = ({
-  notifications,
   notificationsLoading,
-  onNotificationClick,
-  onMarkAllNotificationsRead,
 }: CoordinatorDashboardProps) => {
+  const { t } = useTranslation();
   // const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -148,15 +138,10 @@ const CoordinatorDashboard = ({
     return colors[status] || colors.active;
   };
 
-  const getAlertColor = (type: string) => {
-    const colors: Record<string, string> = {
-      warning: "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
-      info: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
-      error: "border-red-500 bg-red-50 dark:bg-red-900/20",
-      success: "border-green-500 bg-green-50 dark:bg-green-900/20",
-    };
-    return colors[type] || colors.info;
-  };
+  const getStatusLabel = (status: string) =>
+    t(`dashboard.students.statusLabels.${status.toLowerCase()}`, {
+      defaultValue: status,
+    });
 
   const getAlertIcon = (type: string) => {
     switch (type) {
@@ -169,103 +154,6 @@ const CoordinatorDashboard = ({
       default:
         return <Bell className="w-5 h-5 text-blue-600" />;
     }
-  };
-
-  const getNotificationVisuals = (type: string): {
-    container: string;
-    title: string;
-    message: string;
-    iconBg: string;
-    badge: string;
-    icon: ReactNode;
-  } => {
-    switch (type) {
-      case "DOCUMENT":
-        return {
-          container: "border-purple-500 bg-purple-50 dark:bg-purple-900/20",
-          title: "text-purple-900 dark:text-purple-100",
-          message: "text-purple-700 dark:text-purple-200",
-          iconBg:
-            "bg-purple-100 dark:bg-purple-800 text-purple-600 dark:text-purple-200",
-          badge:
-            "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
-          icon: <FileCheck className="w-4 h-4" />,
-        };
-      case "ATTENDANCE":
-        return {
-          container: "border-green-500 bg-green-50 dark:bg-green-900/20",
-          title: "text-green-900 dark:text-green-100",
-          message: "text-green-700 dark:text-green-200",
-          iconBg:
-            "bg-green-100 dark:bg-green-800 text-green-600 dark:text-green-200",
-          badge:
-            "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
-          icon: <Clock className="w-4 h-4" />,
-        };
-      case "ALERT":
-        return {
-          container: "border-red-500 bg-red-50 dark:bg-red-900/20",
-          title: "text-red-900 dark:text-red-100",
-          message: "text-red-700 dark:text-red-200",
-          iconBg:
-            "bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-200",
-          badge:
-            "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200",
-          icon: <AlertCircle className="w-4 h-4" />,
-        };
-      case "SYSTEM":
-        return {
-          container: "border-blue-500 bg-blue-50 dark:bg-blue-900/20",
-          title: "text-blue-900 dark:text-blue-100",
-          message: "text-blue-700 dark:text-blue-200",
-          iconBg:
-            "bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-200",
-          badge:
-            "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
-          icon: <Bell className="w-4 h-4" />,
-        };
-      default:
-        return {
-          container: "border-gray-400 bg-gray-50 dark:bg-gray-800/40",
-          title: "text-gray-900 dark:text-gray-100",
-          message: "text-gray-700 dark:text-gray-300",
-          iconBg:
-            "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-200",
-          badge:
-            "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200",
-          icon: <Bell className="w-4 h-4" />,
-        };
-    }
-  };
-
-  const formatNotificationType = (type: string) => {
-    switch (type) {
-      case "DOCUMENT":
-        return "Document";
-      case "ATTENDANCE":
-        return "Attendance";
-      case "ALERT":
-        return "Alert";
-      case "SYSTEM":
-        return "System";
-      default:
-        return type
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase());
-    }
-  };
-
-  const formatNotificationTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-      return "";
-    }
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const getActivityIcon = (type: string) => {
@@ -304,54 +192,7 @@ const CoordinatorDashboard = ({
   //   );
   // };
 
-  const activityList = Array.isArray(activities) ? activities : [];
   const alertList = Array.isArray(alerts) ? alerts : [];
-
-  const mapNotificationStatus = (
-    notification: NotificationItem
-  ): CoordinatorActivity["status"] => {
-    const lowerMessage = notification.message.toLowerCase();
-    if (lowerMessage.includes("reject")) {
-      return "rejected";
-    }
-    if (lowerMessage.includes("approve")) {
-      return "approved";
-    }
-    return "pending";
-  };
-
-  const notificationActivities: CoordinatorActivity[] = notifications.map(
-    (notification) => {
-      const mappedType: CoordinatorActivity["type"] = (() => {
-        switch (notification.type) {
-          case "DOCUMENT":
-            return "document";
-          case "ATTENDANCE":
-            return "attendance";
-          case "ALERT":
-            return "task";
-          case "SYSTEM":
-          default:
-            return "task";
-        }
-      })();
-
-      return {
-        id: `notification-${notification.id}`,
-        type: mappedType,
-        student: notification.title,
-        action: notification.message,
-        timestamp: notification.createdAt,
-        status: mapNotificationStatus(notification),
-      };
-    }
-  );
-
-  const activityFeed = [...activityList, ...notificationActivities]
-    .sort(
-      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
-    .slice(0, 10);
 
   const filteredStudents = (students || []).filter((student) => {
     const matchesSearch =
@@ -369,9 +210,7 @@ const CoordinatorDashboard = ({
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading coordinator dashboard...
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">{t("dashboard.loading")}</p>
         </div>
       </div>
     );
@@ -392,11 +231,11 @@ const CoordinatorDashboard = ({
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
-                Dashboard Overview
+                {t("dashboard.header.title")}
               </h1>
             </div>
             <p className="text-purple-100 text-sm font-medium max-w-xl">
-              Monitor and manage all internship activities across the system
+              {t("dashboard.header.subtitle")}
             </p>
           </div>
 
@@ -406,7 +245,7 @@ const CoordinatorDashboard = ({
                 <Users className="w-6 h-6 text-white" />
               </div>
               <p className="text-purple-100 text-xs font-medium mt-1">
-                Total Students
+                {t("dashboard.header.totalStudents")}
               </p>
               <p className="text-2xl font-bold text-white">
                 {stats?.totalStudents || 0}
@@ -426,10 +265,10 @@ const CoordinatorDashboard = ({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Student Management
+                  {t("dashboard.students.title")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Manage and monitor student progress
+                  {t("dashboard.students.subtitle")}
                 </p>
               </div>
             </div>
@@ -438,7 +277,7 @@ const CoordinatorDashboard = ({
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search students, companies, or student numbers..."
+                  placeholder={t("dashboard.students.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
@@ -449,10 +288,10 @@ const CoordinatorDashboard = ({
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium"
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
+                <option value="all">{t("dashboard.students.filters.all")}</option>
+                <option value="active">{t("dashboard.students.filters.active")}</option>
+                <option value="pending">{t("dashboard.students.filters.pending")}</option>
+                <option value="completed">{t("dashboard.students.filters.completed")}</option>
               </select>
             </div>
           </div>
@@ -462,22 +301,22 @@ const CoordinatorDashboard = ({
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                 <tr>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Student
+                    {t("dashboard.students.table.student")}
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Company
+                    {t("dashboard.students.table.company")}
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Status
+                    {t("dashboard.students.table.status")}
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Attendance
+                    {t("dashboard.students.table.attendance")}
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Tasks
+                    {t("dashboard.students.table.tasks")}
                   </th>
                   <th className="text-left py-4 px-6 text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Rating
+                    {t("dashboard.students.table.rating")}
                   </th>
                 </tr>
               </thead>
@@ -519,7 +358,7 @@ const CoordinatorDashboard = ({
                           student.status
                         )}`}
                       >
-                        {student.status}
+                        {getStatusLabel(student.status)}
                       </span>
                     </td>
                     <td className="py-6 px-6">
@@ -577,22 +416,22 @@ const CoordinatorDashboard = ({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Performance Overview
+                  {t("dashboard.performance.title")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Key performance metrics
+                  {t("dashboard.performance.subtitle")}
                 </p>
               </div>
             </div>
             <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium text-sm">
-              View All
+              {t("dashboard.performance.viewAll")}
             </button>
           </div>
           <div className="space-y-6">
             <div>
               <div className="flex justify-between items-center mb-3">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  Attendance Rate
+                  {t("dashboard.performance.attendanceRate")}
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {stats?.attendanceRate || 0}%
@@ -608,7 +447,7 @@ const CoordinatorDashboard = ({
             <div>
               <div className="flex justify-between items-center mb-3">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  Tasks Completed
+                  {t("dashboard.performance.tasksCompleted")}
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {stats?.tasksCompleted || 0}%
@@ -624,7 +463,7 @@ const CoordinatorDashboard = ({
             <div>
               <div className="flex justify-between items-center mb-3">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  Document Approval
+                  {t("dashboard.performance.documentApproval")}
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {(
@@ -653,7 +492,7 @@ const CoordinatorDashboard = ({
             <div>
               <div className="flex justify-between items-center mb-3">
                 <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  Average Rating
+                  {t("dashboard.performance.averageRating")}
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {((stats?.averageRating || 0 / 5) * 100).toFixed(0)}%
@@ -680,10 +519,10 @@ const CoordinatorDashboard = ({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Recent Alerts
+                  {t("dashboard.alerts.title")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Important notifications and updates
+                  {t("dashboard.alerts.subtitle")}
                 </p>
               </div>
             </div>
@@ -716,7 +555,7 @@ const CoordinatorDashboard = ({
             ))}
             {(!alertList || alertList.length === 0) && (
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                No alerts at the moment. Everything looks good!
+                {t("dashboard.alerts.empty")}
               </div>
             )}
           </div>
@@ -731,10 +570,10 @@ const CoordinatorDashboard = ({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Recent Activities
+                  {t("dashboard.activities.title")}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Latest system activities
+                  {t("dashboard.activities.subtitle")}
                 </p>
               </div>
             </div>
@@ -755,21 +594,21 @@ const CoordinatorDashboard = ({
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {activity.title}
+                      {activity.student}
                     </h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {activity.description}
+                      {activity.action}
                     </p>
                   </div>
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatActivityTimestamp(activity.timestamp)}
+                  {formatDateTime(activity.timestamp)}
                 </span>
               </div>
             ))}
             {(!activities || activities.length === 0) && (
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                No recent activity.
+                {t("dashboard.activities.empty")}
               </div>
             )}
           </div>
@@ -783,6 +622,7 @@ const CoordinatorDashboard = ({
 // MAIN COORDINATOR PORTAL
 // =============================================
 const CoordinatorPortal: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -801,6 +641,12 @@ const CoordinatorPortal: React.FC = () => {
     { ttl: 60 * 1000 }
   );
   const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
+
+  useEffect(() => {
+    if (Array.isArray(notificationsData)) {
+      setLocalNotifications(notificationsData);
+    }
+  }, [notificationsData]);
 
   // Current user state
   const [currentUser, setCurrentUser] = useState<{
@@ -822,75 +668,83 @@ const CoordinatorPortal: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (notificationsData) {
-      setLocalNotifications(notificationsData);
-    }
-  }, [notificationsData]);
+  const loadUserData = useCallback(() => {
+    try {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        const user = JSON.parse(userData);
+        const name = user.name || user.fullName || "Coordinator";
+        const email = user.email || "";
+        const initials = name
+          .split(" ")
+          .map((n: string) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
 
-  // Load current user data
-  useEffect(() => {
-    const loadUserData = () => {
-      try {
-        const userData = localStorage.getItem("user");
-        if (userData) {
-          const user = JSON.parse(userData);
-          const name = user.name || user.fullName || "Coordinator";
-          const email = user.email || "";
-          const initials = name
-            .split(" ")
-            .map((n: string) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-
-          setCurrentUser({
-            name,
-            email,
-            initials,
-          });
-        }
-
-        // Load profile photo from server
-        const loadProfilePhoto = async () => {
-          try {
-            const serverPhoto = await settingsService.getProfilePhoto();
-            if (serverPhoto) {
-              setProfilePhoto(serverPhoto);
-            }
-          } catch (error) {
-            console.log("No profile photo found");
-          }
-        };
-        loadProfilePhoto();
-      } catch (error) {
-        console.error("Error loading user data:", error);
-        // Fallback to default values
         setCurrentUser({
-          name: "Coordinator",
-          email: "",
-          initials: "CO",
+          name,
+          email,
+          initials,
         });
+      }
+
+      const loadProfilePhoto = async () => {
+        try {
+          const serverPhoto = await settingsService.getProfilePhoto();
+          if (serverPhoto) {
+            setProfilePhoto(serverPhoto);
+          }
+        } catch (error) {
+          console.log("No profile photo found");
+        }
+      };
+      loadProfilePhoto();
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      setCurrentUser({
+        name: "Coordinator",
+        email: "",
+        initials: "CO",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    loadUserData();
+
+    const handleProfileUpdated = (event: any) => {
+      const { user } = event.detail || {};
+      if (user?.name || user?.email) {
+        const name = user.name || user.fullName || "Coordinator";
+        const email = user.email || "";
+        const initials = name
+          .split(" ")
+          .map((n: string) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+
+        setCurrentUser({ name, email, initials });
       }
     };
 
-    loadUserData();
-
-    // Listen for profile photo updates from settings
     const handleProfilePhotoUpdate = (event: any) => {
       const { photoUrl } = event.detail;
       setProfilePhoto(photoUrl);
     };
 
+    window.addEventListener("profileUpdated", handleProfileUpdated);
     window.addEventListener("profilePhotoUpdated", handleProfilePhotoUpdate);
 
     return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdated);
       window.removeEventListener(
         "profilePhotoUpdated",
         handleProfilePhotoUpdate
       );
     };
-  }, []);
+  }, [loadUserData]);
 
   // Check authentication on mount
   React.useEffect(() => {
@@ -928,12 +782,11 @@ const CoordinatorPortal: React.FC = () => {
   }, [showUserMenu, showNotifications]);
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "students", label: "Student Management", icon: Users },
-    { id: "documents", label: "Review Documents", icon: FileCheck },
-    { id: "companies", label: "Company Management", icon: Building2 },
-    { id: "announcements", label: "Announcements", icon: MessageSquare },
-    //{ id: "settings", label: "Settings", icon: Settings },
+    { id: "dashboard", label: t("dashboard.nav.dashboard"), icon: Home },
+    { id: "students", label: t("dashboard.nav.students"), icon: Users },
+    { id: "documents", label: t("dashboard.nav.documents"), icon: FileCheck },
+    { id: "companies", label: t("dashboard.nav.companies"), icon: Building2 },
+    { id: "announcements", label: t("dashboard.nav.announcements"), icon: MessageSquare },
   ];
 
   const handleNotificationClick = async (notification: NotificationItem) => {
@@ -948,13 +801,20 @@ const CoordinatorPortal: React.FC = () => {
         refreshNotifications();
       }
 
-      if (notification.link) {
+      if (notification.type === "DOCUMENT") {
+        setActiveTab("documents");
+        navigate("/coordinator/dashboard");
+      } else if (notification.link) {
         const link = notification.link;
         if (/^https?:\/\//i.test(link)) {
           window.open(link, "_blank", "noopener,noreferrer");
         } else {
           const normalizedLink = link.startsWith("/") ? link : `/${link}`;
-          navigate(normalizedLink);
+          if (normalizedLink.startsWith("/login")) {
+            navigate("/coordinator/dashboard");
+          } else {
+            navigate(normalizedLink);
+          }
         }
       }
     } catch (error) {
@@ -979,28 +839,35 @@ const CoordinatorPortal: React.FC = () => {
   ).length;
 
   const formatDropdownTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-      return "";
-    }
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    if (!timestamp) return "";
+    return formatDateTime(timestamp);
   };
 
   const handleLogout = () => {
-    // Clear authentication state
+    const appPrefs = localStorage.getItem("appPreferences");
+    const notificationPrefs = localStorage.getItem("notificationPreferences");
+
     setIsAuthenticated(false);
     sessionStorage.removeItem("isAuthenticated");
-    localStorage.clear();
 
-    // Close modal
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    if (notificationPrefs) {
+      localStorage.setItem("notificationPreferences", notificationPrefs);
+    }
+    if (appPrefs) {
+      localStorage.setItem("appPreferences", appPrefs);
+      try {
+        const parsed = JSON.parse(appPrefs);
+        settingsService.applyTheme(parsed.theme as "light" | "dark" | "system");
+      } catch (error) {
+        console.error("Failed to re-apply theme during logout", error);
+      }
+    }
+
     setShowLogoutModal(false);
-
-    // Redirect to login page and prevent back navigation
     window.location.replace("/login");
   };
 
@@ -1015,10 +882,7 @@ const CoordinatorPortal: React.FC = () => {
       case "dashboard":
         return (
           <CoordinatorDashboard
-            notifications={localNotifications}
             notificationsLoading={notificationsLoading}
-            onNotificationClick={handleNotificationClick}
-            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
           />
         );
       case "students":
@@ -1030,14 +894,11 @@ const CoordinatorPortal: React.FC = () => {
       case "announcements":
         return <CoordinatorAnnouncementsTab />;
       case "settings":
-        return <CoordinatorSettingsTab />;
+        return <CoordinatorSettingsTab onProfileUpdate={loadUserData} />;
       default:
         return (
           <CoordinatorDashboard
-            notifications={localNotifications}
             notificationsLoading={notificationsLoading}
-            onNotificationClick={handleNotificationClick}
-            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
           />
         );
     }
@@ -1053,7 +914,7 @@ const CoordinatorPortal: React.FC = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="lg:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -1077,15 +938,15 @@ const CoordinatorPortal: React.FC = () => {
                     <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between">
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Notifications
+                          {t("dashboard.notifications.title")}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                          Recent approvals, feedback, and alerts
+                          {t("dashboard.notifications.subtitle")}
                         </p>
                       </div>
                       {unreadNotificationCount > 0 && (
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
-                          {unreadNotificationCount} new
+                          {t("dashboard.notifications.new", { count: unreadNotificationCount })}
                         </span>
                       )}
                     </div>
@@ -1093,48 +954,58 @@ const CoordinatorPortal: React.FC = () => {
                     <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
                       {notificationsLoading ? (
                         <div className="px-5 py-8 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                          Loading notifications...
+                          {t("dashboard.notifications.loading")}
                         </div>
                       ) : localNotifications.length > 0 ? (
-                        localNotifications.map((notification) => (
-                          <button
-                            key={notification.id}
-                            onClick={() => {
-                              handleNotificationClick(notification);
-                              setShowNotifications(false);
-                            }}
-                            className={`w-full text-left px-5 py-4 transition-colors ${
-                              notification.read
-                                ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {formatDropdownTimestamp(notification.createdAt)}
-                                </p>
+                        localNotifications
+                          .filter((notification) =>
+                            [
+                              "DOCUMENT",
+                              "ATTENDANCE",
+                              "ALERT",
+                              "SYSTEM",
+                              "OTHER",
+                            ].includes(notification.type ?? "OTHER")
+                          )
+                          .map((notification) => (
+                            <button
+                              key={notification.id}
+                              onClick={() => {
+                                handleNotificationClick(notification);
+                                setShowNotifications(false);
+                              }}
+                              className={`w-full text-left px-5 py-4 transition-colors ${
+                                notification.read
+                                  ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                  : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {formatDropdownTimestamp(notification.createdAt)}
+                                  </p>
+                                </div>
+                                {!notification.read && (
+                                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
+                                )}
                               </div>
-                              {!notification.read && (
-                                <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-3">
+                                {notification.message}
+                              </p>
+                              {notification.type && (
+                                <span className="mt-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                  {notification.type.replace(/_/g, " ")}
+                                </span>
                               )}
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-3">
-                              {notification.message}
-                            </p>
-                            {notification.type && (
-                              <span className="mt-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                                {notification.type.replace(/_/g, " ")}
-                              </span>
-                            )}
-                          </button>
-                        ))
+                            </button>
+                          ))
                       ) : (
                         <div className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                          You're all caught up! No new notifications.
+                          {t("dashboard.notifications.empty")}
                         </div>
                       )}
                     </div>
@@ -1148,7 +1019,7 @@ const CoordinatorPortal: React.FC = () => {
                         disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
                         className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Mark all as read
+                        {t("dashboard.notifications.markAll")}
                       </button>
                       <button
                         onClick={() => {
@@ -1157,7 +1028,7 @@ const CoordinatorPortal: React.FC = () => {
                         }}
                         className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-blue-600 text-white hover:from-purple-600 hover:to-blue-700 transition-colors"
                       >
-                        View dashboard
+                        {t("dashboard.notifications.viewDashboard")}
                       </button>
                     </div>
                   </div>

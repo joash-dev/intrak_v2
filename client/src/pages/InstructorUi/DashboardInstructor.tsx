@@ -22,6 +22,8 @@ import {
   Calendar,
   Upload,
   ClipboardList,
+  Megaphone,
+  CalendarDays,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
@@ -43,6 +45,7 @@ import {
   notificationService,
   type NotificationItem,
 } from "../../services/notificationService";
+import { type Announcement } from "../../services/announcementService";
 
 // =============================================
 // INSTRUCTOR DASHBOARD COMPONENT
@@ -83,6 +86,13 @@ const InstructorDashboard = ({
     { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
+  const { data: announcementsData, loading: announcementsLoading } =
+    useOptimizedData<Announcement[]>(
+      () => instructorService.getAnnouncements(),
+      [],
+      { ttl: 2 * 60 * 1000 }
+    );
+
   const students = studentsData || [];
   const stats =
     statsData ||
@@ -97,12 +107,23 @@ const InstructorDashboard = ({
       evaluationsPending: 0,
     };
   const activities = activitiesData || [];
+  const announcements = announcementsData || [];
+  const latestAnnouncements = announcements.slice(0, 3);
 
   const loading =
     studentsLoading ||
     statsLoading ||
     activitiesLoading ||
+    announcementsLoading ||
     notificationsLoading;
+
+  const handleAnnouncementClick = async (announcementId: string) => {
+    try {
+      await instructorService.trackAnnouncementView(announcementId);
+    } catch (error) {
+      console.warn("Failed to track announcement view", error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -542,6 +563,64 @@ const InstructorDashboard = ({
 
         {/* Right Sidebar */}
         <div className="space-y-6">
+          {/* Announcements */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
+                <span className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <Megaphone className="w-4 h-4 text-white" />
+                </span>
+                <span>Announcements</span>
+              </h3>
+              <span className="text-xs font-medium px-3 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                {announcements.length} total
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {latestAnnouncements.length > 0 ? (
+                latestAnnouncements.map((announcement) => (
+                  <button
+                    key={announcement.id}
+                    onClick={() => handleAnnouncementClick(announcement.id)}
+                    className="w-full text-left rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-900/20 px-4 py-3 hover:bg-amber-100/80 dark:hover:bg-amber-900/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {announcement.title}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                          {announcement.message || announcement.content}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end space-y-1">
+                        <span className="inline-flex items-center space-x-1 text-[11px] font-medium text-amber-700 dark:text-amber-200">
+                          <CalendarDays className="w-3.5 h-3.5" />
+                          <span>
+                            {announcement.createdDate
+                              ? new Date(announcement.createdDate).toLocaleDateString()
+                              : new Date(announcement.createdAt).toLocaleDateString()}
+                          </span>
+                        </span>
+                        {announcement.type && (
+                          <span className="text-[11px] uppercase tracking-wide font-semibold text-amber-600 dark:text-amber-300">
+                            {announcement.type}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
+                  <Megaphone className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                  No announcements yet.
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">

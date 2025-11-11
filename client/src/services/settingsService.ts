@@ -148,12 +148,8 @@ class SettingsService {
     } else if (theme === 'light') {
       root.classList.remove('dark');
     } else {
-      // Auto/System theme based on system preference
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList[prefersDark ? 'add' : 'remove']('dark');
     }
   }
 

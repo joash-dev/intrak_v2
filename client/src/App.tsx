@@ -8,6 +8,8 @@ import DashboardIndustryPartner from "./pages/SupervisorUi/SupervisorDashboard";
 import AdminPage from "./pages/AdminUi/AdminPage";
 import MaintenancePage from "./pages/MaintenancePage";
 import { adminService } from "./services/adminService";
+import { settingsService } from "./services/settingsService";
+import i18n from "i18next";
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -90,6 +92,12 @@ const MaintenanceWrapper: React.FC<{ children: React.ReactNode }> = ({
 };
 
 const App: React.FC = () => {
+  useEffect(() => {
+    const prefs = settingsService.loadAppPreferences();
+    settingsService.applyTheme(prefs.theme);
+    i18n.changeLanguage(prefs.language || "en");
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

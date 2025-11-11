@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Users,
   Search,
@@ -51,7 +51,13 @@ interface Instructor {
   studentsAssigned: number;
 }
 
-const CoordinatorStudentManagement: React.FC = () => {
+interface CoordinatorStudentManagementProps {
+  bulkOperationsEnabled?: boolean;
+}
+
+const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> = ({
+  bulkOperationsEnabled = false,
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [instructorFilter, setInstructorFilter] = useState("all");
@@ -145,6 +151,9 @@ const CoordinatorStudentManagement: React.FC = () => {
   };
 
   const handleMassAssignment = () => {
+    if (!bulkOperationsEnabled) {
+      return;
+    }
     if (selectedStudents.length === 0) {
       toast.error("Please select at least one student");
       return;
@@ -153,6 +162,9 @@ const CoordinatorStudentManagement: React.FC = () => {
   };
 
   const handleConfirmMassAssignment = async () => {
+    if (!bulkOperationsEnabled) {
+      return;
+    }
     if (selectedStudents.length === 0 || !selectedInstructor) return;
 
     try {
@@ -183,6 +195,9 @@ const CoordinatorStudentManagement: React.FC = () => {
   };
 
   const handleSelectStudent = (studentId: string) => {
+    if (!bulkOperationsEnabled) {
+      return;
+    }
     setSelectedStudents((prev) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId)
@@ -191,6 +206,9 @@ const CoordinatorStudentManagement: React.FC = () => {
   };
 
   const handleSelectAll = () => {
+    if (!bulkOperationsEnabled) {
+      return;
+    }
     const unassignedStudents = filteredStudents.filter(
       (student: Student) => !student.instructorId
     );
@@ -249,6 +267,13 @@ const CoordinatorStudentManagement: React.FC = () => {
     combinedLoading,
   });
 
+  useEffect(() => {
+    if (!bulkOperationsEnabled) {
+      setSelectedStudents([]);
+      setShowMassAssignModal(false);
+    }
+  }, [bulkOperationsEnabled]);
+
   // Early return if data is not ready
   if (!students && !instructors && combinedLoading) {
     return (
@@ -266,6 +291,8 @@ const CoordinatorStudentManagement: React.FC = () => {
       </div>
     );
   }
+
+  const columnCount = bulkOperationsEnabled ? 6 : 5;
 
   return (
     <div className="space-y-6">
@@ -357,7 +384,7 @@ const CoordinatorStudentManagement: React.FC = () => {
       </div>
 
       {/* Bulk Actions Toolbar */}
-      {selectedStudents.length > 0 && (
+      {bulkOperationsEnabled && selectedStudents.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -506,20 +533,22 @@ const CoordinatorStudentManagement: React.FC = () => {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedStudents.length > 0 &&
-                      selectedStudents.length ===
-                        filteredStudents.filter(
-                          (student: Student) => !student.instructorId
-                        ).length
-                    }
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </th>
+                {bulkOperationsEnabled && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedStudents.length > 0 &&
+                        selectedStudents.length ===
+                          filteredStudents.filter(
+                            (student: Student) => !student.instructorId
+                          ).length
+                      }
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Student
                 </th>
@@ -540,7 +569,7 @@ const CoordinatorStudentManagement: React.FC = () => {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {combinedLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={columnCount} className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
                     <p className="text-gray-500 dark:text-gray-400 mt-2">
                       Loading students...
@@ -549,7 +578,7 @@ const CoordinatorStudentManagement: React.FC = () => {
                 </tr>
               ) : filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={columnCount} className="px-6 py-12 text-center">
                     <Users className="w-12 h-12 mx-auto text-gray-400" />
                     <p className="text-gray-500 dark:text-gray-400 mt-2">
                       No students found
@@ -562,15 +591,17 @@ const CoordinatorStudentManagement: React.FC = () => {
                     key={student.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={() => handleSelectStudent(student.id)}
-                        disabled={!!student.instructorId}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      />
-                    </td>
+                    {bulkOperationsEnabled && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={() => handleSelectStudent(student.id)}
+                          disabled={!!student.instructorId}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
@@ -729,8 +760,8 @@ const CoordinatorStudentManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Mass Assignment Modal */}
-      {showMassAssignModal && (
+      {/* Mass Assign Modal */}
+      {bulkOperationsEnabled && showMassAssignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4">

@@ -174,7 +174,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       throw new Error('Failed to save file');
     }
 
-    const document = await prisma.document.create({
+    let document = await prisma.document.create({
       data: {
         studentId: targetStudentId,
         type,
@@ -185,6 +185,22 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         status: 'PENDING'
       }
     });
+
+    if (type === 'MOA') {
+      const autoApproveEnabled = await prisma.coordinatorSettings.findFirst({
+        where: {
+          autoApproveDocuments: true,
+          requireDocumentReview: false,
+        },
+      });
+
+      if (autoApproveEnabled) {
+        document = await prisma.document.update({
+          where: { id: document.id },
+          data: { status: 'APPROVED' },
+        });
+      }
+    }
 
     await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
       documentId: document.id,
