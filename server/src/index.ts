@@ -55,10 +55,16 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
+    const envOrigins = (process.env.CORS_ORIGIN || '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
     const allowedOrigins = [
-      process.env.CORS_ORIGIN || 'http://localhost:5173',
+      ...envOrigins,
+      'http://localhost:5173',
       'http://localhost:3000',
-      'http://localhost:5173'
+      'https://intrak-v2.onrender.com'
     ];
 
     if (allowedOrigins.includes(origin)) {
