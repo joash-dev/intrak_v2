@@ -26,6 +26,16 @@ class EmailService {
         pass: process.env.SMTP_PASS || 'ethereal.pass'
       }
     });
+
+    this.transporter
+      .verify()
+      .then(() => {
+        console.log('✅ Email transporter verified successfully');
+      })
+      .catch((error) => {
+        console.error('❌ Email transporter verification failed:', error);
+        console.error('❌ Check SMTP_HOST/PORT/USER/PASS/SECURE environment variables');
+      });
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
@@ -51,7 +61,10 @@ class EmailService {
       }
 
       const mailOptions = {
-        from: process.env.SMTP_FROM || 'noreply@intrak.edu.ph',
+        from:
+          process.env.SMTP_FROM ||
+          process.env.SMTP_USER ||
+          'intraksystem@gmail.com',
         to: options.to,
         subject: options.subject,
         html: options.html,

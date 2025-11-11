@@ -25,17 +25,12 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       additionalInfo
     );
 
-    if (emailSent) {
-      res.json({ 
-        message: 'Welcome email sent successfully',
-        emailSent: true 
-      });
-    } else {
-      res.status(500).json({ 
-        message: 'Failed to send welcome email',
-        emailSent: false 
-      });
-    }
+    res.status(200).json({
+      message: emailSent
+        ? 'Welcome email sent successfully'
+        : 'User created but email failed to send',
+      emailSent
+    });
   } catch (error) {
     console.error('Error sending welcome email:', error);
     res.status(500).json({ 
@@ -62,17 +57,12 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       temporaryPassword
     );
 
-    if (emailSent) {
-      res.json({ 
-        message: 'Welcome email sent successfully',
-        emailSent: true 
-      });
-    } else {
-      res.status(500).json({ 
-        message: 'Failed to send welcome email',
-        emailSent: false 
-      });
-    }
+    res.status(200).json({
+      message: emailSent
+        ? 'Welcome email sent successfully'
+        : 'User created but email failed to send',
+      emailSent
+    });
   } catch (error) {
     console.error('Error sending welcome email:', error);
     res.status(500).json({ 
