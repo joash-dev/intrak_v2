@@ -307,7 +307,6 @@ const SupervisorAttendance = () => {
 
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
-  const supervisorName = user?.name || "Supervisor";
   const companyName = user?.company || "Company";
 
   return (

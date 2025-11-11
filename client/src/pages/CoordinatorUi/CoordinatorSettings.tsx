@@ -21,7 +21,6 @@ import {
   FileText,
   Settings,
   Activity,
-  Download,
   //Upload,
   Palette,
   Monitor,

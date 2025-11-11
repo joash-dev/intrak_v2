@@ -255,7 +255,10 @@ class AdminService {
       return response.data.instructors || [];
     } catch (error) {
       console.error('Error fetching instructors:', error);
-      throw new Error(error.response?.data?.message || 'Failed to fetch instructors');
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error instanceof Error ? error.message : 'Failed to fetch instructors');
+      throw new Error(message);
     }
   }
 

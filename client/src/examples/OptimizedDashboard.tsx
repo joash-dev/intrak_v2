@@ -120,9 +120,9 @@ const OptimizedDashboard = memo(() => {
 
       {/* Optimized Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsCards.map((stat, index) => (
+        {statsCards.map((stat) => (
           <OptimizedCard
-            key={index}
+            key={stat.title}
             title={stat.title}
             value={stat.value}
             icon={stat.icon}
@@ -138,7 +138,7 @@ const OptimizedDashboard = memo(() => {
           items={studentsList}
           itemHeight={60}
           containerHeight={400}
-          renderItem={(student: any, index) => (
+          renderItem={(student: any, _index: number) => (
             <div
               key={student.id}
               className="flex items-center p-3 border-b border-gray-200"

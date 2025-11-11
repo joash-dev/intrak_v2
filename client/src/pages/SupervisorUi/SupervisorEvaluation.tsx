@@ -8,7 +8,6 @@ import {
   Loader2,
   Star,
   TrendingUp,
-  Calendar,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type {

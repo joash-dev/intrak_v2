@@ -176,25 +176,26 @@ const AdminCompanyManagement = () => {
     setShowEditModal(true);
   };
 
-  const getMoaBadgeColor = (
-    status: "SIGNED" | "PENDING" | "EXPIRED" | string
-  ) => {
+  const getMoaBadgeColor = (status?: "SIGNED" | "PENDING" | "EXPIRED" | string) => {
     return {
       SIGNED:
         "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       PENDING:
         "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       EXPIRED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    }[status];
+    }[status ?? "PENDING"];
   };
 
-  const getMoaIcon = (status: "SIGNED" | "PENDING" | "EXPIRED" | string) => {
+  const getMoaIcon = (status?: "SIGNED" | "PENDING" | "EXPIRED" | string) => {
     return {
       SIGNED: <CheckCircle className="w-4 h-4" />,
       PENDING: <AlertCircle className="w-4 h-4" />,
       EXPIRED: <XCircle className="w-4 h-4" />,
-    }[status];
+    }[status ?? "PENDING"];
   };
+
+  const selectedCompanyStudentCount =
+    selectedCompany?.studentCount ?? selectedCompany?.students?.length ?? 0;
 
   return (
     <div className="space-y-6 font-outfit">
@@ -636,18 +637,18 @@ const AdminCompanyManagement = () => {
                     <p className="text-sm text-gray-500">Status</p>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm ${
-                        selectedCompany.status === "ACTIVE"
+                        (selectedCompany.status ?? "INACTIVE") === "ACTIVE"
                           ? "bg-green-100 text-green-800"
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {selectedCompany.status}
+                      {selectedCompany.status ?? "INACTIVE"}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Students</p>
                     <p className="text-2xl font-bold text-indigo-600">
-                      {selectedCompany.studentCount}
+                      {selectedCompanyStudentCount}
                     </p>
                   </div>
                 </div>
@@ -663,7 +664,7 @@ const AdminCompanyManagement = () => {
                       )}`}
                     >
                       {getMoaIcon(selectedCompany.moaStatus)}
-                      <span>{selectedCompany.moaStatus}</span>
+                      <span>{selectedCompany.moaStatus ?? "PENDING"}</span>
                     </span>
                   </div>
                   {selectedCompany.moaExpiry && (
@@ -706,10 +707,10 @@ const AdminCompanyManagement = () => {
               Delete{" "}
               <span className="font-semibold">{selectedCompany.name}</span>?
             </p>
-            {selectedCompany.studentCount > 0 && (
+            {selectedCompanyStudentCount > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                 <p className="text-sm text-yellow-800 text-center">
-                  This company has {selectedCompany.studentCount} active
+                  This company has {selectedCompanyStudentCount} active
                   student(s)
                 </p>
               </div>
