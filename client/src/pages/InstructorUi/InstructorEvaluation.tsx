@@ -26,14 +26,6 @@ interface Student {
   pendingEvaluation: boolean;
 }
 
-interface EvaluationHistory {
-  id: string;
-  date: string;
-  rating: number;
-  evaluator: string;
-  type: string;
-}
-
 const InstructorEvaluationsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -100,34 +92,6 @@ const InstructorEvaluationsTab = () => {
       pendingEvaluation: false,
     },
   ];
-
-  const evaluationHistory: Record<string, EvaluationHistory[]> = {
-    "1": [
-      {
-        id: "1",
-        date: "2024-09-15",
-        rating: 4.5,
-        evaluator: "Instructor",
-        type: "Mid-term",
-      },
-      {
-        id: "2",
-        date: "2024-08-30",
-        rating: 4.3,
-        evaluator: "Industry Partner",
-        type: "Monthly",
-      },
-    ],
-    "2": [
-      {
-        id: "1",
-        date: "2024-09-10",
-        rating: 4.2,
-        evaluator: "Instructor",
-        type: "Mid-term",
-      },
-    ],
-  };
 
   const stats = {
     total: students.length,

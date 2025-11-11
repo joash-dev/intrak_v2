@@ -1,11 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-interface PerformanceMetrics {
-  renderTime: number;
-  memoryUsage?: number;
-  componentName: string;
-}
-
 export function usePerformanceMonitor(componentName: string) {
   const renderStartTime = useRef<number>(0);
   const mountTime = useRef<number>(0);
@@ -19,7 +13,7 @@ export function usePerformanceMonitor(componentName: string) {
       const totalMountTime = performance.now() - mountTime.current;
       
       // Log performance metrics in development
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log(`[Performance] ${componentName}:`, {
           renderTime: `${renderTime.toFixed(2)}ms`,
           totalMountTime: `${totalMountTime.toFixed(2)}ms`,

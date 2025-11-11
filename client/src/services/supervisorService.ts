@@ -355,4 +355,3 @@ class SupervisorService {
 }
 
 export const supervisorService = new SupervisorService();
-export type { SupervisorStudent, AttendanceLog, StudentDocument, EvaluationData };

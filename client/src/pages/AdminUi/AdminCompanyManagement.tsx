@@ -9,7 +9,6 @@ import {
   Phone,
   Mail,
   Users,
-  Globe,
   X,
   AlertCircle,
   Eye,
@@ -20,99 +19,6 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminCompany } from "../../services/adminService";
 import toast from "react-hot-toast";
-
-const mockCompanies = [
-  {
-    id: "1",
-    name: "Tech Innovations Inc.",
-    industry: "Information Technology",
-    address: "123 Tech Street, Makati City, Metro Manila",
-    contactPerson: "Engr. Lisa Tan",
-    email: "contact@techinnovations.com",
-    phone: "+63-912-345-6789",
-    website: "www.techinnovations.com",
-    studentCount: 23,
-    status: "ACTIVE",
-    moaStatus: "SIGNED",
-    moaExpiry: "2025-12-31",
-    createdAt: "2023-01-15",
-  },
-  {
-    id: "2",
-    name: "Digital Solutions Corp.",
-    industry: "Software Development",
-    address: "456 Digital Ave, BGC, Taguig City",
-    contactPerson: "Mr. Robert Chen",
-    email: "hr@digitalsolutions.com",
-    phone: "+63-912-345-6790",
-    website: "www.digitalsolutions.com",
-    studentCount: 18,
-    status: "ACTIVE",
-    moaStatus: "SIGNED",
-    moaExpiry: "2025-11-30",
-    createdAt: "2023-02-20",
-  },
-  {
-    id: "3",
-    name: "Engineering Works Ltd.",
-    industry: "Civil Engineering",
-    address: "789 Builder Road, Quezon City",
-    contactPerson: "Engr. Maria Garcia",
-    email: "info@engineeringworks.com",
-    phone: "+63-912-345-6791",
-    website: "www.engineeringworks.com",
-    studentCount: 15,
-    status: "ACTIVE",
-    moaStatus: "PENDING",
-    moaExpiry: null,
-    createdAt: "2023-03-10",
-  },
-  {
-    id: "4",
-    name: "Smart Systems Co.",
-    industry: "Electronics & Automation",
-    address: "321 Smart Lane, Pasig City",
-    contactPerson: "Dr. John Martinez",
-    email: "contact@smartsystems.com",
-    phone: "+63-912-345-6792",
-    website: "www.smartsystems.com",
-    studentCount: 12,
-    status: "ACTIVE",
-    moaStatus: "SIGNED",
-    moaExpiry: "2026-01-15",
-    createdAt: "2023-04-05",
-  },
-  {
-    id: "5",
-    name: "Future Tech Labs",
-    industry: "Research & Development",
-    address: "555 Innovation Hub, Mandaluyong City",
-    contactPerson: "Ms. Sarah Lee",
-    email: "hr@futuretechlabs.com",
-    phone: "+63-912-345-6793",
-    website: "www.futuretechlabs.com",
-    studentCount: 10,
-    status: "ACTIVE",
-    moaStatus: "SIGNED",
-    moaExpiry: "2025-10-20",
-    createdAt: "2023-05-12",
-  },
-  {
-    id: "6",
-    name: "Old Systems Inc.",
-    industry: "Manufacturing",
-    address: "999 Old Street, Manila",
-    contactPerson: "Mr. Pedro Santos",
-    email: "contact@oldsystems.com",
-    phone: "+63-912-345-6794",
-    website: "www.oldsystems.com",
-    studentCount: 0,
-    status: "INACTIVE",
-    moaStatus: "EXPIRED",
-    moaExpiry: "2024-06-30",
-    createdAt: "2022-01-10",
-  },
-];
 
 const AdminCompanyManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -156,9 +62,12 @@ const AdminCompanyManagement = () => {
 
   const stats = {
     total: companies.length,
-    active: companies.filter((c) => c.students.length > 0).length,
-    inactive: companies.filter((c) => c.students.length === 0).length,
-    totalStudents: companies.reduce((sum, c) => sum + c.students.length, 0),
+    active: companies.filter((c) => (c.students?.length ?? 0) > 0).length,
+    inactive: companies.filter((c) => (c.students?.length ?? 0) === 0).length,
+    totalStudents: companies.reduce(
+      (sum, c) => sum + (c.students?.length ?? 0),
+      0
+    ),
     moaSigned: Math.floor(companies.length * 0.7), // Mock data for now
     moaPending: Math.floor(companies.length * 0.2), // Mock data for now
     moaExpired: Math.floor(companies.length * 0.1), // Mock data for now
@@ -168,8 +77,8 @@ const AdminCompanyManagement = () => {
   const filteredCompanies = companies.filter((company) => {
     const matchesStatus =
       statusFilter === "ALL" ||
-      (statusFilter === "ACTIVE" && company.students.length > 0) ||
-      (statusFilter === "INACTIVE" && company.students.length === 0);
+      (statusFilter === "ACTIVE" && (company.students?.length ?? 0) > 0) ||
+      (statusFilter === "INACTIVE" && (company.students?.length ?? 0) === 0);
     // MOA filter would need to be implemented based on actual MOA data
     return matchesStatus;
   });
@@ -191,7 +100,16 @@ const AdminCompanyManagement = () => {
 
   const handleAddCompany = async () => {
     try {
-      await adminService.createCompany(formData);
+      await adminService.createCompany({
+        name: formData.name,
+        address: formData.address,
+        contactPerson: formData.contactPerson,
+        contactEmail: formData.email,
+        contactNumber: formData.phone,
+        latitude: undefined,
+        longitude: undefined,
+        radiusMeters: undefined,
+      });
       toast.success("Company created successfully");
       setShowAddModal(false);
       resetForm();
@@ -205,7 +123,18 @@ const AdminCompanyManagement = () => {
     if (!selectedCompany) return;
 
     try {
-      await adminService.updateCompany(selectedCompany.id, formData);
+      await adminService.updateCompany(selectedCompany.id, {
+        name: formData.name,
+        address: formData.address,
+        contactPerson: formData.contactPerson,
+        contactEmail: formData.email,
+        contactNumber: formData.phone,
+        industry: formData.industry,
+        website: formData.website,
+        status: formData.status,
+        moaStatus: formData.moaStatus,
+        moaExpiry: formData.moaExpiry,
+      });
       toast.success("Company updated successfully");
       setShowEditModal(false);
       resetForm();
@@ -247,7 +176,9 @@ const AdminCompanyManagement = () => {
     setShowEditModal(true);
   };
 
-  const getMoaBadgeColor = (status) => {
+  const getMoaBadgeColor = (
+    status: "SIGNED" | "PENDING" | "EXPIRED" | string
+  ) => {
     return {
       SIGNED:
         "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -257,7 +188,7 @@ const AdminCompanyManagement = () => {
     }[status];
   };
 
-  const getMoaIcon = (status) => {
+  const getMoaIcon = (status: "SIGNED" | "PENDING" | "EXPIRED" | string) => {
     return {
       SIGNED: <CheckCircle className="w-4 h-4" />,
       PENDING: <AlertCircle className="w-4 h-4" />,
@@ -427,17 +358,17 @@ const AdminCompanyManagement = () => {
                 <div className="flex items-center space-x-2">
                   <Users className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {company.students.length} students
+                    {company.students?.length ?? 0} students
                   </span>
                 </div>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    company.students.length > 0
+                    (company.students?.length ?? 0) > 0
                       ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                       : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
                   }`}
                 >
-                  {company.students.length > 0 ? "ACTIVE" : "INACTIVE"}
+                  {(company.students?.length ?? 0) > 0 ? "ACTIVE" : "INACTIVE"}
                 </span>
               </div>
 

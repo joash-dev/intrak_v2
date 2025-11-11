@@ -8,7 +8,7 @@ import { Users, FileText, Clock, TrendingUp } from "lucide-react";
 
 // Example of how to optimize your existing dashboard components
 const OptimizedDashboard = memo(() => {
-  const { measureRender } = usePerformanceMonitor("OptimizedDashboard");
+  usePerformanceMonitor("OptimizedDashboard");
 
   // Optimized data fetching with caching
   const {
@@ -16,7 +16,7 @@ const OptimizedDashboard = memo(() => {
     loading,
     error,
     refresh,
-  } = useOptimizedData(
+  } = useOptimizedData<any>(
     () =>
       import("../services/dashboardService").then((s) =>
         s.dashboardService.getDashboardData()
@@ -68,8 +68,8 @@ const OptimizedDashboard = memo(() => {
 
   // Memoized students list for virtual scrolling
   const studentsList = React.useMemo(() => {
-    return dashboardData?.students || [];
-  }, [dashboardData?.students]);
+    return (dashboardData?.students as any[]) || [];
+  }, [dashboardData]);
 
   if (loading) {
     return (
@@ -138,7 +138,7 @@ const OptimizedDashboard = memo(() => {
           items={studentsList}
           itemHeight={60}
           containerHeight={400}
-          renderItem={(student, index) => (
+          renderItem={(student: any, index) => (
             <div
               key={student.id}
               className="flex items-center p-3 border-b border-gray-200"

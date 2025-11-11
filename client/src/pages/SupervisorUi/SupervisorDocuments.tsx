@@ -7,10 +7,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Calendar,
   Loader2,
-  FileCheck,
-  AlertCircle,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type { StudentDocument } from "../../services/supervisorService";

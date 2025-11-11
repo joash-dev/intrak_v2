@@ -33,6 +33,14 @@ export interface AdminCompany {
   latitude?: number;
   longitude?: number;
   radiusMeters?: number;
+  industry?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  status?: string;
+  moaStatus?: string;
+  moaExpiry?: string | null;
+  studentCount?: number;
   students: Array<{
     user: {
       name: string;

@@ -17,14 +17,13 @@ import {
 // Import document service
 import { documentService } from "../../services/documentService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
-import { formatDistanceToNow } from "date-fns";
 import { formatDate, formatDateTime } from "../../services/localeService";
 
 interface Document {
   id: string;
   type: string;
   filename: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "RESUBMISSION_REQUESTED";
   uploadedAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;

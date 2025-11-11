@@ -13,7 +13,9 @@ const resolveLocale = (language?: string) => {
   }
 };
 
-const resolveDateOptions = (format: SupportedDateFormat) => {
+const resolveDateOptions = (
+  format: SupportedDateFormat
+): Intl.DateTimeFormatOptions => {
   const base: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "2-digit",
@@ -22,9 +24,14 @@ const resolveDateOptions = (format: SupportedDateFormat) => {
 
   switch (format) {
     case "DD/MM/YYYY":
-      return { ...base, day: "2-digit", month: "2-digit" };
+      return { ...base, day: "2-digit", month: "2-digit" } as Intl.DateTimeFormatOptions;
     case "YYYY-MM-DD":
-      return { ...base, year: "numeric", month: "2-digit", day: "2-digit" };
+      return {
+        ...base,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      } as Intl.DateTimeFormatOptions;
     case "MM/DD/YYYY":
     default:
       return base;

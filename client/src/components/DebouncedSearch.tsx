@@ -19,7 +19,7 @@ const DebouncedSearch: React.FC<DebouncedSearchProps> = ({
 
   const debouncedSearch = useCallback(
     (() => {
-      let timeoutId: NodeJS.Timeout;
+      let timeoutId: ReturnType<typeof setTimeout>;
       return (searchQuery: string) => {
         clearTimeout(timeoutId);
         setIsSearching(true);

@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
 import toast from "react-hot-toast";
-import api from "../../services/api";
 
 const SupervisorSettings = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -173,10 +172,11 @@ const SupervisorSettings = () => {
 
     try {
       setSaving(true);
-      await settingsService.changePassword(
-        passwordData.currentPassword,
-        passwordData.newPassword
-      );
+      await settingsService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword,
+      });
       toast.success("Password changed successfully");
       setPasswordData({
         currentPassword: "",
@@ -194,8 +194,7 @@ const SupervisorSettings = () => {
   const handleSaveNotifications = async () => {
     try {
       setSaving(true);
-      // Save notification preferences to backend
-      // await api.put('/settings/notifications', notifications);
+      // Save notification preferences to backend (API endpoint pending)
       toast.success("Notification preferences saved");
     } catch (error) {
       console.error("Error saving notifications:", error);
@@ -220,7 +219,6 @@ const SupervisorSettings = () => {
 
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
-  const supervisorName = user?.name || "Supervisor";
   const companyName = user?.company || "Company";
 
   return (

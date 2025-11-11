@@ -76,26 +76,32 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
   // Fetch students
   const {
-    data: students = [],
+    data: studentsData,
     loading: studentsLoading,
     refresh: refetchStudents,
   } = useOptimizedData(() => coordinatorService.getAllStudents(), [], {
     ttl: 3 * 60 * 1000,
   });
+  const students = studentsData ?? [];
 
   // Fetch instructors
-  const { data: instructors = [], loading: instructorsLoading } =
-    useOptimizedData(() => coordinatorService.getInstructors(), [], {
+  const { data: instructorsData, loading: instructorsLoading } = useOptimizedData(
+    () => coordinatorService.getInstructors(),
+    [],
+    {
       ttl: 5 * 60 * 1000,
-    });
+    }
+  );
+  const instructors = instructorsData ?? [];
 
   const {
-    data: companies = [],
+    data: companiesData,
     loading: companiesLoading,
     refresh: refreshCompanies,
   } = useOptimizedData(() => coordinatorService.getAllCompanies(), [], {
     ttl: 5 * 60 * 1000,
   });
+  const companies = companiesData ?? [];
 
   const handleAssignStudent = (student: Student) => {
     setSelectedStudent(student);

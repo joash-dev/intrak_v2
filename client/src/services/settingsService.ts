@@ -241,6 +241,10 @@ class SettingsService {
     }
   }
 
+  async deleteProfilePhoto(): Promise<void> {
+    return this.removeProfilePhoto();
+  }
+
   // Legacy methods for backward compatibility (now deprecated)
   saveProfilePhoto(photoDataUrl: string): void {
     console.warn('saveProfilePhoto with localStorage is deprecated. Use uploadProfilePhoto instead.');

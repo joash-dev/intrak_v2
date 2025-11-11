@@ -113,6 +113,7 @@ export function useOptimizedData<T>(
     loading,
     error,
     refresh: refreshData,
+    refetch: refreshData,
     invalidateCache
   };
 }

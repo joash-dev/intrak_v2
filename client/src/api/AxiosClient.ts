@@ -19,7 +19,9 @@ api.interceptors.request.use(
       console.log('No token found in localStorage');
     }
     
-    console.log('Making request to:', config.baseURL + config.url);
+    const baseURL = config.baseURL ?? api.defaults.baseURL ?? '';
+    const requestPath = config.url ?? '';
+    console.log('Making request to:', `${baseURL}${requestPath}`);
     return config;
   },
   (error) => {

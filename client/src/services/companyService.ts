@@ -13,6 +13,9 @@ export type Company = {
   longitude?: number;
   radiusMeters?: number;
   maxSlots?: number;
+  industry?: string;
+  description?: string;
+  website?: string;
   supervisorId?: string | null;
   supervisor?: {
     id: string;
@@ -333,4 +336,3 @@ class CompanyService {
 export const companyService = new CompanyService();
 
 // Re-export types for external use
-export type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorAccountInfo, SupervisorProvisionResult };

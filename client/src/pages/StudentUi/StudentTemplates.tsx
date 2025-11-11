@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  FileText,
-  Download,
-  Search,
-  AlertCircle,
-  CheckCircle,
-} from "lucide-react";
+import { FileText, Download, Search, AlertCircle } from "lucide-react";
 import { templateService } from "../../services/templateService";
 import type { DocumentTemplate } from "../../services/templateService";
 import { toast } from "react-hot-toast";
@@ -139,7 +133,7 @@ const StudentTemplates: React.FC = () => {
             No Templates Available
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            {searchQuery || filterType !== "all" || filterCategory !== "all"
+            {searchQuery || filterCategory !== "all"
               ? "Try adjusting your search criteria or filters to find templates."
               : "No document templates are currently available. Contact your instructor for more information."}
           </p>
