@@ -13,10 +13,14 @@ class EmailService {
   constructor() {
     // For development, we'll use a test account
     // In production, you should use a real SMTP service like Gmail, SendGrid, etc.
+    const port = parseInt(process.env.SMTP_PORT || '587');
+    const secure =
+      (process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465;
+
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false, // true for 465, false for other ports
+      port,
+      secure,
       auth: {
         user: process.env.SMTP_USER || 'ethereal.user@ethereal.email',
         pass: process.env.SMTP_PASS || 'ethereal.pass'
@@ -106,7 +110,7 @@ class EmailService {
       
       <p><strong>Important:</strong> This is a temporary password that you must change on your first login.</p>
       
-      <p><a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/login">Login to INTRAK</a></p>
+      <p><a href="${process.env.CLIENT_URL || 'https://intrak-v2.onrender.com'}/login">Login to INTRAK</a></p>
       
       <p>If you have any questions, please contact your system administrator.</p>
     `;
@@ -129,7 +133,7 @@ ${additionalInfo.department ? `Department: ${additionalInfo.department}` : ''}
 
 IMPORTANT: This is a temporary password that you must change on your first login.
 
-Login at: ${process.env.CLIENT_URL || 'http://localhost:3000'}/login
+Login at: ${process.env.CLIENT_URL || 'https://intrak-v2.onrender.com'}/login
 
 If you have any questions, please contact your system administrator.
 
