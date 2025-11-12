@@ -4,11 +4,55 @@ import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 import { auditLog } from '../services/audit.service';
 import os from 'os';
-import fs from 'fs';
-import { promisify } from 'util';
+import checkDiskSpace from 'check-disk-space';
 
 const prisma = new PrismaClient();
-const stat = promisify(fs.stat);
+
+// simple in-memory cache reference that can be cleared via admin actions
+const globalCache = globalThis as { __appCache?: Record<string, unknown> };
+if (!globalCache.__appCache) {
+  globalCache.__appCache = {};
+}
+
+const DEFAULT_ADMIN_SETTINGS = {
+  maintenanceMode: false,
+  emailNotifications: true,
+  systemAlerts: true,
+  autoBackup: true,
+  sessionTimeout: 30,
+  maxLoginAttempts: 5,
+  emailSystemAlerts: true,
+  emailUserActivity: true,
+  emailMaintenance: true,
+  pushNotifications: true,
+  theme: 'system',
+};
+
+const ensureAdminSettings = async (userId: string) => {
+  let adminSettings = await prisma.adminSettings.findUnique({
+    where: { userId },
+  });
+
+  if (!adminSettings) {
+    adminSettings = await prisma.adminSettings.create({
+      data: {
+        userId,
+        ...DEFAULT_ADMIN_SETTINGS,
+      },
+    });
+  }
+
+  return adminSettings;
+};
+
+const sanitizeAdminSettings = <T extends { [key: string]: unknown } | null>(settings: T) => {
+  if (!settings || typeof settings !== 'object') {
+    return settings;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { smsAlerts, ...rest } = settings as Record<string, unknown>;
+  return rest as T;
+};
 
 // Get admin profile
 export const getAdminProfile = async (req: AuthRequest, res: Response) => {
@@ -234,32 +278,9 @@ export const getAdminSettings = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Access denied. Admin role required.' });
     }
 
-    let adminSettings = await prisma.adminSettings.findUnique({
-      where: { userId }
-    });
+    const adminSettings = await ensureAdminSettings(userId);
 
-    // Create default settings if none exist
-    if (!adminSettings) {
-      adminSettings = await prisma.adminSettings.create({
-        data: {
-          userId,
-          maintenanceMode: false,
-          emailNotifications: true,
-          systemAlerts: true,
-          autoBackup: true,
-          sessionTimeout: 30,
-          maxLoginAttempts: 5,
-          emailSystemAlerts: true,
-          emailUserActivity: true,
-          emailMaintenance: true,
-          pushNotifications: true,
-          smsAlerts: false,
-          theme: 'system'
-        }
-      });
-    }
-
-    res.json({ adminSettings });
+    res.json({ adminSettings: sanitizeAdminSettings(adminSettings) });
   } catch (error) {
     console.error('Get admin settings error:', error);
     res.status(500).json({ 
@@ -284,7 +305,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
       emailUserActivity,
       emailMaintenance,
       pushNotifications,
-      smsAlerts,
       theme
     } = req.body;
 
@@ -324,7 +344,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
     if (emailUserActivity !== undefined) updateData.emailUserActivity = emailUserActivity;
     if (emailMaintenance !== undefined) updateData.emailMaintenance = emailMaintenance;
     if (pushNotifications !== undefined) updateData.pushNotifications = pushNotifications;
-    if (smsAlerts !== undefined) updateData.smsAlerts = smsAlerts;
     if (theme !== undefined) updateData.theme = theme;
 
     // Upsert admin settings
@@ -343,7 +362,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
         emailUserActivity: emailUserActivity ?? true,
         emailMaintenance: emailMaintenance ?? true,
         pushNotifications: pushNotifications ?? true,
-        smsAlerts: smsAlerts ?? false,
         theme: theme ?? 'system'
       }
     });
@@ -355,13 +373,286 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
 
     res.json({ 
       message: 'Admin settings updated successfully',
-      adminSettings 
+      adminSettings: sanitizeAdminSettings(adminSettings)
     });
   } catch (error) {
     console.error('Update admin settings error:', error);
     res.status(500).json({ 
       message: 'Failed to update admin settings', 
       error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
+export const exportAdminSettingsFile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const [adminSettings, profile] = await Promise.all([
+      ensureAdminSettings(userId),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          department: true,
+          office: true,
+          role: true,
+          profilePhoto: true,
+        },
+      }),
+    ]);
+
+    const exportPayload = {
+      generatedAt: new Date().toISOString(),
+      profile,
+      systemSettings: {
+        maintenanceMode: adminSettings.maintenanceMode,
+        emailNotifications: adminSettings.emailNotifications,
+        systemAlerts: adminSettings.systemAlerts,
+        autoBackup: adminSettings.autoBackup,
+        sessionTimeout: adminSettings.sessionTimeout,
+        maxLoginAttempts: adminSettings.maxLoginAttempts,
+      },
+      notifications: {
+        emailSystemAlerts: adminSettings.emailSystemAlerts,
+        emailUserActivity: adminSettings.emailUserActivity,
+        emailMaintenance: adminSettings.emailMaintenance,
+        pushNotifications: adminSettings.pushNotifications,
+      },
+      appearance: {
+        theme: adminSettings.theme ?? 'system',
+      },
+      meta: {
+        version: process.env.npm_package_version || null,
+        exportedBy: profile?.email,
+      },
+    };
+
+    const filename = `admin-settings-${new Date().toISOString().split('T')[0]}.json`;
+    const buffer = Buffer.from(JSON.stringify(exportPayload, null, 2));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+
+    await auditLog(userId, 'ADMIN_SETTINGS_EXPORTED', { filename }, req);
+  } catch (error) {
+    console.error('Export admin settings error:', error);
+    res.status(500).json({
+      message: 'Failed to export admin settings',
+      error: process.env.NODE_ENV === 'development' ? error : undefined,
+    });
+  }
+};
+
+export const importAdminSettingsFile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { systemSettings, notifications, profile, appearance } = req.body || {};
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    if (!systemSettings && !notifications && !profile && !appearance) {
+      return res.status(400).json({ message: 'No settings payload provided for import.' });
+    }
+
+    const toBoolean = (value: unknown) =>
+      typeof value === 'boolean' ? value : undefined;
+
+    const toNumber = (value: unknown) => {
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+      }
+      if (typeof value === 'string') {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+      return undefined;
+    };
+
+    const getTheme = (): string | undefined => {
+      const candidate = appearance?.theme ?? (req.body?.theme as string | undefined);
+      if (typeof candidate === 'string' && ['light', 'dark', 'system'].includes(candidate)) {
+        return candidate;
+      }
+      return undefined;
+    };
+
+    const importedTheme = getTheme();
+
+    const result = await prisma.$transaction(async (tx) => {
+      const adminSettings = await tx.adminSettings.upsert({
+        where: { userId },
+        update: {
+          ...(toBoolean(systemSettings?.maintenanceMode) !== undefined && {
+            maintenanceMode: systemSettings.maintenanceMode,
+          }),
+          ...(toBoolean(systemSettings?.emailNotifications) !== undefined && {
+            emailNotifications: systemSettings.emailNotifications,
+          }),
+          ...(toBoolean(systemSettings?.systemAlerts) !== undefined && {
+            systemAlerts: systemSettings.systemAlerts,
+          }),
+          ...(toBoolean(systemSettings?.autoBackup) !== undefined && {
+            autoBackup: systemSettings.autoBackup,
+          }),
+          ...(toNumber(systemSettings?.sessionTimeout) !== undefined && {
+            sessionTimeout: toNumber(systemSettings.sessionTimeout),
+          }),
+          ...(toNumber(systemSettings?.maxLoginAttempts) !== undefined && {
+            maxLoginAttempts: toNumber(systemSettings.maxLoginAttempts),
+          }),
+          ...(toBoolean(notifications?.emailSystemAlerts) !== undefined && {
+            emailSystemAlerts: notifications.emailSystemAlerts,
+          }),
+          ...(toBoolean(notifications?.emailUserActivity) !== undefined && {
+            emailUserActivity: notifications.emailUserActivity,
+          }),
+          ...(toBoolean(notifications?.emailMaintenance) !== undefined && {
+            emailMaintenance: notifications.emailMaintenance,
+          }),
+          ...(toBoolean(notifications?.pushNotifications) !== undefined && {
+            pushNotifications: notifications.pushNotifications,
+          }),
+          ...(importedTheme && { theme: importedTheme }),
+        },
+        create: {
+          userId,
+          maintenanceMode:
+            toBoolean(systemSettings?.maintenanceMode) ??
+            DEFAULT_ADMIN_SETTINGS.maintenanceMode,
+          emailNotifications:
+            toBoolean(systemSettings?.emailNotifications) ??
+            DEFAULT_ADMIN_SETTINGS.emailNotifications,
+          systemAlerts:
+            toBoolean(systemSettings?.systemAlerts) ??
+            DEFAULT_ADMIN_SETTINGS.systemAlerts,
+          autoBackup:
+            toBoolean(systemSettings?.autoBackup) ??
+            DEFAULT_ADMIN_SETTINGS.autoBackup,
+          sessionTimeout:
+            toNumber(systemSettings?.sessionTimeout) ??
+            DEFAULT_ADMIN_SETTINGS.sessionTimeout,
+          maxLoginAttempts:
+            toNumber(systemSettings?.maxLoginAttempts) ??
+            DEFAULT_ADMIN_SETTINGS.maxLoginAttempts,
+          emailSystemAlerts:
+            toBoolean(notifications?.emailSystemAlerts) ??
+            DEFAULT_ADMIN_SETTINGS.emailSystemAlerts,
+          emailUserActivity:
+            toBoolean(notifications?.emailUserActivity) ??
+            DEFAULT_ADMIN_SETTINGS.emailUserActivity,
+          emailMaintenance:
+            toBoolean(notifications?.emailMaintenance) ??
+            DEFAULT_ADMIN_SETTINGS.emailMaintenance,
+          pushNotifications:
+            toBoolean(notifications?.pushNotifications) ??
+            DEFAULT_ADMIN_SETTINGS.pushNotifications,
+          theme: importedTheme ?? DEFAULT_ADMIN_SETTINGS.theme,
+        },
+      });
+
+      let updatedProfile = null as
+        | {
+            id: string;
+            name: string;
+            email: string;
+            phone: string | null;
+            department: string | null;
+            office: string | null;
+            role: string;
+            profilePhoto: string | null;
+          }
+        | null;
+
+      if (profile && typeof profile === 'object') {
+        const profileData: Record<string, string | null> = {};
+
+        if (typeof profile.name === 'string') {
+          profileData.name = profile.name;
+        }
+        if (typeof profile.email === 'string') {
+          profileData.email = profile.email;
+        }
+        if (typeof profile.phone === 'string' || profile.phone === null) {
+          profileData.phone = profile.phone ?? null;
+        }
+        if (typeof profile.department === 'string' || profile.department === null) {
+          profileData.department = profile.department ?? null;
+        }
+        if (typeof profile.office === 'string' || profile.office === null) {
+          profileData.office = profile.office ?? null;
+        }
+
+        if (Object.keys(profileData).length > 0) {
+          updatedProfile = await tx.user.update({
+            where: { id: userId },
+            data: profileData,
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              department: true,
+              office: true,
+              role: true,
+              profilePhoto: true,
+            },
+          });
+        }
+      }
+
+      return { adminSettings, profile: updatedProfile };
+    });
+
+    await auditLog(
+      userId,
+      'ADMIN_SETTINGS_IMPORTED',
+      {
+        importedSections: Object.entries({ systemSettings, notifications, profile, appearance })
+          .filter(([_, value]) => value !== undefined)
+          .map(([key]) => key),
+      },
+      req
+    );
+
+    res.json({
+      message: 'Settings imported successfully',
+      adminSettings: sanitizeAdminSettings(result.adminSettings),
+      profile: result.profile,
+        notifications: {
+          emailSystemAlerts: result.adminSettings.emailSystemAlerts,
+          emailUserActivity: result.adminSettings.emailUserActivity,
+          emailMaintenance: result.adminSettings.emailMaintenance,
+          pushNotifications: result.adminSettings.pushNotifications,
+        },
+    });
+  } catch (error) {
+    console.error('Import admin settings error:', error);
+    res.status(500).json({
+      message: 'Failed to import admin settings',
+      error: process.env.NODE_ENV === 'development' ? error : undefined,
     });
   }
 };
@@ -525,14 +816,26 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const uptimeHours = Math.floor((uptimeSeconds % (24 * 60 * 60)) / (60 * 60));
     const systemUptime = `${uptimeDays} days, ${uptimeHours} hours`;
 
-    // Get disk usage (simplified - in production you might want to use a library like 'diskusage')
-    let diskUsage = 75; // Default fallback
+    // Get disk usage using check-disk-space
+    let diskUsage = 0;
+    let totalDiskGiB = 0;
+    let usedDiskGiB = 0;
     try {
-      // This is a simplified disk usage calculation
-      // In production, you might want to use a proper disk usage library
-      diskUsage = Math.round(Math.random() * 30 + 60); // Simulate 60-90% usage
+      const diskPath = os.platform() === 'win32' ? 'C:' : '/';
+      const disk = await checkDiskSpace(diskPath);
+      if (disk && disk.size > 0) {
+        totalDiskGiB = Number((disk.size / 1024 / 1024 / 1024).toFixed(2));
+        const freeGiB = Number((disk.free / 1024 / 1024 / 1024).toFixed(2));
+        usedDiskGiB = Number((totalDiskGiB - freeGiB).toFixed(2));
+        diskUsage = Math.min(
+          100,
+          Math.max(0, Math.round(((disk.size - disk.free) / disk.size) * 100))
+        );
+      }
     } catch (diskError) {
       console.warn('Could not calculate disk usage:', diskError);
+      // fallback to previous behavior
+      diskUsage = 75;
     }
 
     // Get database information
@@ -576,9 +879,11 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       diskUsage,
       databaseStatus,
       apiServerStatus,
-      totalMemory: Math.round(totalMemory / 1024 / 1024 / 1024 * 100) / 100, // GB
-      freeMemory: Math.round(freeMemory / 1024 / 1024 / 1024 * 100) / 100, // GB
-      usedMemory: Math.round(usedMemory / 1024 / 1024 / 1024 * 100) / 100, // GB
+      totalMemory: Number((totalMemory / 1024 / 1024 / 1024).toFixed(2)), // GB
+      freeMemory: Number((freeMemory / 1024 / 1024 / 1024).toFixed(2)), // GB
+      usedMemory: Number((usedMemory / 1024 / 1024 / 1024).toFixed(2)), // GB
+      totalDisk: totalDiskGiB,
+      usedDisk: usedDiskGiB,
       cpuModel,
       cpuCount,
       platform: os.platform(),
@@ -653,6 +958,164 @@ export const emergencyDisableMaintenance = async (req: Request, res: Response) =
     res.status(500).json({ 
       message: 'Failed to disable maintenance mode', 
       error: process.env.NODE_ENV === 'development' ? error : undefined 
+    });
+  }
+};
+
+export const createSystemBackup = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const [settings, users, companies, documents, activities] = await Promise.all([
+      prisma.adminSettings.findMany(),
+      prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          active: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      }),
+      prisma.company.findMany({
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          industry: true,
+          contactPerson: true,
+          contactEmail: true,
+          contactNumber: true,
+          createdAt: true,
+          updatedAt: true,
+          students: {
+            select: { id: true },
+          },
+        },
+      }),
+      prisma.document.findMany({
+        select: {
+          id: true,
+          type: true,
+          filename: true,
+          status: true,
+          studentId: true,
+          uploadedById: true,
+          uploadedAt: true,
+          reviewedAt: true,
+        },
+      }),
+      prisma.auditLog.findMany({
+        take: 100,
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
+
+    const backupPayload = {
+      generatedAt: new Date().toISOString(),
+      generatedBy: userId,
+      environment: process.env.NODE_ENV || 'development',
+      stats: {
+        totalUsers: users.length,
+        totalCompanies: companies.length,
+        totalDocuments: documents.length,
+        recentActivities: activities.length
+      },
+      data: {
+        settings,
+        users,
+        companies,
+        documents,
+        activities
+      }
+    };
+
+    const buffer = Buffer.from(JSON.stringify(backupPayload, null, 2));
+    const filename = `intrak-backup-${new Date().toISOString().split('T')[0]}.json`;
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Create system backup error:', error);
+    res.status(500).json({
+      message: 'Failed to create system backup',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const clearSystemCache = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    globalCache.__appCache = {};
+
+    // Reset Prisma connection to clear prepared statements/cached metadata
+    await prisma.$disconnect();
+    await prisma.$connect();
+
+    res.json({
+      message: 'System cache cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Clear system cache error:', error);
+    res.status(500).json({
+      message: 'Failed to clear system cache',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const restartSystem = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    res.json({
+      message: 'System restart initiated. The service will restart momentarily.',
+      timestamp: new Date().toISOString()
+    });
+
+    // Give the response a moment to flush before exiting
+    setTimeout(() => {
+      console.log('♻️ Restart requested by admin. Exiting process to trigger restart.');
+      process.exit(0);
+    }, 500);
+  } catch (error) {
+    console.error('Restart system error:', error);
+    res.status(500).json({
+      message: 'Failed to initiate system restart',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };

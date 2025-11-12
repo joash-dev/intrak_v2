@@ -18,6 +18,8 @@ router.put('/password', adminController.changeAdminPassword);
 // Admin settings routes
 router.get('/settings', adminController.getAdminSettings);
 router.put('/settings', adminController.updateAdminSettings);
+router.get('/settings/export', adminController.exportAdminSettingsFile);
+router.post('/settings/import', adminController.importAdminSettingsFile);
 
 // Admin dashboard routes
 router.get('/dashboard', adminController.getAdminDashboard);
@@ -27,6 +29,9 @@ router.get('/instructors', adminController.getInstructors);
 
 // Admin system information route
 router.get('/system-info', adminController.getSystemInfo);
+router.post('/system/backup', adminController.createSystemBackup);
+router.post('/system/cache/clear', adminController.clearSystemCache);
+router.post('/system/restart', adminController.restartSystem);
 
 // Public maintenance status check route
 router.get('/maintenance-status', adminController.checkMaintenanceStatus);

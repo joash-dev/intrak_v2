@@ -9,10 +9,10 @@ export interface AdminUser {
   role: 'ADMIN' | 'COORDINATOR' | 'INSTRUCTOR' | 'STUDENT' | 'INDUSTRY_PARTNER';
   active: boolean;
   createdAt: string;
-  phone?: string;
-  department?: string;
-  office?: string;
-  profilePhoto?: string;
+  phone?: string | null;
+  department?: string | null;
+  office?: string | null;
+  profilePhoto?: string | null;
   student?: {
     studentNumber: string;
     program: string;
@@ -21,6 +21,65 @@ export interface AdminUser {
       name: string;
     };
   };
+}
+
+export interface AdminSettingsRecord {
+  id: string;
+  userId: string;
+  maintenanceMode: boolean;
+  emailNotifications: boolean;
+  systemAlerts: boolean;
+  autoBackup: boolean;
+  sessionTimeout: number;
+  maxLoginAttempts: number;
+  emailSystemAlerts: boolean;
+  emailUserActivity: boolean;
+  emailMaintenance: boolean;
+  pushNotifications: boolean;
+  theme: 'light' | 'dark' | 'system';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminNotificationPreferences {
+  emailSystemAlerts: boolean;
+  emailUserActivity: boolean;
+  emailMaintenance: boolean;
+  pushNotifications: boolean;
+}
+
+export interface AdminSettingsImportPayload {
+  systemSettings?: Partial<{
+    maintenanceMode: boolean;
+    emailNotifications: boolean;
+    systemAlerts: boolean;
+    autoBackup: boolean;
+    sessionTimeout: number | string;
+    maxLoginAttempts: number | string;
+  }>;
+  notifications?: Partial<AdminNotificationPreferences>;
+  profile?: Partial<{
+    name: string;
+    email: string;
+    phone: string | null;
+    department: string | null;
+    office: string | null;
+  }>;
+  appearance?: Partial<{
+    theme: 'light' | 'dark' | 'system';
+  }>;
+}
+
+export interface AdminSettingsImportResponse {
+  message: string;
+  adminSettings: AdminSettingsRecord;
+  profile?: AdminUser | null;
+  notifications: AdminNotificationPreferences;
+}
+
+export interface AdminSettingsExportResult {
+  blob: Blob;
+  fileName: string;
 }
 
 export interface AdminCompany {
@@ -115,6 +174,8 @@ export interface SystemInfo {
   totalMemory?: number;
   freeMemory?: number;
   usedMemory?: number;
+  totalDisk?: number;
+  usedDisk?: number;
   cpuModel?: string;
   cpuCount?: number;
   platform?: string;
@@ -189,7 +250,7 @@ class AdminService {
   }
 
   // Admin Settings Management
-  async getAdminSettings(): Promise<{ adminSettings: any }> {
+  async getAdminSettings(): Promise<{ adminSettings: AdminSettingsRecord }> {
     try {
       const response = await api.get('/admin/settings');
       return response.data;
@@ -210,15 +271,50 @@ class AdminService {
     emailUserActivity?: boolean;
     emailMaintenance?: boolean;
     pushNotifications?: boolean;
-    smsAlerts?: boolean;
     theme?: string;
-  }): Promise<{ adminSettings: any }> {
+  }): Promise<{ adminSettings: AdminSettingsRecord }> {
     try {
       const response = await api.put('/admin/settings', settingsData);
       return response.data;
     } catch (error: any) {
       console.error('Error updating admin settings:', error);
       throw new Error(error.response?.data?.message || 'Failed to update admin settings');
+    }
+  }
+
+  async exportAdminSettings(): Promise<AdminSettingsExportResult> {
+    try {
+      const response = await api.get('/admin/settings/export', {
+        responseType: 'blob',
+      });
+
+      const disposition = response.headers['content-disposition'] as string | undefined;
+      let fileName = `admin-settings-${new Date().toISOString().split('T')[0]}.json`;
+
+      if (disposition) {
+        const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        if (match && match[1]) {
+          fileName = decodeURIComponent(match[1]);
+        }
+      }
+
+      return {
+        blob: response.data,
+        fileName,
+      };
+    } catch (error: any) {
+      console.error('Error exporting admin settings:', error);
+      throw new Error(error.response?.data?.message || 'Failed to export admin settings');
+    }
+  }
+
+  async importAdminSettings(payload: AdminSettingsImportPayload): Promise<AdminSettingsImportResponse> {
+    try {
+      const response = await api.post('/admin/settings/import', payload);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error importing admin settings:', error);
+      throw new Error(error.response?.data?.message || 'Failed to import admin settings');
     }
   }
 
@@ -674,7 +770,7 @@ class AdminService {
     }
   }
 
-  // Get system information
+  // Admin system information
   async getSystemInfo(): Promise<SystemInfo> {
     try {
       console.log('Fetching system information...');
@@ -695,6 +791,29 @@ class AdminService {
         memoryUsage: 68,
         diskUsage: 75
       };
+    }
+  }
+
+  async createSystemBackup(): Promise<Blob> {
+    const response = await api.post('/admin/system/backup', {}, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  async clearSystemCache(): Promise<void> {
+    await api.post('/admin/system/cache/clear');
+  }
+
+  async restartSystem(): Promise<void> {
+    try {
+      await api.post('/admin/system/restart');
+    } catch (error: any) {
+      // When the server exits the process, the request may be interrupted.
+      if (error?.code === 'ERR_NETWORK') {
+        return;
+      }
+      throw error;
     }
   }
 

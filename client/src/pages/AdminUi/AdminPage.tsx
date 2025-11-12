@@ -14,7 +14,6 @@ import {
   Bell,
   Loader2,
   Calendar,
-  User,
 } from "lucide-react";
 import AdminUserManagement from "./AdminUserManagement";
 import AdminSettings from "./AdminSettings";
@@ -27,6 +26,7 @@ import {
   type StudentsByProgram,
   type CompanyStats,
   type DocumentStats,
+  type AdminUser,
 } from "../../services/adminService";
 import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
@@ -181,7 +181,7 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
         )}
 
         {/* Recent Activities - Compact */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center">
               <Activity className="w-4 h-4 mr-2 text-blue-500" />
@@ -191,18 +191,18 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
               Live
             </span>
           </div>
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2 max-h-60 sm:max-h-72 lg:max-h-96 overflow-y-auto pr-2 custom-scrollbar">
             {data.recentActivities.length > 0 ? (
-              data.recentActivities.slice(0, 5).map((activity) => (
+              data.recentActivities.slice(0, 12).map((activity) => (
                 <div
                   key={activity.id}
                   className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-medium text-gray-900 dark:text-white line-clamp-1 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1 flex-1">
                       {activity.description}
                     </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                       {new Date(activity.timestamp).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -210,7 +210,7 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       {activity.user}
                     </span>
                   </div>
@@ -237,6 +237,20 @@ const AdminDashboard = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [adminProfile, setAdminProfile] = useState<Partial<AdminUser> | null>(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === "object") {
+          return parsed;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to parse stored user profile:", error);
+    }
+    return null;
+  });
 
   // Optimized data fetching with caching
   const { data: stats, loading: statsLoading } = useOptimizedData(
@@ -305,6 +319,14 @@ const AdminDashboard = () => {
 
   const loading = statsLoading || activitiesLoading || alertsLoading;
 
+  const displayName = adminProfile?.name || "Admin User";
+  const displayEmail = adminProfile?.email || "admin@intrak.com";
+  const displayRoleLabel =
+    adminProfile?.role?.toLowerCase() === "admin"
+      ? "Administrator"
+      : adminProfile?.role || "Administrator";
+  const adminRoleValue = adminProfile?.role || "ADMIN";
+
   // Check authentication on mount
   useEffect(() => {
     const checkAuth = () => {
@@ -348,6 +370,73 @@ const AdminDashboard = () => {
       }
     };
     loadProfilePhoto();
+  }, []);
+
+  useEffect(() => {
+    const loadAdminProfile = async () => {
+      try {
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === "object") {
+            setAdminProfile((prev) => ({ ...(prev || {}), ...parsed }));
+            if (parsed.profilePhoto) {
+              setProfilePhoto(parsed.profilePhoto);
+            }
+          }
+        }
+
+        const response = await adminService.getAdminProfile();
+        if (response?.user) {
+          setAdminProfile(response.user);
+          if (response.user.profilePhoto) {
+            setProfilePhoto(response.user.profilePhoto);
+          }
+          const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+          localStorage.setItem(
+            "user",
+            JSON.stringify({ ...currentUser, ...response.user })
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load admin profile:", error);
+      }
+    };
+
+    const handleProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ user?: Partial<AdminUser> }>).detail;
+      if (detail?.user) {
+        setAdminProfile((prev) => ({
+          ...(prev || {}),
+          ...detail.user,
+        }));
+        if (detail.user.profilePhoto) {
+          setProfilePhoto(detail.user.profilePhoto);
+        }
+      }
+    };
+
+    const handleProfilePhotoUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ photoUrl?: string | null }>).detail;
+      if (
+        detail &&
+        Object.prototype.hasOwnProperty.call(detail, "photoUrl")
+      ) {
+        setProfilePhoto(detail.photoUrl ?? null);
+        setAdminProfile((prev) =>
+          prev ? { ...prev, profilePhoto: detail.photoUrl ?? undefined } : prev
+        );
+      }
+    };
+
+    loadAdminProfile();
+    window.addEventListener("profileUpdated", handleProfileUpdated);
+    window.addEventListener("profilePhotoUpdated", handleProfilePhotoUpdated);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdated);
+      window.removeEventListener("profilePhotoUpdated", handleProfilePhotoUpdated);
+    };
   }, []);
 
   // Close user menu and notifications when clicking outside
@@ -431,10 +520,10 @@ const AdminDashboard = () => {
   const renderContent = () => {
     const adminData: AdminData = {
       admin: {
-        id: "ADMIN-001",
-        name: "Admin User",
-        email: "admin@intrak.com",
-        role: "admin",
+        id: adminProfile?.id || "ADMIN-001",
+        name: displayName,
+        email: displayEmail,
+        role: adminRoleValue,
       },
       stats: safeStats,
       recentActivities: safeActivities,
@@ -450,7 +539,7 @@ const AdminDashboard = () => {
       case "users":
         return <AdminUserManagement />;
       case "settings":
-        return <AdminSettings onBack={() => setActiveTab("overview")} />;
+        return <AdminSettings />;
       default:
         return <AdminOverviewTab data={adminData} />;
     }
@@ -514,10 +603,19 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
+        <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-2 flex-shrink-0">
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -611,17 +709,35 @@ const AdminDashboard = () => {
               <div className="relative user-menu-dropdown">
                 <button
                   onClick={toggleUserMenu}
-                  className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center overflow-hidden hover:ring-2 hover:ring-purple-300 dark:hover:ring-purple-600 transition-all"
+                  className="flex items-center space-x-3 pl-3 pr-3 py-2 border-l border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  {profilePhoto ? (
-                    <img
-                      src={profilePhoto}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-5 h-5 text-purple-600 dark:text-purple-300" />
-                  )}
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-sm">
+                    {profilePhoto ? (
+                      <img
+                        src={profilePhoto}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-semibold">
+                        {displayName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .filter(Boolean)
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase() || "AU"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="hidden md:flex flex-col items-start leading-tight text-left">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {displayName}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {displayRoleLabel}
+                    </span>
+                  </div>
                 </button>
 
                 {/* User Menu Dropdown */}
@@ -638,16 +754,26 @@ const AdminDashboard = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-white font-semibold">AU</span>
+                            <span className="text-white font-semibold">
+                              {(adminProfile?.name || "Admin User")
+                                .split(" ")
+                                .map((n: string) => n[0])
+                                .filter(Boolean)
+                                .join("")
+                                .substring(0, 2)
+                                .toUpperCase() || "AU"}
+                            </span>
                           )}
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            Admin User
+                            {adminProfile?.name || "Admin User"}
                           </p>
-                          <p className="text-sm text-gray-500">Administrator</p>
+                          <p className="text-sm text-gray-500">
+                            {displayRoleLabel}
+                          </p>
                           <p className="text-xs text-gray-400">
-                            admin@intrak.com
+                            {adminProfile?.email || "admin@intrak.com"}
                           </p>
                         </div>
                       </div>
@@ -690,7 +816,7 @@ const AdminDashboard = () => {
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-0 flex items-center justify-center p-4 lg:hidden"
           style={{ margin: "0" }}
           onClick={() => setSidebarOpen(false)}
         />

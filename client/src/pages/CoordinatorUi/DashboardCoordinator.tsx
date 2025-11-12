@@ -79,6 +79,7 @@ const CoordinatorDashboard = ({
   // const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const navigate = useNavigate();
 
   // Optimized data fetching with caching
   const { data: students = [], loading: studentsLoading } = useOptimizedData(
@@ -321,87 +322,114 @@ const CoordinatorDashboard = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredStudents.map((student) => (
-                  <tr
-                    key={student.id}
-                    className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 cursor-pointer transition-all duration-200"
-                  >
-                    <td className="py-6 px-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
-                          {student.avatar}
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-16 px-6">
+                      <div className="flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center shadow-inner">
+                          <Users className="w-8 h-8 text-gray-500 dark:text-gray-300" />
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white text-base">
-                            {student.name}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {formatStudentId(student.studentNumber)} •{" "}
-                            {student.program}
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {t("dashboard.students.empty.title")}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+                            {t("dashboard.students.empty.description")}
                           </p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-6 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {student.company}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-6 px-6">
-                      <span
-                        className={`text-xs px-4 py-2 rounded-full font-semibold ${getStatusColor(
-                          student.status
-                        )}`}
-                      >
-                        {getStatusLabel(student.status)}
-                      </span>
-                    </td>
-                    <td className="py-6 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                          <div
-                            className={`h-3 rounded-full transition-all duration-500 ${
-                              student.attendance >= 90
-                                ? "bg-gradient-to-r from-green-500 to-green-600"
-                                : student.attendance >= 75
-                                ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                                : "bg-gradient-to-r from-red-500 to-red-600"
-                            }`}
-                            style={{ width: `${student.attendance}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">
-                          {student.attendance}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-6 px-6">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
-                          <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                        </div>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {student.tasks.completed}/{student.tasks.total}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-6 px-6">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-lg flex items-center justify-center">
-                          <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
-                        </div>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">
-                          {student.evaluation}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => navigate("/coordinator/student-management")}
+                          className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                        >
+                          {t("dashboard.students.empty.action")}
+                        </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredStudents.map((student) => (
+                    <tr
+                      key={student.id}
+                      className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 cursor-pointer transition-all duration-200"
+                    >
+                      <td className="py-6 px-6">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
+                            {student.avatar}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white text-base">
+                              {student.name}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {formatStudentId(student.studentNumber)} •{" "}
+                              {student.program}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-6 px-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg flex items-center justify-center">
+                            <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {student.company}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-6 px-6">
+                        <span
+                          className={`text-xs px-4 py-2 rounded-full font-semibold ${getStatusColor(
+                            student.status
+                          )}`}
+                        >
+                          {getStatusLabel(student.status)}
+                        </span>
+                      </td>
+                      <td className="py-6 px-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div
+                              className={`h-3 rounded-full transition-all duration-500 ${
+                                student.attendance >= 90
+                                  ? "bg-gradient-to-r from-green-500 to-green-600"
+                                  : student.attendance >= 75
+                                  ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                                  : "bg-gradient-to-r from-red-500 to-red-600"
+                              }`}
+                              style={{ width: `${student.attendance}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {student.attendance}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-6 px-6">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
+                            <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {student.tasks.completed}/{student.tasks.total}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-6 px-6">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-lg flex items-center justify-center">
+                            <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {student.evaluation}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

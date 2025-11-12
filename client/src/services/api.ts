@@ -1,10 +1,54 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json'
+const ensureApiPath = (url: string): string => {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
+  return withoutTrailingSlash.endsWith('/api')
+    ? withoutTrailingSlash
+    : `${withoutTrailingSlash}/api`;
+};
+
+const resolveBaseURL = (): string => {
+  const envCandidates = [
+    import.meta.env.VITE_API_URL as string | undefined,
+    import.meta.env.VITE_API_BASE_URL as string | undefined,
+  ].filter(Boolean) as string[];
+
+  for (const candidate of envCandidates) {
+    const normalized = ensureApiPath(candidate);
+    if (normalized) {
+      return normalized;
+    }
   }
+
+  if (typeof window !== 'undefined') {
+    const runtimeCandidate =
+      (window as unknown as Record<string, unknown>).__INTRAK_API_URL ??
+      (window as unknown as Record<string, unknown>).__APP_API_URL;
+    if (runtimeCandidate) {
+      const normalized = ensureApiPath(String(runtimeCandidate));
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    const hostname = window.location.hostname;
+    if (hostname === 'intrak-v2.onrender.com') {
+      return 'https://intrak-backend.onrender.com/api';
+    }
+  }
+
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = resolveBaseURL();
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // Request interceptor
@@ -64,7 +108,7 @@ api.interceptors.response.use(
 
         console.log('🔄 Attempting token refresh...');
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/refresh`,
           { refreshToken }
         );
 

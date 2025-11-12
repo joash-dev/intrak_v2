@@ -6,7 +6,6 @@ import {
   EyeOff,
   Camera,
   Save,
-  ArrowLeft,
   CheckCircle,
   AlertCircle,
   Loader2,
@@ -23,8 +22,12 @@ import {
   Database,
   Download,
   Upload,
+  X,
 } from "lucide-react";
-import { settingsService } from "../../services/settingsService";
+import {
+  settingsService,
+  type AppPreferences,
+} from "../../services/settingsService";
 import { adminService, type SystemInfo } from "../../services/adminService";
 import toast from "react-hot-toast";
 
@@ -35,7 +38,7 @@ interface AdminProfile {
   phone?: string;
   department?: string;
   office?: string;
-  profilePhoto?: string;
+  profilePhoto?: string | null;
   role: string;
 }
 
@@ -59,10 +62,9 @@ interface NotificationPreferences {
   emailUserActivity: boolean;
   emailMaintenance: boolean;
   pushNotifications: boolean;
-  smsAlerts: boolean;
 }
 
-const AdminSettings = ({ onBack }: { onBack: () => void }) => {
+const AdminSettings = () => {
   const [profile, setProfile] = useState<AdminProfile>({
     id: "",
     name: "",
@@ -91,7 +93,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     emailUserActivity: true,
     emailMaintenance: true,
     pushNotifications: true,
-    smsAlerts: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,6 +112,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     activeUsers: 156,
     totalDocuments: 1247,
     databaseSize: "2.3 GB",
+    diskUsageLabel: "0 / 0 GB",
   });
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
     version: "2.1.3",
@@ -123,6 +125,10 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     memoryUsage: 68,
     diskUsage: 75,
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
+    null
+  );
 
   // Settings sections for navigation
   const sections = [
@@ -145,6 +151,8 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
 
     initializeSettings();
   }, []);
+
+  const closeHelpModal = () => setHelpModal(null);
 
   const loadProfilePhoto = async () => {
     try {
@@ -254,7 +262,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
         emailUserActivity: settings.emailUserActivity,
         emailMaintenance: settings.emailMaintenance,
         pushNotifications: settings.pushNotifications,
-        smsAlerts: settings.smsAlerts,
       });
 
       // Set theme
@@ -286,6 +293,11 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
         activeUsers: systemInfoData.activeUsers || 156,
         totalDocuments: systemInfoData.totalDocuments || 1247,
         databaseSize: systemInfoData.databaseSize || "2.3 GB",
+        diskUsageLabel:
+          systemInfoData.usedDisk !== undefined &&
+          systemInfoData.totalDisk !== undefined
+            ? `${systemInfoData.usedDisk}GB / ${systemInfoData.totalDisk}GB`
+            : "0 / 0 GB",
       });
 
       console.log("System info loaded:", systemInfoData);
@@ -330,20 +342,32 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
         office: profile.office,
       });
 
+      // Build updated profile information
+      const updatedUser = {
+        ...response.user,
+        name: response.user.name || profile.name,
+        email: response.user.email || profile.email,
+        phone: response.user.phone ?? profile.phone,
+        department: response.user.department ?? profile.department,
+        office: response.user.office ?? profile.office,
+      };
+
       // Update local state
-      setProfile({ ...profile, ...response.user });
+      setProfile((prev) => ({
+        ...prev,
+        ...updatedUser,
+      }));
 
       // Store updated profile in localStorage for immediate access
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...currentUser,
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone,
-          department: profile.department,
-          office: profile.office,
+      localStorage.setItem("user", JSON.stringify({ ...currentUser, ...updatedUser }));
+
+      // Broadcast profile changes so other components refresh
+      window.dispatchEvent(
+        new CustomEvent("profileUpdated", {
+          detail: {
+            user: updatedUser,
+          },
         })
       );
 
@@ -550,63 +574,125 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  const handleExportData = () => {
-    const data = {
-      systemSettings,
-      profile,
-      notifications,
-      exportedAt: new Date().toISOString(),
-    };
+  const handleExportData = async () => {
+    const toastId = toast.loading("Preparing export...");
+    setSaving(true);
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `admin-settings-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const { blob, fileName } = await adminService.exportAdminSettings();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
 
-    toast.success("Settings exported successfully!");
+      toast.success("Settings exported successfully!", { id: toastId });
+    } catch (error) {
+      console.error("Error exporting admin settings:", error);
+      const message =
+        error instanceof Error ? error.message : "Failed to export settings";
+      toast.error(message, { id: toastId });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== "application/json") {
+    if (
+      file.type &&
+      file.type !== "application/json" &&
+      file.type !== "text/plain"
+    ) {
       toast.error("Please select a valid JSON file");
+      event.target.value = "";
       return;
     }
 
+    const toastId = toast.loading("Importing settings...");
+    setSaving(true);
+
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string);
+        const parsed = JSON.parse(e.target?.result as string);
+        const payload = {
+          systemSettings: parsed.systemSettings,
+          notifications: parsed.notifications,
+          profile: parsed.profile,
+          appearance: parsed.appearance || {
+            theme: parsed.theme,
+          },
+        };
 
-        if (data.systemSettings) {
-          setSystemSettings(data.systemSettings);
-        }
-        if (data.profile) {
-          setProfile(data.profile);
-        }
-        if (data.notifications) {
-          setNotifications(data.notifications);
+        const response = await adminService.importAdminSettings(payload);
+        const importedSettings = response.adminSettings;
+
+        setSystemSettings({
+          maintenanceMode: importedSettings.maintenanceMode,
+          emailNotifications: importedSettings.emailNotifications,
+          systemAlerts: importedSettings.systemAlerts,
+          autoBackup: importedSettings.autoBackup,
+          sessionTimeout: importedSettings.sessionTimeout,
+          maxLoginAttempts: importedSettings.maxLoginAttempts,
+        });
+
+        setNotifications(response.notifications);
+
+        const importedProfile = response.profile;
+        if (importedProfile) {
+          setProfile({
+            id: importedProfile.id,
+            name: importedProfile.name,
+            email: importedProfile.email,
+            phone: importedProfile.phone || "",
+            department: importedProfile.department || "",
+            office: importedProfile.office || "",
+            profilePhoto: importedProfile.profilePhoto || "",
+            role: importedProfile.role,
+          });
+          setProfilePhoto(importedProfile.profilePhoto || null);
         }
 
-        toast.success("Settings imported successfully!");
+        if (importedSettings.theme) {
+          const importedTheme = importedSettings.theme;
+          setTheme(importedTheme);
+          const appPrefs = settingsService.loadAppPreferences();
+          const updatedPrefs: AppPreferences = {
+            ...appPrefs,
+            theme:
+              importedTheme === "system" ? "auto" : importedTheme,
+          };
+          settingsService.saveAppPreferences(updatedPrefs);
+          settingsService.applyTheme(
+            importedTheme === "system" ? "auto" : importedTheme
+          );
+        }
+
+        toast.success("Settings imported successfully!", { id: toastId });
       } catch (error) {
-        toast.error("Invalid JSON file format");
+        console.error("Error importing admin settings:", error);
+        const message =
+          error instanceof Error ? error.message : "Invalid JSON file format";
+        toast.error(message, { id: toastId });
+      } finally {
+        setSaving(false);
       }
     };
+
+    reader.onerror = () => {
+      toast.error("Failed to read the selected file", { id: toastId });
+      setSaving(false);
+    };
+
     reader.readAsText(file);
 
-    // Reset the file input
+    // Reset the file input so the same file can be re-imported
     event.target.value = "";
   };
 
@@ -615,24 +701,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
       setSaving(true);
       toast.loading("Creating system backup...", { id: "backup" });
 
-      // Create a comprehensive backup data object
-      const backupData = {
-        systemSettings,
-        profile,
-        notifications,
-        systemInfo,
-        exportedAt: new Date().toISOString(),
-        backupType: "system_backup",
-        version: systemInfo.version,
-      };
-
-      // Simulate backup process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // For now, download as JSON file (will integrate with NAS later)
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-        type: "application/json",
-      });
+      const blob = await adminService.createSystemBackup();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -659,12 +728,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
       setSaving(true);
       toast.loading("Clearing system cache...", { id: "cache" });
 
-      // Clear localStorage cache
-      localStorage.removeItem("adminSystemSettings");
-      localStorage.removeItem("adminProfile");
-
-      // Simulate cache clearing
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await adminService.clearSystemCache();
 
       toast.success("System cache cleared successfully!", { id: "cache" });
     } catch (error) {
@@ -684,10 +748,12 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
         setSaving(true);
         toast.loading("Restarting system...", { id: "restart" });
 
-        // Simulate restart process
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await adminService.restartSystem();
 
-        toast.success("System restart completed!", { id: "restart" });
+        toast.success(
+          "Restart initiated. The service will reload shortly.",
+          { id: "restart", duration: 5000 }
+        );
       } catch (error) {
         toast.error("System restart failed. Please try again.", {
           id: "restart",
@@ -735,7 +801,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     }
 
     try {
-      setSaving(true);
+      setUploadingPhoto(true);
 
       // Upload to server
       const photoUrl = await settingsService.uploadProfilePhoto(file);
@@ -758,7 +824,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
       // Clear photo on error
       setProfilePhoto(null);
     } finally {
-      setSaving(false);
+      setUploadingPhoto(false);
     }
   };
 
@@ -772,7 +838,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
         emailUserActivity: notifications.emailUserActivity,
         emailMaintenance: notifications.emailMaintenance,
         pushNotifications: notifications.pushNotifications,
-        smsAlerts: notifications.smsAlerts,
       });
 
       setSaveSuccess(true);
@@ -825,12 +890,23 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
     <div className="space-y-6 font-outfit">
       {/* Success Message */}
       {saveSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-xl p-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-3xl border border-emerald-200 bg-white p-6 text-center shadow-2xl dark:border-emerald-800/60 dark:bg-gray-900">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-200">
               Settings saved successfully!
+            </h3>
+            <p className="mt-2 text-sm text-emerald-600/80 dark:text-emerald-200/80">
+              Your changes are now live.
             </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="mt-6 inline-flex items-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}
@@ -853,24 +929,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
           </div>
         </div>
       )}
-
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Admin Settings
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your admin account and system settings
-          </p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
@@ -913,51 +971,67 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                   </p>
                 </div>
 
-                <div className="flex items-start space-x-6">
-                  {/* Profile Photo */}
-                  <div className="flex-shrink-0">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                        {profilePhoto ? (
-                          <img
-                            src={profilePhoto}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white text-2xl font-bold">
-                            {profile.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        )}
-                      </div>
-                      <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
-                        <Camera className="w-3 h-3" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                          disabled={saving}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
+                  <div className="relative">
+                    <div className="w-24 h-24 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center overflow-hidden">
+                      {profilePhoto ? (
+                        <img
+                          src={profilePhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
                         />
-                      </label>
+                      ) : (
+                        <User className="w-12 h-12 text-purple-600 dark:text-purple-300" />
+                      )}
                     </div>
+                    <label className="absolute bottom-0 right-0 p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg cursor-pointer transition-colors">
+                      <Camera className="w-4 h-4" />
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/gif"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        disabled={uploadingPhoto}
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-flex items-center space-x-2">
+                      {uploadingPhoto ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4" />
+                          <span>Change Photo</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/gif"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        disabled={uploadingPhoto}
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      JPG, PNG or GIF. Max size 2MB
+                    </p>
                     {profilePhoto && (
                       <button
                         onClick={handleRemovePhoto}
-                        disabled={saving}
-                        className="mt-2 text-xs text-red-600 hover:text-red-700 transition-colors"
+                        className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       >
                         Remove Photo
                       </button>
                     )}
                   </div>
+                </div>
 
-                  {/* Profile Form */}
-                  <div className="flex-1 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Profile Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Full Name
@@ -1068,21 +1142,19 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                       </div>
                     </div>
 
-                    <div className="flex justify-end">
-                      <button
-                        onClick={handleProfileUpdate}
-                        disabled={saving}
-                        className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {saving ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4" />
-                        )}
-                        <span>Save Changes</span>
-                      </button>
-                    </div>
-                  </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleProfileUpdate}
+                    disabled={saving}
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>Save Changes</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -1095,34 +1167,13 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                     Password & Security
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Update your password and security settings
+                    Keep your account protected
                   </p>
                 </div>
 
-                {/* Security Info */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                        Admin Security
-                      </h3>
-                      <p className="text-blue-700 dark:text-blue-300 text-sm">
-                        As an administrator, your account has elevated
-                        privileges. Keep your password secure and change it
-                        regularly.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Form */}
-                <div className="max-w-lg space-y-6">
-                  {/* Current Password */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                <div className="space-y-4 max-w-xl">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
                     </label>
                     <div className="relative">
@@ -1134,16 +1185,14 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                             ...passwordData,
                             currentPassword: e.target.value,
                           });
-                          // Clear error when user starts typing
                           if (errors.currentPassword) {
                             setErrors({ ...errors, currentPassword: "" });
                           }
                         }}
-                        placeholder="Enter your current password"
-                        className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 ${
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                           errors.currentPassword
                             ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
+                            : "border-gray-300 dark:border-gray-600"
                         }`}
                       />
                       <button
@@ -1151,7 +1200,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showCurrentPassword ? (
                           <EyeOff className="w-5 h-5" />
@@ -1161,15 +1210,14 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                       </button>
                     </div>
                     {errors.currentPassword && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-600 mt-1">
                         {errors.currentPassword}
                       </p>
                     )}
                   </div>
 
-                  {/* New Password */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       New Password
                     </label>
                     <div className="relative">
@@ -1181,22 +1229,20 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                             ...passwordData,
                             newPassword: e.target.value,
                           });
-                          // Clear error when user starts typing
                           if (errors.newPassword) {
                             setErrors({ ...errors, newPassword: "" });
                           }
                         }}
-                        placeholder="Enter your new password"
-                        className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 ${
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                           errors.newPassword
                             ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
+                            : "border-gray-300 dark:border-gray-600"
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showNewPassword ? (
                           <EyeOff className="w-5 h-5" />
@@ -1205,40 +1251,19 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                         )}
                       </button>
                     </div>
-                    {/* Password Strength Indicator */}
-                    {passwordData.newPassword && (
-                      <div className="space-y-2">
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4].map((level) => (
-                            <div
-                              key={level}
-                              className={`h-1 flex-1 rounded-full ${
-                                passwordData.newPassword.length >= level * 2
-                                  ? passwordData.newPassword.length >= 8
-                                    ? "bg-green-500"
-                                    : "bg-yellow-500"
-                                  : "bg-gray-200 dark:bg-gray-600"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          {passwordData.newPassword.length < 8
-                            ? "Password should be at least 8 characters"
-                            : "Strong password"}
-                        </p>
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Must be at least 8 characters with uppercase, lowercase,
+                      and numbers
+                    </p>
                     {errors.newPassword && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-600 mt-1">
                         {errors.newPassword}
                       </p>
                     )}
                   </div>
 
-                  {/* Confirm Password */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -1250,16 +1275,14 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                             ...passwordData,
                             confirmPassword: e.target.value,
                           });
-                          // Clear error when user starts typing
                           if (errors.confirmPassword) {
                             setErrors({ ...errors, confirmPassword: "" });
                           }
                         }}
-                        placeholder="Confirm your new password"
-                        className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200 ${
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                           errors.confirmPassword
                             ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
+                            : "border-gray-300 dark:border-gray-600"
                         }`}
                       />
                       <button
@@ -1267,7 +1290,7 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="w-5 h-5" />
@@ -1276,55 +1299,54 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                         )}
                       </button>
                     </div>
-                    {/* Password Match Indicator */}
-                    {passwordData.confirmPassword &&
-                      !errors.confirmPassword && (
-                        <div className="flex items-center space-x-2">
-                          {passwordData.newPassword ===
-                          passwordData.confirmPassword ? (
-                            <>
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                              <span className="text-sm text-green-600">
-                                Passwords match
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <AlertCircle className="w-4 h-4 text-red-500" />
-                              <span className="text-sm text-red-600">
-                                Passwords do not match
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      )}
                     {errors.confirmPassword && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-600 mt-1">
                         {errors.confirmPassword}
                       </p>
                     )}
                   </div>
+                </div>
 
-                  {/* Action Button */}
-                  <div className="pt-4">
-                    <button
-                      onClick={handlePasswordChange}
-                      disabled={
-                        saving ||
-                        passwordData.newPassword !==
-                          passwordData.confirmPassword ||
-                        passwordData.newPassword.length < 8
-                      }
-                      className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
-                    >
-                      {saving ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Lock className="w-5 h-5" />
-                      )}
-                      <span>Change Password</span>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Two-Factor Authentication
+                  </h3>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          Enable 2FA
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Add an extra layer of security
+                        </p>
+                      </div>
+                    </div>
+                    <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                      Enable
                     </button>
                   </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={handlePasswordChange}
+                    disabled={saving}
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Updating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Update Password</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -1473,6 +1495,9 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                           }`}
                         >
                           {systemStatus.storage}% Used
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {systemStatus.diskUsageLabel}
+                          </div>
                         </p>
                       </div>
                     </div>
@@ -1876,6 +1901,13 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                           <span className="font-medium">Memory Usage:</span>{" "}
                           {systemInfo.memoryUsage}%
                         </p>
+                        <p>
+                          <span className="font-medium">Disk Usage:</span>{" "}
+                          {systemInfo.usedDisk !== undefined &&
+                          systemInfo.totalDisk !== undefined
+                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
+                            : `${systemInfo.diskUsage}%`}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1933,12 +1965,6 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                       title: "Push Notifications",
                       description: "Receive push notifications in browser",
                       enabled: notifications.pushNotifications,
-                    },
-                    {
-                      key: "smsAlerts",
-                      title: "SMS Alerts",
-                      description: "Critical alerts via text message",
-                      enabled: notifications.smsAlerts,
                     },
                   ].map((notification) => (
                     <div
@@ -2111,21 +2137,22 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <a
-                    href="#"
-                    className="p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("faq")}
+                    className="p-6 text-left bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <HelpCircle className="w-8 h-8 text-purple-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      Admin Guide
+                      FAQ
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Learn how to manage the system
+                      Find answers to common admin questions
                     </p>
-                  </a>
+                  </button>
 
                   <a
-                    href="#"
+                    href="mailto:intraksystem@gmail.com?subject=INTRAK%20Admin%20Support%20Request"
                     className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <Mail className="w-8 h-8 text-blue-600 mb-3" />
@@ -2133,35 +2160,37 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
                       Contact Support
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Email: admin-support@intrak.edu
+                      Email: intraksystem@gmail.com
                     </p>
                   </a>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("guide")}
+                    className="p-6 text-left bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <FileText className="w-8 h-8 text-green-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      System Documentation
+                      Admin Guide
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Technical documentation and APIs
+                      Learn how to manage INTRAK at scale
                     </p>
-                  </a>
+                  </button>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("privacy")}
+                    className="p-6 text-left bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <Shield className="w-8 h-8 text-yellow-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      Security Policy
+                      Security & Privacy
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Security guidelines and best practices
+                      Review policies and compliance notes
                     </p>
-                  </a>
+                  </button>
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
@@ -2189,6 +2218,143 @@ const AdminSettings = ({ onBack }: { onBack: () => void }) => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+      {helpModal && (
+        <AdminHelpModalContent variant={helpModal} onClose={closeHelpModal} />
+      )}
+    </div>
+  );
+};
+
+const AdminHelpModalContent = ({
+  variant,
+  onClose,
+}: {
+  variant: "faq" | "guide" | "privacy";
+  onClose: () => void;
+}) => {
+  const titles = {
+    faq: "Frequently Asked Questions",
+    guide: "Administrator Quick Guide",
+    privacy: "Security & Privacy Overview",
+  } as const;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      style={{ marginTop: 0 }}
+    >
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          aria-label="Close help dialog"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="px-6 pb-6 pt-7 space-y-4">
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {titles[variant]}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {variant === "faq" &&
+                "Quick answers to the most common administrator questions."}
+              {variant === "guide" &&
+                "Follow these steps to get the most out of the admin dashboard and controls."}
+              {variant === "privacy" &&
+                "A short summary of how INTRAK handles sensitive data and access controls."}
+            </p>
+          </div>
+
+          {variant === "faq" && (
+            <ul className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+              <li>
+                <p className="font-semibold">
+                  How do I create or reset admin accounts?
+                </p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Use the User Management tab to provision new accounts or reset
+                  credentials. The system automatically emails login
+                  instructions.
+                </p>
+              </li>
+              <li>
+                <p className="font-semibold">
+                  Where can I monitor system health?
+                </p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Open Admin Settings → System to view live metrics, trigger
+                  backups, clear cache, or restart services.
+                </p>
+              </li>
+              <li>
+                <p className="font-semibold">Can I roll back configuration?</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Yes. Export your settings before making large changes. You can
+                  re-import the JSON file to restore previous values.
+                </p>
+              </li>
+            </ul>
+          )}
+
+          {variant === "guide" && (
+            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <div>
+                <p className="font-semibold">1. Start with the dashboard</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Review alerts, recent activities, and pending requests daily
+                  to keep the institution in sync.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">2. Manage access & roles</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Use User Management to add coordinators, instructors, and
+                  supervisors. Always enforce secure passwords and refresh tokens
+                  when roles change.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">3. Protect your data</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Schedule backups from System Actions and store them securely.
+                  Clear cache or restart backend services after major updates.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {variant === "privacy" && (
+            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+              <div>
+                <p className="font-semibold">Data retention</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  INTRAK stores academic and placement records in encrypted
+                  databases hosted on Render. Backups are generated manually via
+                  the System tab.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">Access controls</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Only administrators can manage global settings. Coordinators,
+                  instructors, and supervisors receive scoped permissions based
+                  on their role.
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">Incident response</p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  Enable system alerts to be notified of outages. Use the
+                  Restart System action for planned maintenance and document any
+                  changes in audit logs.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

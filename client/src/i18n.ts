@@ -173,6 +173,12 @@ const resources = {
             inactive: "Inactive",
             suspended: "Suspended",
           },
+        empty: {
+          title: "No students yet",
+          description:
+            "When you add students or approve internship placements, they will show up here.",
+          action: "Open Student Management",
+        },
         },
         performance: {
           title: "Performance Overview",
@@ -392,6 +398,12 @@ const resources = {
             inactive: "Hindi Aktibo",
             suspended: "Suspendido",
           },
+        empty: {
+          title: "Wala pang mga mag-aaral",
+          description:
+            "Makikita rito ang mga mag-aaral kapag naidagdag o naaprubahan na ang kanilang internship.",
+          action: "Buksan ang Pamamahala ng Mag-aaral",
+        },
         },
         performance: {
           title: "Balangkas ng Performance",
