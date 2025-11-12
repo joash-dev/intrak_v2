@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailOptions {
   to: string;
@@ -8,77 +8,62 @@ interface EmailOptions {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend | null = null;
+  private fromEmail: string;
 
   constructor() {
-    // For development, we'll use a test account
-    // In production, you should use a real SMTP service like Gmail, SendGrid, etc.
-    const port = parseInt(process.env.SMTP_PORT || '587');
-    const secure =
-      (process.env.SMTP_SECURE || '').toLowerCase() === 'true' || port === 465;
+    const { RESEND_API_KEY } = process.env;
 
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-      port,
-      secure,
-      auth: {
-        user: process.env.SMTP_USER || 'ethereal.user@ethereal.email',
-        pass: process.env.SMTP_PASS || 'ethereal.pass'
-      }
-    });
+    this.fromEmail =
+      process.env.SMTP_FROM ||
+      process.env.SMTP_USER ||
+      'intraksystem@gmail.com';
 
-    this.transporter
-      .verify()
+    if (!RESEND_API_KEY) {
+      console.warn('📧 RESEND_API_KEY missing. Email sending is disabled.');
+      return;
+    }
+
+    this.resend = new Resend(RESEND_API_KEY);
+
+    this.resend.domains
+      .list()
       .then(() => {
-        console.log('✅ Email transporter verified successfully');
+        console.log('✅ Resend API key verified successfully');
       })
-      .catch((error) => {
-        console.error('❌ Email transporter verification failed:', error);
-        console.error('❌ Check SMTP_HOST/PORT/USER/PASS/SECURE environment variables');
+      .catch((error: unknown) => {
+        console.error('❌ Resend domain verification failed:', error);
+        console.error('❌ Check RESEND_API_KEY and domain configuration');
       });
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
+    if (!this.resend) {
+      console.log('📧 Email sending skipped (RESEND_API_KEY not configured).');
+      console.log('📧 Email content would be:');
+      console.log('   To:', options.to);
+      console.log('   Subject:', options.subject);
+      console.log('   Content:', options.text?.substring(0, 100) + '...');
+      return true;
+    }
+
     try {
-      // Check if email configuration is properly set up
-      const hasEmailConfig = process.env.SMTP_HOST && 
-                            process.env.SMTP_USER && 
-                            process.env.SMTP_PASS;
-
-      if (!hasEmailConfig) {
-        console.log('📧 EMAIL SETUP REQUIRED:');
-        console.log('📧 To enable email sending, create a .env file with:');
-        console.log('📧 SMTP_HOST=smtp.gmail.com');
-        console.log('📧 SMTP_PORT=587');
-        console.log('📧 SMTP_USER=your-email@gmail.com');
-        console.log('📧 SMTP_PASS=your-app-password');
-        console.log('📧 See EMAIL_SETUP_GUIDE.md for detailed instructions');
-        console.log('📧 Email content would be:');
-        console.log('   To:', options.to);
-        console.log('   Subject:', options.subject);
-        console.log('   Content:', options.text?.substring(0, 100) + '...');
-        return true; // Return true to not break the student creation flow
-      }
-
-      const mailOptions = {
-        from:
-          process.env.SMTP_FROM ||
-          process.env.SMTP_USER ||
-          'intraksystem@gmail.com',
+      const response = await this.resend.emails.send({
+        from: this.fromEmail,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('📧 Email sent successfully to:', options.to);
-      console.log('📧 Message ID:', info.messageId);
+      console.log('📧 Email sent via Resend:', {
+        to: options.to,
+        id: response.data?.id
+      });
       return true;
     } catch (error) {
       console.error('❌ Email sending failed:', error);
-      console.error('❌ Please check your email configuration in .env file');
-      console.error('❌ See EMAIL_SETUP_GUIDE.md for troubleshooting');
+      console.error('❌ Check RESEND_API_KEY and domain settings');
       return false;
     }
   }
@@ -153,7 +138,7 @@ If you have any questions, please contact your system administrator.
 This is an automated message. Please do not reply to this email.
     `;
 
-    return await this.sendEmail({
+    return this.sendEmail({
       to: userEmail,
       subject,
       html,
@@ -167,7 +152,7 @@ This is an automated message. Please do not reply to this email.
     studentNumber: string,
     temporaryPassword: string
   ): Promise<boolean> {
-    return await this.sendUserWelcomeEmail(
+    return this.sendUserWelcomeEmail(
       studentEmail,
       studentName,
       'STUDENT',
@@ -177,13 +162,17 @@ This is an automated message. Please do not reply to this email.
   }
 
   async testConnection(): Promise<boolean> {
+    if (!this.resend) {
+      console.warn('📧 Resend not configured. Set RESEND_API_KEY to enable email sending.');
+      return false;
+    }
+
     try {
-      await this.transporter.verify();
-      console.log('✅ Email service connection successful');
+      await this.resend.domains.list();
+      console.log('✅ Resend connection verified');
       return true;
     } catch (error) {
-      console.error('❌ Email service connection failed:', error);
-      console.error('❌ See EMAIL_SETUP_GUIDE.md for troubleshooting');
+      console.error('❌ Resend connection failed:', error);
       return false;
     }
   }
