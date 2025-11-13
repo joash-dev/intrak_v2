@@ -92,11 +92,128 @@ If you don't want to set up email, the system will log email content to the cons
 
 ## Production Setup
 
-For production, use a dedicated email service like:
+### ⭐ Recommended: SendGrid (Best for Production - No Domain Required Initially)
 
-- SendGrid
-- Mailgun
-- Amazon SES
-- Microsoft Graph API
+**Why SendGrid?**
+- ✅ **No domain verification required** - Can use shared domain initially
+- ✅ **Free tier**: 100 emails/day forever
+- ✅ **Excellent deliverability** and analytics
+- ✅ **Easy setup** - Just need API key
+- ✅ **Can add custom domain later** for better branding
 
-These services provide better deliverability and analytics.
+**Setup Steps:**
+
+1. **Sign up** at https://sendgrid.com (free account)
+2. **Create API Key**:
+   - Go to Settings → API Keys
+   - Create API Key with "Mail Send" permissions
+   - Copy the API key
+3. **Add to `.env`**:
+
+```env
+EMAIL_PROVIDER=sendgrid
+SENDGRID_API_KEY=your-sendgrid-api-key-here
+SMTP_FROM=noreply@intrak.edu.ph
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASS=your-sendgrid-api-key-here
+```
+
+**Note**: You can use `noreply@intrak.edu.ph` as the FROM address even without domain verification. SendGrid will use their shared domain for delivery.
+
+---
+
+### Alternative Options
+
+#### 1. Mailgun (Good Alternative)
+
+**Free tier**: 5,000 emails/month (first 3 months), then 1,000/month
+
+```env
+EMAIL_PROVIDER=mailgun
+SMTP_HOST=smtp.mailgun.org
+SMTP_PORT=587
+SMTP_USER=your-mailgun-smtp-username
+SMTP_PASS=your-mailgun-smtp-password
+SMTP_FROM=noreply@intrak.edu.ph
+```
+
+**Setup**: Sign up at https://mailgun.com, get SMTP credentials from dashboard
+
+---
+
+#### 2. Brevo (formerly Sendinblue)
+
+**Free tier**: 300 emails/day
+
+```env
+EMAIL_PROVIDER=brevo
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your-brevo-smtp-user
+SMTP_PASS=your-brevo-smtp-password
+SMTP_FROM=noreply@intrak.edu.ph
+```
+
+**Setup**: Sign up at https://brevo.com, get SMTP credentials
+
+---
+
+#### 3. Amazon SES (Very Cheap, Pay-as-you-go)
+
+**Cost**: ~$0.10 per 1,000 emails
+
+```env
+EMAIL_PROVIDER=smtp
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=your-aws-ses-smtp-username
+SMTP_PASS=your-aws-ses-smtp-password
+SMTP_FROM=noreply@intrak.edu.ph
+```
+
+**Setup**: Requires AWS account, verify email addresses initially
+
+---
+
+#### 4. Gmail SMTP (Not Recommended for Production)
+
+**Limits**: 500 emails/day, not ideal for production
+
+```env
+EMAIL_PROVIDER=smtp
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM=your-email@gmail.com
+```
+
+---
+
+### Provider Comparison
+
+| Provider | Free Tier | Domain Required? | Best For |
+|----------|-----------|------------------|----------|
+| **SendGrid** ⭐ | 100/day | No (initially) | **Production (Recommended)** |
+| Mailgun | 5K/month (3mo) | No (sandbox) | Development/Production |
+| Brevo | 300/day | No | Small scale production |
+| Amazon SES | Pay-as-you-go | No (email verify) | High volume |
+| Gmail | 500/day | No | Development only |
+
+---
+
+### Quick Start with SendGrid (Recommended)
+
+1. Sign up: https://sendgrid.com/free/
+2. Create API Key: Settings → API Keys → Create API Key
+3. Add to `.env`:
+   ```env
+   EMAIL_PROVIDER=sendgrid
+   SENDGRID_API_KEY=SG.xxxxxxxxxxxxx
+   SMTP_FROM=noreply@intrak.edu.ph
+   ```
+4. Restart server - emails will work immediately!
+
+**No domain verification needed** - SendGrid handles delivery through their infrastructure.

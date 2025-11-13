@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 interface EmailOptions {
   to: string;
@@ -7,65 +8,154 @@ interface EmailOptions {
   text?: string;
 }
 
+type EmailProvider = 'resend' | 'sendgrid' | 'mailgun' | 'smtp' | 'brevo';
+
 class EmailService {
   private resend: Resend | null = null;
+  private transporter: nodemailer.Transporter | null = null;
+  private provider: EmailProvider;
   private fromEmail: string;
 
   constructor() {
-    const { RESEND_API_KEY } = process.env;
+    // Determine which email provider to use
+    const { RESEND_API_KEY, SENDGRID_API_KEY, EMAIL_PROVIDER, SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT } = process.env;
 
     this.fromEmail =
       process.env.SMTP_FROM ||
       process.env.SMTP_USER ||
       'intraksystem@gmail.com';
 
-    if (!RESEND_API_KEY) {
-      console.warn('📧 RESEND_API_KEY missing. Email sending is disabled.');
-      return;
+    // Auto-detect provider based on available API keys
+    if (EMAIL_PROVIDER) {
+      this.provider = EMAIL_PROVIDER.toLowerCase() as EmailProvider;
+    } else if (SENDGRID_API_KEY) {
+      this.provider = 'sendgrid';
+    } else if (RESEND_API_KEY) {
+      this.provider = 'resend';
+    } else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      this.provider = 'smtp';
+    } else {
+      this.provider = 'smtp'; // Default fallback
     }
 
-    this.resend = new Resend(RESEND_API_KEY);
+    // Initialize Resend if API key is provided
+    if (RESEND_API_KEY && (this.provider === 'resend' || !EMAIL_PROVIDER)) {
+      this.resend = new Resend(RESEND_API_KEY);
+      this.resend.domains
+        .list()
+        .then(() => {
+          console.log('✅ Resend API key verified successfully');
+        })
+        .catch((error: unknown) => {
+          console.error('❌ Resend domain verification failed:', error);
+          console.error('❌ Check RESEND_API_KEY and domain configuration');
+        });
+    }
 
-    this.resend.domains
-      .list()
-      .then(() => {
-        console.log('✅ Resend API key verified successfully');
-      })
-      .catch((error: unknown) => {
-        console.error('❌ Resend domain verification failed:', error);
-        console.error('❌ Check RESEND_API_KEY and domain configuration');
+    // Initialize SMTP transporter (works with SendGrid, Mailgun, Brevo, Gmail, etc.)
+    if (this.provider === 'sendgrid' || this.provider === 'mailgun' || this.provider === 'brevo' || this.provider === 'smtp') {
+      const smtpConfig = {
+        host: SMTP_HOST || this.getDefaultSMTPHost(this.provider),
+        port: parseInt(SMTP_PORT || '587'),
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: SMTP_USER || this.getDefaultSMTPUser(this.provider),
+          pass: SMTP_PASS || SENDGRID_API_KEY || ''
+        }
+      };
+
+      this.transporter = nodemailer.createTransport(smtpConfig);
+
+      // Verify connection
+      this.transporter.verify((error: Error | null) => {
+        if (error) {
+          console.error(`❌ ${this.provider.toUpperCase()} SMTP connection failed:`, error);
+        } else {
+          console.log(`✅ ${this.provider.toUpperCase()} SMTP connection verified`);
+        }
       });
+    }
+
+    if (!this.resend && !this.transporter) {
+      console.warn('📧 No email provider configured. Email sending is disabled.');
+      console.warn('📧 Set EMAIL_PROVIDER and required API keys (SENDGRID_API_KEY, RESEND_API_KEY, or SMTP credentials)');
+    }
+  }
+
+  private getDefaultSMTPHost(provider: EmailProvider): string {
+    const hosts: Record<EmailProvider, string> = {
+      sendgrid: 'smtp.sendgrid.net',
+      mailgun: 'smtp.mailgun.org',
+      brevo: 'smtp-relay.brevo.com',
+      smtp: 'smtp.gmail.com',
+      resend: ''
+    };
+    return hosts[provider] || 'smtp.gmail.com';
+  }
+
+  private getDefaultSMTPUser(provider: EmailProvider): string {
+    const users: Record<EmailProvider, string> = {
+      sendgrid: 'apikey',
+      mailgun: process.env.MAILGUN_SMTP_USER || '',
+      brevo: process.env.BREVO_SMTP_USER || '',
+      smtp: process.env.SMTP_USER || '',
+      resend: ''
+    };
+    return users[provider] || 'apikey';
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
-    if (!this.resend) {
-      console.log('📧 Email sending skipped (RESEND_API_KEY not configured).');
-      console.log('📧 Email content would be:');
-      console.log('   To:', options.to);
-      console.log('   Subject:', options.subject);
-      console.log('   Content:', options.text?.substring(0, 100) + '...');
-      return true;
+    // Try Resend first if configured
+    if (this.provider === 'resend' && this.resend) {
+      try {
+        const response = await this.resend.emails.send({
+          from: this.fromEmail,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text
+        });
+
+        console.log('📧 Email sent via Resend:', {
+          to: options.to,
+          id: response.data?.id
+        });
+        return true;
+      } catch (error) {
+        console.error('❌ Resend email sending failed:', error);
+        return false;
+      }
     }
 
-    try {
-      const response = await this.resend.emails.send({
-        from: this.fromEmail,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text
-      });
+    // Use SMTP transporter (SendGrid, Mailgun, Brevo, Gmail, etc.)
+    if (this.transporter) {
+      try {
+        const info = await this.transporter.sendMail({
+          from: this.fromEmail,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text
+        });
 
-      console.log('📧 Email sent via Resend:', {
-        to: options.to,
-        id: response.data?.id
-      });
-      return true;
-    } catch (error) {
-      console.error('❌ Email sending failed:', error);
-      console.error('❌ Check RESEND_API_KEY and domain settings');
-      return false;
+        console.log(`📧 Email sent via ${this.provider.toUpperCase()}:`, {
+          to: options.to,
+          messageId: info.messageId
+        });
+        return true;
+      } catch (error) {
+        console.error(`❌ ${this.provider.toUpperCase()} email sending failed:`, error);
+        return false;
+      }
     }
+
+    // Fallback: log email content
+    console.log('📧 Email sending skipped (no provider configured).');
+    console.log('📧 Email content would be:');
+    console.log('   To:', options.to);
+    console.log('   Subject:', options.subject);
+    console.log('   Content:', options.text?.substring(0, 100) + '...');
+    return true;
   }
 
   async sendUserWelcomeEmail(
@@ -162,19 +252,33 @@ This is an automated message. Please do not reply to this email.
   }
 
   async testConnection(): Promise<boolean> {
-    if (!this.resend) {
-      console.warn('📧 Resend not configured. Set RESEND_API_KEY to enable email sending.');
-      return false;
+    if (this.provider === 'resend' && this.resend) {
+      try {
+        await this.resend.domains.list();
+        console.log('✅ Resend connection verified');
+        return true;
+      } catch (error) {
+        console.error('❌ Resend connection failed:', error);
+        return false;
+      }
     }
 
-    try {
-      await this.resend.domains.list();
-      console.log('✅ Resend connection verified');
-      return true;
-    } catch (error) {
-      console.error('❌ Resend connection failed:', error);
-      return false;
+    if (this.transporter) {
+      return new Promise((resolve) => {
+        this.transporter!.verify((error) => {
+          if (error) {
+            console.error(`❌ ${this.provider.toUpperCase()} connection failed:`, error);
+            resolve(false);
+          } else {
+            console.log(`✅ ${this.provider.toUpperCase()} connection verified`);
+            resolve(true);
+          }
+        });
+      });
     }
+
+    console.warn('📧 No email provider configured. Set EMAIL_PROVIDER and required API keys.');
+    return false;
   }
 }
 
