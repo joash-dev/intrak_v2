@@ -12,22 +12,29 @@ class EmailService {
   private fromEmail: string;
 
   constructor() {
-    const { SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT, SMTP_FROM } = process.env;
+    // Option 1: SMTP_* variables (primary/preferred)
+    // Option 2: MAIL_* variables (Laravel style, fallback)
+    const SMTP_HOST = process.env.SMTP_HOST || process.env.MAIL_HOST;
+    const SMTP_PORT = process.env.SMTP_PORT || process.env.MAIL_PORT || '587';
+    const SMTP_USER = process.env.SMTP_USER || process.env.MAIL_USERNAME;
+    const SMTP_PASS = process.env.SMTP_PASS || process.env.MAIL_PASSWORD;
+    const SMTP_FROM = process.env.SMTP_FROM || process.env.MAIL_FROM_ADDRESS;
+    const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
 
     this.fromEmail = SMTP_FROM || SMTP_USER || 'intraksystem@gmail.com';
 
-    // Initialize SMTP transporter
+    // Initialize SMTP transporter (same pattern as Laravel mailers)
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-      const port = parseInt(SMTP_PORT || '465');
+      const port = parseInt(SMTP_PORT);
       const secure = port === 465; // true for 465 (SSL), false for 587 (TLS)
 
-      console.log('📧 Initializing SMTP transporter:', {
+      console.log('📧 Initializing SMTP transporter (Laravel mailer pattern):', {
         host: SMTP_HOST,
         port: port,
         secure: secure,
         user: SMTP_USER.substring(0, 10) + '...',
         hasPassword: !!SMTP_PASS,
-        from: this.fromEmail
+        from: `${SMTP_FROM_NAME} <${this.fromEmail}>`
       });
 
       const smtpConfig = {
@@ -37,7 +44,11 @@ class EmailService {
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS
-        }
+        },
+        // Add timeout like Laravel (null = no timeout)
+        connectionTimeout: 60000, // 60 seconds
+        greetingTimeout: 30000, // 30 seconds
+        socketTimeout: 60000 // 60 seconds
       };
 
       this.transporter = nodemailer.createTransport(smtpConfig);
@@ -84,8 +95,13 @@ class EmailService {
         subject: options.subject
       });
 
+      // Use "From Name <email>" format
+      // Priority: SMTP_FROM_NAME > MAIL_FROM_NAME
+      const fromName = process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
+      const fromAddress = fromName ? `${fromName} <${this.fromEmail}>` : this.fromEmail;
+
       const info = await this.transporter.sendMail({
-        from: this.fromEmail,
+        from: fromAddress,
         to: options.to,
         subject: options.subject,
         html: options.html,
@@ -110,6 +126,147 @@ class EmailService {
     }
   }
 
+  private generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
+    const logoUrl = `${clientUrl}/logo_intrak.png`;
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INTRAK Email</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #F3F8FF;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #FFFFFF;
+      border: 1px solid #cfd9e0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .header {
+      padding: 20px 30px 10px;
+      display: flex;
+      align-items: center;
+    }
+    .logo {
+      width: 60px;
+      height: 60px;
+      margin-right: 15px;
+      object-fit: contain;
+    }
+    .title-text {
+      color: #002c63;
+    }
+    .title-text h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .banner {
+      background-color: #002C76;
+      color: white;
+      padding: 15px 30px;
+      margin: 15px 15px 0px 15px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .banner img {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      filter: brightness(0) invert(1);
+    }
+    .content {
+      padding: 0px 30px 15px 30px;
+      color: #1a202c;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .credentials-box {
+      margin: 20px 0;
+      background-color: #f2f2f2;
+      border: 2px dashed #002c63;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .credentials-box p {
+      margin: 8px 0;
+      font-size: 15px;
+    }
+    .credentials-box strong {
+      color: #002c63;
+      font-weight: 700;
+    }
+    .login-button {
+      display: block;
+      margin: 20px auto;
+      text-align: center;
+      text-decoration: none;
+      padding: 12px 24px;
+      background-color: #002C76;
+      color: white !important;
+      font-weight: 600;
+      border-radius: 8px;
+      font-size: 15px;
+      width: fit-content;
+    }
+    .footer {
+      padding: 0 30px 30px;
+      font-size: 14px;
+      color: #2d3748;
+    }
+    .footer strong {
+      font-weight: 700;
+    }
+    .note {
+      font-size: 13px;
+      color: #718096;
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <img src="${logoUrl}" alt="INTRAK Logo" class="logo" onerror="this.style.display='none'">
+      <div class="title-text">
+        <h2>INTRAK - OJT Management System</h2>
+      </div>
+    </div>
+
+    <!-- Banner -->
+    <div class="banner">
+      ${bannerIcon ? `<img src="${bannerIcon}" alt="Icon" />` : ''}
+      ${bannerText}
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      ${content}
+    </div>
+  </div>
+</body>
+</html>
+    `.trim();
+  }
+
   async sendUserWelcomeEmail(
     userEmail: string,
     userName: string,
@@ -131,6 +288,7 @@ class EmailService {
 
     const roleDisplayName = roleDisplayNames[userRole] || userRole;
     const subject = `Welcome to INTRAK - Your ${roleDisplayName} Account Credentials`;
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
     
     const additionalInfoHtml = additionalInfo ? `
       ${additionalInfo.studentNumber ? `<p><strong>Student Number:</strong> ${additionalInfo.studentNumber}</p>` : ''}
@@ -138,22 +296,35 @@ class EmailService {
       ${additionalInfo.department ? `<p><strong>Department:</strong> ${additionalInfo.department}</p>` : ''}
     ` : '';
 
-    const html = `
-      <h1>Welcome to INTRAK, ${userName}!</h1>
-      <p>Your ${roleDisplayName} account has been successfully created.</p>
+    const content = `
+      <p>Hello ${userName}!</p>
+      <p>Your ${roleDisplayName} account has been successfully created in the INTRAK OJT Management System.</p>
       
-      <h2>Account Credentials:</h2>
-      <p><strong>Email:</strong> ${userEmail}</p>
-      <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
-      <p><strong>Role:</strong> ${roleDisplayName}</p>
-      ${additionalInfoHtml}
+      <div class="credentials-box">
+        <p><strong>Account Credentials:</strong></p>
+        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+        <p><strong>Role:</strong> ${roleDisplayName}</p>
+        ${additionalInfoHtml}
+      </div>
+
+      <p><strong>Important:</strong> This is a temporary password that you must change on your first login for security purposes.</p>
       
-      <p><strong>Important:</strong> This is a temporary password that you must change on your first login.</p>
+      <a href="${clientUrl}/login" class="login-button">Login to INTRAK</a>
       
-      <p><a href="${process.env.CLIENT_URL || 'https://intrak-v2.onrender.com'}/login">Login to INTRAK</a></p>
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${clientUrl}/login</span></p>
       
-      <p>If you have any questions, please contact your system administrator.</p>
+      <p>If you have any questions or need assistance, please contact your system administrator.</p>
+      
+      <p><br><strong>– INTRAK System</strong></p>
     `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      'Welcome to INTRAK',
+      'https://img.icons8.com/ios-filled/50/ffffff/user-male-circle.png'
+    );
 
     const text = `
 Welcome to INTRAK, ${userName}!
@@ -173,7 +344,7 @@ ${additionalInfo.department ? `Department: ${additionalInfo.department}` : ''}
 
 IMPORTANT: This is a temporary password that you must change on your first login.
 
-Login at: ${process.env.CLIENT_URL || 'https://intrak-v2.onrender.com'}/login
+Login at: ${clientUrl}/login
 
 If you have any questions, please contact your system administrator.
 
