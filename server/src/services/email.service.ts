@@ -30,14 +30,19 @@ class EmailService {
     // Auto-detect provider based on available API keys
     if (EMAIL_PROVIDER) {
       this.provider = EMAIL_PROVIDER.toLowerCase() as EmailProvider;
+      console.log(`📧 Email provider set to: ${this.provider} (from EMAIL_PROVIDER)`);
     } else if (SENDGRID_API_KEY) {
       this.provider = 'sendgrid';
+      console.log('📧 Email provider auto-detected: sendgrid (from SENDGRID_API_KEY)');
     } else if (RESEND_API_KEY) {
       this.provider = 'resend';
+      console.log('📧 Email provider auto-detected: resend (from RESEND_API_KEY)');
     } else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
       this.provider = 'smtp';
+      console.log('📧 Email provider auto-detected: smtp (from SMTP credentials)');
     } else {
       this.provider = 'smtp'; // Default fallback
+      console.warn('📧 Email provider defaulting to: smtp (no provider configured)');
     }
 
     // Initialize SendGrid API (preferred over SMTP for better reliability)
@@ -67,13 +72,24 @@ class EmailService {
 
     // Initialize SMTP transporter (for Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
     if (this.provider === 'mailgun' || this.provider === 'brevo' || this.provider === 'smtp') {
+      const smtpHost = SMTP_HOST || this.getDefaultSMTPHost(this.provider);
+      const smtpUser = SMTP_USER || this.getDefaultSMTPUser(this.provider);
+      const smtpPass = SMTP_PASS || '';
+      
+      console.log(`📧 Initializing ${this.provider.toUpperCase()} SMTP transporter:`, {
+        host: smtpHost,
+        port: SMTP_PORT || '587',
+        user: smtpUser ? smtpUser.substring(0, 10) + '...' : 'NOT SET',
+        hasPassword: !!smtpPass
+      });
+
       const smtpConfig = {
-        host: SMTP_HOST || this.getDefaultSMTPHost(this.provider),
+        host: smtpHost,
         port: parseInt(SMTP_PORT || '587'),
         secure: false, // true for 465, false for other ports
         auth: {
-          user: SMTP_USER || this.getDefaultSMTPUser(this.provider),
-          pass: SMTP_PASS || ''
+          user: smtpUser,
+          pass: smtpPass
         }
       };
 
@@ -83,6 +99,11 @@ class EmailService {
       this.transporter.verify((error: Error | null) => {
         if (error) {
           console.error(`❌ ${this.provider.toUpperCase()} SMTP connection failed:`, error);
+          console.error('Error details:', {
+            message: error.message,
+            code: (error as any).code,
+            command: (error as any).command
+          });
         } else {
           console.log(`✅ ${this.provider.toUpperCase()} SMTP connection verified`);
         }
@@ -202,6 +223,12 @@ class EmailService {
     // Use SMTP transporter (Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
     if (this.transporter) {
       try {
+        console.log(`📧 Attempting to send email via ${this.provider.toUpperCase()} SMTP:`, {
+          to: options.to,
+          from: this.fromEmail,
+          subject: options.subject
+        });
+
         const info = await this.transporter.sendMail({
           from: this.fromEmail,
           to: options.to,
@@ -215,22 +242,34 @@ class EmailService {
           messageId: info.messageId
         });
         return true;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ ${this.provider.toUpperCase()} email sending failed:`, error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          command: error.command,
+          response: error.response,
+          responseCode: error.responseCode
+        });
         return false;
       }
     }
 
     // Fallback: log email content
-    console.log('📧 Email sending skipped (no provider configured).');
-    console.log('📧 Current provider:', this.provider);
-    console.log('📧 Has SendGrid API key:', !!this.sendgridApiKey);
-    console.log('📧 Has Resend:', !!this.resend);
-    console.log('📧 Has SMTP transporter:', !!this.transporter);
-    console.log('📧 Email content would be:');
-    console.log('   To:', options.to);
-    console.log('   Subject:', options.subject);
-    console.log('   Content:', options.text?.substring(0, 100) + '...');
+    console.error('❌ Email sending skipped (no provider configured).');
+    console.error('📧 Current provider:', this.provider);
+    console.error('📧 Has SendGrid API key:', !!this.sendgridApiKey);
+    console.error('📧 Has Resend:', !!this.resend);
+    console.error('📧 Has SMTP transporter:', !!this.transporter);
+    console.error('📧 Environment variables check:');
+    console.error('   EMAIL_PROVIDER:', process.env.EMAIL_PROVIDER || 'NOT SET');
+    console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
+    console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
+    console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+    console.error('📧 Email content would be:');
+    console.error('   To:', options.to);
+    console.error('   Subject:', options.subject);
+    console.error('   Content:', options.text?.substring(0, 100) + '...');
     return false; // Return false instead of true to indicate failure
   }
 
