@@ -45,6 +45,10 @@ class EmailService {
       this.sendgridApiKey = SENDGRID_API_KEY;
       sgMail.setApiKey(SENDGRID_API_KEY);
       console.log('✅ SendGrid API initialized (using Web API instead of SMTP)');
+      console.log('📧 SendGrid API Key:', SENDGRID_API_KEY.substring(0, 10) + '...' + SENDGRID_API_KEY.substring(SENDGRID_API_KEY.length - 4));
+      console.log('📧 SendGrid From Email:', this.fromEmail);
+    } else if (this.provider === 'sendgrid' && !SENDGRID_API_KEY) {
+      console.error('❌ SendGrid provider selected but SENDGRID_API_KEY not found in environment variables');
     }
 
     // Initialize Resend if API key is provided
@@ -105,8 +109,8 @@ class EmailService {
   private getDefaultSMTPUser(provider: EmailProvider): string {
     const users: Record<EmailProvider, string> = {
       sendgrid: 'apikey',
-      mailgun: process.env.MAILGUN_SMTP_USER || '',
-      brevo: process.env.BREVO_SMTP_USER || '',
+      mailgun: process.env.MAILGUN_SMTP_USER || process.env.SMTP_USER || '',
+      brevo: process.env.SMTP_USER || process.env.BREVO_SMTP_USER || '',
       smtp: process.env.SMTP_USER || '',
       resend: ''
     };
@@ -125,6 +129,13 @@ class EmailService {
           text: options.text
         };
 
+        console.log('📧 Attempting to send email via SendGrid API:', {
+          to: options.to,
+          from: this.fromEmail,
+          provider: this.provider,
+          hasApiKey: !!this.sendgridApiKey
+        });
+
         const response = await sgMail.send(msg);
 
         console.log('📧 Email sent via SendGrid API:', {
@@ -135,10 +146,35 @@ class EmailService {
       } catch (error: any) {
         console.error('❌ SendGrid email sending failed:', error);
         if (error.response) {
-          console.error('SendGrid error details:', error.response.body);
+          const errorBody = error.response.body;
+          console.error('SendGrid error response:', {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            body: errorBody
+          });
+          
+          // Check for common SendGrid errors
+          if (errorBody?.errors) {
+            errorBody.errors.forEach((err: any) => {
+              console.error(`SendGrid Error: ${err.message}`);
+              if (err.message?.includes('sender') || err.message?.includes('from')) {
+                console.error('⚠️  IMPORTANT: The "from" email address must be verified in SendGrid!');
+                console.error('⚠️  Go to SendGrid Dashboard → Settings → Sender Authentication');
+                console.error('⚠️  Verify the email:', this.fromEmail);
+              }
+            });
+          }
+        } else {
+          console.error('SendGrid error (no response):', error.message || error);
         }
         return false;
       }
+    }
+
+    // Log if SendGrid is not properly configured
+    if (this.provider === 'sendgrid' && !this.sendgridApiKey) {
+      console.error('❌ SendGrid provider selected but API key not found');
+      console.error('❌ Check SENDGRID_API_KEY environment variable');
     }
 
     // Try Resend if configured
@@ -187,11 +223,15 @@ class EmailService {
 
     // Fallback: log email content
     console.log('📧 Email sending skipped (no provider configured).');
+    console.log('📧 Current provider:', this.provider);
+    console.log('📧 Has SendGrid API key:', !!this.sendgridApiKey);
+    console.log('📧 Has Resend:', !!this.resend);
+    console.log('📧 Has SMTP transporter:', !!this.transporter);
     console.log('📧 Email content would be:');
     console.log('   To:', options.to);
     console.log('   Subject:', options.subject);
     console.log('   Content:', options.text?.substring(0, 100) + '...');
-    return true;
+    return false; // Return false instead of true to indicate failure
   }
 
   async sendUserWelcomeEmail(
