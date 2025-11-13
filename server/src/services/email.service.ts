@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 interface EmailOptions {
   to: string;
@@ -13,6 +14,7 @@ type EmailProvider = 'resend' | 'sendgrid' | 'mailgun' | 'smtp' | 'brevo';
 class EmailService {
   private resend: Resend | null = null;
   private transporter: nodemailer.Transporter | null = null;
+  private sendgridApiKey: string | null = null;
   private provider: EmailProvider;
   private fromEmail: string;
 
@@ -38,6 +40,13 @@ class EmailService {
       this.provider = 'smtp'; // Default fallback
     }
 
+    // Initialize SendGrid API (preferred over SMTP for better reliability)
+    if (SENDGRID_API_KEY && this.provider === 'sendgrid') {
+      this.sendgridApiKey = SENDGRID_API_KEY;
+      sgMail.setApiKey(SENDGRID_API_KEY);
+      console.log('✅ SendGrid API initialized (using Web API instead of SMTP)');
+    }
+
     // Initialize Resend if API key is provided
     if (RESEND_API_KEY && (this.provider === 'resend' || !EMAIL_PROVIDER)) {
       this.resend = new Resend(RESEND_API_KEY);
@@ -52,15 +61,15 @@ class EmailService {
         });
     }
 
-    // Initialize SMTP transporter (works with SendGrid, Mailgun, Brevo, Gmail, etc.)
-    if (this.provider === 'sendgrid' || this.provider === 'mailgun' || this.provider === 'brevo' || this.provider === 'smtp') {
+    // Initialize SMTP transporter (for Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
+    if (this.provider === 'mailgun' || this.provider === 'brevo' || this.provider === 'smtp') {
       const smtpConfig = {
         host: SMTP_HOST || this.getDefaultSMTPHost(this.provider),
         port: parseInt(SMTP_PORT || '587'),
         secure: false, // true for 465, false for other ports
         auth: {
           user: SMTP_USER || this.getDefaultSMTPUser(this.provider),
-          pass: SMTP_PASS || SENDGRID_API_KEY || ''
+          pass: SMTP_PASS || ''
         }
       };
 
@@ -76,7 +85,7 @@ class EmailService {
       });
     }
 
-    if (!this.resend && !this.transporter) {
+    if (!this.resend && !this.transporter && !this.sendgridApiKey) {
       console.warn('📧 No email provider configured. Email sending is disabled.');
       console.warn('📧 Set EMAIL_PROVIDER and required API keys (SENDGRID_API_KEY, RESEND_API_KEY, or SMTP credentials)');
     }
@@ -105,7 +114,34 @@ class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
-    // Try Resend first if configured
+    // Try SendGrid API first if configured (preferred method)
+    if (this.provider === 'sendgrid' && this.sendgridApiKey) {
+      try {
+        const msg = {
+          to: options.to,
+          from: this.fromEmail,
+          subject: options.subject,
+          html: options.html,
+          text: options.text
+        };
+
+        const response = await sgMail.send(msg);
+
+        console.log('📧 Email sent via SendGrid API:', {
+          to: options.to,
+          statusCode: response[0]?.statusCode
+        });
+        return true;
+      } catch (error: any) {
+        console.error('❌ SendGrid email sending failed:', error);
+        if (error.response) {
+          console.error('SendGrid error details:', error.response.body);
+        }
+        return false;
+      }
+    }
+
+    // Try Resend if configured
     if (this.provider === 'resend' && this.resend) {
       try {
         const response = await this.resend.emails.send({
@@ -127,7 +163,7 @@ class EmailService {
       }
     }
 
-    // Use SMTP transporter (SendGrid, Mailgun, Brevo, Gmail, etc.)
+    // Use SMTP transporter (Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
     if (this.transporter) {
       try {
         const info = await this.transporter.sendMail({
@@ -252,6 +288,23 @@ This is an automated message. Please do not reply to this email.
   }
 
   async testConnection(): Promise<boolean> {
+    if (this.provider === 'sendgrid' && this.sendgridApiKey) {
+      try {
+        // Test SendGrid API by checking API key validity
+        // We'll do a simple validation - SendGrid API keys start with SG.
+        if (this.sendgridApiKey.startsWith('SG.')) {
+          console.log('✅ SendGrid API key format verified');
+          return true;
+        } else {
+          console.error('❌ Invalid SendGrid API key format (should start with SG.)');
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ SendGrid connection failed:', error);
+        return false;
+      }
+    }
+
     if (this.provider === 'resend' && this.resend) {
       try {
         await this.resend.domains.list();
