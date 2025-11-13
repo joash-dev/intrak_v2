@@ -17,6 +17,8 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       });
     }
 
+    console.log('📧 Email controller: Attempting to send welcome email to:', userEmail);
+    
     const emailSent = await emailService.sendUserWelcomeEmail(
       userEmail,
       userName,
@@ -25,17 +27,25 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       additionalInfo
     );
 
+    console.log('📧 Email controller: Email send result:', emailSent);
+
     res.status(200).json({
       message: emailSent
         ? 'Welcome email sent successfully'
         : 'User created but email failed to send',
       emailSent
     });
-  } catch (error) {
-    console.error('Error sending welcome email:', error);
+  } catch (error: any) {
+    console.error('❌ Error sending welcome email:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      response: error?.response
+    });
     res.status(500).json({ 
       message: 'Failed to send welcome email', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+      emailSent: false,
+      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
     });
   }
 };
@@ -50,6 +60,8 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       });
     }
 
+    console.log('📧 Email controller: Attempting to send student welcome email to:', studentEmail);
+    
     const emailSent = await emailService.sendStudentWelcomeEmail(
       studentEmail,
       studentName,
@@ -57,17 +69,25 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       temporaryPassword
     );
 
+    console.log('📧 Email controller: Email send result:', emailSent);
+
     res.status(200).json({
       message: emailSent
         ? 'Welcome email sent successfully'
         : 'User created but email failed to send',
       emailSent
     });
-  } catch (error) {
-    console.error('Error sending welcome email:', error);
+  } catch (error: any) {
+    console.error('❌ Error sending welcome email:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      response: error?.response
+    });
     res.status(500).json({ 
       message: 'Failed to send welcome email', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+      emailSent: false,
+      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
     });
   }
 };

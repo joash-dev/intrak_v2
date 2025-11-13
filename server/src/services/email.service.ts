@@ -1,6 +1,4 @@
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-import sgMail from '@sendgrid/mail';
 
 interface EmailOptions {
   to: string;
@@ -9,87 +7,36 @@ interface EmailOptions {
   text?: string;
 }
 
-type EmailProvider = 'resend' | 'sendgrid' | 'mailgun' | 'smtp' | 'brevo';
-
 class EmailService {
-  private resend: Resend | null = null;
   private transporter: nodemailer.Transporter | null = null;
-  private sendgridApiKey: string | null = null;
-  private provider: EmailProvider;
   private fromEmail: string;
 
   constructor() {
-    // Determine which email provider to use
-    const { RESEND_API_KEY, SENDGRID_API_KEY, EMAIL_PROVIDER, SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT } = process.env;
+    const { SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_PORT, SMTP_FROM } = process.env;
 
-    this.fromEmail =
-      process.env.SMTP_FROM ||
-      process.env.SMTP_USER ||
-      'intraksystem@gmail.com';
+    this.fromEmail = SMTP_FROM || SMTP_USER || 'intraksystem@gmail.com';
 
-    // Auto-detect provider based on available API keys
-    if (EMAIL_PROVIDER) {
-      this.provider = EMAIL_PROVIDER.toLowerCase() as EmailProvider;
-      console.log(`📧 Email provider set to: ${this.provider} (from EMAIL_PROVIDER)`);
-    } else if (SENDGRID_API_KEY) {
-      this.provider = 'sendgrid';
-      console.log('📧 Email provider auto-detected: sendgrid (from SENDGRID_API_KEY)');
-    } else if (RESEND_API_KEY) {
-      this.provider = 'resend';
-      console.log('📧 Email provider auto-detected: resend (from RESEND_API_KEY)');
-    } else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-      this.provider = 'smtp';
-      console.log('📧 Email provider auto-detected: smtp (from SMTP credentials)');
-    } else {
-      this.provider = 'smtp'; // Default fallback
-      console.warn('📧 Email provider defaulting to: smtp (no provider configured)');
-    }
+    // Initialize SMTP transporter
+    if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      const port = parseInt(SMTP_PORT || '465');
+      const secure = port === 465; // true for 465 (SSL), false for 587 (TLS)
 
-    // Initialize SendGrid API (preferred over SMTP for better reliability)
-    if (SENDGRID_API_KEY && this.provider === 'sendgrid') {
-      this.sendgridApiKey = SENDGRID_API_KEY;
-      sgMail.setApiKey(SENDGRID_API_KEY);
-      console.log('✅ SendGrid API initialized (using Web API instead of SMTP)');
-      console.log('📧 SendGrid API Key:', SENDGRID_API_KEY.substring(0, 10) + '...' + SENDGRID_API_KEY.substring(SENDGRID_API_KEY.length - 4));
-      console.log('📧 SendGrid From Email:', this.fromEmail);
-    } else if (this.provider === 'sendgrid' && !SENDGRID_API_KEY) {
-      console.error('❌ SendGrid provider selected but SENDGRID_API_KEY not found in environment variables');
-    }
-
-    // Initialize Resend if API key is provided
-    if (RESEND_API_KEY && (this.provider === 'resend' || !EMAIL_PROVIDER)) {
-      this.resend = new Resend(RESEND_API_KEY);
-      this.resend.domains
-        .list()
-        .then(() => {
-          console.log('✅ Resend API key verified successfully');
-        })
-        .catch((error: unknown) => {
-          console.error('❌ Resend domain verification failed:', error);
-          console.error('❌ Check RESEND_API_KEY and domain configuration');
-        });
-    }
-
-    // Initialize SMTP transporter (for Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
-    if (this.provider === 'mailgun' || this.provider === 'brevo' || this.provider === 'smtp') {
-      const smtpHost = SMTP_HOST || this.getDefaultSMTPHost(this.provider);
-      const smtpUser = SMTP_USER || this.getDefaultSMTPUser(this.provider);
-      const smtpPass = SMTP_PASS || '';
-      
-      console.log(`📧 Initializing ${this.provider.toUpperCase()} SMTP transporter:`, {
-        host: smtpHost,
-        port: SMTP_PORT || '587',
-        user: smtpUser ? smtpUser.substring(0, 10) + '...' : 'NOT SET',
-        hasPassword: !!smtpPass
+      console.log('📧 Initializing SMTP transporter:', {
+        host: SMTP_HOST,
+        port: port,
+        secure: secure,
+        user: SMTP_USER.substring(0, 10) + '...',
+        hasPassword: !!SMTP_PASS,
+        from: this.fromEmail
       });
 
       const smtpConfig = {
-        host: smtpHost,
-        port: parseInt(SMTP_PORT || '587'),
-        secure: false, // true for 465, false for other ports
+        host: SMTP_HOST,
+        port: port,
+        secure: secure, // true for 465, false for 587
         auth: {
-          user: smtpUser,
-          pass: smtpPass
+          user: SMTP_USER,
+          pass: SMTP_PASS
         }
       };
 
@@ -98,179 +45,69 @@ class EmailService {
       // Verify connection
       this.transporter.verify((error: Error | null) => {
         if (error) {
-          console.error(`❌ ${this.provider.toUpperCase()} SMTP connection failed:`, error);
+          console.error('❌ SMTP connection failed:', error);
           console.error('Error details:', {
             message: error.message,
             code: (error as any).code,
             command: (error as any).command
           });
         } else {
-          console.log(`✅ ${this.provider.toUpperCase()} SMTP connection verified`);
+          console.log('✅ SMTP connection verified');
         }
       });
+    } else {
+      console.warn('📧 SMTP not configured. Email sending is disabled.');
+      console.warn('📧 Required environment variables: SMTP_HOST, SMTP_USER, SMTP_PASS');
+      if (!SMTP_HOST) console.warn('   - SMTP_HOST: NOT SET');
+      if (!SMTP_USER) console.warn('   - SMTP_USER: NOT SET');
+      if (!SMTP_PASS) console.warn('   - SMTP_PASS: NOT SET');
     }
-
-    if (!this.resend && !this.transporter && !this.sendgridApiKey) {
-      console.warn('📧 No email provider configured. Email sending is disabled.');
-      console.warn('📧 Set EMAIL_PROVIDER and required API keys (SENDGRID_API_KEY, RESEND_API_KEY, or SMTP credentials)');
-    }
-  }
-
-  private getDefaultSMTPHost(provider: EmailProvider): string {
-    const hosts: Record<EmailProvider, string> = {
-      sendgrid: 'smtp.sendgrid.net',
-      mailgun: 'smtp.mailgun.org',
-      brevo: 'smtp-relay.brevo.com',
-      smtp: 'smtp.gmail.com',
-      resend: ''
-    };
-    return hosts[provider] || 'smtp.gmail.com';
-  }
-
-  private getDefaultSMTPUser(provider: EmailProvider): string {
-    const users: Record<EmailProvider, string> = {
-      sendgrid: 'apikey',
-      mailgun: process.env.MAILGUN_SMTP_USER || process.env.SMTP_USER || '',
-      brevo: process.env.SMTP_USER || process.env.BREVO_SMTP_USER || '',
-      smtp: process.env.SMTP_USER || '',
-      resend: ''
-    };
-    return users[provider] || 'apikey';
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
-    // Try SendGrid API first if configured (preferred method)
-    if (this.provider === 'sendgrid' && this.sendgridApiKey) {
-      try {
-        const msg = {
-          to: options.to,
-          from: this.fromEmail,
-          subject: options.subject,
-          html: options.html,
-          text: options.text
-        };
-
-        console.log('📧 Attempting to send email via SendGrid API:', {
-          to: options.to,
-          from: this.fromEmail,
-          provider: this.provider,
-          hasApiKey: !!this.sendgridApiKey
-        });
-
-        const response = await sgMail.send(msg);
-
-        console.log('📧 Email sent via SendGrid API:', {
-          to: options.to,
-          statusCode: response[0]?.statusCode
-        });
-        return true;
-      } catch (error: any) {
-        console.error('❌ SendGrid email sending failed:', error);
-        if (error.response) {
-          const errorBody = error.response.body;
-          console.error('SendGrid error response:', {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            body: errorBody
-          });
-          
-          // Check for common SendGrid errors
-          if (errorBody?.errors) {
-            errorBody.errors.forEach((err: any) => {
-              console.error(`SendGrid Error: ${err.message}`);
-              if (err.message?.includes('sender') || err.message?.includes('from')) {
-                console.error('⚠️  IMPORTANT: The "from" email address must be verified in SendGrid!');
-                console.error('⚠️  Go to SendGrid Dashboard → Settings → Sender Authentication');
-                console.error('⚠️  Verify the email:', this.fromEmail);
-              }
-            });
-          }
-        } else {
-          console.error('SendGrid error (no response):', error.message || error);
-        }
-        return false;
-      }
+    if (!this.transporter) {
+      console.error('❌ Email sending skipped (SMTP transporter not configured).');
+      console.error('📧 Environment variables check:');
+      console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
+      console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
+      console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+      console.error('📧 Email content would be:');
+      console.error('   To:', options.to);
+      console.error('   Subject:', options.subject);
+      return false;
     }
 
-    // Log if SendGrid is not properly configured
-    if (this.provider === 'sendgrid' && !this.sendgridApiKey) {
-      console.error('❌ SendGrid provider selected but API key not found');
-      console.error('❌ Check SENDGRID_API_KEY environment variable');
+    try {
+      console.log('📧 Attempting to send email via SMTP:', {
+        to: options.to,
+        from: this.fromEmail,
+        subject: options.subject
+      });
+
+      const info = await this.transporter.sendMail({
+        from: this.fromEmail,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text
+      });
+
+      console.log('📧 Email sent successfully:', {
+        to: options.to,
+        messageId: info.messageId
+      });
+      return true;
+    } catch (error: any) {
+      console.error('❌ Email sending failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+        response: error.response,
+        responseCode: error.responseCode
+      });
+      return false;
     }
-
-    // Try Resend if configured
-    if (this.provider === 'resend' && this.resend) {
-      try {
-        const response = await this.resend.emails.send({
-          from: this.fromEmail,
-          to: options.to,
-          subject: options.subject,
-          html: options.html,
-          text: options.text
-        });
-
-        console.log('📧 Email sent via Resend:', {
-          to: options.to,
-          id: response.data?.id
-        });
-        return true;
-      } catch (error) {
-        console.error('❌ Resend email sending failed:', error);
-        return false;
-      }
-    }
-
-    // Use SMTP transporter (Mailgun, Brevo, Gmail, etc. - NOT SendGrid)
-    if (this.transporter) {
-      try {
-        console.log(`📧 Attempting to send email via ${this.provider.toUpperCase()} SMTP:`, {
-          to: options.to,
-          from: this.fromEmail,
-          subject: options.subject
-        });
-
-        const info = await this.transporter.sendMail({
-          from: this.fromEmail,
-          to: options.to,
-          subject: options.subject,
-          html: options.html,
-          text: options.text
-        });
-
-        console.log(`📧 Email sent via ${this.provider.toUpperCase()}:`, {
-          to: options.to,
-          messageId: info.messageId
-        });
-        return true;
-      } catch (error: any) {
-        console.error(`❌ ${this.provider.toUpperCase()} email sending failed:`, error);
-        console.error('Error details:', {
-          message: error.message,
-          code: error.code,
-          command: error.command,
-          response: error.response,
-          responseCode: error.responseCode
-        });
-        return false;
-      }
-    }
-
-    // Fallback: log email content
-    console.error('❌ Email sending skipped (no provider configured).');
-    console.error('📧 Current provider:', this.provider);
-    console.error('📧 Has SendGrid API key:', !!this.sendgridApiKey);
-    console.error('📧 Has Resend:', !!this.resend);
-    console.error('📧 Has SMTP transporter:', !!this.transporter);
-    console.error('📧 Environment variables check:');
-    console.error('   EMAIL_PROVIDER:', process.env.EMAIL_PROVIDER || 'NOT SET');
-    console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
-    console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
-    console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
-    console.error('📧 Email content would be:');
-    console.error('   To:', options.to);
-    console.error('   Subject:', options.subject);
-    console.error('   Content:', options.text?.substring(0, 100) + '...');
-    return false; // Return false instead of true to indicate failure
   }
 
   async sendUserWelcomeEmail(
@@ -367,50 +204,22 @@ This is an automated message. Please do not reply to this email.
   }
 
   async testConnection(): Promise<boolean> {
-    if (this.provider === 'sendgrid' && this.sendgridApiKey) {
-      try {
-        // Test SendGrid API by checking API key validity
-        // We'll do a simple validation - SendGrid API keys start with SG.
-        if (this.sendgridApiKey.startsWith('SG.')) {
-          console.log('✅ SendGrid API key format verified');
-          return true;
+    if (!this.transporter) {
+      console.warn('📧 SMTP transporter not configured.');
+      return false;
+    }
+
+    return new Promise((resolve) => {
+      this.transporter!.verify((error) => {
+        if (error) {
+          console.error('❌ SMTP connection failed:', error);
+          resolve(false);
         } else {
-          console.error('❌ Invalid SendGrid API key format (should start with SG.)');
-          return false;
+          console.log('✅ SMTP connection verified');
+          resolve(true);
         }
-      } catch (error) {
-        console.error('❌ SendGrid connection failed:', error);
-        return false;
-      }
-    }
-
-    if (this.provider === 'resend' && this.resend) {
-      try {
-        await this.resend.domains.list();
-        console.log('✅ Resend connection verified');
-        return true;
-      } catch (error) {
-        console.error('❌ Resend connection failed:', error);
-        return false;
-      }
-    }
-
-    if (this.transporter) {
-      return new Promise((resolve) => {
-        this.transporter!.verify((error) => {
-          if (error) {
-            console.error(`❌ ${this.provider.toUpperCase()} connection failed:`, error);
-            resolve(false);
-          } else {
-            console.log(`✅ ${this.provider.toUpperCase()} connection verified`);
-            resolve(true);
-          }
-        });
       });
-    }
-
-    console.warn('📧 No email provider configured. Set EMAIL_PROVIDER and required API keys.');
-    return false;
+    });
   }
 }
 
