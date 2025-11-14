@@ -79,8 +79,9 @@ class EmailService {
     }
   }
 
-  async sendEmail(options: EmailOptions): Promise<boolean> {
+  async sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
     if (!this.transporter) {
+      const errorMsg = 'SMTP transporter not configured. Please check SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
       console.error('❌ Email sending skipped (SMTP transporter not configured).');
       console.error('📧 Environment variables check:');
       console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
@@ -89,7 +90,7 @@ class EmailService {
       console.error('📧 Email content would be:');
       console.error('   To:', options.to);
       console.error('   Subject:', options.subject);
-      return false;
+      return { success: false, error: errorMsg };
     }
 
     try {
@@ -127,7 +128,7 @@ class EmailService {
         to: options.to,
         messageId: info.messageId
       });
-      return true;
+      return { success: true };
     } catch (error: any) {
       console.error('❌ Email sending failed:', error);
       console.error('Error details:', {
@@ -140,7 +141,20 @@ class EmailService {
         port: process.env.SMTP_PORT
       });
       
-      // Provide helpful error messages
+      // Build user-friendly error message
+      let errorMessage = error.message || 'Unknown error occurred';
+      
+      if (error.code === 'ETIMEDOUT') {
+        errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = `Connection refused: SMTP server refused the connection. Please verify SMTP_HOST and SMTP_PORT are correct.`;
+      } else if (error.code === 'EAUTH') {
+        errorMessage = `Authentication failed: Invalid SMTP credentials. Please check SMTP_USER and SMTP_PASS.`;
+      } else if (error.responseCode) {
+        errorMessage = `SMTP error ${error.responseCode}: ${error.response || error.message}`;
+      }
+      
+      // Provide helpful troubleshooting tips in logs
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
         console.error('💡 Troubleshooting tips:');
         console.error('   1. Check if SMTP_PORT is set to 587 (TLS) not 465 (SSL)');
@@ -149,7 +163,7 @@ class EmailService {
         console.error('   4. Try using a different SMTP provider (Gmail, SendGrid API, etc.)');
       }
       
-      return false;
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -304,7 +318,7 @@ class EmailService {
       program?: string;
       department?: string;
     }
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; error?: string }> {
     const roleDisplayNames: Record<string, string> = {
       'STUDENT': 'Student',
       'INSTRUCTOR': 'Instructor',
@@ -329,10 +343,10 @@ class EmailService {
       
       <div class="credentials-box">
         <p><strong>Account Credentials:</strong></p>
-        <p><strong>Email:</strong> ${userEmail}</p>
-        <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
-        <p><strong>Role:</strong> ${roleDisplayName}</p>
-        ${additionalInfoHtml}
+      <p><strong>Email:</strong> ${userEmail}</p>
+      <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+      <p><strong>Role:</strong> ${roleDisplayName}</p>
+      ${additionalInfoHtml}
       </div>
 
       <p><strong>Important:</strong> This is a temporary password that you must change on your first login for security purposes.</p>
@@ -391,7 +405,7 @@ This is an automated message. Please do not reply to this email.
     studentName: string,
     studentNumber: string,
     temporaryPassword: string
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; error?: string }> {
     return this.sendUserWelcomeEmail(
       studentEmail,
       studentName,
@@ -401,20 +415,31 @@ This is an automated message. Please do not reply to this email.
     );
   }
 
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ success: boolean; error?: string }> {
     if (!this.transporter) {
+      const errorMsg = 'SMTP transporter not configured. Please check SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
       console.warn('📧 SMTP transporter not configured.');
-      return false;
+      return { success: false, error: errorMsg };
     }
 
     return new Promise((resolve) => {
-      this.transporter!.verify((error) => {
+      this.transporter!.verify((error: Error | null) => {
         if (error) {
           console.error('❌ SMTP connection failed:', error);
-          resolve(false);
+          let errorMessage = error.message || 'Unknown error occurred';
+          
+          if ((error as any).code === 'ETIMEDOUT') {
+            errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
+          } else if ((error as any).code === 'ECONNREFUSED') {
+            errorMessage = `Connection refused: SMTP server refused the connection. Please verify SMTP_HOST and SMTP_PORT are correct.`;
+          } else if ((error as any).code === 'EAUTH') {
+            errorMessage = `Authentication failed: Invalid SMTP credentials. Please check SMTP_USER and SMTP_PASS.`;
+          }
+          
+          resolve({ success: false, error: errorMessage });
         } else {
           console.log('✅ SMTP connection verified');
-          resolve(true);
+          resolve({ success: true });
         }
       });
     });

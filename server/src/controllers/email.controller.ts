@@ -19,7 +19,7 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
 
     console.log('📧 Email controller: Attempting to send welcome email to:', userEmail);
     
-    const emailSent = await emailService.sendUserWelcomeEmail(
+    const result = await emailService.sendUserWelcomeEmail(
       userEmail,
       userName,
       userRole,
@@ -27,13 +27,14 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       additionalInfo
     );
 
-    console.log('📧 Email controller: Email send result:', emailSent);
+    console.log('📧 Email controller: Email send result:', result);
 
     res.status(200).json({
-      message: emailSent
+      message: result.success
         ? 'Welcome email sent successfully'
-        : 'User created but email failed to send',
-      emailSent
+        : (result.error || 'User created but email failed to send'),
+      emailSent: result.success,
+      error: result.error
     });
   } catch (error: any) {
     console.error('❌ Error sending welcome email:', error);
@@ -62,20 +63,21 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
 
     console.log('📧 Email controller: Attempting to send student welcome email to:', studentEmail);
     
-    const emailSent = await emailService.sendStudentWelcomeEmail(
+    const result = await emailService.sendStudentWelcomeEmail(
       studentEmail,
       studentName,
       studentNumber,
       temporaryPassword
     );
 
-    console.log('📧 Email controller: Email send result:', emailSent);
+    console.log('📧 Email controller: Email send result:', result);
 
     res.status(200).json({
-      message: emailSent
+      message: result.success
         ? 'Welcome email sent successfully'
-        : 'User created but email failed to send',
-      emailSent
+        : (result.error || 'User created but email failed to send'),
+      emailSent: result.success,
+      error: result.error
     });
   } catch (error: any) {
     console.error('❌ Error sending welcome email:', error);
@@ -95,21 +97,21 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
 export const testEmailConnection = async (req: Request, res: Response) => {
   try {
     console.log('📧 Email controller: Testing email connection...');
-    const isConnected = await emailService.testConnection();
+    const result = await emailService.testConnection();
     
-    console.log('📧 Email controller: Connection test result:', isConnected);
+    console.log('📧 Email controller: Connection test result:', result);
     
-    if (isConnected) {
+    if (result.success) {
       res.json({ 
         message: 'Email service connection successful',
         connected: true 
       });
     } else {
-      // Return 200 with connected: false instead of 500
-      // This way the UI can show the error message properly
+      // Return 200 with connected: false and error message
       res.status(200).json({ 
-        message: 'Email service connection failed. Check server logs for details.',
-        connected: false 
+        message: result.error || 'Email service connection failed. Check server logs for details.',
+        connected: false,
+        error: result.error
       });
     }
   } catch (error: any) {
@@ -124,7 +126,7 @@ export const testEmailConnection = async (req: Request, res: Response) => {
     res.status(200).json({ 
       message: `Email connection test failed: ${error?.message || 'Unknown error'}`,
       connected: false,
-      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
+      error: error?.message || 'Unknown error'
     });
   }
 };
@@ -141,26 +143,26 @@ export const sendTestEmail = async (req: Request, res: Response) => {
 
     console.log('📧 Email controller: Attempting to send test email to:', email);
 
-    const emailSent = await emailService.sendStudentWelcomeEmail(
+    const result = await emailService.sendStudentWelcomeEmail(
       email,
       'Test Student',
       '99-TEST-9999',
       'testpass123'
     );
 
-    console.log('📧 Email controller: Test email send result:', emailSent);
+    console.log('📧 Email controller: Test email send result:', result);
 
-    if (emailSent) {
+    if (result.success) {
       res.json({ 
         message: 'Test email sent successfully',
         emailSent: true 
       });
     } else {
-      // Return 200 with emailSent: false instead of 500
-      // This way the UI can show the error message properly
+      // Return 200 with emailSent: false and error message
       res.status(200).json({ 
-        message: 'Failed to send test email. Check server logs for details.',
-        emailSent: false 
+        message: result.error || 'Failed to send test email. Check server logs for details.',
+        emailSent: false,
+        error: result.error
       });
     }
   } catch (error: any) {
@@ -172,11 +174,10 @@ export const sendTestEmail = async (req: Request, res: Response) => {
     });
     
     // Return 200 with error details instead of 500
-    // This prevents the UI from showing a generic 500 error
     res.status(200).json({ 
       message: `Failed to send test email: ${error?.message || 'Unknown error'}`,
       emailSent: false,
-      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
+      error: error?.message || 'Unknown error'
     });
   }
 };

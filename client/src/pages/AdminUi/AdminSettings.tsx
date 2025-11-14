@@ -1946,42 +1946,44 @@ const AdminSettings = () => {
                               setEmailTestResult({
                                 type: "connection",
                                 success: response.data.connected,
-                                message: response.data.message,
+                                message: response.data.message || (response.data.error || "Email connection failed"),
                               });
                               if (response.data.connected) {
                                 toast.success("Email connection successful!");
                               } else {
-                                toast.error("Email connection failed");
+                                toast.error(response.data.message || response.data.error || "Email connection failed");
                               }
-                            } catch (error: any) {
-                              // Check if this is a token expiration error that's being handled by the interceptor
-                              if (error.response?.status === 401 && error.response?.data?.message?.includes("Token expired")) {
-                                // Token refresh is happening automatically, wait a bit and retry
-                                await new Promise(resolve => setTimeout(resolve, 1000));
-                                try {
-                                  const retryResponse = await api.get("/email/test");
-                                  setEmailTestResult({
-                                    type: "connection",
-                                    success: retryResponse.data.connected,
-                                    message: retryResponse.data.message,
-                                  });
-                                  if (retryResponse.data.connected) {
-                                    toast.success("Email connection successful!");
-                                  } else {
-                                    toast.error("Email connection failed");
+                              } catch (error: any) {
+                                // Check if this is a token expiration error that's being handled by the interceptor
+                                if (error.response?.status === 401 && error.response?.data?.message?.includes("Token expired")) {
+                                  // Token refresh is happening automatically, wait a bit and retry
+                                  await new Promise(resolve => setTimeout(resolve, 1000));
+                                  try {
+                                    const retryResponse = await api.get("/email/test");
+                                    const errorMessage = retryResponse.data.message || retryResponse.data.error || "Email connection failed";
+                                    setEmailTestResult({
+                                      type: "connection",
+                                      success: retryResponse.data.connected,
+                                      message: errorMessage,
+                                    });
+                                    if (retryResponse.data.connected) {
+                                      toast.success("Email connection successful!");
+                                    } else {
+                                      toast.error(errorMessage);
+                                    }
+                                    return;
+                                  } catch (retryError: any) {
+                                    // If retry also fails, show the error
                                   }
-                                  return;
-                                } catch (retryError: any) {
-                                  // If retry also fails, show the error
                                 }
-                              }
-                              setEmailTestResult({
-                                type: "connection",
-                                success: false,
-                                message: error.response?.data?.message || "Connection test failed. Please try again.",
-                              });
-                              toast.error("Email connection test failed");
-                            } finally {
+                                const errorMessage = error.response?.data?.message || error.response?.data?.error || "Connection test failed. Please try again.";
+                                setEmailTestResult({
+                                  type: "connection",
+                                  success: false,
+                                  message: errorMessage,
+                                });
+                                toast.error(errorMessage);
+                              } finally {
                               setEmailTesting(false);
                             }
                           }}
@@ -2045,12 +2047,12 @@ const AdminSettings = () => {
                                 setEmailTestResult({
                                   type: "send",
                                   success: response.data.emailSent,
-                                  message: response.data.message,
+                                  message: response.data.message || (response.data.error || "Failed to send test email"),
                                 });
                                 if (response.data.emailSent) {
                                   toast.success("Test email sent successfully!");
                                 } else {
-                                  toast.error("Failed to send test email");
+                                  toast.error(response.data.message || response.data.error || "Failed to send test email");
                                 }
                               } catch (error: any) {
                                 // Check if this is a token expiration error that's being handled by the interceptor
@@ -2061,27 +2063,29 @@ const AdminSettings = () => {
                                     const retryResponse = await api.post("/email/test-send", {
                                       email: emailTestEmail,
                                     });
+                                    const retryErrorMessage = retryResponse.data.message || retryResponse.data.error || "Failed to send test email";
                                     setEmailTestResult({
                                       type: "send",
                                       success: retryResponse.data.emailSent,
-                                      message: retryResponse.data.message,
+                                      message: retryErrorMessage,
                                     });
                                     if (retryResponse.data.emailSent) {
                                       toast.success("Test email sent successfully!");
                                     } else {
-                                      toast.error("Failed to send test email");
+                                      toast.error(retryErrorMessage);
                                     }
                                     return;
                                   } catch (retryError: any) {
                                     // If retry also fails, show the error
                                   }
                                 }
+                                const errorMessage = error.response?.data?.message || error.response?.data?.error || "Failed to send test email. Please try again.";
                                 setEmailTestResult({
                                   type: "send",
                                   success: false,
-                                  message: error.response?.data?.message || "Failed to send test email. Please try again.",
+                                  message: errorMessage,
                                 });
-                                toast.error("Failed to send test email");
+                                toast.error(errorMessage);
                               } finally {
                                 setEmailTesting(false);
                               }
