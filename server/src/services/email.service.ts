@@ -48,34 +48,28 @@ class EmailService {
           user: SMTP_USER,
           pass: SMTP_PASS
         },
-        // Timeout settings
-        connectionTimeout: 10000, // 10 seconds (reduced for faster failure detection)
-        greetingTimeout: 5000, // 5 seconds
-        socketTimeout: 10000, // 10 seconds
+        // Timeout settings - Increased for Render.com (can be slow)
+        connectionTimeout: 30000, // 30 seconds (Render needs more time)
+        greetingTimeout: 15000, // 15 seconds
+        socketTimeout: 30000, // 30 seconds
         // For port 587, explicitly require TLS upgrade
         ...(requiresTLS && {
           requireTLS: true,
           tls: {
             rejectUnauthorized: false // Allow self-signed certificates if needed
           }
-        })
+        }),
+        // Additional options for Render.com compatibility
+        pool: false, // Don't use connection pooling (can cause issues on Render)
+        maxConnections: 1,
+        maxMessages: 1
       };
 
       this.transporter = nodemailer.createTransport(smtpConfig);
 
-      // Verify connection
-      this.transporter.verify((error: Error | null) => {
-        if (error) {
-          console.error('❌ SMTP connection failed:', error);
-          console.error('Error details:', {
-            message: error.message,
-            code: (error as any).code,
-            command: (error as any).command
-          });
-        } else {
-          console.log('✅ SMTP connection verified');
-        }
-      });
+      // Don't verify connection on startup (Render blocks initial connections)
+      // Connection will be verified when actually sending emails
+      console.log('📧 SMTP transporter created (connection will be verified on first email send)');
     } else {
       console.warn('📧 SMTP not configured. Email sending is disabled.');
       console.warn('📧 Required environment variables: SMTP_HOST, SMTP_USER, SMTP_PASS');
@@ -102,13 +96,24 @@ class EmailService {
       console.log('📧 Attempting to send email via SMTP:', {
         to: options.to,
         from: this.fromEmail,
-        subject: options.subject
+        subject: options.subject,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT || '587'
       });
 
       // Use "From Name <email>" format
       // Priority: SMTP_FROM_NAME > MAIL_FROM_NAME
       const fromName = process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
       const fromAddress = fromName ? `${fromName} <${this.fromEmail}>` : this.fromEmail;
+
+      // Verify connection before sending (lazy verification)
+      try {
+        await this.transporter.verify();
+        console.log('✅ SMTP connection verified before sending');
+      } catch (verifyError: any) {
+        console.warn('⚠️ SMTP verification failed, but attempting to send anyway:', verifyError.message);
+        // Continue anyway - sometimes verification fails but sending works
+      }
 
       const info = await this.transporter.sendMail({
         from: fromAddress,
@@ -130,8 +135,20 @@ class EmailService {
         code: error.code,
         command: error.command,
         response: error.response,
-        responseCode: error.responseCode
+        responseCode: error.responseCode,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT
       });
+      
+      // Provide helpful error messages
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
+        console.error('💡 Troubleshooting tips:');
+        console.error('   1. Check if SMTP_PORT is set to 587 (TLS) not 465 (SSL)');
+        console.error('   2. Verify SMTP_HOST is correct');
+        console.error('   3. Check if Render.com is blocking outbound SMTP connections');
+        console.error('   4. Try using a different SMTP provider (Gmail, SendGrid API, etc.)');
+      }
+      
       return false;
     }
   }
