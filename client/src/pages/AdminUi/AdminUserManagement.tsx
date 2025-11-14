@@ -85,31 +85,6 @@ const AdminUserManagement = () => {
     fetchInstructors();
   }, []);
 
-  // Create a reliable refresh function
-  const refreshUsersList = useCallback(async () => {
-    try {
-      if (typeof refetchUsers === "function") {
-        await refetchUsers();
-      } else {
-        // Fallback: reload the page
-        console.warn("refetchUsers not available, reloading page");
-        window.location.reload();
-      }
-
-      // Also refresh instructors list
-      try {
-        const instructorsData = await adminService.getInstructors();
-        setInstructors(instructorsData);
-      } catch (error) {
-        console.error("Error refreshing instructors:", error);
-      }
-    } catch (error) {
-      console.error("Error refreshing users list:", error);
-      // Final fallback: reload the page
-      window.location.reload();
-    }
-  }, [refetchUsers]);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -124,16 +99,68 @@ const AdminUserManagement = () => {
     status: "ACTIVE",
   });
 
-  // Calculate stats from current users
-  const stats = {
-    total: pagination?.total || 0,
-    students: users.filter((u) => u.role === "STUDENT").length,
-    coordinators: users.filter((u) => u.role === "COORDINATOR").length,
-    instructors: users.filter((u) => u.role === "INSTRUCTOR").length,
-    partners: users.filter((u) => u.role === "INDUSTRY_PARTNER").length,
-    active: users.filter((u) => u.active).length,
-    inactive: users.filter((u) => !u.active).length,
-  };
+  const [globalStats, setGlobalStats] = useState({
+    total: 0,
+    students: 0,
+    coordinators: 0,
+    instructors: 0,
+    partners: 0,
+    active: 0,
+    inactive: 0,
+  });
+
+  const fetchGlobalStats = useCallback(async () => {
+    try {
+      const allUsersResponse = await adminService.getUsers({ limit: 1000 });
+      const allUsers = allUsersResponse.users || [];
+
+      setGlobalStats({
+        total: allUsersResponse.pagination?.total || allUsers.length,
+        students: allUsers.filter((u) => u.role === "STUDENT").length,
+        coordinators: allUsers.filter((u) => u.role === "COORDINATOR").length,
+        instructors: allUsers.filter((u) => u.role === "INSTRUCTOR").length,
+        partners: allUsers.filter((u) => u.role === "INDUSTRY_PARTNER").length,
+        active: allUsers.filter((u) => u.active).length,
+        inactive: allUsers.filter((u) => !u.active).length,
+      });
+    } catch (error) {
+      console.error("Error fetching global user stats:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGlobalStats();
+  }, [fetchGlobalStats]);
+
+  // Create a reliable refresh function
+  const refreshUsersList = useCallback(async () => {
+    try {
+      if (typeof refetchUsers === "function") {
+        await refetchUsers();
+      } else {
+        // Fallback: reload the page
+        console.warn("refetchUsers not available, reloading page");
+        window.location.reload();
+      }
+
+      await fetchGlobalStats();
+
+      // Also refresh instructors list
+      try {
+        const instructorsData = await adminService.getInstructors();
+        setInstructors(instructorsData);
+      } catch (error) {
+        console.error("Error refreshing instructors:", error);
+      }
+    } catch (error) {
+      console.error("Error refreshing users list:", error);
+      // Final fallback: reload the page
+      window.location.reload();
+    }
+  }, [refetchUsers, fetchGlobalStats]);
+
+  // Use global stats so counts remain consistent regardless of filters
+  const stats = globalStats;
 
   // Filter users locally for status filter
   const filteredUsers = users.filter((user) => {
