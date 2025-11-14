@@ -26,29 +26,39 @@ class EmailService {
     // Initialize SMTP transporter (same pattern as Laravel mailers)
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
       const port = parseInt(SMTP_PORT);
-      const secure = port === 465; // true for 465 (SSL), false for 587 (TLS)
+      // Port 465 = SSL (secure: true), Port 587 = TLS (secure: false, requiresTLS: true)
+      const secure = port === 465;
+      const requiresTLS = port === 587; // Explicitly require TLS for port 587
 
       console.log('📧 Initializing SMTP transporter (Laravel mailer pattern):', {
         host: SMTP_HOST,
         port: port,
         secure: secure,
+        requiresTLS: requiresTLS,
         user: SMTP_USER.substring(0, 10) + '...',
         hasPassword: !!SMTP_PASS,
         from: `${SMTP_FROM_NAME} <${this.fromEmail}>`
       });
 
-      const smtpConfig = {
+      const smtpConfig: any = {
         host: SMTP_HOST,
         port: port,
-        secure: secure, // true for 465, false for 587
+        secure: secure, // true for 465 (SSL), false for 587 (TLS)
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS
         },
-        // Add timeout like Laravel (null = no timeout)
-        connectionTimeout: 60000, // 60 seconds
-        greetingTimeout: 30000, // 30 seconds
-        socketTimeout: 60000 // 60 seconds
+        // Timeout settings
+        connectionTimeout: 10000, // 10 seconds (reduced for faster failure detection)
+        greetingTimeout: 5000, // 5 seconds
+        socketTimeout: 10000, // 10 seconds
+        // For port 587, explicitly require TLS upgrade
+        ...(requiresTLS && {
+          requireTLS: true,
+          tls: {
+            rejectUnauthorized: false // Allow self-signed certificates if needed
+          }
+        })
       };
 
       this.transporter = nodemailer.createTransport(smtpConfig);
