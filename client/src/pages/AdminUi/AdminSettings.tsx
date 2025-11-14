@@ -130,7 +130,7 @@ const AdminSettings = () => {
   const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
     null
   );
-  // Email testing state
+  // Email testing state - TODO: Remove this section later
   const [emailTestEmail, setEmailTestEmail] = useState("");
   const [emailTesting, setEmailTesting] = useState(false);
   const [emailTestResult, setEmailTestResult] = useState<{
@@ -1921,7 +1921,7 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  {/* Email Testing Section */}
+                  {/* Email Testing Section - TODO: Remove this section later */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
