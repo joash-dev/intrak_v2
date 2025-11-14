@@ -817,15 +817,16 @@ Login here: ${loginUrl}
 Please change this password immediately after your first login. If you did not expect this account, contact the coordinator.
 `;
 
-        emailSent = await emailService.sendEmail({
+        const emailResult = await emailService.sendEmail({
           to: supervisorUser.email,
           subject,
           html,
           text,
         });
+        emailSent = emailResult.success;
         emailMessage = emailSent
           ? `Supervisor account created and credentials sent to ${supervisorUser.email}.`
-          : `Supervisor account created, but failed to send credentials email to ${supervisorUser.email}.`;
+          : `Supervisor account created, but failed to send credentials email to ${supervisorUser.email}. ${emailResult.error || ''}`;
       } else {
         const subject = `INTRAK: Supervisor Account Linked to ${companyName}`;
         const html = `
@@ -863,15 +864,16 @@ Temporary Password: ${temporaryPassword}
  
  This is an automated message. Please do not reply to this email.`;
  
-        emailSent = await emailService.sendEmail({
+        const emailResult = await emailService.sendEmail({
           to: supervisorUser.email,
           subject,
           html,
           text,
         });
+        emailSent = emailResult.success;
         emailMessage = emailSent
           ? `Supervisor account linked and credentials sent to ${supervisorUser.email}.`
-          : `Supervisor account linked, but failed to send credential email to ${supervisorUser.email}.`;
+          : `Supervisor account linked, but failed to send credential email to ${supervisorUser.email}. ${emailResult.error || ''}`;
       }
     } catch (emailError) {
       console.error("Error sending supervisor account email:", emailError);
