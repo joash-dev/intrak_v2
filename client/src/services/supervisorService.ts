@@ -58,20 +58,18 @@ export interface StudentDocument {
   remarks: string | null;
 }
 
-export interface EvaluationData {
+export interface CompetencyEvaluation {
+  rating: number;
+  remarks: string;
+}
+
+export interface InternshipEvaluationData {
   studentId: string;
-  technicalSkills: number;
-  workEthic: number;
-  communication: number;
-  teamwork: number;
-  problemSolving: number;
-  initiative: number;
-  punctuality: number;
-  qualityOfWork: number;
-  comments: string;
-  strengths?: string;
-  improvements?: string;
-  recommendation?: string;
+  competencies: Record<string, CompetencyEvaluation>;
+  overallComments?: string;
+  evaluatorName?: string;
+  evaluatorPosition?: string;
+  ojtGrade: number;
 }
 
 class SupervisorService {
@@ -233,34 +231,25 @@ class SupervisorService {
   }
 
   // Submit evaluation for a student
-  async submitEvaluation(data: EvaluationData): Promise<void> {
+  async submitEvaluation(data: InternshipEvaluationData): Promise<void> {
     try {
-      const overallRating = (
-        data.technicalSkills +
-        data.workEthic +
-        data.communication +
-        data.teamwork +
-        data.problemSolving +
-        data.initiative +
-        data.punctuality +
-        data.qualityOfWork
-      ) / 8;
+      const ratings = Object.values(data.competencies).map(
+        (entry) => entry.rating
+      );
+      const overallRating =
+        ratings.length > 0
+          ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+          : 0;
 
       await api.post('/evaluations', {
         studentId: data.studentId,
+        formType: 'internship_official',
         overallRating,
-        technicalSkills: data.technicalSkills,
-        workEthic: data.workEthic,
-        communication: data.communication,
-        teamwork: data.teamwork,
-        problemSolving: data.problemSolving,
-        initiative: data.initiative,
-        punctuality: data.punctuality,
-        qualityOfWork: data.qualityOfWork,
-        comments: data.comments,
-        strengths: data.strengths,
-        improvements: data.improvements,
-        recommendation: data.recommendation,
+        competencies: data.competencies,
+        overallComments: data.overallComments,
+        evaluatorName: data.evaluatorName,
+        evaluatorPosition: data.evaluatorPosition,
+        ojtGrade: data.ojtGrade,
       });
     } catch (error) {
       console.error('Error submitting evaluation:', error);

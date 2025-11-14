@@ -130,6 +130,44 @@ export const login = async (req: Request, res: Response) => {
       ipAddress: req.ip
     });
 
+    let companyInfo: {
+      id: string | null;
+      name: string | null;
+      address: string | null;
+      contactPerson?: string | null;
+      contactEmail?: string | null;
+      contactNumber?: string | null;
+    } | null = null;
+
+    if (user.role === 'INDUSTRY_PARTNER') {
+      const company = await prisma.company.findFirst({
+        where: { supervisorId: user.id },
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          contactPerson: true,
+          contactEmail: true,
+          contactNumber: true
+        }
+      });
+
+      companyInfo = company
+        ? {
+            id: company.id,
+            name: company.name,
+            address: company.address,
+            contactPerson: company.contactPerson,
+            contactEmail: company.contactEmail,
+            contactNumber: company.contactNumber
+          }
+        : {
+            id: null,
+            name: null,
+            address: null
+          };
+    }
+
     console.log('Sending response...');
     res.json({
       accessToken,
@@ -138,7 +176,13 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        companyId: companyInfo?.id || null,
+        companyName: companyInfo?.name || null,
+        companyAddress: companyInfo?.address || null,
+        companyContactPerson: companyInfo?.contactPerson || null,
+        companyContactEmail: companyInfo?.contactEmail || null,
+        companyContactNumber: companyInfo?.contactNumber || null
       }
     });
   } catch (error: any) {

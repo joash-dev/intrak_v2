@@ -122,7 +122,11 @@ const SupervisorOverview = () => {
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
   const supervisorName = user?.name || "Supervisor";
-  const companyName = user?.company || "Company";
+  const companyName =
+    user?.companyName ||
+    user?.company ||
+    user?.company?.name ||
+    "Company";
 
   return (
     <div className="space-y-6">
@@ -341,8 +345,8 @@ const SupervisorDashboard = () => {
 
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
-  const companyName = user?.name || "Supervisor";
-  const companyEmail = user?.email || "";
+  const supervisorDisplayName = user?.name || "Supervisor";
+  const supervisorEmail = user?.email || "";
 
   useEffect(() => {
     loadProfilePhoto();
@@ -521,7 +525,7 @@ const SupervisorDashboard = () => {
                             />
                           ) : (
                             <span className="text-white font-semibold">
-                              {companyName
+                              {supervisorDisplayName
                                 .split(" ")
                                 .map((namePart: string) => namePart[0] ?? "")
                                 .join("")
@@ -531,11 +535,11 @@ const SupervisorDashboard = () => {
               </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {companyName}
+                            {supervisorDisplayName}
                           </p>
                           <p className="text-sm text-gray-500">Supervisor</p>
                           <p className="text-xs text-gray-400">
-                            {companyEmail}
+                            {supervisorEmail}
                           </p>
                         </div>
               </div>

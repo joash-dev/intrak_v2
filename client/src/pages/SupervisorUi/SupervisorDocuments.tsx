@@ -117,7 +117,11 @@ const SupervisorDocuments = () => {
 
   const userString = localStorage.getItem("user");
   const user = userString ? JSON.parse(userString) : null;
-  const companyName = user?.company || "Company";
+  const companyName =
+    user?.companyName ||
+    user?.company ||
+    user?.company?.name ||
+    "Company";
 
   return (
     <div className="space-y-6">
