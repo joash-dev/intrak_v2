@@ -29,6 +29,7 @@ import {
   type AppPreferences,
 } from "../../services/settingsService";
 import { adminService, type SystemInfo } from "../../services/adminService";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 
 interface AdminProfile {
@@ -129,6 +130,14 @@ const AdminSettings = () => {
   const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
     null
   );
+  // Email testing state
+  const [emailTestEmail, setEmailTestEmail] = useState("");
+  const [emailTesting, setEmailTesting] = useState(false);
+  const [emailTestResult, setEmailTestResult] = useState<{
+    type: "connection" | "send" | null;
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   // Settings sections for navigation
   const sections = [
@@ -1907,6 +1916,168 @@ const AdminSettings = () => {
                           systemInfo.totalDisk !== undefined
                             ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
                             : `${systemInfo.diskUsage}%`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Email Testing Section */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <Mail className="w-5 h-5 mr-2 text-purple-600" />
+                        Email Service Testing
+                      </h3>
+                    </div>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      Test your email service configuration and send a test email to verify everything is working correctly.
+                    </p>
+
+                    <div className="space-y-4">
+                      {/* Test Connection Button */}
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={async () => {
+                            try {
+                              setEmailTesting(true);
+                              setEmailTestResult(null);
+                              const response = await api.get("/email/test");
+                              setEmailTestResult({
+                                type: "connection",
+                                success: response.data.connected,
+                                message: response.data.message,
+                              });
+                              if (response.data.connected) {
+                                toast.success("Email connection successful!");
+                              } else {
+                                toast.error("Email connection failed");
+                              }
+                            } catch (error: any) {
+                              setEmailTestResult({
+                                type: "connection",
+                                success: false,
+                                message: error.response?.data?.message || "Connection test failed",
+                              });
+                              toast.error("Email connection test failed");
+                            } finally {
+                              setEmailTesting(false);
+                            }
+                          }}
+                          disabled={emailTesting}
+                          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {emailTesting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Testing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <SettingsIcon className="w-4 h-4" />
+                              <span>Test Connection</span>
+                            </>
+                          )}
+                        </button>
+
+                        {emailTestResult?.type === "connection" && (
+                          <div className={`flex items-center space-x-2 ${
+                            emailTestResult.success ? "text-green-600" : "text-red-600"
+                          }`}>
+                            {emailTestResult.success ? (
+                              <CheckCircle className="w-5 h-5" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5" />
+                            )}
+                            <span className="text-sm font-medium">
+                              {emailTestResult.message}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Send Test Email */}
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Send Test Email
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="email"
+                            value={emailTestEmail}
+                            onChange={(e) => setEmailTestEmail(e.target.value)}
+                            placeholder="Enter email address to test"
+                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          />
+                          <button
+                            onClick={async () => {
+                              if (!emailTestEmail || !emailTestEmail.includes("@")) {
+                                toast.error("Please enter a valid email address");
+                                return;
+                              }
+                              try {
+                                setEmailTesting(true);
+                                setEmailTestResult(null);
+                                const response = await api.post("/email/test-send", {
+                                  email: emailTestEmail,
+                                });
+                                setEmailTestResult({
+                                  type: "send",
+                                  success: response.data.emailSent,
+                                  message: response.data.message,
+                                });
+                                if (response.data.emailSent) {
+                                  toast.success("Test email sent successfully!");
+                                } else {
+                                  toast.error("Failed to send test email");
+                                }
+                              } catch (error: any) {
+                                setEmailTestResult({
+                                  type: "send",
+                                  success: false,
+                                  message: error.response?.data?.message || "Failed to send test email",
+                                });
+                                toast.error("Failed to send test email");
+                              } finally {
+                                setEmailTesting(false);
+                              }
+                            }}
+                            disabled={emailTesting || !emailTestEmail}
+                            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {emailTesting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Sending...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-4 h-4" />
+                                <span>Send Test Email</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {emailTestResult?.type === "send" && (
+                          <div className={`flex items-center space-x-2 p-3 rounded-lg ${
+                            emailTestResult.success 
+                              ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300" 
+                              : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                          }`}>
+                            {emailTestResult.success ? (
+                              <CheckCircle className="w-5 h-5" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5" />
+                            )}
+                            <span className="text-sm font-medium">
+                              {emailTestResult.message}
+                            </span>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          A test welcome email will be sent to the specified address. Check your inbox (and spam folder) after sending.
                         </p>
                       </div>
                     </div>
