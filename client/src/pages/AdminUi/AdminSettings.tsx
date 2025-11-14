@@ -1954,10 +1954,31 @@ const AdminSettings = () => {
                                 toast.error("Email connection failed");
                               }
                             } catch (error: any) {
+                              // Check if this is a token expiration error that's being handled by the interceptor
+                              if (error.response?.status === 401 && error.response?.data?.message?.includes("Token expired")) {
+                                // Token refresh is happening automatically, wait a bit and retry
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                try {
+                                  const retryResponse = await api.get("/email/test");
+                                  setEmailTestResult({
+                                    type: "connection",
+                                    success: retryResponse.data.connected,
+                                    message: retryResponse.data.message,
+                                  });
+                                  if (retryResponse.data.connected) {
+                                    toast.success("Email connection successful!");
+                                  } else {
+                                    toast.error("Email connection failed");
+                                  }
+                                  return;
+                                } catch (retryError: any) {
+                                  // If retry also fails, show the error
+                                }
+                              }
                               setEmailTestResult({
                                 type: "connection",
                                 success: false,
-                                message: error.response?.data?.message || "Connection test failed",
+                                message: error.response?.data?.message || "Connection test failed. Please try again.",
                               });
                               toast.error("Email connection test failed");
                             } finally {
@@ -2032,10 +2053,33 @@ const AdminSettings = () => {
                                   toast.error("Failed to send test email");
                                 }
                               } catch (error: any) {
+                                // Check if this is a token expiration error that's being handled by the interceptor
+                                if (error.response?.status === 401 && error.response?.data?.message?.includes("Token expired")) {
+                                  // Token refresh is happening automatically, wait a bit and retry
+                                  await new Promise(resolve => setTimeout(resolve, 1000));
+                                  try {
+                                    const retryResponse = await api.post("/email/test-send", {
+                                      email: emailTestEmail,
+                                    });
+                                    setEmailTestResult({
+                                      type: "send",
+                                      success: retryResponse.data.emailSent,
+                                      message: retryResponse.data.message,
+                                    });
+                                    if (retryResponse.data.emailSent) {
+                                      toast.success("Test email sent successfully!");
+                                    } else {
+                                      toast.error("Failed to send test email");
+                                    }
+                                    return;
+                                  } catch (retryError: any) {
+                                    // If retry also fails, show the error
+                                  }
+                                }
                                 setEmailTestResult({
                                   type: "send",
                                   success: false,
-                                  message: error.response?.data?.message || "Failed to send test email",
+                                  message: error.response?.data?.message || "Failed to send test email. Please try again.",
                                 });
                                 toast.error("Failed to send test email");
                               } finally {
