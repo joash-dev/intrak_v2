@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailOptions {
   to: string;
@@ -9,11 +10,18 @@ interface EmailOptions {
 
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
   private fromEmail: string;
+  private emailProvider: 'resend' | 'smtp' | 'none' = 'none';
 
   constructor() {
-    // Option 1: SMTP_* variables (primary/preferred)
-    // Option 2: MAIL_* variables (Laravel style, fallback)
+    // Priority 1: Resend API (works on Render, no SMTP needed)
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+    const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
+
+    // Priority 2: SMTP_* variables (primary/preferred)
+    // Priority 3: MAIL_* variables (Laravel style, fallback)
     const SMTP_HOST = process.env.SMTP_HOST || process.env.MAIL_HOST;
     const SMTP_PORT = process.env.SMTP_PORT || process.env.MAIL_PORT || '587';
     const SMTP_USER = process.env.SMTP_USER || process.env.MAIL_USERNAME;
@@ -21,10 +29,25 @@ class EmailService {
     const SMTP_FROM = process.env.SMTP_FROM || process.env.MAIL_FROM_ADDRESS;
     const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
 
+    // Initialize Resend (Priority 1 - works on Render without SMTP)
+    if (RESEND_API_KEY && RESEND_FROM_EMAIL) {
+      this.resend = new Resend(RESEND_API_KEY);
+      this.fromEmail = RESEND_FROM_EMAIL;
+      this.emailProvider = 'resend';
+      console.log('📧 Initializing Resend API (works on Render without SMTP):', {
+        from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
+        hasApiKey: !!RESEND_API_KEY
+      });
+      console.log('✅ Resend email service initialized');
+      return; // Don't initialize SMTP if Resend is configured
+    }
+
+    // Initialize SMTP (Priority 2 - may not work on Render)
     this.fromEmail = SMTP_FROM || SMTP_USER || 'intraksystem@gmail.com';
 
     // Initialize SMTP transporter (same pattern as Laravel mailers)
     if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+      this.emailProvider = 'smtp';
       const port = parseInt(SMTP_PORT);
       // Port 465 = SSL (secure: true), Port 587 = TLS (secure: false, requiresTLS: true)
       const secure = port === 465;
@@ -80,17 +103,87 @@ class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+    // Use Resend API if configured (Priority 1)
+    if (this.emailProvider === 'resend' && this.resend) {
+      return this.sendEmailViaResend(options);
+    }
+
+    // Use SMTP if configured (Priority 2)
+    if (this.emailProvider === 'smtp' && this.transporter) {
+      return this.sendEmailViaSMTP(options);
+    }
+
+    // No email provider configured
+    const errorMsg = 'Email service not configured. Please set either RESEND_API_KEY and RESEND_FROM_EMAIL, or SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
+    console.error('❌ Email sending skipped (no email provider configured).');
+    console.error('📧 Environment variables check:');
+    console.error('   RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'SET' : 'NOT SET');
+    console.error('   RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL || 'NOT SET');
+    console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
+    console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
+    console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+    console.error('📧 Email content would be:');
+    console.error('   To:', options.to);
+    console.error('   Subject:', options.subject);
+    return { success: false, error: errorMsg };
+  }
+
+  private async sendEmailViaResend(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+    if (!this.resend) {
+      return { success: false, error: 'Resend client not initialized' };
+    }
+
+    try {
+      const fromName = process.env.RESEND_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
+      const fromAddress = fromName ? `${fromName} <${this.fromEmail}>` : this.fromEmail;
+
+      console.log('📧 Attempting to send email via Resend API:', {
+        to: options.to,
+        from: fromAddress,
+        subject: options.subject
+      });
+
+      const { data, error } = await this.resend.emails.send({
+        from: fromAddress,
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+        text: options.text
+      });
+
+      if (error) {
+        console.error('❌ Resend API error:', error);
+        return { 
+          success: false, 
+          error: `Resend API error: ${error.message || JSON.stringify(error)}` 
+        };
+      }
+
+      console.log('📧 Email sent successfully via Resend:', {
+        to: options.to,
+        messageId: data?.id
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('❌ Email sending failed via Resend:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        stack: error?.stack
+      });
+
+      let errorMessage = error?.message || 'Unknown error occurred';
+      if (error?.response?.data) {
+        errorMessage = `Resend API error: ${JSON.stringify(error.response.data)}`;
+      }
+
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  private async sendEmailViaSMTP(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
     if (!this.transporter) {
-      const errorMsg = 'SMTP transporter not configured. Please check SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
-      console.error('❌ Email sending skipped (SMTP transporter not configured).');
-      console.error('📧 Environment variables check:');
-      console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
-      console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
-      console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
-      console.error('📧 Email content would be:');
-      console.error('   To:', options.to);
-      console.error('   Subject:', options.subject);
-      return { success: false, error: errorMsg };
+      return { success: false, error: 'SMTP transporter not initialized' };
     }
 
     try {
@@ -416,33 +509,51 @@ This is an automated message. Please do not reply to this email.
   }
 
   async testConnection(): Promise<{ success: boolean; error?: string }> {
-    if (!this.transporter) {
-      const errorMsg = 'SMTP transporter not configured. Please check SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
-      console.warn('📧 SMTP transporter not configured.');
-      return { success: false, error: errorMsg };
+    // Test Resend connection
+    if (this.emailProvider === 'resend' && this.resend) {
+      try {
+        console.log('📧 Testing Resend API connection...');
+        // Resend doesn't have a test endpoint, so we'll just verify the client is initialized
+        if (this.resend && this.fromEmail) {
+          console.log('✅ Resend API client initialized');
+          return { success: true };
+        }
+        return { success: false, error: 'Resend client not properly initialized' };
+      } catch (error: any) {
+        return { 
+          success: false, 
+          error: `Resend connection test failed: ${error?.message || 'Unknown error'}` 
+        };
+      }
     }
 
-    return new Promise((resolve) => {
-      this.transporter!.verify((error: Error | null) => {
-        if (error) {
-          console.error('❌ SMTP connection failed:', error);
-          let errorMessage = error.message || 'Unknown error occurred';
-          
-          if ((error as any).code === 'ETIMEDOUT') {
-            errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
-          } else if ((error as any).code === 'ECONNREFUSED') {
-            errorMessage = `Connection refused: SMTP server refused the connection. Please verify SMTP_HOST and SMTP_PORT are correct.`;
-          } else if ((error as any).code === 'EAUTH') {
-            errorMessage = `Authentication failed: Invalid SMTP credentials. Please check SMTP_USER and SMTP_PASS.`;
+    // Test SMTP connection
+    if (this.emailProvider === 'smtp' && this.transporter) {
+      return new Promise((resolve) => {
+        this.transporter!.verify((error: Error | null) => {
+          if (error) {
+            console.error('❌ SMTP connection failed:', error);
+            let errorMessage = error.message || 'Unknown error occurred';
+            
+            if ((error as any).code === 'ETIMEDOUT') {
+              errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
+            } else if ((error as any).code === 'ECONNREFUSED') {
+              errorMessage = `Connection refused: SMTP server refused the connection. Please verify SMTP_HOST and SMTP_PORT are correct.`;
+            } else if ((error as any).code === 'EAUTH') {
+              errorMessage = `Authentication failed: Invalid SMTP credentials. Please check SMTP_USER and SMTP_PASS.`;
+            }
+            
+            resolve({ success: false, error: errorMessage });
+          } else {
+            console.log('✅ SMTP connection verified');
+            resolve({ success: true });
           }
-          
-          resolve({ success: false, error: errorMessage });
-        } else {
-          console.log('✅ SMTP connection verified');
-          resolve({ success: true });
-        }
+        });
       });
-    });
+    }
+
+    const errorMsg = 'Email service not configured. Please set either RESEND_API_KEY and RESEND_FROM_EMAIL, or SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
+    return { success: false, error: errorMsg };
   }
 }
 
