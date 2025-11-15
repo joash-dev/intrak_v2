@@ -33,12 +33,14 @@ export interface InstructorStudent {
   tasksCompleted: number;
   totalTasks: number;
   lastEvaluation: number;
-  status: 'active' | 'at_risk' | 'completed';
+  status: 'active' | 'warning' | 'at_risk' | 'completed';
   lastActivity: string;
   year: number;
   section?: string;
   documentsPending?: number;
   attendanceAlerts?: number;
+  attendanceGapDays?: number;
+  lastAttendanceDate?: string | null;
 }
 
 export interface InstructorActivity {
@@ -107,10 +109,14 @@ class InstructorService {
         tasksCompleted: student.tasksCompleted || 0,
         totalTasks: student.totalTasks || 20,
         lastEvaluation: student.lastEvaluation || 0,
-        status: this.mapStudentStatus(student),
+        status:
+          (student.status as InstructorStudent['status']) ||
+          this.mapStudentStatus(student),
         lastActivity: this.formatLastActivity(student.lastActivity),
         year: student.year || 0,
         section: student.section || '',
+        attendanceGapDays: student.attendanceGapDays ?? 0,
+        lastAttendanceDate: student.lastAttendanceDate || null,
       }));
     } catch (error) {
       console.error('Error fetching assigned students:', error);
@@ -369,18 +375,23 @@ class InstructorService {
   }
 
   // Map student status from detailed status to simple status
-  private mapStudentStatus(student: any): 'active' | 'at_risk' | 'completed' {
-    // If student has completed required hours, mark as completed
-    if (student.completedHours >= student.totalHours) {
+  private mapStudentStatus(student: any): 'active' | 'warning' | 'at_risk' | 'completed' {
+    const completionPercentage =
+      student.totalHours > 0 ? (student.completedHours / student.totalHours) * 100 : 0;
+    const attendanceGapDays = student.attendanceGapDays ?? 0;
+
+    if (completionPercentage >= 100 && student.attendanceRate >= 75) {
       return 'completed';
     }
-    
-    // If student has low attendance or performance issues, mark as at_risk
-    if (student.attendanceRate < 70 || student.lastEvaluation < 3.0) {
+
+    if (attendanceGapDays >= 5) {
       return 'at_risk';
     }
-    
-    // Otherwise, student is active
+
+    if (attendanceGapDays >= 3) {
+      return 'warning';
+    }
+
     return 'active';
   }
 

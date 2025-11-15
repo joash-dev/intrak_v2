@@ -607,6 +607,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
           company: { select: { name: true } },
           instructor: { select: { id: true, name: true, email: true } },
           attendanceLogs: {
+            where: { verified: true },
             select: {
               id: true,
               date: true,
@@ -616,7 +617,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
               verified: true
             },
             orderBy: { date: 'desc' },
-            take: 30 // Last 30 attendance logs
+            take: 30 // Last 30 verified attendance logs
           },
           evaluations: {
             select: {
@@ -705,34 +706,53 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
 
       const completedHours = Math.round(attendanceLogs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60);
 
+      const lastAttendanceDate = student.attendanceLogs[0]?.date
+        ? new Date(student.attendanceLogs[0].date)
+        : null;
+
+      const startDateObj = student.startDate ? new Date(student.startDate) : null;
+      const endDateObj = student.endDate ? new Date(student.endDate) : null;
+      const today = new Date();
+      const todayMidnight = new Date(today);
+      todayMidnight.setHours(0, 0, 0, 0);
+
+      const internshipStarted =
+        !!startDateObj && todayMidnight.getTime() >= new Date(startDateObj).setHours(0, 0, 0, 0);
+
+      let attendanceGapDays = 0;
+      if (internshipStarted) {
+        const referenceDate = lastAttendanceDate || startDateObj!;
+        const referenceMidnight = new Date(referenceDate);
+        referenceMidnight.setHours(0, 0, 0, 0);
+        attendanceGapDays = Math.max(
+          0,
+          Math.floor((todayMidnight.getTime() - referenceMidnight.getTime()) / (1000 * 60 * 60 * 24))
+        );
+      }
+
       // Get last evaluation rating
       const lastEvaluation = student.evaluations[0]?.rating || 0;
 
       // Determine student status based on multiple criteria
-      let status = 'active';
-      
-      // Check if internship period has ended
-      const now = new Date();
-      const endDate = student.endDate ? new Date(student.endDate) : null;
-      const hasEnded = endDate && endDate < now;
-      
+      let status: 'active' | 'warning' | 'at_risk' | 'completed' = 'active';
+
       // Calculate completion percentage
-      const completionPercentage = (completedHours / student.totalHours) * 100;
-      
-      if (hasEnded && completionPercentage >= 100 && attendanceRate >= 75) {
-        // Internship ended and student met all requirements
+      const completionPercentage =
+        student.totalHours > 0 ? (completedHours / student.totalHours) * 100 : 0;
+
+      const internshipEnded = endDateObj ? endDateObj < today : false;
+
+      if (completionPercentage >= 100 && attendanceRate >= 75) {
         status = 'completed';
-      } else if (hasEnded && (completionPercentage < 100 || attendanceRate < 75)) {
-        // Internship ended but student didn't meet requirements
+      } else if (!internshipStarted) {
+        status = 'active';
+      } else if (attendanceGapDays >= 5) {
         status = 'at_risk';
-      } else if (!hasEnded && attendanceRate < 75) {
-        // Internship ongoing but attendance is poor
+      } else if (attendanceGapDays >= 3) {
+        status = 'warning';
+      } else if (internshipEnded && completionPercentage < 100) {
         status = 'at_risk';
-      } else if (!hasEnded && attendanceRate >= 75 && completionPercentage >= 100) {
-        // Internship ongoing but student has already completed all hours
-        status = 'completed';
       } else {
-        // Default active status
         status = 'active';
       }
 
@@ -742,6 +762,8 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         completedHours,
         lastEvaluation,
         status,
+        attendanceGapDays,
+        lastAttendanceDate: lastAttendanceDate ? lastAttendanceDate.toISOString() : null,
         lastActivity: student.attendanceLogs[0]?.date || student.createdAt
       };
     }));

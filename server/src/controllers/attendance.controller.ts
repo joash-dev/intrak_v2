@@ -6,6 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 import { generateQRToken, verifyQRToken } from '../services/qr.service';
 import { auditLog } from '../services/audit.service';
 import { generateDTRPDF } from '../services/dtr.service';
+import { ensureStudentStartDate } from '../utils/student.utils';
 
 const prisma = new PrismaClient();
 
@@ -44,6 +45,8 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
           verificationMethod: 'MANUAL'
         }
       });
+
+      await ensureStudentStartDate(studentId, new Date(timeIn));
     } else if (action === 'time-out') {
       const existingLog = await prisma.attendanceLog.findFirst({
         where: {
