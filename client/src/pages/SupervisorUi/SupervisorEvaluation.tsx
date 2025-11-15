@@ -265,6 +265,8 @@ const SupervisorEvaluation = () => {
   const [showEvaluationForm, setShowEvaluationForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [interns, setInterns] = useState<SupervisorStudent[]>([]);
 
   const [competencyRatings, setCompetencyRatings] = useState<CompetencyFormState>(
@@ -283,6 +285,10 @@ const SupervisorEvaluation = () => {
     user?.company ||
     user?.company?.name ||
     "Company";
+  const companyAddress =
+    user?.companyAddress ||
+    (user?.company && user.company.address) ||
+    "Not Provided";
 
   const fetchInterns = async () => {
     try {
@@ -340,6 +346,8 @@ const SupervisorEvaluation = () => {
         (sum, entry) => sum + entry.rating,
         0
       );
+      const averageRating =
+        totalPoints / Object.keys(competencyRatings).length || 0;
       const ojtGrade = totalPoints * 10 + 50;
 
       const evaluationData: InternshipEvaluationData = {
@@ -351,8 +359,25 @@ const SupervisorEvaluation = () => {
       };
 
       await supervisorService.submitEvaluation(evaluationData);
+      const evaluationDate = new Date().toISOString();
+
+      setInterns((prev) =>
+        prev.map((intern) =>
+          intern.id === selectedIntern.id
+            ? {
+                ...intern,
+                lastEvaluation: {
+                  date: evaluationDate,
+                  overallRating: Number(averageRating.toFixed(1)),
+                },
+              }
+            : intern
+        )
+      );
+
       toast.success(`Evaluation submitted for ${selectedIntern.name}`);
       setShowEvaluationForm(false);
+      setShowSuccessModal(true);
       setSelectedIntern(null);
       resetForm();
       fetchInterns(); // Refresh data
@@ -364,483 +389,52 @@ const SupervisorEvaluation = () => {
     }
   };
 
-  const formatDate = (value?: string | null) => {
-    if (!value) return "N/A";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "N/A";
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const escapeHtml = (value: string) =>
-    value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-  const buildOfficialFormHTML = (intern: SupervisorStudent) => {
-    const resolvedCompanyName =
-      user?.companyName ||
-      user?.company ||
-      user?.company?.name ||
-      "Company";
-    const resolvedCompanyAddress =
-      user?.companyAddress ||
-      (user?.company && user.company.address) ||
-      "Not Provided";
-    const totalPoints = Object.values(competencyRatings).reduce(
-      (sum, entry) => sum + entry.rating,
-      0
-    );
-    const ojtGrade = totalPoints * 10 + 50;
-    const ratingRows = competencyList
-      .map((competency) => {
-        const entry = competencyRatings[competency.id];
-        const remarks = escapeHtml(entry.remarks || "");
-        const rows = competency.criteria
-          .map((criterion, index) => {
-            const isFirstRow = index === 0;
-            return `
-              <tr>
-                ${
-                  isFirstRow
-                    ? `<td class="competency-name" rowspan="${competency.criteria.length}">
-                        <strong>${escapeHtml(competency.title)}</strong>
-                      </td>`
-                    : ""
-                }
-                <td class="criteria-cell">${escapeHtml(criterion.text)}</td>
-                <td class="rating-cell ${
-                  entry.rating === criterion.rating ? "selected-rating" : ""
-                }">${criterion.rating}</td>
-                ${
-                  isFirstRow
-                    ? `<td class="remarks-cell" rowspan="${competency.criteria.length}">${remarks}</td>`
-                    : ""
-                }
-              </tr>
-            `;
-          })
-          .join("");
-
-        return rows;
-      })
-      .join("");
-
-    return `
-      <html>
-        <head>
-          <title>Internship Evaluation Form</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 40px;
-              color: #111;
-            }
-            .form-container {
-              border: 2px solid #000;
-              padding: 0;
-            }
-            .header-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 0;
-            }
-            .header-table td {
-              border: 1.5px solid #000;
-              padding: 10px;
-            }
-            .header-logo {
-              width: 120px;
-              text-align: center;
-            }
-            .header-logo img {
-              width: 90px;
-              height: 90px;
-              object-fit: contain;
-            }
-            .header-title {
-              text-align: center;
-              font-size: 22px;
-              font-weight: bold;
-              letter-spacing: 1px;
-              width: 100%;
-              font-family: Arial, sans-serif;
-            }
-            .header-subtitle {
-              font-size: 14px;
-              font-weight: normal;
-              text-align: center;
-              width: 100%;
-              font-family: Arial, sans-serif;
-            }
-            .header-subtitle u {
-              font-weight: bold;
-            }
-            .header-note {
-              border: 1.5px solid #000;
-              border-top: none;
-              padding: 8px;
-              font-size: 12px;
-              text-align: center;
-              margin: 0;
-            }
-            .instructions-block {
-              border-left: 1.5px solid #000;
-              border-right: 1.5px solid #000;
-              border-bottom: 1.5px solid #000;
-              padding: 10px 12px;
-              font-size: 12px;
-              line-height: 1.4;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              border-spacing: 0;
-              margin: 0;
-            }
-            table, th, td {
-              border: 1px solid #000;
-            }
-            th, td {
-              padding: 2px;
-              vertical-align: middle;
-              font-size: 11px;
-            }
-            .info-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 0;
-              table-layout: fixed;
-            }
-            .info-table td {
-              border: 1.5px solid #000;
-              padding: 4px 8px;
-              vertical-align: middle;
-              word-wrap: break-word;
-              font-family: Arial, sans-serif;
-            }
-            .info-label {
-              font-size: 10px;
-              font-weight: bold;
-              letter-spacing: 0.3px;
-              background-color: #fff;
-              width: 30%;
-              text-transform: uppercase;
-              line-height: 1.2;
-              font-family: Arial, sans-serif;
-            }
-            .info-value {
-              font-size: 11px;
-              text-transform: uppercase;
-              line-height: 1.2;
-              background-color: #fff;
-              width: 70%;
-              font-family: Arial, sans-serif;
-            }
-            .info-table tr:last-child .info-label,
-            .info-table tr:last-child .info-value {
-              width: 25%;
-            }
-            .competency-table th {
-              background: #f3f3f3;
-              text-align: center;
-            }
-            .competency-name {
-              width: 18%;
-              font-weight: bold;
-            }
-            .criteria-cell {
-              font-size: 12px;
-              padding: 6px;
-              text-align: left;
-            }
-            .rating-cell {
-              width: 60px;
-              text-align: center;
-              font-size: 14px;
-              font-weight: bold;
-            }
-            .rating-cell.selected-rating {
-              background: #111;
-              color: #fff;
-            }
-            .remarks-cell {
-              font-size: 12px;
-              padding: 6px;
-              width: 180px;
-            }
-            .signature-block {
-              margin-top: 40px;
-              display: flex;
-              justify-content: space-between;
-              font-size: 12px;
-            }
-            .signature-line {
-              border-top: 1px solid #111;
-              width: 260px;
-              text-align: center;
-              padding-top: 4px;
-              margin: 0 auto;
-            }
-            .ojt-grade-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 10px;
-            }
-            .ojt-grade-table td {
-              border: 1.5px solid #000;
-              padding: 8px;
-              font-size: 12px;
-            }
-            .grade-text {
-              font-weight: bold;
-              text-transform: uppercase;
-            }
-            .grade-score {
-              width: 140px;
-              text-align: center;
-              font-size: 24px;
-              font-weight: bold;
-            }
-            .note-banner {
-              border: 1.5px solid #000;
-              padding: 8px;
-              font-size: 12px;
-              text-align: center;
-              margin: 0;
-            }
-            .termination-block {
-              border: 1.5px solid #000;
-              border-top: none;
-              margin: 0;
-            }
-            .termination-title {
-              font-size: 12px;
-              font-style: italic;
-              padding: 8px 10px 0 10px;
-            }
-            .termination-columns {
-              display: flex;
-            }
-            .termination-column {
-              flex: 1;
-              padding: 8px 14px 10px 14px;
-              font-size: 12px;
-              line-height: 1.4;
-            }
-            .termination-item {
-              margin-bottom: 4px;
-            }
-            .statement-block {
-              border: 1.5px solid #000;
-              border-top: none;
-              padding: 0;
-              font-size: 12px;
-            }
-            .statement-line {
-              padding: 8px 12px;
-            }
-            .statement-line + .statement-line {
-              border-top: 1px solid #000;
-            }
-            .signature-caption {
-              margin-top: 4px;
-            }
-            .date-line {
-              margin-top: 10px;
-            }
-            .signature-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 0;
-            }
-            .signature-table td {
-              border: 1.5px solid #000;
-              padding: 16px 20px;
-              vertical-align: top;
-              text-align: center;
-            }
-            .signature-label {
-              font-size: 12px;
-              margin-top: 4px;
-            }
-            .signature-date {
-              font-size: 12px;
-              margin-top: 12px;
-            }
-            .approval-cell {
-              text-align: left;
-              height: 120px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="form-container">
-          <table class="header-table">
-            <tr>
-              <td class="header-logo" rowspan="2">
-                <img src="${window.location.origin}/logo_intrak.png" alt="University Logo" />
-              </td>
-              <td class="header-title">INTERNSHIP EVALUATION FORM</td>
-            </tr>
-            <tr>
-              <td class="header-subtitle">
-                PANGASINAN STATE UNIVERSITY<br />
-                <u>URDANETA Campus</u>
-              </td>
-            </tr>
-          </table>
-          <div class="header-note">
-            This form is to be completed by the host company or a designated supervisor. This form shall be completed and submitted to the office of Campus Internship Coordinator and Internship / Practicum Subject Instructor upon completion of _____ training hours.
-          </div>
-
-          <table class="info-table">
-            <tr>
-              <td class="info-label">NAME OF STUDENT-INTERN</td>
-              <td class="info-value" colspan="3">${escapeHtml(intern.name)}</td>
-            </tr>
-            <tr>
-              <td class="info-label">NAME OF COMPANY / FIRM / AGENCY</td>
-              <td class="info-value" colspan="3">${escapeHtml(resolvedCompanyName)}</td>
-            </tr>
-            <tr>
-              <td class="info-label">COMPANY ADDRESS</td>
-              <td class="info-value" colspan="3">${escapeHtml(resolvedCompanyAddress)}</td>
-            </tr>
-            <tr>
-              <td class="info-label" style="width:25%;">DATE STARTED</td>
-              <td class="info-value" style="width:25%;">${formatDate(intern.startDate)}</td>
-              <td class="info-label" style="width:25%;">DATE ENDED</td>
-              <td class="info-value" style="width:25%;">${formatDate(intern.endDate)}</td>
-            </tr>
-          </table>
-
-          <div class="instructions-block">
-            <strong>Instructions:</strong> Evaluate the student-intern fairly and honestly based on performance during the training period. Circle or indicate the number that best describes the intern for each competency.
-          </div>
-
-          <table class="competency-table">
-            <thead>
-              <tr>
-                <th>Competency</th>
-                <th>Criteria</th>
-                <th>Rating</th>
-                <th>Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${ratingRows}
-            </tbody>
-          </table>
-
-          <table class="ojt-grade-table" style="margin-bottom:0;">
-            <tr>
-              <td class="grade-text">
-                <strong>OJT GRADE</strong><br />
-                = Total Points (A + B + C + D + E + F + G + H × 10) / 50 × 50 + 50
-              </td>
-              <td class="grade-score">${ojtGrade}</td>
-            </tr>
-          </table>
-
-          <div class="note-banner" style="border-top: none;">
-            Please discuss strengths & weaknesses with the student trainee to encourage and motivate improved performance.<br />
-            NOTE: When you terminate a student-trainee for any reason, please check the items below.
-          </div>
-
-          <div class="termination-block">
-            <div class="termination-title">The Internship Practicum was terminated:</div>
-            <div class="termination-columns">
-              <div class="termination-column">
-                <div class="termination-item">_____ due "only" for lack of work</div>
-                <div class="termination-item">_____ violation of Company Rules</div>
-                <div class="termination-item">_____ unfavorable work habits and practices</div>
-                <div class="termination-item">_____ altercation on the job</div>
-              </div>
-              <div class="termination-column">
-                <div class="termination-item">_____ too much absences and tardiness</div>
-                <div class="termination-item">_____ disrespectful to co-trainee or personnel</div>
-                <div class="termination-item">_____ does not demonstrate interest and desire to learn</div>
-                <div class="termination-item">
-                  _____ other(s), please specify ____________________
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="statement-block">
-            <div class="statement-line">_____ We would be pleased to employ this Student-Trainee in the future</div>
-            <div class="statement-line">_____ He/She needs to improve his/her performance.</div>
-          </div>
-
-          <table class="signature-table">
-            <tr>
-              <td style="border-right: none;">
-                <div class="signature-label"><strong>${escapeHtml(
-                  user?.name || ""
-                )}</strong></div>
-                <div class="signature-line"></div>
-                <div class="signature-label">
-                  Printed Name and Signature of Person Completing this Form
-                </div>
-                <div class="signature-date">Date: ____________________</div>
-              </td>
-              <td style="border-left: none;">
-                <div class="signature-label"><strong>${escapeHtml(
-                  intern.name
-                )}</strong></div>
-                <div class="signature-line"></div>
-                <div class="signature-label">Signature of Student-Intern</div>
-                <div class="signature-date">Date: ____________________</div>
-              </td>
-            </tr>
-            <tr>
-              <td class="approval-cell" colspan="2">
-                <div class="signature-label" style="font-weight:bold; margin-bottom:18px;">APPROVED:</div>
-                <div class="signature-line" style="width:250px;"></div>
-                <div class="signature-caption">Training Supervisor</div>
-              </td>
-            </tr>
-          </table>
-          </div>
-        </body>
-      </html>
-    `;
-  };
-
-  const handleExportOfficialForm = () => {
+  const handleExportOfficialForm = async () => {
     if (!selectedIntern) return;
     const allRated = Object.values(competencyRatings).every(
       (entry) => entry.rating > 0
     );
     if (!allRated) {
-      toast.error("Please provide ratings for all competencies before exporting.");
+      toast.error(
+        "Please provide ratings for all competencies before exporting."
+      );
       return;
     }
-    const printWindow = window.open("", "_blank", "width=900,height=650");
-    if (!printWindow) {
-      toast.error("Please allow pop-ups to generate the form.");
-      return;
+
+    try {
+      setExporting(true);
+    const totalPoints = Object.values(competencyRatings).reduce(
+      (sum, entry) => sum + entry.rating,
+      0
+    );
+    const ojtGrade = totalPoints * 10 + 50;
+
+      await supervisorService.exportEvaluation({
+        studentId: selectedIntern.id,
+        studentName: selectedIntern.name,
+        companyName,
+        companyAddress,
+        dateStarted: selectedIntern.startDate,
+        dateEnded: selectedIntern.endDate,
+        competencies: competencyRatings,
+        evaluatorName: user?.name || "",
+        evaluatorPosition: user?.position || "",
+        ojtGrade,
+      });
+      toast.success("Official evaluation form downloaded.");
+    } catch (error) {
+      console.error("Error exporting official form:", error);
+      toast.error("Failed to export official form.");
+    } finally {
+      setExporting(false);
     }
-    const htmlContent = buildOfficialFormHTML(selectedIntern);
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
   };
 
   const getStatusBadge = (intern: SupervisorStudent) => {
     if (intern.lastEvaluation) {
       return (
         <span className="text-xs px-3 py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-          Evaluated
+          Finished
         </span>
       );
     } else {
@@ -866,6 +460,10 @@ const SupervisorEvaluation = () => {
 
     return matchesSearch && matchesFilter;
   });
+
+  const allCompetenciesRated = Object.values(competencyRatings).every(
+    (entry) => entry.rating > 0
+  );
 
   if (loading) {
   return (
@@ -1098,7 +696,7 @@ const SupervisorEvaluation = () => {
                   </button>
               </div>
 
-            <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
+            <div className="space-y-6 max-h-[420px] overflow-y-auto pr-2">
               <div className="space-y-5">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   Internship Evaluation Competencies
@@ -1205,30 +803,35 @@ const SupervisorEvaluation = () => {
                     </div>
 
             {/* Form Actions */}
-            <div className="flex space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      <button
+            <div className="flex flex-col md:flex-row gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
                 onClick={() => setShowEvaluationForm(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
                 disabled={submitting}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleExportOfficialForm}
-                        disabled={
-                          !Object.values(competencyRatings).every(
-                            (entry) => entry.rating > 0
-                          )
-                        }
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FileText className="w-5 h-5" />
-                        <span>Export Official Form</span>
-                      </button>
-                      <button
-                        onClick={handleSubmitEvaluation}
-                disabled={submitting}
-                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExportOfficialForm}
+                disabled={!allCompetenciesRated || exporting}
+                className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-5 h-5" />
+                    <span>Export Official Form</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleSubmitEvaluation}
+                disabled={!allCompetenciesRated || submitting}
+                className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
               >
                 {submitting ? (
                   <>
@@ -1241,11 +844,32 @@ const SupervisorEvaluation = () => {
                     <span>Submit Evaluation</span>
                   </>
                 )}
-                        </button>
-              </div>
+              </button>
+            </div>
             </div>
           </div>
         )}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 space-y-4 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              Intern Evaluated
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              The evaluation has been submitted and marked as finished.
+            </p>
+            <button
+              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setShowSuccessModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

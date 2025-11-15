@@ -65,7 +65,12 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
         include: {
           user: { select: { name: true, email: true } },
           company: { select: { id: true, name: true } },
-          instructor: { select: { id: true, name: true, email: true } }
+          instructor: { select: { id: true, name: true, email: true } },
+          evaluations: {
+            select: { id: true, rating: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
         },
         skip,
         take: Number(limit),

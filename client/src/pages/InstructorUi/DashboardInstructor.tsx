@@ -428,40 +428,40 @@ const InstructorDashboard = ({
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="bg-blue-600 rounded-lg p-3">
+                      <div className="rounded-lg p-3 border border-blue-500 bg-white dark:bg-gray-800">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-white text-sm font-medium">
+                          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
                             Attendance
                           </p>
-                          <Clock className="w-4 h-4 text-white" />
+                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-300" />
                         </div>
                         <div className="space-y-2">
-                          <p className="text-white text-lg font-bold">
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-200">
                             {student.attendanceRate}%
                           </p>
-                          <div className="w-full bg-blue-500 rounded-full h-1.5">
+                          <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-full h-1.5">
                             <div
-                              className="bg-white h-1.5 rounded-full transition-all duration-500"
+                              className="bg-blue-600 dark:bg-blue-400 h-1.5 rounded-full transition-all duration-500"
                               style={{ width: `${student.attendanceRate}%` }}
                             />
                           </div>
                         </div>
                       </div>
 
-                      <div className="bg-green-600 rounded-lg p-3">
+                      <div className="rounded-lg p-3 border border-green-500 bg-white dark:bg-gray-800">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-white text-sm font-medium">
+                          <p className="text-sm font-medium text-green-700 dark:text-green-300">
                             Hours Progress
                           </p>
-                          <Calendar className="w-4 h-4 text-white" />
+                          <Calendar className="w-4 h-4 text-green-600 dark:text-green-300" />
                         </div>
                         <div className="space-y-2">
-                          <p className="text-white text-lg font-bold">
+                          <p className="text-lg font-bold text-green-700 dark:text-green-200">
                             {student.hoursCompleted}/{student.requiredHours}
                           </p>
-                          <div className="w-full bg-green-500 rounded-full h-1.5">
+                          <div className="w-full bg-green-100 dark:bg-green-900/30 rounded-full h-1.5">
                             <div
-                              className="bg-white h-1.5 rounded-full transition-all duration-500"
+                              className="bg-green-600 dark:bg-green-400 h-1.5 rounded-full transition-all duration-500"
                               style={{
                                 width: `${
                                   student.requiredHours
@@ -476,15 +476,15 @@ const InstructorDashboard = ({
                         </div>
                       </div>
 
-                      <div className="bg-amber-600 rounded-lg p-3">
+                      <div className="rounded-lg p-3 border border-amber-500 bg-white dark:bg-gray-800">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-white text-sm font-medium">
+                          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                             Performance
                           </p>
-                          <Award className="w-4 h-4 text-white" />
+                          <Award className="w-4 h-4 text-amber-600 dark:text-amber-300" />
                         </div>
                         <div className="space-y-2">
-                          <p className="text-white text-lg font-bold">
+                          <p className="text-lg font-bold text-amber-700 dark:text-amber-200">
                             {student.lastEvaluation
                               ? student.lastEvaluation.toFixed(1)
                               : "N/A"}
@@ -496,8 +496,8 @@ const InstructorDashboard = ({
                                 className={`w-3 h-3 ${
                                   student.lastEvaluation &&
                                   star <= Math.round(student.lastEvaluation)
-                                    ? "text-white"
-                                    : "text-white/30"
+                                    ? "text-amber-600 dark:text-amber-300"
+                                    : "text-amber-200 dark:text-amber-900"
                                 }`}
                               />
                             ))}

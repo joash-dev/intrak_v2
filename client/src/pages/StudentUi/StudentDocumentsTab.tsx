@@ -97,6 +97,12 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       required: true,
       category: "PRE_DEPLOYMENT",
     },
+    {
+      value: "TIME_FRAMES",
+      label: "Internship Time Frames (Form FM-AA-INT-14)",
+      required: true,
+      category: "PRE_DEPLOYMENT",
+    },
 
     // II. UPON APPROVAL OF COMPANY
     {
@@ -134,12 +140,6 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
     {
       value: "DTR_PHOTOCOPY",
       label: "Photocopy of Daily Time Record",
-      required: true,
-      category: "POST_OJT",
-    },
-    {
-      value: "TIME_FRAMES",
-      label: "Internship Time Frames (Form FM-AA-INT-14)",
       required: true,
       category: "POST_OJT",
     },

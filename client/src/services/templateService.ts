@@ -173,7 +173,8 @@ class TemplateService {
         { value: 'INTERNSHIP_RESUME', label: 'Internship Resume (Form FM-AA-INT-09)' },
         { value: 'CONSENT_FORM', label: 'Consent Form (Form FM-AA-INT-03)' },
         { value: 'ENDORSEMENT_LETTER', label: 'Endorsement Letter (Form FM-AA-INT-05)' },
-        { value: 'INTERNSHIP_RELEASE', label: 'Internship Release Form (Form FM-AA-INT-12)' }
+        { value: 'INTERNSHIP_RELEASE', label: 'Internship Release Form (Form FM-AA-INT-12)' },
+        { value: 'TIME_FRAMES', label: 'Internship Time Frames (Form FM-AA-INT-14)' }
       ],
       UPON_APPROVAL: [
         { value: 'MOA', label: 'Memorandum of Agreement (Form FM-AA-INT-10)' },
@@ -185,7 +186,6 @@ class TemplateService {
         { value: 'CERTIFICATE_COMPLETION', label: 'Certificate of Training Completion' },
         { value: 'NARRATIVE_REPORT', label: 'Internship Narrative Report' },
         { value: 'DTR_PHOTOCOPY', label: 'Photocopy of Daily Time Record' },
-        { value: 'TIME_FRAMES', label: 'Internship Time Frames (Form FM-AA-INT-14)' },
         { value: 'WEEKLY_REPORTS', label: 'Practicum/Internship Weekly Reports (Form FM-AA-INT-16)' },
         { value: 'STUDENT_FEEDBACK', label: 'Student-Trainees Feedback Form (Form FM-AA-INT-17)' },
         { value: 'SUPERVISOR_FEEDBACK', label: 'Training Supervisor Feedback Form (Form FM-AA-INT-18)' },

@@ -72,6 +72,14 @@ export interface InternshipEvaluationData {
   ojtGrade: number;
 }
 
+export interface EvaluationExportPayload extends InternshipEvaluationData {
+  studentName: string;
+  companyName: string;
+  companyAddress?: string;
+  dateStarted?: string | null;
+  dateEnded?: string | null;
+}
+
 class SupervisorService {
   // Get students assigned to supervisor's company
   async getMyStudents(): Promise<SupervisorStudent[]> {
@@ -98,6 +106,12 @@ class SupervisorService {
         status: this.calculateStudentStatus(student),
         lastActivity: student.lastActivity,
         pendingApprovals: student.pendingApprovals || 0,
+        lastEvaluation: student.evaluations?.[0]
+          ? {
+              date: student.evaluations[0].createdAt,
+              overallRating: student.evaluations[0].rating || 0,
+            }
+          : undefined,
       }));
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -253,6 +267,45 @@ class SupervisorService {
       });
     } catch (error) {
       console.error('Error submitting evaluation:', error);
+      throw error;
+    }
+  }
+
+  async exportEvaluation(payload: EvaluationExportPayload): Promise<void> {
+    try {
+      const response = await api.post('/evaluations/export', payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type:
+          response.headers['content-type'] ||
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `InternshipEvaluation_${payload.studentName.replace(
+        /[^a-z0-9]/gi,
+        '_'
+      )}.docx`;
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/i);
+        if (match?.[1]) {
+          filename = match[1];
+        }
+      }
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting evaluation:', error);
       throw error;
     }
   }

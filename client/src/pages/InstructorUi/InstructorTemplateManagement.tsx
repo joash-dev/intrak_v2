@@ -319,14 +319,16 @@ const InstructorTemplateManagement: React.FC = () => {
     : templates;
 
   // Group templates by category for display
-  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
-    const category = template.category || "OTHER";
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(template);
-    return acc;
-  }, {} as Record<string, DocumentTemplate[]>);
+  const groupedTemplates = filteredTemplates
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+    .reduce((acc, template) => {
+      const category = template.category || "OTHER";
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(template);
+      return acc;
+    }, {} as Record<string, DocumentTemplate[]>);
 
   if (loading) {
     return (

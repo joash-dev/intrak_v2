@@ -175,7 +175,8 @@ class DocumentService {
       'INTERNSHIP_RESUME',
       'CONSENT_FORM',
       'ENDORSEMENT_LETTER',
-      'INTERNSHIP_RELEASE'
+      'INTERNSHIP_RELEASE',
+      'TIME_FRAMES'
     ];
 
     const uponApprovalTypes = [
@@ -188,7 +189,6 @@ class DocumentService {
       'CERTIFICATE_COMPLETION',
       'NARRATIVE_REPORT',
       'DTR_PHOTOCOPY',
-      'TIME_FRAMES',
       'WEEKLY_REPORTS',
       'STUDENT_FEEDBACK',
       'SUPERVISOR_FEEDBACK',

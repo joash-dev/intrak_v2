@@ -399,7 +399,6 @@ const SupervisorDashboard = () => {
     { id: "overview", label: "Overview", icon: Home },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "evaluations", label: "Evaluations", icon: Award },
-    { id: "documents", label: "Documents", icon: FileCheck },
   ];
 
   const renderContent = () => {
@@ -410,8 +409,6 @@ const SupervisorDashboard = () => {
         return <IndustryPartnerAttendance />;
       case "evaluations":
         return <IndustryPartnerEvaluation />;
-      case "documents":
-        return <IndustryPartnerDocuments />;
       case "settings":
         return <SupervisorSettings />;
       default:
