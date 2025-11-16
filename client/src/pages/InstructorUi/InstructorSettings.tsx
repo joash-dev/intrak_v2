@@ -16,7 +16,19 @@ import {
   FileText,
   Megaphone,
   SlidersHorizontal,
+  HelpCircle,
+  Mail,
+  Shield,
+  Book,
+  X as CloseIcon,
 } from "lucide-react";
+// External help links (update these to your live URLs when available)
+const HELP_LINKS = {
+  faq: "https://intrak.site/faq",
+  coordinatorGuide: "https://intrak.site/coordinator-guide",
+  privacy: "https://intrak.site/privacy",
+  supportEmail: "intraksystem@gmail.com",
+};
 import { settingsService } from "../../services/settingsService";
 import toast from "react-hot-toast";
 
@@ -80,6 +92,7 @@ const InstructorSettings = () => {
     requireManualReview: false,
     defaultAnnouncementAudience: "All Users",
   });
+  const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(null);
 
   // Settings sections for navigation
   const sections = [
@@ -1385,54 +1398,118 @@ const InstructorSettings = () => {
 
             {/* Help & Support */}
             {activeTab === "help" && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Help & Support
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Find answers and contact support
+                    Get help and learn more about the portal
                   </p>
                 </div>
-                <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      Frequently Asked Questions
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Visit our FAQ to learn how to manage student documents, attendance, and evaluations.
+
+                {/* Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* FAQ */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("faq")}
+                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-5"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 rounded-lg bg-purple-600/30 flex items-center justify-center">
+                        <HelpCircle className="w-5 h-5 text-purple-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">FAQ</h3>
+                        <p className="text-sm text-gray-300">
+                          Find answers to common questions
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Contact Support */}
+                  <a
+                    href={`mailto:${HELP_LINKS.supportEmail}`}
+                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-5"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 rounded-lg bg-blue-600/30 flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-blue-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Contact Support</h3>
+                        <p className="text-sm text-gray-300">
+                          Email: {HELP_LINKS.supportEmail}
+                        </p>
+                      </div>
+                    </div>
+                  </a>
+
+                  {/* Coordinator Guide */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("guide")}
+                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-5"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center">
+                        <Book className="w-5 h-5 text-emerald-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Coordinator Guide</h3>
+                        <p className="text-sm text-gray-300">
+                          Learn how to use coordinator features
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Privacy Policy */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("privacy")}
+                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-5"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 rounded-lg bg-amber-600/30 flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-amber-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Privacy Policy</h3>
+                        <p className="text-sm text-gray-300">
+                          Read our privacy terms
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* App Information */}
+                <div className="pt-2">
+                  <h3 className="text-lg font-semibold text-gray-200">App Information</h3>
+                  <div className="mt-4 space-y-2 text-sm text-gray-300">
+                    <p>
+                      <span className="text-gray-400">Version:</span> 1.0.0
                     </p>
-                    <a
-                      href="#"
-                      className="inline-block mt-2 text-purple-600 hover:text-purple-700 text-sm"
-                    >
-                      Open FAQ
-                    </a>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      User Guide
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Step-by-step guide for instructors on managing OJT workflows.
+                    <p>
+                      <span className="text-gray-400">Last Updated:</span> October 2024
                     </p>
-                    <a
-                      href="#"
-                      className="inline-block mt-2 text-purple-600 hover:text-purple-700 text-sm"
-                    >
-                      Open User Guide
-                    </a>
-                  </div>
-                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      Contact Support
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Need help? Reach us at support@intrak.site
+                    <p>
+                      <span className="text-gray-400">License:</span> Educational Use
                     </p>
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Help Modals */}
+            {helpModal && (
+              <InstructorHelpModalContent
+                variant={helpModal}
+                onClose={() => setHelpModal(null)}
+              />
             )}
           </div>
         </div>
@@ -1442,3 +1519,119 @@ const InstructorSettings = () => {
 };
 
 export default InstructorSettings;
+
+const InstructorHelpModalContent = ({
+  variant,
+  onClose,
+}: {
+  variant: "faq" | "guide" | "privacy";
+  onClose: () => void;
+}) => {
+  const titles = {
+    faq: "Frequently Asked Questions",
+    guide: "Instructor Quick Guide",
+    privacy: "Privacy Overview",
+  } as const;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      style={{ marginTop: 0 }}
+    >
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          aria-label="Close help dialog"
+        >
+          <CloseIcon className="h-5 w-5" />
+        </button>
+        <div className="px-6 pb-6 pt-7 space-y-4">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {titles[variant]}
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {variant === "faq" && "Quick answers to the most common instructor questions."}
+            {variant === "guide" && "Follow these steps to get the most out of the instructor portal."}
+            {variant === "privacy" && "A short summary of how INTRAK handles instructor data."}
+          </p>
+        </div>
+
+        {variant === "faq" && (
+          <ul className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <li>
+              <p className="font-semibold">How do I upload document templates?</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Go to Templates, click “Upload Template”, choose the category and document type,
+                then upload one or more files. You can rename files before submitting.
+              </p>
+            </li>
+            <li>
+              <p className="font-semibold">Where can I verify attendance?</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Open Student Monitoring, select a student, then review their recent activities and
+                attendance trend. Use the details modal for weekly breakdowns.
+              </p>
+            </li>
+            <li>
+              <p className="font-semibold">How do I submit or edit evaluations?</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Go to Evaluations from the sidebar, pick a student, complete the form, and submit.
+                You can return to update until it’s marked as finalized.
+              </p>
+            </li>
+          </ul>
+        )}
+
+        {variant === "guide" && (
+          <div className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <div>
+              <p className="font-semibold">1. Review your dashboard daily</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                The dashboard highlights active students, pending items, and announcements so you can
+                act quickly.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold">2. Manage documents and templates</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Use Documents to review submissions; upload common formats in Templates to guide students.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold">3. Monitor progress and evaluations</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Track attendance, hours, and ratings in Student Monitoring; submit evaluations on time.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {variant === "privacy" && (
+          <div className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <p>
+              INTRAK collects instructor profile details and action logs to support coordination and compliance.
+            </p>
+            <p>
+              We do not share instructor information outside the OJT management team. Access is restricted and audited.
+            </p>
+            <p>
+              Need a full copy of the policy? Email us at {HELP_LINKS.supportEmail} and we will send the latest PDF.
+            </p>
+          </div>
+        )}
+
+        <div className="px-6 pb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-auto block rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -182,19 +182,19 @@ const InstructorApplications: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-sm md:text-base">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
               Company Applications
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
               Review and approve student applications to companies
             </p>
           </div>
-          <div className="flex items-center space-x-2 text-sm">
+          <div className="flex items-center space-x-2 text-xs md:text-sm">
             <FileCheck className="w-4 h-4 text-gray-400" />
             <span className="text-gray-600 dark:text-gray-400">
               {applications.filter((a) => a.status === "PENDING").length}{" "}
@@ -258,10 +258,10 @@ const InstructorApplications: React.FC = () => {
                         {application.student.user.name.charAt(0)}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white">
                           {application.student.user.name}
                         </h3>
-                        <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div className="flex flex-wrap gap-2 text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
                           <span className="inline-flex items-center">
                             <User className="w-3 h-3 mr-1" />
                             {application.student.studentNumber}
@@ -288,7 +288,7 @@ const InstructorApplications: React.FC = () => {
                           <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
                             {application.company.name}
                           </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                             {application.company.address}
                           </p>
                           {application.company.industry && (
@@ -296,7 +296,7 @@ const InstructorApplications: React.FC = () => {
                               {application.company.industry}
                             </span>
                           )}
-                          <div className="mt-2 text-sm">
+                          <div className="mt-2 text-xs md:text-sm">
                             {availableSlots > 0 ? (
                               <span className="text-green-600 dark:text-green-400 font-semibold">
                                 ✓ {availableSlots} slot
@@ -315,7 +315,7 @@ const InstructorApplications: React.FC = () => {
                     {/* Application Message */}
                     {application.message && (
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300">
                           <strong className="text-blue-900 dark:text-blue-200">
                             Message:
                           </strong>{" "}
@@ -327,7 +327,7 @@ const InstructorApplications: React.FC = () => {
                     {/* Rejection Reason */}
                     {application.rejectionReason && (
                       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300">
                           <strong className="text-red-900 dark:text-red-200">
                             Rejection Reason:
                           </strong>{" "}

@@ -342,7 +342,7 @@ const InstructorTemplateManagement: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             {category && (
               <button
@@ -356,7 +356,7 @@ const InstructorTemplateManagement: React.FC = () => {
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {category
                   ? `${category
                       .replace("_", " ")
@@ -364,7 +364,7 @@ const InstructorTemplateManagement: React.FC = () => {
                       .replace(/\b\w/g, (l) => l.toUpperCase())} Documents`
                   : "Document Templates"}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 {category
                   ? `Manage ${category
                       .replace("_", " ")
@@ -386,7 +386,7 @@ const InstructorTemplateManagement: React.FC = () => {
             setFileValidationMap({});
             setShowUploadModal(true);
           }}
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+            className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
             <span>Upload Template</span>

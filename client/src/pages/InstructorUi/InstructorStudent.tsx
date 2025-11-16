@@ -279,7 +279,7 @@ const InstructorMonitoringTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-sm md:text-base">
       {/* Header Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -288,10 +288,10 @@ const InstructorMonitoringTab = () => {
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">
                 Student Monitoring
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
                 Track detailed progress and performance metrics
               </p>
             </div>
