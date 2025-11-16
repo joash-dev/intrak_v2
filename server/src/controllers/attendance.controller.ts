@@ -253,21 +253,55 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       );
     }
 
-    const log = await prisma.attendanceLog.create({
-      data: {
+    // Toggle logic: if there's an open segment (no timeOut), close it; otherwise start a new one
+    const openLog = await prisma.attendanceLog.findFirst({
+      where: {
         studentId: qrToken.studentId,
-        date: new Date(),
-        timeIn: new Date(),
-        verified: true,
-        verificationMethod: 'QR',
-        verificationMetadata: {
-          token,
-          latitude,
-          longitude,
-          distanceMeters
-        }
-      }
+        timeOut: null
+      },
+      orderBy: { date: 'desc' }
     });
+
+    let log;
+    if (openLog) {
+      const now = new Date();
+      const durationMinutes = Math.max(
+        0,
+        Math.floor((now.getTime() - openLog.timeIn!.getTime()) / 60000)
+      );
+      log = await prisma.attendanceLog.update({
+        where: { id: openLog.id },
+        data: {
+          timeOut: now,
+          durationMinutes,
+          verified: true,
+          verificationMethod: 'QR',
+          verificationMetadata: {
+            ...(openLog.verificationMetadata as any),
+            token,
+            latitude,
+            longitude,
+            distanceMeters
+          }
+        }
+      });
+    } else {
+      log = await prisma.attendanceLog.create({
+        data: {
+          studentId: qrToken.studentId,
+          date: new Date(),
+          timeIn: new Date(),
+          verified: true,
+          verificationMethod: 'QR',
+          verificationMetadata: {
+            token,
+            latitude,
+            longitude,
+            distanceMeters
+          }
+        }
+      });
+    }
 
     await prisma.qRToken.update({
       where: { id: qrToken.id },
