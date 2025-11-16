@@ -13,7 +13,6 @@ import {
   LogOut,
   Settings,
   Home,
-  FileCheck,
   Loader2,
   User,
 } from "lucide-react";
@@ -22,7 +21,6 @@ import { supervisorService } from "../../services/supervisorService";
 import type { SupervisorStudent } from "../../services/supervisorService";
 import IndustryPartnerAttendance from "./SupervisorAttendance";
 import IndustryPartnerEvaluation from "./SupervisorEvaluation";
-import IndustryPartnerDocuments from "./SupervisorDocuments";
 import SupervisorSettings from "./SupervisorSettings";
 import { settingsService } from "../../services/settingsService";
 import api from "../../services/api";
