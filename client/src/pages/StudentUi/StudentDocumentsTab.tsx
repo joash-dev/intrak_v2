@@ -33,6 +33,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -400,6 +402,31 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       console.error("Download error:", err);
     }
   };
+
+  // Load preview when opening the modal
+  useEffect(() => {
+    const loadPreview = async () => {
+      if (!viewModalOpen || !selectedDoc) return;
+      try {
+        const blob = await documentService.downloadDocument(selectedDoc.id);
+        const url = window.URL.createObjectURL(blob);
+        setPreviewUrl(url);
+        setPreviewType(blob.type || null);
+      } catch (e) {
+        setPreviewUrl(null);
+        setPreviewType(null);
+      }
+    };
+    loadPreview();
+    return () => {
+      if (previewUrl) {
+        window.URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(null);
+      setPreviewType(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewModalOpen, selectedDoc]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -1039,6 +1066,38 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 </div>
               )}
 
+              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700">
+                {previewUrl ? (
+                  previewType?.startsWith("image/") ? (
+                    <img
+                      src={previewUrl}
+                      alt={selectedDoc.filename}
+                      className="max-h-[70vh] mx-auto rounded"
+                    />
+                  ) : previewType === "application/pdf" ? (
+                    <iframe
+                      title="Document Preview"
+                      src={previewUrl}
+                      className="w-full h-[70vh] rounded bg-white"
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Preview not available for this file type.
+                      </p>
+                    </div>
+                  )
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Loading preview...
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <DocumentFeedbackPanel
                 documentId={selectedDoc.id}
                 allowFeedback
@@ -1049,16 +1108,6 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 submitLabel="Send response"
                 messagePlaceholder="Reply to the reviewer or ask for clarification..."
               />
-
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-8 bg-gray-50 dark:bg-gray-700 text-center">
-                <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">
-                  Document preview will be displayed here
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                  PDF/Image viewer coming soon
-                </p>
-              </div>
 
               <button
                 onClick={() => selectedDoc && handleDownload(selectedDoc)}

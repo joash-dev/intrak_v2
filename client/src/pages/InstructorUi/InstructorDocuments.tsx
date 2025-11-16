@@ -314,102 +314,58 @@ const InstructorDocumentsTab = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Pending Review Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-200 dark:border-amber-800">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 dark:from-amber-400/5 dark:to-orange-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg">
-                <Clock className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-amber-700 dark:text-amber-300">
-                  {stats.pending}
-                </p>
-              </div>
-            </div>
+        {/* Pending Review Card (dashboard-style) */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                Pending Review
-              </h3>
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                Awaiting instructor feedback
-              </p>
+              <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Pending Review</h3>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.pending}</p>
+              <p className="text-amber-600 dark:text-amber-400 text-sm">Awaiting instructor feedback</p>
+            </div>
+            <div className="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
         {/* Approved Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-emerald-200 dark:border-emerald-800">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10 dark:from-emerald-400/5 dark:to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl shadow-lg">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {stats.approved}
-                </p>
-              </div>
-            </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
-                Approved
-              </h3>
-              <p className="text-sm text-emerald-700 dark:text-emerald-400">
-                Successfully reviewed documents
-              </p>
+              <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Approved</h3>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.approved}</p>
+              <p className="text-green-600 dark:text-green-400 text-sm">Successfully reviewed documents</p>
+            </div>
+            <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
         {/* Rejected Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-rose-200 dark:border-rose-800">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-red-500/10 dark:from-rose-400/5 dark:to-red-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-rose-500 to-red-500 rounded-xl shadow-lg">
-                <XCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-rose-700 dark:text-rose-300">
-                  {stats.rejected}
-                </p>
-              </div>
-            </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-rose-900 dark:text-rose-100 mb-1">
-                Rejected
-              </h3>
-              <p className="text-sm text-rose-700 dark:text-rose-400">
-                Requires revision and resubmission
-              </p>
+              <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Rejected</h3>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.rejected}</p>
+              <p className="text-rose-600 dark:text-rose-400 text-sm">Requires revision and resubmission</p>
+            </div>
+            <div className="w-12 h-12 bg-rose-600 rounded-xl flex items-center justify-center">
+              <XCircle className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
         {/* Total Documents Card */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-indigo-200 dark:border-indigo-800">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-400/5 dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="relative">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl shadow-lg">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300">
-                  {stats.total}
-                </p>
-              </div>
-            </div>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-1">
-                Total Documents
-              </h3>
-              <p className="text-sm text-indigo-700 dark:text-indigo-400">
-                All submitted documents
-              </p>
+              <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Total Documents</h3>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.total}</p>
+              <p className="text-indigo-600 dark:text-indigo-400 text-sm">All submitted documents</p>
+            </div>
+            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
@@ -561,10 +517,10 @@ const InstructorDocumentsTab = () => {
               {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
-                    className={`border-l-4 rounded-lg p-4 mb-4 ${
+                    className={`rounded-lg p-4 mb-4 ${
                       doc.status === "APPROVED"
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                        : "border-red-500 bg-red-50 dark:bg-red-900/20"
+                        ? "bg-green-50 dark:bg-green-900/20"
+                        : "bg-red-50 dark:bg-red-900/20"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
