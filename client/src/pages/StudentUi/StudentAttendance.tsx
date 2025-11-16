@@ -867,7 +867,10 @@ const StudentAttendanceTab: React.FC = () => {
             </p>
             <button
               className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              onClick={() => setShowScanSuccessModal(false)}
+              onClick={() => {
+                setShowScanSuccessModal(false);
+                window.location.reload();
+              }}
             >
               Close
             </button>
