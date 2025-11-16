@@ -671,7 +671,7 @@ const SupervisorEvaluation = () => {
         {showEvaluationForm && selectedIntern && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          style={{ margin: "0" }}
+          style={{ marginTop: "0px" }}
           onClick={() => !submitting && setShowEvaluationForm(false)}
         >
           <div
@@ -850,7 +850,10 @@ const SupervisorEvaluation = () => {
           </div>
         )}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          style={{ marginTop: "0px" }}
+        >
           <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 space-y-4 text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-green-600" />

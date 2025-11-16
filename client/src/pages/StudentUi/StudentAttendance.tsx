@@ -167,6 +167,11 @@ const StudentAttendanceTab: React.FC = () => {
     return days;
   };
 
+  // Day details modal state
+  const [showDayModal, setShowDayModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDayLogs, setSelectedDayLogs] = useState<any[]>([]);
+
   const getLogForDay = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(
       currentDate.getMonth() + 1
@@ -177,10 +182,28 @@ const StudentAttendanceTab: React.FC = () => {
       return null;
     }
 
-    return attendanceLogs.find((log) => {
+    // Collect all logs for this date
+    const logsForDay = attendanceLogs.filter((log) => {
       const logDate = new Date(log.date).toISOString().split("T")[0];
       return logDate === dateStr;
     });
+
+    if (logsForDay.length === 0) return null;
+
+    // Aggregate: sum duration across segments; verified only if all segments verified
+    const totalMinutes = logsForDay.reduce(
+      (sum, l) => sum + (Number(l.durationMinutes) || 0),
+      0
+    );
+    const allVerified = logsForDay.every((l) => !!l.verified);
+
+    // Return a merged representation compatible with existing UI
+    return {
+      date: dateStr,
+      durationMinutes: totalMinutes,
+      verified: allVerified,
+      segments: logsForDay,
+    } as any;
   };
 
   const previousMonth = () => {
@@ -535,6 +558,12 @@ const StudentAttendanceTab: React.FC = () => {
                         : "bg-gray-50 dark:bg-gray-700"
                       : ""
                   }`}
+                  onClick={() => {
+                    if (!day || !log) return;
+                    setSelectedDate(log.date);
+                    setSelectedDayLogs(log.segments || []);
+                    setShowDayModal(true);
+                  }}
                 >
                   {day && (
                     <>
@@ -575,6 +604,96 @@ const StudentAttendanceTab: React.FC = () => {
               <div className="w-4 h-4 bg-gray-50 dark:bg-gray-700 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">No entry</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Day Details Modal */}
+      {showDayModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowDayModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Attendance Details {selectedDate ? `- ${selectedDate}` : ""}
+              </h3>
+              <button
+                className="px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+                onClick={() => setShowDayModal(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {selectedDayLogs.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                No logs for this day.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+                      <th className="py-2 pr-4">Time In</th>
+                      <th className="py-2 pr-4">Time Out</th>
+                      <th className="py-2 pr-4">Hours</th>
+                      <th className="py-2 pr-4">Method</th>
+                      <th className="py-2 pr-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedDayLogs.map((seg, idx) => {
+                      const timeInLabel = seg.timeIn
+                        ? new Date(seg.timeIn).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-";
+                      const timeOutLabel = seg.timeOut
+                        ? new Date(seg.timeOut).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-";
+                      const hoursLabel = attendanceService.formatDuration(
+                        seg.durationMinutes || 0
+                      );
+                      return (
+                        <tr
+                          key={seg.id || idx}
+                          className="border-b border-gray-100 dark:border-gray-700"
+                        >
+                          <td className="py-2 pr-4">{timeInLabel}</td>
+                          <td className="py-2 pr-4">{timeOutLabel}</td>
+                          <td className="py-2 pr-4">{hoursLabel}</td>
+                          <td className="py-2 pr-4">
+                            {seg.verificationMethod || "MANUAL"}
+                          </td>
+                          <td className="py-2 pr-4">
+                            {seg.verified ? (
+                              <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                                <CheckCircle className="w-4 h-4" />
+                                Verified
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                                <AlertCircle className="w-4 h-4" />
+                                Pending
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

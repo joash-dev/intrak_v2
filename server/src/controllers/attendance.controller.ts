@@ -37,6 +37,24 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
     let log;
 
     if (action === 'time-in') {
+      // Prevent overlapping segments: ensure there's no open log for this student
+      const openLog = await prisma.attendanceLog.findFirst({
+        where: {
+          studentId,
+          timeOut: null,
+        },
+        orderBy: { date: 'desc' },
+      });
+
+      if (openLog) {
+        return res.status(400).json({
+          message: 'There is an active time-in without time-out. Time-out first before starting a new segment.',
+          openLogId: openLog.id,
+          openLogDate: openLog.date,
+          openLogTimeIn: openLog.timeIn,
+        });
+      }
+
       log = await prisma.attendanceLog.create({
         data: {
           studentId,
@@ -48,16 +66,17 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
 
       await ensureStudentStartDate(studentId, new Date(timeIn));
     } else if (action === 'time-out') {
+      // Close the most recent open segment for the given date (or any date if not provided)
       const existingLog = await prisma.attendanceLog.findFirst({
         where: {
           studentId,
-          date: new Date(date),
           timeOut: null
-        }
+        },
+        orderBy: { date: 'desc' }
       });
 
       if (!existingLog) {
-        return res.status(400).json({ message: 'No time-in record found for today' });
+        return res.status(400).json({ message: 'No open time-in record found to close' });
       }
 
       const timeOutDate = new Date(timeOut);
