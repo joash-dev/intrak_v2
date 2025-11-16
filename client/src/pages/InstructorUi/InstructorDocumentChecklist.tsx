@@ -16,7 +16,7 @@ import {
   ClipboardList,
   X,
 } from "lucide-react";
-import { instructorService } from "../../services/instructorService";
+import { instructorService, type InstructorDocument } from "../../services/instructorService";
 import toast from "react-hot-toast";
 
 interface DocumentStatus {
@@ -197,60 +197,98 @@ const DocumentChecklistTab = () => {
       setLoading(true);
       const studentsData = await instructorService.getAssignedStudents();
 
-      // Generate checklists for each student
-      const generatedChecklists = studentsData.map((student) => ({
-        studentId: student.id,
-        studentName: student.name,
-        studentNumber: student.studentId,
-        company: student.company,
-        documents: documentRequirements.map((doc) => ({
-          id: doc.id,
-          name: doc.name,
-          category: doc.category,
-          required: doc.required,
-          status: getRandomDocumentStatus(), // Simulate document status
-          submittedDate:
-            Math.random() > 0.5 ? new Date().toISOString() : undefined,
-          reviewedDate:
-            Math.random() > 0.7 ? new Date().toISOString() : undefined,
-          remarks: Math.random() > 0.8 ? "Document looks good" : undefined,
-        })),
-        overallProgress: 0,
-      }));
+      // Fetch documents visible to instructor (assigned students)
+      const docs = await instructorService.getDocumentsForReview();
 
-      // Calculate overall progress
-      const checklistsWithProgress = generatedChecklists.map((checklist) => ({
-        ...checklist,
-        overallProgress: calculateProgress(checklist.documents),
-      }));
+      // Map requirement id -> backend document type
+      const requirementToType: Record<string, string> = {
+        "record-file": "RECORD_FILE",
+        "application-form": "APPLICATION_INTERNSHIP",
+        "medical-certificate": "MEDICAL_CERTIFICATE",
+        "psychological-test": "MEDICAL_CERTIFICATE", // fallback: share same bucket
+        "units-certification": "CERTIFICATION_UNITS",
+        "internship-resume": "INTERNSHIP_RESUME",
+        "consent-form": "CONSENT_FORM",
+        "endorsement-letter": "ENDORSEMENT_LETTER",
+        "release-form": "INTERNSHIP_RELEASE",
+        "moa": "INTERNSHIP_AGREEMENT",
+        "internship-permit": "INTERNSHIP_RESUME", // no exact type in schema; fallback
+        "training-agreement": "TRAINING_AGREEMENT",
+        "evaluation-form": "INTERNSHIP_EVALUATION",
+        "completion-certificate": "CERTIFICATE_COMPLETION",
+        "narrative-report": "NARRATIVE_REPORT",
+        "dtr-photocopy": "DTR_PHOTOCOPY",
+        "time-frames": "TIME_FRAMES",
+        "weekly-reports": "WEEKLY_REPORTS",
+        "student-feedback": "STUDENT_FEEDBACK",
+        "supervisor-feedback": "SUPERVISOR_FEEDBACK",
+        "evaluation-self": "AGENCY_SELF_EVALUATION",
+        "evaluation-student": "AGENCY_STUDENT_EVALUATION",
+      };
 
-      setChecklists(checklistsWithProgress);
+      // Build map: studentName -> documents
+      const studentNameToDocs = docs.reduce<Record<string, InstructorDocument[]>>((acc, d) => {
+        const key = (d.studentName || "").trim();
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(d);
+        return acc;
+      }, {});
+
+      // Generate checklists from real documents
+      const generatedChecklists = studentsData.map((student) => {
+        const studentDocs = studentNameToDocs[student.name] || [];
+
+        const documents: DocumentStatus[] = documentRequirements.map((req) => {
+          const backendType = requirementToType[req.id];
+          const candidates = backendType
+            ? studentDocs.filter((d) => d.documentType === backendType)
+            : [];
+
+          // Choose newest by submittedDate (string like '1 hour ago' or date) – fallback to array order
+          const latest = candidates[0] || null;
+
+          // Map backend status to checklist status:
+          // - None => pending
+          // - PENDING => submitted
+          // - APPROVED => approved
+          // - REJECTED or RESUBMISSION_REQUESTED => rejected
+          let status: DocumentStatus["status"] = "pending";
+          if (latest) {
+            const s = (latest.status || "PENDING").toUpperCase();
+            if (s === "PENDING") status = "submitted";
+            else if (s === "APPROVED") status = "approved";
+            else if (s === "REJECTED" || s === "RESUBMISSION_REQUESTED") status = "rejected";
+          }
+
+          return {
+            id: req.id,
+            name: req.name,
+            category: req.category,
+            required: req.required,
+            status,
+            submittedDate: latest ? latest.submittedDate : undefined,
+            reviewedDate: latest ? latest.reviewedDate : undefined,
+            remarks: latest?.remarks || undefined,
+          };
+        });
+
+        return {
+          studentId: student.id,
+          studentName: student.name,
+          studentNumber: student.studentId,
+          company: student.company,
+          documents,
+          overallProgress: calculateProgress(documents),
+        };
+      });
+
+      setChecklists(generatedChecklists);
     } catch (error) {
       console.error("Error loading students:", error);
       toast.error("Failed to load student document checklists");
     } finally {
       setLoading(false);
     }
-  };
-
-  const getRandomDocumentStatus = ():
-    | "submitted"
-    | "pending"
-    | "approved"
-    | "rejected" => {
-    const statuses = ["pending", "submitted", "approved", "rejected"];
-    const weights = [0.3, 0.2, 0.4, 0.1]; // More approved documents
-    const random = Math.random();
-    let cumulative = 0;
-
-    for (let i = 0; i < statuses.length; i++) {
-      cumulative += weights[i];
-      if (random <= cumulative) {
-        return statuses[i] as any;
-      }
-    }
-
-    return "pending";
   };
 
   const calculateProgress = (documents: DocumentStatus[]): number => {
@@ -265,11 +303,11 @@ const DocumentChecklistTab = () => {
       case "approved":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case "submitted":
-        return <Clock className="w-4 h-4 text-yellow-600" />;
+        return null; // no leading mark for submitted; badge on the right suffices
       case "rejected":
         return <XCircle className="w-4 h-4 text-red-600" />;
       default:
-        return <Square className="w-4 h-4 text-gray-400" />;
+        return null; // pending: no mark
     }
   };
 

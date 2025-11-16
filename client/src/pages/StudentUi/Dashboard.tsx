@@ -368,13 +368,39 @@ const OverviewTab = ({
       {/* Requirements Checklist */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2 text-purple-600" />
-            Document Status
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+              <FileText className="w-5 h-5 mr-2 text-purple-600" />
+              Document Status
+            </h3>
+            <button
+              onClick={() => setActiveTab("documents")}
+              className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
+            >
+              View all
+            </button>
+          </div>
           <div className="space-y-3">
             {Array.isArray(data.documents) && data.documents.length > 0 ? (
-              data.documents.map((doc) => (
+              (() => {
+                // Deduplicate by document type, prefer APPROVED then newest, and limit to 3
+                const byType = new Map<string, any>();
+                data.documents.forEach((d: any) => {
+                  const existing = byType.get(d.type);
+                  if (!existing) {
+                    byType.set(d.type, d);
+                    return;
+                  }
+                  const existingTime = new Date(existing.uploadedAt || existing.reviewedAt || 0).getTime();
+                  const currentTime = new Date(d.uploadedAt || d.reviewedAt || 0).getTime();
+                  const preferApproved = d.status === "APPROVED" && existing.status !== "APPROVED";
+                  const isNewer = currentTime > existingTime;
+                  if (preferApproved || isNewer) {
+                    byType.set(d.type, d);
+                  }
+                });
+                const limited = Array.from(byType.values()).slice(0, 4);
+                return limited.map((doc: any) => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
@@ -410,7 +436,8 @@ const OverviewTab = ({
                     {doc.status}
                   </span>
                 </div>
-              ))
+              ));
+              })()
             ) : (
               <div className="text-center py-4 text-gray-500 dark:text-gray-400">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />

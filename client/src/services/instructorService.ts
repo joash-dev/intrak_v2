@@ -109,9 +109,7 @@ class InstructorService {
         tasksCompleted: student.tasksCompleted || 0,
         totalTasks: student.totalTasks || 20,
         lastEvaluation: student.lastEvaluation || 0,
-        status:
-          (student.status as InstructorStudent['status']) ||
-          this.mapStudentStatus(student),
+        status: this.mapStudentStatus(student),
         lastActivity: this.formatLastActivity(student.lastActivity),
         year: student.year || 0,
         section: student.section || '',
@@ -256,15 +254,20 @@ class InstructorService {
         console.warn('Could not fetch attendance for activities:', attError);
       }
       
-      // Fetch instructor activities from audit logs
+      // Fetch instructor activities from audit logs (evaluations, assignments, etc.)
       try {
         const auditResponse = await api.get('/audit');
-        const instructorLogs = auditResponse.data.logs?.filter((log: any) => 
-          log.user?.role === 'INSTRUCTOR' && 
-          (log.action === 'USER_REGISTERED' || log.action === 'STUDENT_AUTO_ASSIGNED')
-        ).slice(0, 5) || [];
+        const logs = auditResponse.data.logs || [];
+
+        // Only keep logs related to our assigned students or global system actions
+        const assignedNames = new Set(students.map(s => s.name));
+        const relevant = logs.filter((log: any) => {
+          const studentName = log.meta?.studentName || log.meta?.name || '';
+          return assignedNames.has(studentName) ||
+            ['USER_REGISTERED', 'STUDENT_AUTO_ASSIGNED', 'EVALUATION_SUBMITTED', 'COMPANY_ADDED'].includes(log.action);
+        }).slice(0, 20);
         
-        for (const log of instructorLogs) {
+        for (const log of relevant) {
           if (log.action === 'USER_REGISTERED' && log.meta?.role === 'STUDENT') {
             activities.push({
               id: `inst-${log.id}`,
@@ -279,6 +282,23 @@ class InstructorService {
               studentName: 'System',
               action: `Assigned student to instructor`,
               type: 'evaluation', // Using evaluation type for instructor actions
+              timestamp: log.createdAt
+            });
+          } else if (log.action === 'EVALUATION_SUBMITTED') {
+            const studentName = log.meta?.studentName || 'Student';
+            activities.push({
+              id: `eval-${log.id}`,
+              studentName,
+              action: `Evaluation submitted`,
+              type: 'evaluation',
+              timestamp: log.createdAt
+            });
+          } else if (log.action === 'COMPANY_ADDED') {
+            activities.push({
+              id: `company-${log.id}`,
+              studentName: 'System',
+              action: `New company added`,
+              type: 'task',
               timestamp: log.createdAt
             });
           }
@@ -379,6 +399,13 @@ class InstructorService {
     const completionPercentage =
       student.totalHours > 0 ? (student.completedHours / student.totalHours) * 100 : 0;
     const attendanceGapDays = student.attendanceGapDays ?? 0;
+    const startDate = student.startDate ? new Date(student.startDate) : null;
+    const today = new Date();
+
+    // If no start date yet or start date in the future, student should be active
+    if (!startDate || startDate > today) {
+      return 'active';
+    }
 
     if (completionPercentage >= 100 && student.attendanceRate >= 75) {
       return 'completed';
@@ -392,6 +419,7 @@ class InstructorService {
       return 'warning';
     }
 
+    // Default to active unless explicit risk indicators are provided
     return 'active';
   }
 

@@ -55,12 +55,24 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "profile" | "password" | "notifications" | "appearance"
+    "profile" | "password" | "notifications" | "appearance" | "preferences" | "help"
   >("profile");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [notifications, setNotifications] = useState({
+    emailDocuments: true,
+    emailAttendance: true,
+    emailAnnouncements: true,
+    pushNotifications: true,
+  });
+  const [preferences, setPreferences] = useState({
+    language: "en",
+    dateFormat: "MM/DD/YYYY",
+    timeFormat: "12hr",
+    theme: "system",
+  });
 
   // Settings sections for navigation
   const sections = [
@@ -68,11 +80,14 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     { id: "password", label: "Password", icon: Lock },
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "notifications", label: "Notifications", icon: AlertCircle },
+    { id: "preferences", label: "Preferences", icon: Monitor },
+    { id: "help", label: "Help & Support", icon: AlertCircle },
   ];
 
   useEffect(() => {
     loadProfile();
     loadTheme();
+    loadSavedSettings();
   }, []);
 
   const loadTheme = () => {
@@ -80,6 +95,32 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
       (localStorage.getItem("theme") as "light" | "dark" | "system") ||
       "system";
     setTheme(savedTheme);
+  };
+
+  const loadSavedSettings = () => {
+    try {
+      const notif = settingsService.loadNotificationPreferences?.();
+      if (notif) {
+        setNotifications({
+          emailDocuments: !!notif.emailDocuments,
+          emailAttendance: !!notif.emailAttendance,
+          emailAnnouncements: !!notif.emailAnnouncements,
+          pushNotifications: !!notif.pushNotifications,
+        });
+      }
+    } catch {}
+
+    try {
+      const app = settingsService.loadAppPreferences?.();
+      if (app) {
+        setPreferences({
+          language: app.language || "en",
+          dateFormat: app.dateFormat || "MM/DD/YYYY",
+          timeFormat: app.timeFormat || "12hr",
+          theme: (app.theme as any) || "system",
+        });
+      }
+    } catch {}
   };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
@@ -574,6 +615,43 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
                       </div>
+
+                      {/* Emergency Contact (to match coordinator UI) */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Emergency Contact Name
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Optional"
+                          onChange={(e) =>
+                            setProfile({
+                              ...profile,
+                              // store alongside profile to avoid type explosion
+                              // @ts-expect-error dynamic field for UI only
+                              emergencyName: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Emergency Contact Number
+                        </label>
+                        <input
+                          type="tel"
+                          placeholder="Optional"
+                          onChange={(e) =>
+                            setProfile({
+                              ...profile,
+                              // @ts-expect-error dynamic field for UI only
+                              emergencyContact: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-end">
@@ -790,7 +868,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                       ) : (
                         <Lock className="w-5 h-5" />
                       )}
-                      <span>Change Password</span>
+                      <span>Update Password</span>
                     </button>
                   </div>
                 </div>
@@ -925,60 +1003,220 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                 </div>
 
                 <div className="space-y-4">
-                  {[
-                    {
-                      title: "Student Document Submissions",
-                      description:
-                        "Get notified when students submit documents for review",
-                      enabled: true,
-                    },
-                    {
-                      title: "Attendance Issues",
-                      description:
-                        "Receive alerts when students have attendance problems",
-                      enabled: true,
-                    },
-                    {
-                      title: "Evaluation Reminders",
-                      description:
-                        "Get reminded to complete student evaluations",
-                      enabled: false,
-                    },
-                    {
-                      title: "System Updates",
-                      description:
-                        "Receive notifications about system maintenance and updates",
-                      enabled: true,
-                    },
-                  ].map((notification, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
-                    >
+                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                       <div>
                         <h4 className="font-medium text-gray-900 dark:text-white">
-                          {notification.title}
+                        Student Document Submissions
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {notification.description}
+                        Get notified when students submit documents for review
                         </p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          defaultChecked={notification.enabled}
+                        checked={notifications.emailDocuments}
+                        onChange={(e) =>
+                          setNotifications({
+                            ...notifications,
+                            emailDocuments: e.target.checked,
+                          })
+                        }
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
                       </label>
                     </div>
-                  ))}
+
+                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        Attendance Issues
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Receive alerts when students have attendance problems
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.emailAttendance}
+                        onChange={(e) =>
+                          setNotifications({
+                            ...notifications,
+                            emailAttendance: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        System Updates
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Receive notifications about system maintenance and updates
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={notifications.emailAnnouncements}
+                        onChange={(e) =>
+                          setNotifications({
+                            ...notifications,
+                            emailAnnouncements: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <button className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                  <button
+                    onClick={() => {
+                      settingsService.saveNotificationPreferences?.(notifications as any);
+                      toast.success("Notification preferences saved");
+                    }}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
                     Save Preferences
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Preferences Tab */}
+            {activeTab === "preferences" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    App Preferences
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Language and format settings
+                  </p>
+          </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Language
+                    </label>
+                    <select
+                      value={preferences.language}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, language: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="en">English</option>
+                    </select>
+        </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Date Format
+                    </label>
+                    <select
+                      value={preferences.dateFormat}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, dateFormat: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Time Format
+                    </label>
+                    <select
+                      value={preferences.timeFormat}
+                      onChange={(e) =>
+                        setPreferences({ ...preferences, timeFormat: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="12hr">12-hour</option>
+                      <option value="24hr">24-hour</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      settingsService.saveAppPreferences?.(preferences as any);
+                      toast.success("Preferences saved");
+                    }}
+                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Save Preferences
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Help & Support */}
+            {activeTab === "help" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    Help & Support
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Find answers and contact support
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      Frequently Asked Questions
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Visit our FAQ to learn how to manage student documents, attendance, and evaluations.
+                    </p>
+                    <a
+                      href="#"
+                      className="inline-block mt-2 text-purple-600 hover:text-purple-700 text-sm"
+                    >
+                      Open FAQ
+                    </a>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      User Guide
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Step-by-step guide for instructors on managing OJT workflows.
+                    </p>
+                    <a
+                      href="#"
+                      className="inline-block mt-2 text-purple-600 hover:text-purple-700 text-sm"
+                    >
+                      Open User Guide
+                    </a>
+                  </div>
+                  <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      Contact Support
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Need help? Reach us at support@intrak.site
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

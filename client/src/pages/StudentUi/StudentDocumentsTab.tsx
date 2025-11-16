@@ -35,6 +35,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string | null>(null);
+  const [reuploadingDoc, setReuploadingDoc] = useState<Document | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -264,7 +265,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
     });
   }, [documents, filterStatus, searchQuery, filterCategory]);
 
-  // Group documents by category
+  // Group documents by category (show ALL submissions)
   const groupedDocs = useMemo(() => {
     return filteredDocs.reduce((acc, doc) => {
       const category = documentService.getDocumentCategory(doc.type);
@@ -349,12 +350,23 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       // Reload documents
       await loadDocuments();
 
+      // If this was a re-upload, delete the previous document to avoid duplicates
+      if (reuploadingDoc) {
+        try {
+          await documentService.deleteDocument(reuploadingDoc.id);
+          await loadDocuments();
+        } catch (e) {
+          console.error("Failed to delete old document after re-upload:", e);
+        }
+      }
+
       // Reset form
       setSelectedFile(null);
       setSelectedType("APPLICATION_INTERNSHIP");
       setSelectedCategory("PRE_DEPLOYMENT");
       setUploadModalOpen(false);
       setUploadProgress(0);
+      setReuploadingDoc(null);
 
       clearInterval(progressInterval);
     } catch (err: any) {
@@ -401,6 +413,19 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       );
       console.error("Download error:", err);
     }
+  };
+
+  const handleResubmit = (doc: Document) => {
+    try {
+      const cat = documentService.getDocumentCategory(doc.type);
+      setSelectedCategory(cat);
+    } catch {
+      // fallback; keep current category
+    }
+    setSelectedType(doc.type);
+    setSelectedFile(null);
+    setReuploadingDoc(doc);
+    setUploadModalOpen(true);
   };
 
   // Load preview when opening the modal
@@ -782,8 +807,9 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                                 </button>
                               </>
                             )}
-                            {doc.status === "REJECTED" && (
+                            {(doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && (
                               <button
+                                onClick={() => handleResubmit(doc)}
                                 className="text-green-600 hover:text-green-900 dark:text-green-400 p-1 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
                                 title="Re-upload"
                               >
@@ -817,10 +843,10 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
           <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Upload Document
+                {reuploadingDoc ? "Re-Upload Document" : "Upload Document"}
               </h2>
               <button
-                onClick={() => setUploadModalOpen(false)}
+                onClick={() => { setUploadModalOpen(false); setReuploadingDoc(null); }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               >
                 <X className="w-6 h-6" />

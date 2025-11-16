@@ -122,6 +122,12 @@ const InstructorDocumentsTab = () => {
     }
   };
 
+  // Display rule: treat RESUBMISSION_REQUESTED as "REJECTED" in UI filters
+  const getUiStatus = (status: string): "PENDING" | "APPROVED" | "REJECTED" => {
+    if (status === "RESUBMISSION_REQUESTED") return "REJECTED";
+    return (status as any) || "PENDING";
+  };
+
   const getPriorityFromType = (type: string): "high" | "medium" | "low" => {
     const highPriority = ["final_report", "accomplishment_report"];
     const mediumPriority = ["weekly_report", "monthly_timesheet"];
@@ -264,11 +270,23 @@ const InstructorDocumentsTab = () => {
       doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
 
     const normalizedStatus = doc.status.toLowerCase();
+
+    // Map statuses to filter buckets (separate resubmission)
+    const bucket =
+      normalizedStatus === "resubmission_requested"
+        ? "resubmission"
+        : normalizedStatus;
+
     const matchesStatus =
       filterStatus === "pending"
-        ? normalizedStatus === "pending" ||
-          normalizedStatus === "resubmission_requested"
-        : normalizedStatus === filterStatus;
+        ? bucket === "pending"
+        : filterStatus === "approved"
+        ? bucket === "approved"
+        : filterStatus === "rejected"
+        ? bucket === "rejected"
+        : filterStatus === "resubmission"
+        ? bucket === "resubmission"
+        : bucket === filterStatus;
     const matchesType = !filterType || doc.documentType === filterType;
     const matchesPriority =
       !filterPriority ||
@@ -276,6 +294,52 @@ const InstructorDocumentsTab = () => {
 
     return matchesSearch && matchesStatus && matchesType && matchesPriority;
   });
+
+  // Collapse older entries with preference: APPROVED > PENDING > REJECTED/RESUBMISSION
+  const visibleDocuments = (() => {
+    const approvedKeys = new Set<string>();
+    const pendingKeys = new Set<string>();
+    for (const d of filteredDocuments) {
+      const key = `${d.studentId}::${d.documentType}`;
+      if (d.status === "APPROVED") approvedKeys.add(key);
+      if (d.status === "PENDING") pendingKeys.add(key);
+    }
+
+    const map = new Map<string, any>();
+    for (const d of filteredDocuments) {
+      const key = `${d.studentId}::${d.documentType}`;
+
+      // If approved exists for key, ignore everything else
+      if (approvedKeys.has(key) && d.status !== "APPROVED") continue;
+      // If pending exists for key, ignore rejected/resubmission
+      if (pendingKeys.has(key) && d.status !== "PENDING") continue;
+
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, d);
+        continue;
+      }
+      const timeExisting = new Date(existing.submittedDate || 0).getTime();
+      const timeCurrent = new Date(d.submittedDate || 0).getTime();
+      if (timeCurrent > timeExisting) {
+        map.set(key, d);
+      }
+    }
+
+    // If current filter is 'rejected', show only rejected (not resubmission)
+    if (filterStatus === "rejected") {
+      return Array.from(map.values()).filter(
+        (d) => d.status === "REJECTED"
+      );
+    }
+    // If current filter is 'resubmission', show only resubmission entries
+    if (filterStatus === "resubmission") {
+      return Array.from(map.values()).filter(
+        (d) => d.status === "RESUBMISSION_REQUESTED"
+      );
+    }
+    return Array.from(map.values());
+  })();
 
   // Show loading state
   if (loading) {
@@ -396,6 +460,7 @@ const InstructorDocumentsTab = () => {
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+              <option value="resubmission">Resubmission</option>
             </select>
 
             <select
@@ -427,7 +492,7 @@ const InstructorDocumentsTab = () => {
 
       {/* Documents List */}
       <div className="space-y-4">
-        {filteredDocuments.map((doc) => {
+        {visibleDocuments.map((doc) => {
           const formattedStudentId = formatStudentNumber(doc.studentId);
           return (
           <div
@@ -468,14 +533,27 @@ const InstructorDocumentsTab = () => {
                     </div>
                   </div>
                 </div>
-                <span
-                  className={`inline-flex items-center space-x-1 text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                    doc.status
-                  )}`}
-                >
-                  {getStatusIcon(doc.status)}
-                  <span>{doc.status.replace(/_/g, " ").toLowerCase()}</span>
-                </span>
+                {(() => {
+                  const uiStatus = getUiStatus(doc.status);
+                  const visualStatus =
+                    doc.status === "RESUBMISSION_REQUESTED"
+                      ? "RESUBMISSION_REQUESTED"
+                      : uiStatus;
+                  const label =
+                    doc.status === "RESUBMISSION_REQUESTED"
+                      ? "RESUBMISSION"
+                      : uiStatus.toUpperCase();
+                  return (
+                    <span
+                      className={`inline-flex items-center space-x-1 text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                        visualStatus as any
+                      )}`}
+                    >
+                      {getStatusIcon(visualStatus as any)}
+                      <span>{label}</span>
+                    </span>
+                  );
+                })()}
               </div>
 
               {/* Document Info */}
@@ -493,7 +571,7 @@ const InstructorDocumentsTab = () => {
                             getPriorityFromType(doc.documentType)
                           )}`}
                         >
-                          {getPriorityFromType(doc.documentType)}
+                          {getPriorityFromType(doc.documentType).toUpperCase()}
                         </span>
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -514,17 +592,17 @@ const InstructorDocumentsTab = () => {
               </div>
 
               {/* Review Info (if reviewed) */}
-              {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
+              {(getUiStatus(doc.status) === "APPROVED" || getUiStatus(doc.status) === "REJECTED") &&
                 doc.remarks && (
                   <div
                     className={`rounded-lg p-4 mb-4 ${
-                      doc.status === "APPROVED"
+                      getUiStatus(doc.status) === "APPROVED"
                         ? "bg-green-50 dark:bg-green-900/20"
                         : "bg-red-50 dark:bg-red-900/20"
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      {doc.status === "APPROVED" ? (
+                      {getUiStatus(doc.status) === "APPROVED" ? (
                         <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                       ) : (
                         <XCircle className="w-5 h-5 text-red-600 mt-0.5" />

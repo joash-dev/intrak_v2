@@ -71,19 +71,19 @@ const InstructorDashboard = ({
   const { data: studentsData, loading: studentsLoading } = useOptimizedData(
     () => instructorService.getAssignedStudents(),
     [],
-    { ttl: 3 * 60 * 1000 } // 3 minutes cache
+    { ttl: 60 * 1000 } // 1 minute cache to avoid flicker but keep data fresh
   );
 
   const { data: statsData, loading: statsLoading } = useOptimizedData(
     () => instructorService.getDashboardStats(),
     [],
-    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+    { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
   const { data: activitiesData, loading: activitiesLoading } = useOptimizedData(
     () => instructorService.getRecentActivities(),
     [],
-    { ttl: 2 * 60 * 1000 } // 2 minutes cache
+    { ttl: 60 * 1000 } // 1 minute cache
   );
 
   const { data: announcementsData, loading: announcementsLoading } =

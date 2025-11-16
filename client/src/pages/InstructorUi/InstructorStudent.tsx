@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users,
   Search,
@@ -19,10 +19,7 @@ import {
 } from "lucide-react";
 import { instructorService } from "../../services/instructorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import {
-  calculateAttendanceTrend,
-  determineStudentStatus,
-} from "../../utils/attendanceCalculations";
+import { calculateAttendanceTrend } from "../../utils/attendanceCalculations";
 
 interface Student {
   id: string;
@@ -40,7 +37,7 @@ interface Student {
   totalTasks: number;
   lastEvaluation: number | null;
   recentActivities: number;
-  status: "excellent" | "good" | "needs_attention" | "critical";
+  status: "active" | "warning" | "at_risk" | "completed";
   lastActive: string;
 }
 
@@ -56,6 +53,11 @@ const InstructorMonitoringTab = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [taskHistory, setTaskHistory] = useState<{ task: string; date: string; status: string }[]>([]);
+  const [evaluationHistory, setEvaluationHistory] = useState<{ date: string; rating: number; evaluator: string }[]>([]);
+  const [weeklyAttendanceData, setWeeklyAttendanceData] = useState<{ week: string; rate: number }[]>([]);
+  const [weeklyHoursData, setWeeklyHoursData] = useState<{ label: string; hours: number }[]>([]);
   // Optimized data fetching with caching
   const { data: studentsData, loading: studentsLoading } = useOptimizedData(
     async () => {
@@ -78,13 +80,8 @@ const InstructorMonitoringTab = () => {
           const attendanceRate = attendanceStats.attendanceRate;
           const completedHours = attendanceStats.completedHours;
 
-          // Determine status using shared utility function
-          const status = determineStudentStatus(
-            attendanceRate,
-            student.lastEvaluation || 0,
-            completedHours,
-            student.requiredHours || 240
-          );
+          // Use status that already follows startDate + gap rules
+          const status = student.status as Student["status"];
 
           // Determine attendance trend using shared utility function
           const studentAttendance = attendanceResponse.filter(
@@ -124,49 +121,122 @@ const InstructorMonitoringTab = () => {
   const students = studentsData || [];
   const loading = studentsLoading;
 
+  // Weekly charts populated from logs
   const studentDetails: StudentDetail = {
-    weeklyAttendance: [
-      { week: "Week 1", rate: 100 },
-      { week: "Week 2", rate: 95 },
-      { week: "Week 3", rate: 98 },
-      { week: "Week 4", rate: 92 },
-    ],
-    monthlyProgress: [
-      { month: "Aug", hours: 88 },
-      { month: "Sep", hours: 92 },
-      { month: "Oct", hours: 85 },
-    ],
-    taskHistory: [
-      { task: "Database Design", date: "2024-10-01", status: "completed" },
-      { task: "API Integration", date: "2024-09-28", status: "completed" },
-      { task: "Frontend Development", date: "2024-09-25", status: "completed" },
-    ],
-    evaluationHistory: [
-      { date: "2024-09-15", rating: 4.5, evaluator: "Industry Partner" },
-      { date: "2024-08-30", rating: 4.3, evaluator: "Coordinator" },
-    ],
+    weeklyAttendance: weeklyAttendanceData,
+    monthlyProgress: weeklyHoursData.map((w) => ({ month: w.label, hours: w.hours })),
+    taskHistory,
+    evaluationHistory,
   };
+
+  // Load real details when opening modal
+  useEffect(() => {
+    const loadDetails = async () => {
+      if (!showDetailModal || !selectedStudent) return;
+      try {
+        setDetailLoading(true);
+        // Compute weekly attendance and hours from logs (last 4 weeks)
+        const logs: any[] = await instructorService.getStudentAttendance(selectedStudent.id);
+        const verified = (logs || []).filter((l) => l && l.verified);
+
+        const startOfWeek = (d: Date) => {
+          const date = new Date(d);
+          const day = date.getDay();
+          const diff = (day === 0 ? -6 : 1) - day;
+          date.setDate(date.getDate() + diff);
+          date.setHours(0, 0, 0, 0);
+          return date;
+        };
+
+        const ranges: { start: Date; end: Date; label: string }[] = [];
+        const now = new Date();
+        const thisMon = startOfWeek(now);
+        for (let i = 3; i >= 0; i--) {
+          const start = new Date(thisMon);
+          start.setDate(start.getDate() - i * 7);
+          const end = new Date(start);
+          end.setDate(end.getDate() + 7);
+          const monthShort = start.toLocaleString(undefined, { month: "short" });
+          const weekInMonth = Math.ceil(start.getDate() / 7);
+          ranges.push({ start, end, label: `${monthShort} W${weekInMonth}` });
+        }
+
+        const rates: { week: string; rate: number }[] = [];
+        const hours: { label: string; hours: number }[] = [];
+        for (const r of ranges) {
+          const daySet = new Set<string>();
+          let minutes = 0;
+          verified.forEach((log) => {
+            const dt = new Date(log.date || log.timeIn || log.createdAt);
+            if (dt >= r.start && dt < r.end) {
+              const dow = dt.getDay();
+              if (dow >= 1 && dow <= 5) {
+                daySet.add(dt.toISOString().split("T")[0]);
+              }
+              minutes += Number(log.durationMinutes || 0);
+            }
+          });
+          rates.push({ week: r.label, rate: Math.min(100, Math.round((daySet.size / 5) * 100)) });
+          hours.push({ label: r.label, hours: Math.round((minutes / 60) * 10) / 10 });
+        }
+        setWeeklyAttendanceData(rates);
+        setWeeklyHoursData(hours);
+        // Evaluations
+        const evals = await instructorService.getStudentEvaluationHistory(selectedStudent.id);
+        const mappedEvals = (evals || []).map((e: any) => ({
+          date: new Date(e.createdAt || e.date || Date.now()).toLocaleDateString(),
+          rating: e.rating || 0,
+          evaluator: e.evaluator?.name || e.evaluatorRole || "Evaluator",
+        }));
+        let finalEvals = mappedEvals.slice(0, 5);
+        // Fallback: if API returns no history but we have a last rating on the card, show that
+        if (finalEvals.length === 0 && (selectedStudent.lastEvaluation ?? 0) > 0) {
+          finalEvals = [
+            {
+              date: "—",
+              rating: selectedStudent.lastEvaluation as number,
+              evaluator: "Last recorded rating",
+            },
+          ];
+        }
+        setEvaluationHistory(finalEvals);
+
+        // Use recent document submissions as "tasks" (proxy until tasks API exists)
+        const docsResp = await instructorService.getDocumentsForReview();
+        const studentDocs = (docsResp || []).filter((d: any) => d.studentName === selectedStudent.name);
+        const mappedTasks = studentDocs.slice(0, 4).map((d: any) => ({
+          task: `Submitted ${d.documentType}`,
+          date: d.submittedDate || new Date().toLocaleDateString(),
+          status: d.status?.toLowerCase() || "submitted",
+        }));
+        setTaskHistory(mappedTasks);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+    loadDetails();
+  }, [showDetailModal, selectedStudent]);
 
   const stats = {
     total: students.length,
-    excellent: students.filter((s) => s.status === "excellent").length,
-    good: students.filter((s) => s.status === "good").length,
-    needsAttention: students.filter((s) => s.status === "needs_attention")
-      .length,
-    critical: students.filter((s) => s.status === "critical").length,
+    active: students.filter((s) => s.status === "active").length,
+    warning: students.filter((s) => s.status === "warning").length,
+    atRisk: students.filter((s) => s.status === "at_risk").length,
+    completed: students.filter((s) => s.status === "completed").length,
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      excellent:
+      active:
         "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-500",
-      good: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-500",
-      needs_attention:
+      warning:
         "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-500",
-      critical:
+      at_risk:
         "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-500",
+      completed:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-500",
     };
-    return colors[status] || colors.good;
+    return colors[status] || colors.active;
   };
 
   const getTrendIcon = (trend: string) => {
@@ -251,10 +321,10 @@ const InstructorMonitoringTab = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Excellent
+                Active
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.excellent}
+                {stats.active}
               </p>
             </div>
             <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
@@ -266,25 +336,9 @@ const InstructorMonitoringTab = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Good</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Warning</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.good}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Award className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Needs Attention
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.needsAttention}
+                {stats.warning}
               </p>
             </div>
             <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
@@ -297,14 +351,30 @@ const InstructorMonitoringTab = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Critical
+                At Risk
               </p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.critical}
+                {stats.atRisk}
               </p>
             </div>
             <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
               <XCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Completed
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {stats.completed}
+              </p>
+            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
@@ -329,10 +399,10 @@ const InstructorMonitoringTab = () => {
             className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 min-w-[140px] text-sm"
           >
             <option value="all">All Status</option>
-            <option value="excellent">Excellent</option>
-            <option value="good">Good</option>
-            <option value="needs_attention">Needs Attention</option>
-            <option value="critical">Critical</option>
+            <option value="active">Active</option>
+            <option value="warning">Warning</option>
+            <option value="at_risk">At Risk</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
       </div>
@@ -575,11 +645,11 @@ const InstructorMonitoringTab = () => {
                   </div>
                 </div>
 
-                {/* Monthly Progress */}
+                {/* Weekly Hours */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-                    Monthly Hours
+                    Weekly Hours
                   </h4>
                   <div className="space-y-3">
                     {studentDetails.monthlyProgress.map((month, index) => (
@@ -595,7 +665,7 @@ const InstructorMonitoringTab = () => {
                         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div
                             className="bg-blue-500 h-2 rounded-full"
-                            style={{ width: `${(month.hours / 100) * 100}%` }}
+                            style={{ width: `${Math.min(100, (month.hours / Math.max(1, Math.max(...studentDetails.monthlyProgress.map(m => m.hours)))) * 100)}%` }}
                           />
                         </div>
                       </div>
@@ -611,6 +681,12 @@ const InstructorMonitoringTab = () => {
                   Recent Tasks
                 </h4>
                 <div className="space-y-2">
+                  {detailLoading && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Loading tasks...</div>
+                  )}
+                  {!detailLoading && studentDetails.taskHistory.length === 0 && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">No recent submissions</div>
+                  )}
                   {studentDetails.taskHistory.map((task, index) => (
                     <div
                       key={index}
@@ -626,9 +702,22 @@ const InstructorMonitoringTab = () => {
                         <span className="text-xs text-gray-500">
                           {task.date}
                         </span>
-                        <span className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
-                          {task.status}
-                        </span>
+                        {(() => {
+                          const s = (task.status || '').toLowerCase();
+                          const cls =
+                            s === 'approved'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                              : s === 'rejected'
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                              : s === 'resubmission_requested'
+                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+                          return (
+                            <span className={`text-xs px-2 py-1 rounded-full ${cls}`}>
+                              {s || 'submitted'}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                   ))}
@@ -642,6 +731,12 @@ const InstructorMonitoringTab = () => {
                   Evaluation History
                 </h4>
                 <div className="space-y-2">
+                  {detailLoading && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Loading evaluations...</div>
+                  )}
+                  {!detailLoading && studentDetails.evaluationHistory.length === 0 && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">No evaluation history</div>
+                  )}
                   {studentDetails.evaluationHistory.map((evaluation, index) => (
                     <div
                       key={index}
