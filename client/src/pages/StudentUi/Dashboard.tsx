@@ -1325,7 +1325,7 @@ const StudentDashboard = () => {
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-0 flex items-center justify-center p-4 lg:hidden"
           style={{ margin: "0" }}
           onClick={() => setSidebarOpen(false)}
         />
