@@ -1252,6 +1252,32 @@ const InstructorPortal = () => {
     };
   }, [isAuthenticated]);
 
+  // React to profile/name/email updates broadcasted from Settings without reload
+  useEffect(() => {
+    const handleUserUpdated = (event: any) => {
+      try {
+        const { name, email } = event.detail || {};
+        const initials = (name || currentUser?.name || "IN")
+          .split(" ")
+          .map((n: string) => n[0])
+          .join("")
+          .toUpperCase()
+          .substring(0, 2);
+        setCurrentUser((prev) => ({
+          name: name ?? prev?.name ?? "Instructor",
+          email: email ?? prev?.email ?? "instructor@university.edu",
+          initials,
+        }));
+      } catch {}
+    };
+    window.addEventListener("userUpdated", handleUserUpdated as EventListener);
+    window.addEventListener("profileUpdated", handleUserUpdated as EventListener);
+    return () => {
+      window.removeEventListener("userUpdated", handleUserUpdated as EventListener);
+      window.removeEventListener("profileUpdated", handleUserUpdated as EventListener);
+    };
+  }, [currentUser]);
+
   // Close user menu and notifications when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1281,7 +1307,24 @@ const InstructorPortal = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem("isAuthenticated");
+    // Preserve theme preference across logout
+    const preservedTheme = localStorage.getItem("theme") as
+      | "light"
+      | "dark"
+      | "system"
+      | null;
     localStorage.clear();
+    if (preservedTheme) {
+      localStorage.setItem("theme", preservedTheme);
+      // Apply theme immediately
+      const root = document.documentElement;
+      if (preservedTheme === "system") {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        root.classList.toggle("dark", prefersDark);
+      } else {
+        root.classList.toggle("dark", preservedTheme === "dark");
+      }
+    }
     setShowLogoutModal(false);
     window.location.replace("/login");
   };
@@ -1367,7 +1410,7 @@ const InstructorPortal = () => {
       case "evaluations":
         return <InstructorEvaluationsTab />;
       case "settings":
-        return <InstructorSettings onBack={() => setActiveTab("dashboard")} />;
+        return <InstructorSettings />;
       default:
         return (
           <InstructorDashboard

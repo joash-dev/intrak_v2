@@ -6,7 +6,6 @@ import {
   EyeOff,
   Camera,
   Save,
-  ArrowLeft,
   CheckCircle,
   AlertCircle,
   Loader2,
@@ -14,6 +13,9 @@ import {
   Sun,
   Moon,
   Monitor,
+  FileText,
+  Megaphone,
+  SlidersHorizontal,
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
 import toast from "react-hot-toast";
@@ -34,7 +36,7 @@ interface PasswordChange {
   confirmPassword: string;
 }
 
-const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
+const InstructorSettings = () => {
   const [profile, setProfile] = useState<InstructorProfile>({
     id: "",
     name: "",
@@ -55,7 +57,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "profile" | "password" | "notifications" | "appearance" | "preferences" | "help"
+    "profile" | "password" | "notifications" | "appearance" | "preferences" | "instructor" | "help"
   >("profile");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
@@ -73,6 +75,11 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     timeFormat: "12hr",
     theme: "system",
   });
+  const [instructorSettings, setInstructorSettings] = useState({
+    autoApproveDocuments: true,
+    requireManualReview: false,
+    defaultAnnouncementAudience: "All Users",
+  });
 
   // Settings sections for navigation
   const sections = [
@@ -81,6 +88,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "notifications", label: "Notifications", icon: AlertCircle },
     { id: "preferences", label: "Preferences", icon: Monitor },
+    { id: "instructor", label: "Instructor", icon: SlidersHorizontal },
     { id: "help", label: "Help & Support", icon: AlertCircle },
   ];
 
@@ -121,6 +129,18 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
         });
       }
     } catch {}
+
+    try {
+      const instr = settingsService.loadInstructorSettings();
+      if (instr) {
+        setInstructorSettings({
+          autoApproveDocuments: !!instr.autoApproveDocuments,
+          requireManualReview: !!instr.requireManualReview,
+          defaultAnnouncementAudience:
+            instr.defaultAnnouncementAudience || "All Users",
+        });
+      }
+    } catch {}
   };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
@@ -139,6 +159,15 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
     }
 
     toast.success(`Theme changed to ${newTheme}`);
+
+    // Keep app preferences in sync so Login page and other areas respect choice
+    try {
+      setPreferences((prev) => {
+        const updated = { ...prev, theme: newTheme };
+        settingsService.saveAppPreferences?.(updated as any);
+        return updated;
+      });
+    } catch {}
   };
 
   const loadProfile = async () => {
@@ -224,6 +253,28 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
           phone: profile.phone,
         })
       );
+
+      // Notify the rest of the app about immediate user detail changes
+      try {
+        window.dispatchEvent(
+          new CustomEvent("userUpdated", {
+            detail: {
+              name: profile.name,
+              email: profile.email,
+              phone: profile.phone,
+            },
+          })
+        );
+        window.dispatchEvent(
+          new CustomEvent("profileUpdated", {
+            detail: {
+              name: profile.name,
+              email: profile.email,
+              phone: profile.phone,
+            },
+          })
+        );
+      } catch {}
 
       // Reload profile photo to ensure it's up to date
       try {
@@ -372,14 +423,35 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
 
   return (
     <div className="space-y-6">
-      {/* Success Message */}
+      {/* Success Modal */}
       {saveSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-              Settings saved successfully!
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setSaveSuccess(false)}
+          />
+          <div className="relative z-10 w-full max-w-md">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-green-200 dark:border-green-900/40 overflow-hidden">
+              <div className="p-6 sm:p-8 text-center">
+                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                  <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                  Settings saved successfully
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  Your preferences were updated just now.
+                </p>
+                <div className="mt-6">
+                  <button
+                    onClick={() => setSaveSuccess(false)}
+                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -402,24 +474,6 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
           </div>
         </div>
       )}
-
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Settings
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your instructor account settings
-          </p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
@@ -462,50 +516,59 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                   </p>
                 </div>
 
-                <div className="flex items-start space-x-6">
-                  {/* Profile Photo */}
-                  <div className="flex-shrink-0">
-                    <div className="relative">
+                <div className="space-y-6">
+                  {/* Profile Photo - Top Left with side controls */}
+                  <div className="w-full flex items-center">
+                    <div className="relative mr-4">
                       <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                         {profilePhoto ? (
-                          <img
-                            src={profilePhoto}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-white text-2xl font-bold">
-                            {profile.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
+                            {profile.name.split(" ").map((n) => n[0]).join("")}
                           </span>
                         )}
                       </div>
-                      <label className="absolute bottom-0 right-0 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
+                      <label className="absolute -bottom-1 -right-1 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
                         <Camera className="w-3 h-3" />
+                        <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={saving} />
+                      </label>
+                    </div>
+                    <div className="flex flex-col">
+                      {/* Hidden input triggered by the Change Photo button */}
                         <input
+                        id="profile-photo-input"
                           type="file"
                           accept="image/*"
                           onChange={handlePhotoUpload}
                           className="hidden"
                           disabled={saving}
                         />
-                      </label>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById("profile-photo-input")?.click()}
+                        disabled={saving}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Change Photo
+                      </button>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        JPG, PNG or GIF. Max size 2MB
+                      </p>
                     {profilePhoto && (
                       <button
                         onClick={handleRemovePhoto}
                         disabled={saving}
-                        className="mt-2 text-xs text-red-600 hover:text-red-700 transition-colors"
+                          className="mt-1 text-sm text-red-600 hover:text-red-700 transition-colors"
                       >
                         Remove Photo
                       </button>
                     )}
+                    </div>
                   </div>
 
-                  {/* Profile Form */}
-                  <div className="flex-1 space-y-6">
+                  {/* Profile Form - Stacked */}
+                  <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -520,10 +583,10 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               setErrors({ ...errors, name: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.name
                               ? "border-red-500"
-                              : "border-gray-300 dark:border-gray-600"
+                              : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.name && (
@@ -546,10 +609,10 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               setErrors({ ...errors, email: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.email
                               ? "border-red-500"
-                              : "border-gray-300 dark:border-gray-600"
+                              : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.email && (
@@ -572,10 +635,10 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               setErrors({ ...errors, phone: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.phone
                               ? "border-red-500"
-                              : "border-gray-300 dark:border-gray-600"
+                              : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.phone && (
@@ -598,7 +661,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               department: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
@@ -612,8 +675,16 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                           onChange={(e) =>
                             setProfile({ ...profile, office: e.target.value })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
+                      </div>
+
+                      {/* Section Divider */}
+                      <div className="md:col-span-2">
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                        <h3 className="mt-4 mb-2 text-md font-semibold text-gray-900 dark:text-white">
+                          Emergency Contact
+                        </h3>
                       </div>
 
                       {/* Emergency Contact (to match coordinator UI) */}
@@ -632,7 +703,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               emergencyName: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                       <div>
@@ -649,7 +720,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                               emergencyContact: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                     </div>
@@ -658,7 +729,7 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                       <button
                         onClick={handleProfileUpdate}
                         disabled={saving}
-                        className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                       >
                         {saving ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1083,11 +1154,146 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                   <button
                     onClick={() => {
                       settingsService.saveNotificationPreferences?.(notifications as any);
+                      // fire change event so other components can react instantly
+                      try {
+                        window.dispatchEvent(
+                          new CustomEvent("notificationPreferencesUpdated", {
+                            detail: notifications,
+                          })
+                        );
+                      } catch {}
                       toast.success("Notification preferences saved");
                     }}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     Save Preferences
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Instructor Tab */}
+            {activeTab === "instructor" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    Instructor Settings
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage instructor-specific preferences and workflows
+                  </p>
+                </div>
+
+                {/* Document Management */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                    <FileText className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Document Management
+                    </h3>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Auto-approve */}
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          Auto-approve Documents
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Automatically approve documents that meet criteria
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={instructorSettings.autoApproveDocuments}
+                          onChange={(e) =>
+                            setInstructorSettings((prev) => ({
+                              ...prev,
+                              autoApproveDocuments: e.target.checked,
+                              requireManualReview: e.target.checked
+                                ? false
+                                : prev.requireManualReview,
+                            }))
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600" />
+                      </label>
+                    </div>
+
+                    {/* Require manual review */}
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          Require Document Review
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          All documents must be manually reviewed
+                        </p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={instructorSettings.requireManualReview}
+                          onChange={(e) =>
+                            setInstructorSettings((prev) => ({
+                              ...prev,
+                              requireManualReview: e.target.checked,
+                              autoApproveDocuments: e.target.checked
+                                ? false
+                                : prev.autoApproveDocuments,
+                            }))
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Announcement Settings */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                    <Megaphone className="w-5 h-5 text-orange-500" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Announcement Settings
+                    </h3>
+                  </div>
+                  <div className="p-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Default Audience
+                    </label>
+                    <select
+                      value={instructorSettings.defaultAnnouncementAudience}
+                      onChange={(e) =>
+                        setInstructorSettings((prev) => ({
+                          ...prev,
+                          defaultAnnouncementAudience: e.target.value,
+                        }))
+                      }
+                      className="w-full md:max-w-md px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option>All Users</option>
+                      <option>Students Only</option>
+                      <option>Supervisors Only</option>
+                      <option>Instructors Only</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      settingsService.saveInstructorSettings(
+                        instructorSettings as any
+                      );
+                      toast.success("Instructor settings saved");
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
+                  >
+                    Save Settings
                   </button>
                 </div>
               </div>
@@ -1159,6 +1365,14 @@ const InstructorSettings = ({ onBack }: { onBack: () => void }) => {
                   <button
                     onClick={() => {
                       settingsService.saveAppPreferences?.(preferences as any);
+                      // apply theme immediately if changed via preferences
+                      try {
+                        window.dispatchEvent(
+                          new CustomEvent("appPreferencesUpdated", {
+                            detail: preferences,
+                          })
+                        );
+                      } catch {}
                       toast.success("Preferences saved");
                     }}
                     className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"

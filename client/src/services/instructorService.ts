@@ -954,6 +954,36 @@ class InstructorService {
       return false;
     }
   }
+
+  // Bulk create students (client-side loop to work with existing API)
+  async bulkCreateStudents(rows: Array<{
+    studentNumber: string;
+    name: string;
+    email: string;
+    phone?: string;
+    year: string | number;
+    program?: string;
+  }>): Promise<{ success: number; failed: number; errors: Array<{ row: any; error: string }> }> {
+    const errors: Array<{ row: any; error: string }> = [];
+    let success = 0;
+
+    for (const row of rows) {
+      try {
+        await this.createStudent({
+          studentNumber: row.studentNumber,
+          name: row.name,
+          email: row.email,
+          phone: row.phone || '',
+          program: row.program || 'BS Computer Engineering',
+          year: String(row.year),
+        });
+        success += 1;
+      } catch (e: any) {
+        errors.push({ row, error: e?.message || 'Unknown error' });
+      }
+    }
+    return { success, failed: errors.length, errors };
+  }
 }
 
 export const instructorService = new InstructorService();

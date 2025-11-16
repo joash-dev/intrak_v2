@@ -30,6 +30,12 @@ export interface AppPreferences {
   theme: 'light' | 'dark' | 'auto' | 'system';
 }
 
+export interface InstructorSettings {
+  autoApproveDocuments: boolean;
+  requireManualReview: boolean;
+  defaultAnnouncementAudience: string;
+}
+
 class SettingsService {
   // Get current user profile
   async getCurrentUserProfile(): Promise<UserProfile> {
@@ -69,6 +75,22 @@ class SettingsService {
         emergencyName: "",
       };
     }
+  }
+
+  // Save/load instructor settings (localStorage)
+  saveInstructorSettings(prefs: InstructorSettings): void {
+    localStorage.setItem('instructorSettings', JSON.stringify(prefs));
+  }
+
+  loadInstructorSettings(): InstructorSettings {
+    const stored = localStorage.getItem('instructorSettings');
+    return stored
+      ? JSON.parse(stored)
+      : {
+          autoApproveDocuments: true,
+          requireManualReview: false,
+          defaultAnnouncementAudience: 'All Users',
+        };
   }
 
   // Update user profile
@@ -126,17 +148,29 @@ class SettingsService {
   // Save app preferences to localStorage
   saveAppPreferences(preferences: AppPreferences): void {
     localStorage.setItem('appPreferences', JSON.stringify(preferences));
+    // Also sync the simple theme key used by other parts of the app
+    if (preferences?.theme) {
+      const mapped = preferences.theme === 'auto' ? 'system' : preferences.theme;
+      localStorage.setItem('theme', mapped as string);
+    }
   }
 
   // Load app preferences from localStorage
   loadAppPreferences(): AppPreferences {
     const stored = localStorage.getItem('appPreferences');
-    return stored ? JSON.parse(stored) : {
+    const prefs = stored ? JSON.parse(stored) : {
       language: 'en',
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12hr',
       theme: 'auto',
     };
+    // If standalone theme key exists, prefer it for consistency
+    const simpleTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
+    if (simpleTheme) {
+      // map back to service's enum
+      (prefs as any).theme = simpleTheme === 'system' ? 'auto' : simpleTheme;
+    }
+    return prefs as AppPreferences;
   }
 
   // Apply theme to document

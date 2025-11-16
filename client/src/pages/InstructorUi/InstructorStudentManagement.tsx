@@ -4,6 +4,7 @@ import {
   Search,
   Trash2,
   UserPlus,
+  Upload,
   Award,
   CheckCircle,
   AlertTriangle,
@@ -49,6 +50,7 @@ const InstructorStudentManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCompany, setFilterCompany] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<Student[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -63,6 +65,7 @@ const InstructorStudentManagement: React.FC = () => {
   const [createError, setCreateError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isCreating, setIsCreating] = useState(false);
+  const [isBulkCreating, setIsBulkCreating] = useState(false);
   const [newStudent, setNewStudent] = useState({
     studentNumber: "",
     name: "",
@@ -79,6 +82,63 @@ const InstructorStudentManagement: React.FC = () => {
     status: "active",
     emailSent: false,
   });
+
+  // Bulk add state
+  const [bulkText, setBulkText] = useState("");
+  const [bulkParsed, setBulkParsed] = useState<
+    Array<{ studentNumber: string; name: string; email: string; year: string; phone?: string }>
+  >([]);
+  const [bulkErrors, setBulkErrors] = useState<string | null>(null);
+  const [bulkFileLoading, setBulkFileLoading] = useState(false);
+
+  // CSV parser (reusable for paste or file upload)
+  const parseCsvText = (text: string) => {
+    setBulkErrors(null);
+    try {
+      const lines = text
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+      if (lines.length === 0) {
+        setBulkParsed([]);
+        return;
+      }
+      // Detect header or assume no header
+      const maybeHeader =
+        lines[0].toLowerCase().includes("student") &&
+        lines[0].toLowerCase().includes("name");
+      const dataLines = maybeHeader ? lines.slice(1) : lines;
+      const rows: Array<any> = [];
+      for (const line of dataLines) {
+        const cols = line.split(",").map((c) => c.trim());
+        if (cols.length < 3) {
+          throw new Error(
+            "Each row must have at least 3 columns: studentNumber,name,email[,year][,phone]"
+          );
+        }
+        const row = {
+          studentNumber: cols[0],
+          name: cols[1],
+          email: cols[2],
+          year: cols[3] || "4",
+          phone: cols[4] || "",
+        };
+        // Basic validation
+        if (!/^\d{2}-[A-Z]{2}-\d{4}$/.test(row.studentNumber)) {
+          throw new Error(`Invalid student number: ${row.studentNumber}`);
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
+          throw new Error(`Invalid email: ${row.email}`);
+        }
+        rows.push(row);
+      }
+      setBulkParsed(rows);
+      toast.success(`Parsed ${rows.length} rows`);
+    } catch (err: any) {
+      setBulkParsed([]);
+      setBulkErrors(err.message || "Failed to parse CSV");
+    }
+  };
 
   // Load students data on component mount
   useEffect(() => {
@@ -328,6 +388,13 @@ const InstructorStudentManagement: React.FC = () => {
           >
             <UserPlus className="w-5 h-5" />
             <span>Add Student</span>
+          </button>
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="ml-1 flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+          >
+            <Upload className="w-5 h-5" />
+            <span>Bulk Add</span>
           </button>
         </div>
       </div>
@@ -824,6 +891,142 @@ const InstructorStudentManagement: React.FC = () => {
               >
                 Continue
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Add Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Bulk Add Students</h3>
+              <button onClick={() => setShowBulkModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p>Paste CSV with headers: <span className="font-semibold">studentNumber,name,email,year,phone</span></p>
+              <pre className="bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg overflow-x-auto scrollbar-slim">
+22-UR-0592,Juan Dela Cruz,juan@example.com,4,+63 912 345 6789
+22-UR-0123,Ana Rodriguez,ana@example.com,3,+63 987 654 3210</pre>
+              <div className="flex items-center gap-3">
+                <label className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setBulkFileLoading(true);
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setBulkFileLoading(false);
+                        parseCsvText(String(reader.result || ""));
+                      };
+                      reader.onerror = () => {
+                        setBulkFileLoading(false);
+                        setBulkErrors("Failed to read file");
+                      };
+                      reader.readAsText(file);
+                    }}
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Upload CSV</span>
+                </label>
+                {bulkFileLoading && (
+                  <span className="text-xs text-gray-500">Reading file…</span>
+                )}
+              </div>
+            </div>
+
+            {bulkErrors && (
+              <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
+                {bulkErrors}
+              </div>
+            )}
+
+            <textarea
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder="Paste your CSV rows here…"
+              className="w-full h-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white scrollbar-slim"
+            />
+
+            {/* Preview */}
+            {bulkParsed.length > 0 && (
+              <div className="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Student No.</th>
+                      <th className="px-3 py-2 text-left">Name</th>
+                      <th className="px-3 py-2 text-left">Email</th>
+                      <th className="px-3 py-2 text-left">Year</th>
+                      <th className="px-3 py-2 text-left">Phone</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {bulkParsed.map((r, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 py-2">{r.studentNumber}</td>
+                        <td className="px-3 py-2">{r.name}</td>
+                        <td className="px-3 py-2">{r.email}</td>
+                        <td className="px-3 py-2">{r.year}</td>
+                        <td className="px-3 py-2">{r.phone || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => parseCsvText(bulkText)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Preview
+              </button>
+              <div className="space-x-3">
+                <button
+                  onClick={() => setShowBulkModal(false)}
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (bulkParsed.length === 0) {
+                      setBulkErrors("Please paste CSV and click Preview first.");
+                      return;
+                    }
+                    try {
+                      setIsBulkCreating(true);
+                      const result = await instructorService.bulkCreateStudents(bulkParsed);
+                      toast.success(`Added ${result.success} students`);
+                      if (result.failed > 0) {
+                        toast.error(`${result.failed} failed. Check console for details.`);
+                        console.table(result.errors);
+                      }
+                      setShowBulkModal(false);
+                      setBulkParsed([]);
+                      setBulkText("");
+                      await loadStudentsData();
+                    } catch (e: any) {
+                      toast.error(e?.message || "Bulk add failed");
+                    } finally {
+                      setIsBulkCreating(false);
+                    }
+                  }}
+                  disabled={isBulkCreating}
+                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isBulkCreating ? "Adding..." : "Add Students"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
