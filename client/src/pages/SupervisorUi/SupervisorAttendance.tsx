@@ -113,6 +113,7 @@ const SupervisorAttendance = () => {
   };
 
   const [scannerKey, setScannerKey] = useState(0);
+  const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
   const [scannedToken, setScannedToken] = useState<string | null>(null);
   const [manualToken, setManualToken] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
@@ -191,6 +192,7 @@ const SupervisorAttendance = () => {
         setScannedToken(token);
         setManualToken("");
         toast.success("Attendance verified via QR code");
+        setShowScanSuccessModal(true);
         await fetchAttendanceLogs();
       } catch (error: any) {
         const message =
@@ -520,6 +522,34 @@ const SupervisorAttendance = () => {
         </div>
       )}
 
+      {/* QR Verify Success Modal */}
+      {showScanSuccessModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowScanSuccessModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Intern logged in successfully
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              QR verification completed and attendance recorded.
+            </p>
+            <button
+              className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setShowScanSuccessModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       {activeTab === "logs" && (
         <>
       {/* Filters */}

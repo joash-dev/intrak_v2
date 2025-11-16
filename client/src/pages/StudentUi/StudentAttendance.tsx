@@ -24,6 +24,8 @@ const StudentAttendanceTab: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
+  const [polling, setPolling] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
@@ -226,12 +228,44 @@ const StudentAttendanceTab: React.FC = () => {
       setQrExpiresAt(qrData.expiresAt);
       setShowQRModal(true);
       toast.success("QR code generated successfully");
+      // Start polling to detect supervisor verification shortly after scan
+      startScanPolling();
     } catch (error) {
       console.error("Error generating QR code:", error);
       toast.error("Failed to generate QR code");
     } finally {
       setQrLoading(false);
     }
+  };
+
+  const startScanPolling = async () => {
+    if (polling) return;
+    setPolling(true);
+    const startTime = Date.now();
+    const timeoutMs = 60000; // 60 seconds
+    const poll = async () => {
+      try {
+        const logs = await attendanceService.getAttendanceLogs();
+        const today = new Date().toISOString().split("T")[0];
+        const todays = logs.filter(
+          (l) => new Date(l.date).toISOString().split("T")[0] === today
+        );
+        const anyVerified = todays.some((l) => l.verified && l.timeIn);
+        if (anyVerified) {
+          setShowScanSuccessModal(true);
+          setPolling(false);
+          return;
+        }
+      } catch (e) {
+        // ignore polling errors
+      }
+      if (Date.now() - startTime < timeoutMs && showQRModal) {
+        setTimeout(poll, 3000);
+      } else {
+        setPolling(false);
+      }
+    };
+    setTimeout(poll, 3000);
   };
 
   const handleExportDTR = async () => {
@@ -805,6 +839,35 @@ const StudentAttendanceTab: React.FC = () => {
             <button
               onClick={() => setShowQRModal(false)}
               className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR Scan Success Modal */}
+      {showScanSuccessModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowScanSuccessModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Logged in successfully
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">
+              Your attendance was verified via QR scan.
+            </p>
+            <button
+              className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setShowScanSuccessModal(false)}
             >
               Close
             </button>
