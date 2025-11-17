@@ -9,7 +9,6 @@ import {
   AlertCircle,
   CheckSquare,
   User,
-  Building2,
   Loader2,
   ClipboardList,
   X,
