@@ -316,98 +316,98 @@ const SupervisorAttendance = () => {
     "Company";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">Attendance Management</h1>
-        <p className="text-blue-100 text-lg mb-1">Company: {companyName}</p>
-        <p className="text-blue-100">
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5 sm:mb-2">Attendance Management</h1>
+        <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1">Company: {companyName}</p>
+        <p className="text-blue-100 text-xs sm:text-sm lg:text-base">
           Review and verify intern attendance logs - Track time and approve
           hours
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Pending Review */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
                 Pending Review
               </p>
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+            <div className="p-1.5 sm:p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex-shrink-0">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                 {stats.pending}
               </p>
-          <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+          <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400 font-medium">
             {stats.pending} pending
           </span>
             </div>
 
         {/* Approved */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">Approved</p>
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Approved</p>
+            <div className="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
           </div>
         </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                 {stats.approved}
               </p>
-          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+          <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium">
             Approved logs
           </span>
             </div>
 
         {/* Rejected */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">Rejected</p>
-            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-              <X className="w-5 h-5 text-red-600 dark:text-red-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Rejected</p>
+            <div className="p-1.5 sm:p-2 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
           </div>
         </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                 {stats.rejected}
               </p>
-          <span className="text-xs text-red-600 dark:text-red-400 font-medium">
+          <span className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 font-medium">
             Rejected logs
           </span>
         </div>
 
         {/* Hours Today */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
                 Hours Today
               </p>
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
           </div>
         </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
             {stats.totalHoursToday}
           </p>
-          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+          <span className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium">
             Total hours
           </span>
                 </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-2 shadow-sm flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-1.5 sm:p-2 shadow-sm flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={() => setActiveTab("logs")}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
+          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${
             activeTab === "logs"
               ? "bg-purple-600 text-white shadow"
               : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
           }`}
         >
-          <Clock className="w-4 h-4" />
+          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>Attendance Logs</span>
         </button>
         <button
@@ -415,13 +415,13 @@ const SupervisorAttendance = () => {
             setActiveTab("scanner");
             restartScanner();
           }}
-          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
+          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${
             activeTab === "scanner"
               ? "bg-purple-600 text-white shadow"
               : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
           }`}
         >
-          <QrCode className="w-4 h-4" />
+          <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>QR Scanner</span>
         </button>
       </div>

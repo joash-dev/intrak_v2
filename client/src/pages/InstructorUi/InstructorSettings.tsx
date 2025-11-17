@@ -445,20 +445,20 @@ const InstructorSettings = () => {
           />
           <div className="relative z-10 w-full max-w-md">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-green-200 dark:border-green-900/40 overflow-hidden">
-              <div className="p-6 sm:p-8 text-center">
-                <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                  <CheckCircle className="w-7 h-7 text-green-600 dark:text-green-400" />
+              <div className="p-4 sm:p-6 md:p-8 text-center">
+                <div className="mx-auto mb-3 sm:mb-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 dark:text-white">
                   Settings saved successfully
                 </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Your preferences were updated just now.
                 </p>
-                <div className="mt-6">
+                <div className="mt-4 sm:mt-6">
                   <button
                     onClick={() => setSaveSuccess(false)}
-                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
+                    className="inline-flex items-center justify-center px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
                   >
                     Dismiss
                   </button>
@@ -471,14 +471,14 @@ const InstructorSettings = () => {
 
       {/* Error Messages */}
       {Object.keys(errors).length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-600" />
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-3 sm:p-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
             <div>
               {Object.entries(errors).map(([field, message]) => (
                 <p
                   key={field}
-                  className="text-sm text-red-800 dark:text-red-200 font-medium"
+                  className="text-xs sm:text-sm text-red-800 dark:text-red-200 font-medium"
                 >
                   {message}
                 </p>
@@ -488,25 +488,25 @@ const InstructorSettings = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
-            <nav className="space-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1.5 sm:p-2">
+            <nav className="space-y-0.5 sm:space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (
                   <button
                     key={section.id}
                     onClick={() => setActiveTab(section.id as any)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-left ${
                       activeTab === section.id
                         ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="font-medium text-sm">{section.label}</span>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span className="font-medium text-xs sm:text-sm">{section.label}</span>
                   </button>
                 );
               })}
@@ -516,34 +516,34 @@ const InstructorSettings = () => {
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Profile Information
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Update your personal information
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Profile Photo - Top Left with side controls */}
                   <div className="w-full flex items-center">
-                    <div className="relative mr-4">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                    <div className="relative mr-3 sm:mr-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                         {profilePhoto ? (
                           <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-white text-2xl font-bold">
+                          <span className="text-white text-lg sm:text-xl md:text-2xl font-bold">
                             {profile.name.split(" ").map((n) => n[0]).join("")}
                           </span>
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 bg-purple-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
-                        <Camera className="w-3 h-3" />
+                      <label className="absolute -bottom-1 -right-1 bg-purple-600 text-white p-1 sm:p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
+                        <Camera className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={saving} />
                       </label>
                     </div>
@@ -561,7 +561,7 @@ const InstructorSettings = () => {
                         type="button"
                         onClick={() => document.getElementById("profile-photo-input")?.click()}
                         disabled={saving}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Change Photo
                       </button>
@@ -572,7 +572,7 @@ const InstructorSettings = () => {
                       <button
                         onClick={handleRemovePhoto}
                         disabled={saving}
-                          className="mt-1 text-sm text-red-600 hover:text-red-700 transition-colors"
+                          className="mt-1 text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors"
                       >
                         Remove Photo
                       </button>
@@ -581,10 +581,10 @@ const InstructorSettings = () => {
                   </div>
 
                   {/* Profile Form - Stacked */}
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Full Name
                         </label>
                         <input
@@ -596,21 +596,21 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, name: "" });
                             }
                           }}
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.name
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.name && (
-                          <p className="mt-1 text-sm text-red-600">
+                          <p className="mt-1 text-xs sm:text-sm text-red-600">
                             {errors.name}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Email
                         </label>
                         <input
@@ -622,21 +622,21 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, email: "" });
                             }
                           }}
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.email
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.email && (
-                          <p className="mt-1 text-sm text-red-600">
+                          <p className="mt-1 text-xs sm:text-sm text-red-600">
                             {errors.email}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Phone Number
                         </label>
                         <input
@@ -648,21 +648,21 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, phone: "" });
                             }
                           }}
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
                             errors.phone
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                           }`}
                         />
                         {errors.phone && (
-                          <p className="mt-1 text-sm text-red-600">
+                          <p className="mt-1 text-xs sm:text-sm text-red-600">
                             {errors.phone}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Department
                         </label>
                         <input
@@ -674,12 +674,12 @@ const InstructorSettings = () => {
                               department: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Office Location
                         </label>
                         <input
@@ -688,21 +688,21 @@ const InstructorSettings = () => {
                           onChange={(e) =>
                             setProfile({ ...profile, office: e.target.value })
                           }
-                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
                       {/* Section Divider */}
                       <div className="md:col-span-2">
                         <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                        <h3 className="mt-4 mb-2 text-md font-semibold text-gray-900 dark:text-white">
+                        <h3 className="mt-3 sm:mt-4 mb-2 text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                           Emergency Contact
                         </h3>
                       </div>
 
                       {/* Emergency Contact (to match coordinator UI) */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Emergency Contact Name
                         </label>
                         <input
@@ -716,11 +716,11 @@ const InstructorSettings = () => {
                               emergencyName: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Emergency Contact Number
                         </label>
                         <input
@@ -733,7 +733,7 @@ const InstructorSettings = () => {
                               emergencyContact: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                     </div>
@@ -742,7 +742,7 @@ const InstructorSettings = () => {
                       <button
                         onClick={handleProfileUpdate}
                         disabled={saving}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                        className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                       >
                         {saving ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -759,27 +759,27 @@ const InstructorSettings = () => {
 
             {/* Password Tab */}
             {activeTab === "password" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Password & Security
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Update your password and security settings
                   </p>
                 </div>
 
                 {/* Security Info */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                  <div className="flex items-start space-x-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6">
+                  <div className="flex items-start space-x-2 sm:space-x-3">
                     <div className="flex-shrink-0">
-                      <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1.5 sm:mb-2">
                         Password Security
                       </h3>
-                      <p className="text-blue-700 dark:text-blue-300 text-sm">
+                      <p className="text-blue-700 dark:text-blue-300 text-xs sm:text-sm">
                         Keep your account secure by using a strong password with
                         at least 8 characters, including numbers and special
                         characters.
@@ -789,10 +789,10 @@ const InstructorSettings = () => {
                 </div>
 
                 {/* Password Form */}
-                <div className="max-w-lg space-y-6">
+                <div className="max-w-lg space-y-4 sm:space-y-6">
                   {/* Current Password */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       Current Password
                     </label>
                     <div className="relative">
@@ -806,19 +806,19 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Enter your current password"
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showCurrentPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
@@ -826,7 +826,7 @@ const InstructorSettings = () => {
 
                   {/* New Password */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       New Password
                     </label>
                     <div className="relative">
@@ -840,17 +840,17 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Enter your new password"
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showNewPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
@@ -882,7 +882,7 @@ const InstructorSettings = () => {
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -896,19 +896,19 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Confirm your new password"
-                        className="w-full px-4 py-3 pr-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
@@ -918,15 +918,15 @@ const InstructorSettings = () => {
                         {passwordData.newPassword ===
                         passwordData.confirmPassword ? (
                           <>
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-green-600">
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                            <span className="text-xs sm:text-sm text-green-600">
                               Passwords match
                             </span>
                           </>
                         ) : (
                           <>
-                            <AlertCircle className="w-4 h-4 text-red-500" />
-                            <span className="text-sm text-red-600">
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
+                            <span className="text-xs sm:text-sm text-red-600">
                               Passwords do not match
                             </span>
                           </>
@@ -945,12 +945,12 @@ const InstructorSettings = () => {
                           passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
-                      className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                     >
                       {saving ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       ) : (
-                        <Lock className="w-5 h-5" />
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                       )}
                       <span>Update Password</span>
                     </button>
@@ -961,53 +961,53 @@ const InstructorSettings = () => {
 
             {/* Appearance Tab */}
             {activeTab === "appearance" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Appearance Settings
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Customize your interface appearance
                   </p>
                 </div>
 
                 {/* Theme Settings */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                       Theme Settings
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
                       Choose your preferred theme appearance
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     {/* Light Theme */}
                     <button
                       onClick={() => handleThemeChange("light")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
                         theme === "light"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
                     >
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
-                          <Sun className="w-6 h-6 text-white" />
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
+                          <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                             Light
                           </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Clean and bright interface
                           </p>
                         </div>
                       </div>
                       {theme === "light" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                         </div>
                       )}
                     </button>
@@ -1015,28 +1015,28 @@ const InstructorSettings = () => {
                     {/* Dark Theme */}
                     <button
                       onClick={() => handleThemeChange("dark")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
                         theme === "dark"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
                     >
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
-                          <Moon className="w-6 h-6 text-white" />
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
+                          <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                             Dark
                           </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Easy on the eyes
                           </p>
                         </div>
                       </div>
                       {theme === "dark" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                         </div>
                       )}
                     </button>
@@ -1044,28 +1044,28 @@ const InstructorSettings = () => {
                     {/* System Theme */}
                     <button
                       onClick={() => handleThemeChange("system")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
                         theme === "system"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
                     >
-                      <div className="flex flex-col items-center space-y-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                          <Monitor className="w-6 h-6 text-white" />
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                          <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
                             System
                           </h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Follow system preference
                           </p>
                         </div>
                       </div>
                       {theme === "system" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                         </div>
                       )}
                     </button>
@@ -1076,27 +1076,27 @@ const InstructorSettings = () => {
 
             {/* Notifications Tab */}
             {activeTab === "notifications" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Notification Preferences
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Manage your notification settings
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-white">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                      <div className="flex-1 pr-2 sm:pr-4">
+                        <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                         Student Document Submissions
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Get notified when students submit documents for review
                         </p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                         <input
                           type="checkbox"
                         checked={notifications.emailDocuments}
@@ -1112,16 +1112,16 @@ const InstructorSettings = () => {
                       </label>
                     </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
+                  <div className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="flex-1 pr-2 sm:pr-4">
+                      <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                         Attendance Issues
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Receive alerts when students have attendance problems
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={notifications.emailAttendance}
@@ -1137,16 +1137,16 @@ const InstructorSettings = () => {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white">
+                  <div className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="flex-1 pr-2 sm:pr-4">
+                      <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                         System Updates
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Receive notifications about system maintenance and updates
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={notifications.emailAnnouncements}
@@ -1177,7 +1177,7 @@ const InstructorSettings = () => {
                       } catch {}
                       toast.success("Notification preferences saved");
                     }}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     Save Preferences
                   </button>
@@ -1187,36 +1187,36 @@ const InstructorSettings = () => {
 
             {/* Instructor Tab */}
             {activeTab === "instructor" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Instructor Settings
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Manage instructor-specific preferences and workflows
                   </p>
                 </div>
 
                 {/* Document Management */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
-                    <FileText className="w-5 h-5 text-purple-600" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                       Document Management
                     </h3>
                   </div>
-                  <div className="p-4 space-y-4">
+                  <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                     {/* Auto-approve */}
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
+                      <div className="flex-1 pr-2 sm:pr-4">
+                        <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                           Auto-approve Documents
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                           Automatically approve documents that meet criteria
                         </p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                         <input
                           type="checkbox"
                           checked={instructorSettings.autoApproveDocuments}
@@ -1236,16 +1236,16 @@ const InstructorSettings = () => {
                     </div>
 
                     {/* Require manual review */}
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                    <div className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600">
+                      <div className="flex-1 pr-2 sm:pr-4">
+                        <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                           Require Document Review
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                           All documents must be manually reviewed
                         </p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                         <input
                           type="checkbox"
                           checked={instructorSettings.requireManualReview}
@@ -1268,14 +1268,14 @@ const InstructorSettings = () => {
 
                 {/* Announcement Settings */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
-                    <Megaphone className="w-5 h-5 text-orange-500" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+                    <Megaphone className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                       Announcement Settings
                     </h3>
                   </div>
-                  <div className="p-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <div className="p-3 sm:p-4">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Default Audience
                     </label>
                     <select
@@ -1286,7 +1286,7 @@ const InstructorSettings = () => {
                           defaultAnnouncementAudience: e.target.value,
                         }))
                       }
-                      className="w-full md:max-w-md px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                      className="w-full md:max-w-md px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                     >
                       <option>All Users</option>
                       <option>Students Only</option>
@@ -1304,7 +1304,7 @@ const InstructorSettings = () => {
                       );
                       toast.success("Instructor settings saved");
                     }}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
+                    className="px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
                   >
                     Save Settings
                   </button>
@@ -1314,19 +1314,19 @@ const InstructorSettings = () => {
 
             {/* Preferences Tab */}
             {activeTab === "preferences" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     App Preferences
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Language and format settings
                   </p>
           </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Language
                     </label>
                     <select
@@ -1334,14 +1334,14 @@ const InstructorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, language: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
                       <option value="en">English</option>
                     </select>
         </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Date Format
                     </label>
                     <select
@@ -1349,7 +1349,7 @@ const InstructorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, dateFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -1358,7 +1358,7 @@ const InstructorSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Time Format
                     </label>
                     <select
@@ -1366,7 +1366,7 @@ const InstructorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, timeFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
                       <option value="12hr">12-hour</option>
                       <option value="24hr">24-hour</option>
@@ -1388,7 +1388,7 @@ const InstructorSettings = () => {
                       } catch {}
                       toast.success("Preferences saved");
                     }}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
                     Save Preferences
                   </button>
@@ -1398,31 +1398,31 @@ const InstructorSettings = () => {
 
             {/* Help & Support */}
             {activeTab === "help" && (
-              <div className="space-y-8">
+              <div className="space-y-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Help & Support
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Get help and learn more about the portal
                   </p>
                 </div>
 
                 {/* Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   {/* FAQ */}
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-5"
+                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 rounded-lg bg-purple-600/30 flex items-center justify-center">
-                        <HelpCircle className="w-5 h-5 text-purple-300" />
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-600/30 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-white">FAQ</h3>
-                        <p className="text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
                           Find answers to common questions
                         </p>
                       </div>
@@ -1432,15 +1432,15 @@ const InstructorSettings = () => {
                   {/* Contact Support */}
                   <a
                     href={`mailto:${HELP_LINKS.supportEmail}`}
-                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-5"
+                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 rounded-lg bg-blue-600/30 flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-blue-300" />
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-white">Contact Support</h3>
-                        <p className="text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Contact Support</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
                           Email: {HELP_LINKS.supportEmail}
                         </p>
                       </div>
@@ -1451,15 +1451,15 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("guide")}
-                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-5"
+                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center">
-                        <Book className="w-5 h-5 text-emerald-300" />
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center flex-shrink-0">
+                        <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-white">Coordinator Guide</h3>
-                        <p className="text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Coordinator Guide</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
                           Learn how to use coordinator features
                         </p>
                       </div>
@@ -1470,15 +1470,15 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("privacy")}
-                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-5"
+                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 rounded-lg bg-amber-600/30 flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-amber-300" />
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-600/30 flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-white">Privacy Policy</h3>
-                        <p className="text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Privacy Policy</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
                           Read our privacy terms
                         </p>
                       </div>
@@ -1488,8 +1488,8 @@ const InstructorSettings = () => {
 
                 {/* App Information */}
                 <div className="pt-2">
-                  <h3 className="text-lg font-semibold text-gray-200">App Information</h3>
-                  <div className="mt-4 space-y-2 text-sm text-gray-300">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-200">App Information</h3>
+                  <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
                     <p>
                       <span className="text-gray-400">Version:</span> 1.0.0
                     </p>
@@ -1535,23 +1535,23 @@ const InstructorHelpModalContent = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
       style={{ marginTop: 0 }}
     >
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-full p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label="Close help dialog"
         >
-          <CloseIcon className="h-5 w-5" />
+          <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
-        <div className="px-6 pb-6 pt-7 space-y-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 sm:pt-7 space-y-3 sm:space-y-4">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
             {titles[variant]}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             {variant === "faq" && "Quick answers to the most common instructor questions."}
             {variant === "guide" && "Follow these steps to get the most out of the instructor portal."}
             {variant === "privacy" && "A short summary of how INTRAK handles instructor data."}
@@ -1559,11 +1559,11 @@ const InstructorHelpModalContent = ({
         </div>
 
         {variant === "faq" && (
-          <ul className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          <ul className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             <li>
               <p className="font-semibold">How do I upload document templates?</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                Go to Templates, click “Upload Template”, choose the category and document type,
+                Go to Templates, click "Upload Template", choose the category and document type,
                 then upload one or more files. You can rename files before submitting.
               </p>
             </li>
@@ -1578,14 +1578,14 @@ const InstructorHelpModalContent = ({
               <p className="font-semibold">How do I submit or edit evaluations?</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
                 Go to Evaluations from the sidebar, pick a student, complete the form, and submit.
-                You can return to update until it’s marked as finalized.
+                You can return to update until it's marked as finalized.
               </p>
             </li>
           </ul>
         )}
 
         {variant === "guide" && (
-          <div className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             <div>
               <p className="font-semibold">1. Review your dashboard daily</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
@@ -1609,7 +1609,7 @@ const InstructorHelpModalContent = ({
         )}
 
         {variant === "privacy" && (
-          <div className="px-6 pb-6 space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             <p>
               INTRAK collects instructor profile details and action logs to support coordination and compliance.
             </p>
@@ -1622,11 +1622,11 @@ const InstructorHelpModalContent = ({
           </div>
         )}
 
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto block rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+            className="ml-auto block rounded-lg bg-purple-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-white hover:bg-purple-700"
           >
             Close
           </button>

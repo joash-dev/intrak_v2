@@ -76,10 +76,10 @@ const CoordinatorDashboard = ({
   notificationsLoading,
 }: CoordinatorDashboardProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   // const [selectedPeriod, setSelectedPeriod] = useState("this_month");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const navigate = useNavigate();
 
   // Optimized data fetching with caching
   const { data: students = [], loading: studentsLoading } = useOptimizedData(
@@ -258,36 +258,36 @@ const CoordinatorDashboard = ({
 
       <div className="space-y-8">
         {/* Enhanced Students List */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0 mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 sm:space-y-6 lg:space-y-0 mb-6 sm:mb-8">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                   {t("dashboard.students.title")}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   {t("dashboard.students.subtitle")}
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
-              <div className="relative flex-1 sm:w-72">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4 w-full lg:w-auto">
+              <div className="relative flex-1 sm:w-64 lg:w-72">
+                <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <input
                   type="text"
                   placeholder={t("dashboard.students.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                  className="w-full pl-9 sm:pl-12 pr-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium"
+                className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-xl sm:rounded-2xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 font-medium w-full sm:w-auto"
               >
                 <option value="all">{t("dashboard.students.filters.all")}</option>
                 <option value="active">{t("dashboard.students.filters.active")}</option>
@@ -297,7 +297,8 @@ const CoordinatorDashboard = ({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
+          {/* Desktop Table View - Hidden on Mobile */}
+          <div className="hidden lg:block overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
                 <tr>
@@ -348,51 +349,178 @@ const CoordinatorDashboard = ({
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 cursor-pointer transition-all duration-200"
-                    >
-                      <td className="py-6 px-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
-                            {student.avatar}
+                  <>
+                    {filteredStudents.slice(0, 4).map((student) => (
+                      <tr
+                        key={student.id}
+                        className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 cursor-pointer transition-all duration-200"
+                      >
+                        <td className="py-6 px-6">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
+                              {student.avatar}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white text-base">
+                                {student.name}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatStudentId(student.studentNumber)} •{" "}
+                                {student.program}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white text-base">
-                              {student.name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {formatStudentId(student.studentNumber)} •{" "}
-                              {student.program}
-                            </p>
+                        </td>
+                        <td className="py-6 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {student.company}
+                            </span>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-6 px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {student.company}
+                        </td>
+                        <td className="py-6 px-6">
+                          <span
+                            className={`text-xs px-4 py-2 rounded-full font-semibold ${getStatusColor(
+                              student.status
+                            )}`}
+                          >
+                            {getStatusLabel(student.status)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-6 px-6">
+                        </td>
+                        <td className="py-6 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-500 ${
+                                  student.attendance >= 90
+                                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                                    : student.attendance >= 75
+                                    ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                                    : "bg-gradient-to-r from-red-500 to-red-600"
+                                }`}
+                                style={{ width: `${student.attendance}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {student.attendance}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-6 px-6">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {student.tasks.completed}/{student.tasks.total}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-6 px-6">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-lg flex items-center justify-center">
+                              <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
+                            </div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {student.evaluation}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                )}
+              </tbody>
+            </table>
+            {filteredStudents.length > 4 && (
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => navigate("/coordinator/student-management")}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium text-sm shadow-lg"
+                >
+                  Manage Students
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Card View - Hidden on Desktop */}
+          <div className="lg:hidden space-y-3">
+            {filteredStudents.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center shadow-inner mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-500 dark:text-gray-300" />
+                </div>
+                <div className="space-y-2 mb-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                    {t("dashboard.students.empty.title")}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
+                    {t("dashboard.students.empty.description")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/coordinator/student-management")}
+                  className="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs sm:text-sm font-semibold shadow-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                >
+                  {t("dashboard.students.empty.action")}
+                </button>
+              </div>
+            ) : (
+              <>
+                {filteredStudents.slice(0, 3).map((student) => (
+                  <div
+                    key={student.id}
+                    className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
+                  >
+                    {/* Student Header */}
+                    <div className="flex items-start space-x-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {student.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5">
+                          {student.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatStudentId(student.studentNumber)}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {student.program}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Company Section */}
+                    <div className="flex items-center space-x-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                      <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {student.company}
+                      </span>
+                    </div>
+
+                    {/* Status and Metrics */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Status</span>
                         <span
-                          className={`text-xs px-4 py-2 rounded-full font-semibold ${getStatusColor(
+                          className={`text-[10px] px-2 py-1 rounded-full font-semibold ${getStatusColor(
                             student.status
                           )}`}
                         >
                           {getStatusLabel(student.status)}
                         </span>
-                      </td>
-                      <td className="py-6 px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Attendance</span>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                             <div
-                              className={`h-3 rounded-full transition-all duration-500 ${
+                              className={`h-2 rounded-full transition-all duration-500 ${
                                 student.attendance >= 90
                                   ? "bg-gradient-to-r from-green-500 to-green-600"
                                   : student.attendance >= 75
@@ -402,98 +530,101 @@ const CoordinatorDashboard = ({
                               style={{ width: `${student.attendance}%` }}
                             />
                           </div>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                          <span className="text-xs font-bold text-gray-900 dark:text-white">
                             {student.attendance}%
                           </span>
                         </div>
-                      </td>
-                      <td className="py-6 px-6">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-300" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Tasks</span>
+                        <div className="flex items-center space-x-1.5">
+                          <CheckCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-300" />
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                             {student.tasks.completed}/{student.tasks.total}
                           </span>
                         </div>
-                      </td>
-                      <td className="py-6 px-6">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900 dark:to-yellow-800 rounded-lg flex items-center justify-center">
-                            <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
-                          </div>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Rating</span>
+                        <div className="flex items-center space-x-1.5">
+                          <Award className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-300" />
+                          <span className="text-xs font-bold text-gray-900 dark:text-white">
                             {student.evaluation}
                           </span>
                         </div>
-                      </td>
-                    </tr>
-                  ))
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredStudents.length > 3 && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => navigate("/coordinator/student-management")}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium text-sm shadow-lg"
+                    >
+                      Manage Students
+                    </button>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </>
+            )}
           </div>
         </div>
 
         {/* Enhanced Performance Overview */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t("dashboard.performance.title")}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {t("dashboard.performance.subtitle")}
-                </p>
-              </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium text-sm">
-              {t("dashboard.performance.viewAll")}
-            </button>
-          </div>
-          <div className="space-y-6">
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white">
+                {t("dashboard.performance.title")}
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {t("dashboard.performance.subtitle")}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-4 sm:space-y-6">
+            <div>
+              <div className="flex justify-between items-center mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
                   {t("dashboard.performance.attendanceRate")}
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white text-lg">
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base lg:text-lg">
                   {stats?.attendanceRate || 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 lg:h-4 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-gradient-to-r from-green-500 to-green-600 h-2 sm:h-3 lg:h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${stats?.attendanceRate || 0}%` }}
                 />
               </div>
             </div>
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="flex justify-between items-center mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
                   {t("dashboard.performance.tasksCompleted")}
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white text-lg">
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base lg:text-lg">
                   {stats?.tasksCompleted || 0}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 lg:h-4 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 sm:h-3 lg:h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${stats?.tasksCompleted || 0}%` }}
                 />
               </div>
             </div>
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="flex justify-between items-center mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
                   {t("dashboard.performance.documentApproval")}
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white text-lg">
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base lg:text-lg">
                   {(
                     (((stats?.totalStudents || 0) -
                       (stats?.documentsPending || 0)) /
@@ -503,9 +634,9 @@ const CoordinatorDashboard = ({
                   %
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 lg:h-4 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-2 sm:h-3 lg:h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{
                     width: `${
                       (((stats?.totalStudents || 0) -
@@ -518,17 +649,17 @@ const CoordinatorDashboard = ({
               </div>
             </div>
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <div className="flex justify-between items-center mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
                   {t("dashboard.performance.averageRating")}
                 </span>
-                <span className="font-bold text-gray-900 dark:text-white text-lg">
+                <span className="font-bold text-gray-900 dark:text-white text-sm sm:text-base lg:text-lg">
                   {((stats?.averageRating || 0 / 5) * 100).toFixed(0)}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-3 lg:h-4 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 sm:h-3 lg:h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${(stats?.averageRating || 0 / 5) * 100}%` }}
                 />
               </div>
@@ -537,52 +668,50 @@ const CoordinatorDashboard = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {/* Enhanced Alerts Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                <Bell className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t("dashboard.alerts.title")}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {t("dashboard.alerts.subtitle")}
-                </p>
-              </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white">
+                {t("dashboard.alerts.title")}
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {t("dashboard.alerts.subtitle")}
+              </p>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {(alertList || []).slice(0, 4).map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 p-5 hover:shadow-md transition-all duration-200"
+                className="rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 p-3 sm:p-4 lg:p-5 hover:shadow-md transition-all duration-200"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 mt-1">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
+                  <div className="flex items-start space-x-2 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+                    <div className="flex-shrink-0 mt-0.5 sm:mt-1">
                       {getAlertIcon(alert.type)}
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base mb-1">
                         {alert.title}
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                         {alert.description}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">
+                  <span className="text-[10px] sm:text-xs text-gray-500 font-medium whitespace-nowrap flex-shrink-0">
                     {alert.timestamp}
                   </span>
                 </div>
               </div>
             ))}
             {(!alertList || alertList.length === 0) && (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center py-4 sm:py-6">
                 {t("dashboard.alerts.empty")}
               </div>
             )}
@@ -590,52 +719,50 @@ const CoordinatorDashboard = ({
         </div>
 
         {/* Enhanced Recent Activities */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t("dashboard.activities.title")}
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  {t("dashboard.activities.subtitle")}
-                </p>
-              </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white">
+                {t("dashboard.activities.title")}
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {t("dashboard.activities.subtitle")}
+              </p>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {(activities || []).slice(0, 6).map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200"
+                className="flex items-center justify-between gap-2 sm:gap-3 p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200"
               >
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
                   <div
-                    className={`p-3 rounded-2xl shadow-sm ${getActivityColor(
+                    className={`p-2 sm:p-2.5 lg:p-3 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-sm flex-shrink-0 ${getActivityColor(
                       activity.status
                     )}`}
                   >
                     {getActivityIcon(activity.type)}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
                       {activity.student}
                     </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
                       {activity.action}
                     </p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
                   {formatDateTime(activity.timestamp)}
                 </span>
               </div>
             ))}
             {(!activities || activities.length === 0) && (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center py-4 sm:py-6">
                 {t("dashboard.activities.empty")}
               </div>
             )}
@@ -962,26 +1089,26 @@ const CoordinatorPortal: React.FC = () => {
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 mt-3 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                    <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {t("dashboard.notifications.title")}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                          {t("dashboard.notifications.subtitle")}
-                        </p>
+                  <div className="absolute right-0 mt-3 w-72 sm:w-80 md:w-96 bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 flex flex-col max-h-96 sm:max-h-[28rem] md:max-h-[32rem]">
+                      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
+                            {t("dashboard.notifications.title")}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {t("dashboard.notifications.subtitle")}
+                          </p>
+                        </div>
+                        {unreadNotificationCount > 0 && (
+                          <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200 ml-2 flex-shrink-0">
+                            {t("dashboard.notifications.new", { count: unreadNotificationCount })}
+                          </span>
+                        )}
                       </div>
-                      {unreadNotificationCount > 0 && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
-                          {t("dashboard.notifications.new", { count: unreadNotificationCount })}
-                        </span>
-                      )}
-                    </div>
 
-                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
                       {notificationsLoading ? (
-                        <div className="px-5 py-8 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                        <div className="px-4 sm:px-5 py-8 flex items-center justify-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           {t("dashboard.notifications.loading")}
                         </div>
                       ) : localNotifications.length > 0 ? (
@@ -1002,50 +1129,50 @@ const CoordinatorPortal: React.FC = () => {
                                 handleNotificationClick(notification);
                                 setShowNotifications(false);
                               }}
-                              className={`w-full text-left px-5 py-4 transition-colors ${
+                              className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${
                                 notification.read
                                   ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                                   : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
                               }`}
                             >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
                                     {notification.title}
                                   </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
                                     {formatDropdownTimestamp(notification.createdAt)}
                                   </p>
                                 </div>
                                 {!notification.read && (
-                                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5"></span>
+                                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-3">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
                                 {notification.message}
                               </p>
                               {notification.type && (
-                                <span className="mt-3 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                                <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                                   {notification.type.replace(/_/g, " ")}
                                 </span>
                               )}
                             </button>
                           ))
                       ) : (
-                        <div className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <div className="px-4 sm:px-5 py-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           {t("dashboard.notifications.empty")}
                         </div>
                       )}
                     </div>
 
-                    <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={async () => {
                           await handleMarkAllNotificationsRead();
                           setShowNotifications(false);
                         }}
                         disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
-                        className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {t("dashboard.notifications.markAll")}
                       </button>
@@ -1054,7 +1181,7 @@ const CoordinatorPortal: React.FC = () => {
                           setActiveTab("dashboard");
                           setShowNotifications(false);
                         }}
-                        className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-blue-600 text-white hover:from-purple-600 hover:to-blue-700 transition-colors"
+                        className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gradient-to-r from-purple-500 to-blue-600 text-white hover:from-purple-600 hover:to-blue-700 transition-colors"
                       >
                         {t("dashboard.notifications.viewDashboard")}
                       </button>

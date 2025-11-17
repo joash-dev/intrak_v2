@@ -889,28 +889,59 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   return (
                     <div
                       key={company.id}
-                      className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:scale-[1.02] hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden"
+                      className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:scale-[1.01] sm:hover:scale-[1.02] hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden"
                     >
                       {/* Glass morphism overlay */}
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       {/* Company Header */}
-                      <div className="relative p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                          <div className="md:flex-1">
+                      <div className="relative p-4 sm:p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+                        {/* Edit and Delete Buttons - Top Right Corner */}
+                        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex items-center space-x-1.5 sm:space-x-2 z-10">
+                          <button
+                            onClick={() => openEditCompany(company)}
+                            className="p-1.5 sm:p-2 rounded-lg text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
+                            title="Edit Company"
+                          >
+                            <SquarePen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteConfirm(company)}
+                            disabled={Boolean(
+                              company._count?.students &&
+                                company._count.students > 0
+                            )}
+                            className={`p-1.5 sm:p-2 rounded-lg transition-colors bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm ${
+                              company._count?.students &&
+                              company._count.students > 0
+                                ? "text-red-400/60 cursor-not-allowed"
+                                : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            }`}
+                            title={
+                              company._count?.students &&
+                              company._count.students > 0
+                                ? `Cannot delete: ${company._count.students} student(s) assigned`
+                                : "Delete Company"
+                            }
+                          >
+                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </button>
+                        </div>
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 sm:gap-4">
+                          <div className="md:flex-1 w-full">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-3 space-y-2 sm:space-y-0">
-                              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-white" />
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                               </div>
-                              <div>
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white break-words">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">
                                   {company.name}
                                 </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                   {company.contactPerson}
                                 </p>
                                 {company._count?.students &&
                                   company._count.students > 0 && (
-                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 sm:mt-1">
                                       {company._count.students} student
                                       {company._count.students !== 1
                                         ? "s"
@@ -920,24 +951,20 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                   )}
                               </div>
                             </div>
-                            <div className="space-y-2 sm:space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                              <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                                <span className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                                  <span className="truncate">{company.contactEmail}</span>
-                                </span>
+                            <div className="space-y-1.5 sm:space-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                              <p className="flex items-center space-x-2">
+                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full flex-shrink-0"></span>
+                                <span className="truncate">{company.contactEmail}</span>
                               </p>
-                              <p className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                                <span className="flex items-center space-x-2">
-                                <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                                  <span className="truncate">{company.contactNumber}</span>
-                                </span>
+                              <p className="flex items-center space-x-2">
+                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full flex-shrink-0"></span>
+                                <span className="truncate">{company.contactNumber}</span>
                               </p>
                               <div className="flex items-start space-x-2">
-                                <span className="w-2 h-2 bg-purple-400 rounded-full mt-1"></span>
+                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-400 rounded-full mt-1 flex-shrink-0"></span>
                                 <div className="flex-1 min-w-0">
                                   <p
-                                    className="block max-w-full text-sm text-gray-600 dark:text-gray-400 truncate"
+                                    className="block max-w-full text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate"
                                     title={company.address || "No address provided"}
                                   >
                                     {company.address || "No address provided"}
@@ -946,29 +973,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                     <button
                                       type="button"
                                       onClick={() => toast(company.address)}
-                                      className="mt-1 text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                                      className="mt-1 text-[10px] sm:text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
                                     >
                                       View full address
                                     </button>
                                   )}
-                            </div>
-                          </div>
+                                </div>
+                              </div>
                             </div>
 
                             {company.supervisor ? (
-                              <div className="mt-4 w-full rounded-lg border border-green-200 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20 px-4 py-3">
+                              <div className="mt-3 sm:mt-4 w-full rounded-lg border border-green-200 dark:border-green-700 bg-green-50/60 dark:bg-green-900/20 px-3 sm:px-4 py-2 sm:py-3">
                                 <div className="flex items-center justify-between">
-                                  <p className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-300">
+                                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-300">
                                     Supervisor Linked
                                   </p>
-                                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-300 shrink-0 ml-3" />
+                                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-300 shrink-0 ml-2 sm:ml-3" />
                                 </div>
-                                <div className="mt-2">
-                                  <p className="text-sm font-medium text-gray-900 dark:text-white break-words">
+                                <div className="mt-1.5 sm:mt-2">
+                                  <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white break-words">
                                     {company.supervisor.name ||
                                       company.supervisor.email}
                                   </p>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 break-words">
+                                  <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 break-words">
                                     {company.supervisor.email}
                                   </p>
                                 </div>
@@ -977,61 +1004,31 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               <button
                                 onClick={() => handleCreateSupervisorAccount(company)}
                                 disabled={creatingSupervisorId === company.id}
-                                className="mt-4 inline-flex w-full items-center justify-center px-3 py-2 text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="mt-3 sm:mt-4 inline-flex w-full items-center justify-center px-3 py-2 text-[10px] sm:text-xs font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 {creatingSupervisorId === company.id ? (
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 animate-spin" />
                                 ) : (
-                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
                                 )}
                                 {creatingSupervisorId === company.id
                                   ? "Creating Supervisor..."
                                   : "Create Supervisor Account"}
-                            </button>
+                              </button>
                             )}
                             {renderSupervisorError(company.id)}
-                          </div>
-                          <div className="flex flex-col items-end space-y-2">
-                            <button
-                              onClick={() => openEditCompany(company)}
-                              className="p-2 rounded-lg text-purple-600 transition-colors hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-900/30"
-                              title="Edit Company"
-                            >
-                              <SquarePen className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => openDeleteConfirm(company)}
-                              disabled={Boolean(
-                                company._count?.students &&
-                                  company._count.students > 0
-                              )}
-                              className={`p-2 rounded-lg transition-colors ${
-                                company._count?.students &&
-                                company._count.students > 0
-                                  ? "text-red-400/60 cursor-not-allowed"
-                                  : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              }`}
-                              title={
-                                company._count?.students &&
-                                company._count.students > 0
-                                  ? `Cannot delete: ${company._count.students} student(s) assigned`
-                                  : "Delete Company"
-                              }
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
                       </div>
 
                       {/* MOAs Section */}
-                      <div className="p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                          <h5 className="text-sm font-medium text-gray-900 dark:text-white flex items-center space-x-2">
-                            <FileText className="w-4 h-4" />
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+                          <h5 className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white flex items-center space-x-1.5 sm:space-x-2">
+                            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             <span>MOAs ({companyMOAs.length})</span>
                             {companyUrgentMOAs.length > 0 && (
-                              <span className="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs rounded-full">
+                              <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-[10px] sm:text-xs rounded-full">
                                 {companyUrgentMOAs.length} urgent
                               </span>
                             )}
@@ -1039,7 +1036,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleViewAllCompanyMOAs(company)}
-                            className="text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium inline-flex items-center space-x-1 disabled:opacity-60"
+                            className="text-[10px] sm:text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium inline-flex items-center space-x-1 disabled:opacity-60 flex-shrink-0"
                             disabled={
                               loadingCompanyMOAs &&
                               companyForMOAModal?.id === company.id
@@ -1048,7 +1045,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             {loadingCompanyMOAs &&
                             companyForMOAModal?.id === company.id ? (
                               <>
-                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
                                 <span>Loading…</span>
                               </>
                             ) : (
@@ -1058,7 +1055,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         </div>
 
                         {companyMOAs.length > 0 ? (
-                          <div className="space-y-3">
+                          <div className="space-y-2 sm:space-y-3">
                             {companyMOAs.slice(0, 2).map((moa) => {
                               const statusInfo = getStatusInfo(moa.status);
                               const StatusIcon = statusInfo.icon;
@@ -1068,7 +1065,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               return (
                                 <div
                                   key={moa.id}
-                                  className={`p-3 rounded-lg border ${
+                                  className={`p-2.5 sm:p-3 rounded-lg border ${
                                     isExpiredMOA
                                       ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
                                       : isExpiring
@@ -1076,25 +1073,22 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                       : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600"
                                   }`}
                                 >
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {moa.title}
-                                      </p>
-                                      <div className="flex items-center space-x-2 mt-1">
+                                      <div className="flex items-start justify-between gap-2 mb-1">
                                         <span
-                                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}
+                                          className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${statusInfo.color} flex-shrink-0`}
                                         >
-                                          <StatusIcon className="w-3 h-3 mr-1" />
+                                          <StatusIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
                                           {moa.status}
                                         </span>
                                         {(isExpiring || isExpiredMOA) && (
                                           <span
-                                            className={`text-xs ${
+                                            className={`text-[10px] sm:text-xs ${
                                               isExpiredMOA
                                                 ? "text-red-600"
                                                 : "text-orange-600"
-                                            }`}
+                                            } flex-shrink-0`}
                                           >
                                             {isExpiredMOA
                                               ? "Expired"
@@ -1102,21 +1096,24 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                                        {moa.title}
+                                      </p>
+                                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
                                         {formatDate(moa.uploadedAt)}
                                       </p>
                                     </div>
-                                    <div className="flex items-center space-x-1">
+                                    <div className="flex items-center space-x-1 sm:space-x-1.5">
                                       <button
                                         onClick={() => handlePreviewMOA(moa.id)}
-                                        className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="p-1 sm:p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                         title="Preview MOA"
                                         disabled={previewingMOAId === moa.id}
                                       >
                                         {previewingMOAId === moa.id ? (
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                                         ) : (
-                                        <Eye className="w-3.5 h-3.5" />
+                                        <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                         )}
                                       </button>
                                       {moa.status === "PENDING" && (
@@ -1125,32 +1122,32 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                             onClick={() =>
                                               handleApproveMOA(moa.id)
                                             }
-                                            className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
+                                            className="p-1 sm:p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded transition-colors"
                                             title="Approve"
                                           >
-                                            <CheckCircle className="w-3.5 h-3.5" />
+                                            <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                           </button>
                                           <button
                                             onClick={() =>
                                               handleRejectMOA(moa.id)
                                             }
-                                            className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                                            className="p-1 sm:p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
                                             title="Reject"
                                           >
-                                            <XCircle className="w-3.5 h-3.5" />
+                                            <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                           </button>
                                         </>
                                       )}
                                       <button
                                         onClick={() => handleDownloadMOA(moa)}
-                                        className="p-1.5 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="p-1 sm:p-1.5 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                         title="Download"
                                         disabled={downloadingMOAId === moa.id}
                                       >
                                         {downloadingMOAId === moa.id ? (
-                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                                         ) : (
-                                        <Download className="w-3.5 h-3.5" />
+                                        <Download className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                         )}
                                       </button>
                                     </div>
@@ -1159,15 +1156,15 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               );
                             })}
                             {companyMOAs.length > 2 && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+                              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 text-center py-1.5 sm:py-2">
                                 +{companyMOAs.length - 2} more MOAs
                               </p>
                             )}
                           </div>
                         ) : (
-                          <div className="text-center py-4">
-                            <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-center py-3 sm:py-4">
+                            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mx-auto mb-1.5 sm:mb-2" />
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                               No MOAs found for this company
                             </p>
                           </div>

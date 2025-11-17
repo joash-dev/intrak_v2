@@ -395,52 +395,52 @@ const InstructorTemplateManagement: React.FC = () => {
       </div>
 
       {/* Category Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* View All Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
             !category
               ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
           }`}
           onClick={() => setSearchParams({})}
         >
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-300" />
             </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
               All Templates
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {templates.length} template{templates.length !== 1 ? "s" : ""}
             </p>
           </div>
           </div>
-          <div className="w-full mt-10 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center font-medium text-sm">
+          <div className="w-full mt-6 sm:mt-10 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center font-medium text-xs sm:text-sm">
             View All
           </div>
         </div>
 
         {/* Pre-deployment Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
             category === "PRE_DEPLOYMENT"
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
           }`}
           onClick={() => setSearchParams({ category: "PRE_DEPLOYMENT" })}
         >
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                 Pre-deployment Documents
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 {
                   templates.filter((t) => t.category === "PRE_DEPLOYMENT")
                     .length
@@ -465,7 +465,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium text-sm"
+            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>
@@ -473,22 +473,22 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Upon Approval Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
             category === "UPON_APPROVAL"
               ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-yellow-300"
           }`}
           onClick={() => setSearchParams({ category: "UPON_APPROVAL" })}
         >
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                 Upon Approval Documents
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 {templates.filter((t) => t.category === "UPON_APPROVAL").length}{" "}
                 template
                 {templates.filter((t) => t.category === "UPON_APPROVAL")
@@ -510,7 +510,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-4 py-2 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg transition-colors font-medium text-sm"
+            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>
@@ -518,22 +518,22 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Post-OJT Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
             category === "POST_OJT"
               ? "border-green-500 bg-green-50 dark:bg-green-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-green-300"
           }`}
           onClick={() => setSearchParams({ category: "POST_OJT" })}
         >
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center">
-              <XCircle className="w-6 h-6 text-green-600 dark:text-green-300" />
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center flex-shrink-0">
+              <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-300" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                 Post-OJT Documents
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 {templates.filter((t) => t.category === "POST_OJT").length}{" "}
                 template
                 {templates.filter((t) => t.category === "POST_OJT").length !== 1
@@ -554,7 +554,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-sm"
+            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>
@@ -564,15 +564,15 @@ const InstructorTemplateManagement: React.FC = () => {
       {/* Templates List */}
       <div className="space-y-6">
         {filteredTemplates.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="text-center py-16">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="text-center py-12 sm:py-16 px-4">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3">
                 No Templates Found
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-md mx-auto">
                 {category
                   ? `No templates found in the ${category
                       .replace("_", " ")
@@ -582,9 +582,9 @@ const InstructorTemplateManagement: React.FC = () => {
               {!category && (
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg sm:rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl"
                 >
-                  <Plus className="w-5 h-5 mr-2" />
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
                   Upload Your First Template
                 </button>
               )}
@@ -598,10 +598,10 @@ const InstructorTemplateManagement: React.FC = () => {
                 className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700"
               >
                 {/* Category Header */}
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-                  <div className="flex items-center space-x-3">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
                         category === "PRE_DEPLOYMENT"
                           ? "bg-blue-100 dark:bg-blue-900/20"
                           : category === "UPON_APPROVAL"
@@ -610,7 +610,7 @@ const InstructorTemplateManagement: React.FC = () => {
                       }`}
                     >
                       <FileText
-                        className={`w-5 h-5 ${
+                        className={`w-4 h-4 sm:w-5 sm:h-5 ${
                           category === "PRE_DEPLOYMENT"
                             ? "text-blue-600 dark:text-blue-400"
                             : category === "UPON_APPROVAL"
@@ -620,10 +620,10 @@ const InstructorTemplateManagement: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                         {templateService.getCategoryDisplay(category)}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                         {categoryTemplates.length} template
                         {categoryTemplates.length !== 1 ? "s" : ""}
                       </p>
@@ -631,8 +631,8 @@ const InstructorTemplateManagement: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Templates Table */}
-                <div className="overflow-x-auto">
+                {/* Desktop Table View - Hidden on Mobile */}
+                <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
@@ -718,6 +718,70 @@ const InstructorTemplateManagement: React.FC = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Card View - Hidden on Desktop */}
+                <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-600">
+                  {categoryTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-start space-x-3 mb-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
+                          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm text-gray-900 dark:text-white mb-1 break-words">
+                            {template.name}
+                          </div>
+                          {template.description && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                              {template.description}
+                            </div>
+                          )}
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
+                            {templateService.getDocumentTypeDisplay(
+                              template.type
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-medium">Uploaded by:</span> {template.uploadedBy?.name || "Unknown"}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-medium">Created:</span> {new Date(template.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1.5 flex-shrink-0 ml-2">
+                          <button
+                            onClick={() => handleDownload(template)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(template)}
+                            className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(template)}
+                            className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )

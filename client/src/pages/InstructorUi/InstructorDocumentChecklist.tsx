@@ -397,17 +397,17 @@ const DocumentChecklistTab = () => {
   return (
     <div className="space-y-8 font-outfit">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 shadow-lg border border-blue-100 dark:border-gray-600">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-blue-100 dark:border-gray-600">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <ClipboardList className="w-8 h-8 text-white" />
+          <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
                 Document Checklist
               </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
                 Track document submission status for each student
               </p>
             </div>
@@ -483,23 +483,23 @@ const DocumentChecklistTab = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
             <input
               type="text"
               placeholder="Search by student name, ID, or company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm font-medium"
+              className="w-full pl-9 sm:pl-12 pr-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 font-medium"
             />
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-w-[160px] text-sm font-medium"
+              className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[160px] font-medium"
             >
               <option value="all">All Progress</option>
               <option value="complete">Complete (100%)</option>
@@ -510,7 +510,7 @@ const DocumentChecklistTab = () => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-w-[160px] text-sm font-medium"
+              className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[160px] font-medium"
             >
               <option value="all">All Categories</option>
               <option value="pre-deployment">Pre-Deployment</option>
@@ -521,11 +521,11 @@ const DocumentChecklistTab = () => {
         </div>
       </div>
 
-      {/* Student Checklist Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+      {/* Desktop Table View - Hidden on Mobile */}
+      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Table Header */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 px-8 py-4 border-b border-gray-200 dark:border-gray-600">
-          <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3.5 border-b border-gray-200 dark:border-gray-600">
+          <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
             <div className="col-span-4">Student</div>
             <div className="col-span-2">Progress</div>
             <div className="col-span-2">Status</div>
@@ -535,27 +535,27 @@ const DocumentChecklistTab = () => {
         </div>
 
         {/* Table Rows */}
-        <div className="divide-y divide-gray-200 dark:divide-gray-600">
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {filteredChecklists.map((checklist) => (
             <div
               key={checklist.studentId}
-              className="px-8 py-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200"
+              className="px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-all duration-150"
             >
-              <div className="grid grid-cols-12 gap-6 items-center">
+              <div className="grid grid-cols-12 gap-4 items-center">
                 {/* Student Info */}
-                <div className="col-span-4 flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                <div className="col-span-4 flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                     {checklist.studentName
                       .split(" ")
                       .map((n) => n[0])
                       .join("")
                       .substring(0, 2)}
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                       {checklist.studentName}
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-normal mt-0.5">
                       {checklist.studentNumber}
                     </p>
                   </div>
@@ -563,20 +563,18 @@ const DocumentChecklistTab = () => {
 
                 {/* Progress */}
                 <div className="col-span-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-lg font-bold text-gray-900 dark:text-white">
-                      {checklist.overallProgress}%
-                    </div>
-                    <div className="w-20 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
-                          checklist.overallProgress
-                        )}`}
-                        style={{ width: `${checklist.overallProgress}%` }}
-                      />
-                    </div>
+                  <div className="text-base font-bold text-gray-900 dark:text-white mb-1.5">
+                    {checklist.overallProgress}%
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 mb-1">
+                    <div
+                      className={`h-1.5 rounded-full transition-all duration-500 ${getProgressColor(
+                        checklist.overallProgress
+                      )}`}
+                      style={{ width: `${checklist.overallProgress}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-normal">
                     {
                       checklist.documents.filter((d) => d.status === "approved")
                         .length
@@ -588,14 +586,14 @@ const DocumentChecklistTab = () => {
                 {/* Status */}
                 <div className="col-span-2">
                   <span
-                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
+                    className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${
                       checklist.overallProgress === 100
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                         : checklist.overallProgress >= 80
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                         : checklist.overallProgress >= 40
-                        ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
-                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                        ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                     }`}
                   >
                     {checklist.overallProgress === 100
@@ -610,16 +608,13 @@ const DocumentChecklistTab = () => {
 
                 {/* Company */}
                 <div className="col-span-2">
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                      {checklist.company}
-                    </span>
-                  </div>
+                  <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                    {checklist.company}
+                  </span>
                 </div>
 
                 {/* Actions */}
-                <div className="col-span-2 flex items-center space-x-2">
+                <div className="col-span-2 flex items-center space-x-1.5">
                   <button
                     onClick={() =>
                       setExpandedStudent(
@@ -628,16 +623,16 @@ const DocumentChecklistTab = () => {
                           : checklist.studentId
                       )
                     }
-                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200"
+                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
                     title="View Details"
                   >
-                    <Eye className="w-5 h-5" />
+                    <Eye className="w-4 h-4" />
                   </button>
                   <button
-                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-all duration-200"
+                    className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200"
                     title="Download Report"
                   >
-                    <Download className="w-5 h-5" />
+                    <Download className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -646,27 +641,137 @@ const DocumentChecklistTab = () => {
         </div>
       </div>
 
+      {/* Mobile Card View - Hidden on Desktop */}
+      <div className="lg:hidden space-y-3">
+        {filteredChecklists.map((checklist) => (
+          <div
+            key={checklist.studentId}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-4"
+          >
+            {/* Student Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  {checklist.studentName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    {checklist.studentName}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-normal">
+                    {checklist.studentNumber}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1.5 flex-shrink-0">
+                <button
+                  onClick={() =>
+                    setExpandedStudent(
+                      expandedStudent === checklist.studentId
+                        ? null
+                        : checklist.studentId
+                    )
+                  }
+                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                  title="View Details"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200"
+                  title="Download Report"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Progress Section */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Progress
+                </span>
+                <span className="text-base font-bold text-gray-900 dark:text-white">
+                  {checklist.overallProgress}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-1">
+                <div
+                  className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(
+                    checklist.overallProgress
+                  )}`}
+                  style={{ width: `${checklist.overallProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {
+                  checklist.documents.filter((d) => d.status === "approved")
+                    .length
+                }{" "}
+                / {checklist.documents.length} documents
+              </p>
+            </div>
+
+            {/* Status and Company Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Company:
+                </span>
+                <span className="text-xs text-gray-900 dark:text-gray-100 font-medium">
+                  {checklist.company}
+                </span>
+              </div>
+              <span
+                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                  checklist.overallProgress === 100
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                    : checklist.overallProgress >= 80
+                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                    : checklist.overallProgress >= 40
+                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                }`}
+              >
+                {checklist.overallProgress === 100
+                  ? "Complete"
+                  : checklist.overallProgress >= 80
+                  ? "High Progress"
+                  : checklist.overallProgress >= 40
+                  ? "In Progress"
+                  : "Low Progress"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Expanded Student Details Modal */}
       {expandedStudent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3 sm:p-4"
           style={{ margin: "0" }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
-            <div className="p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                   Document Checklist Details
                 </h3>
                 <button
                   onClick={() => setExpandedStudent(null)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-xl transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg sm:rounded-xl transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             </div>
-            <div className="p-8 overflow-y-auto max-h-[65vh]">
+            <div className="p-4 sm:p-6 lg:p-8 overflow-y-auto flex-1">
               {(() => {
                 const checklist = checklists.find(
                   (c) => c.studentId === expandedStudent
@@ -674,29 +779,33 @@ const DocumentChecklistTab = () => {
                 if (!checklist) return null;
 
                 return (
-                  <div className="space-y-8">
+                  <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                     {/* Pre-Deployment Documents */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-2xl p-6 shadow-lg">
-                      <h4 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center">
-                        <AlertCircle className="w-6 h-6 mr-3 text-blue-600" />
-                        Pre-Deployment Documents
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                      <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-blue-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                        </div>
+                        <span>Pre-Deployment Documents</span>
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         {checklist.documents
                           .filter((doc) => doc.category === "pre-deployment")
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
-                              <div className="flex items-center space-x-3 flex-1">
-                                {getStatusIcon(doc.status)}
-                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0">
+                                  {getStatusIcon(doc.status)}
+                                </div>
+                                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
                                   {doc.name}
                                 </span>
                               </div>
                               <span
-                                className={`text-xs px-3 py-1.5 rounded-full font-semibold uppercase ${getStatusColor(
+                                className={`text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold uppercase flex-shrink-0 ml-2 ${getStatusColor(
                                   doc.status
                                 )}`}
                               >
@@ -708,27 +817,31 @@ const DocumentChecklistTab = () => {
                     </div>
 
                     {/* Upon Approval Documents */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 rounded-2xl p-6 shadow-lg">
-                      <h4 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center">
-                        <CheckCircle className="w-6 h-6 mr-3 text-yellow-600" />
-                        Upon Approval Documents
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                      <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-yellow-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                        </div>
+                        <span>Upon Approval Documents</span>
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         {checklist.documents
                           .filter((doc) => doc.category === "upon-approval")
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
-                              <div className="flex items-center space-x-3 flex-1">
-                                {getStatusIcon(doc.status)}
-                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0">
+                                  {getStatusIcon(doc.status)}
+                                </div>
+                                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
                                   {doc.name}
                                 </span>
                               </div>
                               <span
-                                className={`text-xs px-3 py-1.5 rounded-full font-semibold uppercase ${getStatusColor(
+                                className={`text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold uppercase flex-shrink-0 ml-2 ${getStatusColor(
                                   doc.status
                                 )}`}
                               >
@@ -740,27 +853,31 @@ const DocumentChecklistTab = () => {
                     </div>
 
                     {/* Post-OJT Documents */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 rounded-2xl p-6 shadow-lg">
-                      <h4 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center">
-                        <XCircle className="w-6 h-6 mr-3 text-green-600" />
-                        Post-OJT Documents
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                      <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-green-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
+                          <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
+                        </div>
+                        <span>Post-OJT Documents</span>
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         {checklist.documents
                           .filter((doc) => doc.category === "post-ojt")
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
-                              <div className="flex items-center space-x-3 flex-1">
-                                {getStatusIcon(doc.status)}
-                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
+                              <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0">
+                                  {getStatusIcon(doc.status)}
+                                </div>
+                                <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 truncate font-medium">
                                   {doc.name}
                                 </span>
                               </div>
                               <span
-                                className={`text-xs px-3 py-1.5 rounded-full font-semibold uppercase ${getStatusColor(
+                                className={`text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold uppercase flex-shrink-0 ml-2 ${getStatusColor(
                                   doc.status
                                 )}`}
                               >
@@ -779,17 +896,17 @@ const DocumentChecklistTab = () => {
       )}
 
       {filteredChecklists.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <FileText className="w-10 h-10 text-gray-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 sm:p-12 text-center shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+            <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2">
             No students found
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
             No students match your current search criteria
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
             Try adjusting your search terms or filters to find students
           </p>
         </div>

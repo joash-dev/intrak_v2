@@ -270,8 +270,8 @@ const InstructorDashboard = ({
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats Cards - Desktop Grid View */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Active Students Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
@@ -353,20 +353,111 @@ const InstructorDashboard = ({
         </div>
       </div>
 
+      {/* Stats Cards - Mobile Stacked View */}
+      <div className="md:hidden space-y-3">
+        {/* Active Students Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">
+                  Active Students
+                </h3>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                  {stats.activeStudents}
+                </p>
+                <p className="text-green-600 dark:text-green-400 text-xs">
+                  Currently Active
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Attendance Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">
+                  Avg Attendance
+                </h3>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                  {stats.avgAttendance}%
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
+                  of 100%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Average Rating Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Award className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">
+                  Avg Rating
+                </h3>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                  {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "N/A"}
+                </p>
+                <p className="text-yellow-600 dark:text-yellow-400 text-xs">
+                  {stats.avgRating > 0 ? "out of 5.0" : "0 evaluations"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* At Risk Students Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">
+                  At Risk
+                </h3>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                  {stats.atRiskStudents}
+                </p>
+                <p className="text-green-600 dark:text-green-400 text-xs">
+                  On track
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Students List */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 sm:space-y-4 md:space-y-0 mb-4 sm:mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                   Student Management
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   Track progress and review assigned students
                 </p>
               </div>
-              <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
+              <div className="flex flex-col md:flex-row space-y-2 sm:space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
                 <div className="relative flex-1 md:w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
@@ -374,13 +465,13 @@ const InstructorDashboard = ({
                     placeholder="Search by name or student ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm"
+                    className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                   />
                 </div>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 min-w-[140px] text-sm"
+                  className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 w-full md:w-auto md:min-w-[140px]"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -391,80 +482,84 @@ const InstructorDashboard = ({
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {filteredStudents.length > 0 ? (
                 filteredStudents.slice(0, 3).map((student) => (
                   <div
                     key={student.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800"
+                    className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="relative">
-                          <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                    {/* Student Header - Mobile Optimized */}
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                      <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+                        <div className="relative flex-shrink-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                             {student.avatar}
                           </div>
-                          <div className="absolute -bottom-0.5 -left-0.5 w-3 h-3 bg-yellow-500 rounded-full border border-white dark:border-gray-800"></div>
+                          <div className="absolute -bottom-0.5 -left-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-yellow-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                            {student.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">
+                              {student.name}
+                            </h3>
+                            <span
+                              className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-full font-semibold flex-shrink-0 ${getStatusColor(
+                                student.status
+                              )}`}
+                            >
+                              {student.status.replace("_", " ").toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
                             {student.studentId} • {student.program}
                           </p>
-                          <div className="flex items-center space-x-2">
-                            <Building2 className="w-3 h-3 text-gray-400" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center space-x-1.5 sm:space-x-2">
+                            <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                               {student.company}
                             </span>
                           </div>
                         </div>
                       </div>
-                      <span
-                        className={`text-xs px-3 py-1 rounded-full font-semibold ${getStatusColor(
-                          student.status
-                        )}`}
-                      >
-                        {student.status.replace("_", " ").toUpperCase()}
-                      </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="rounded-lg p-3 border border-blue-500 bg-white dark:bg-gray-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {/* Performance Metrics - Mobile Optimized */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-3 sm:mb-4">
+                      <div className="rounded-lg p-2 sm:p-3 border border-blue-500 bg-white dark:bg-gray-800">
+                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                          <p className="text-[10px] sm:text-xs font-medium text-blue-700 dark:text-blue-300">
                             Attendance
                           </p>
-                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                          <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-300 flex-shrink-0" />
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-lg font-bold text-blue-700 dark:text-blue-200">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <p className="text-sm sm:text-base font-bold text-blue-700 dark:text-blue-200">
                             {student.attendanceRate}%
                           </p>
-                          <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-full h-1.5">
+                          <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-full h-1 sm:h-1.5">
                             <div
-                              className="bg-blue-600 dark:bg-blue-400 h-1.5 rounded-full transition-all duration-500"
+                              className="bg-blue-600 dark:bg-blue-400 h-1 sm:h-1.5 rounded-full transition-all duration-500"
                               style={{ width: `${student.attendanceRate}%` }}
                             />
                           </div>
                         </div>
                       </div>
 
-                      <div className="rounded-lg p-3 border border-green-500 bg-white dark:bg-gray-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                      <div className="rounded-lg p-2 sm:p-3 border border-green-500 bg-white dark:bg-gray-800">
+                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                          <p className="text-[10px] sm:text-xs font-medium text-green-700 dark:text-green-300">
                             Hours Progress
                           </p>
-                          <Calendar className="w-4 h-4 text-green-600 dark:text-green-300" />
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-300 flex-shrink-0" />
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-lg font-bold text-green-700 dark:text-green-200">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <p className="text-sm sm:text-base font-bold text-green-700 dark:text-green-200">
                             {student.hoursCompleted}/{student.requiredHours}
                           </p>
-                          <div className="w-full bg-green-100 dark:bg-green-900/30 rounded-full h-1.5">
+                          <div className="w-full bg-green-100 dark:bg-green-900/30 rounded-full h-1 sm:h-1.5">
                             <div
-                              className="bg-green-600 dark:bg-green-400 h-1.5 rounded-full transition-all duration-500"
+                              className="bg-green-600 dark:bg-green-400 h-1 sm:h-1.5 rounded-full transition-all duration-500"
                               style={{
                                 width: `${
                                   student.requiredHours
@@ -479,15 +574,15 @@ const InstructorDashboard = ({
                         </div>
                       </div>
 
-                      <div className="rounded-lg p-3 border border-amber-500 bg-white dark:bg-gray-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                      <div className="rounded-lg p-2 sm:p-3 border border-amber-500 bg-white dark:bg-gray-800">
+                        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                          <p className="text-[10px] sm:text-xs font-medium text-amber-700 dark:text-amber-300">
                             Performance
                           </p>
-                          <Award className="w-4 h-4 text-amber-600 dark:text-amber-300" />
+                          <Award className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600 dark:text-amber-300 flex-shrink-0" />
                         </div>
-                        <div className="space-y-2">
-                          <p className="text-lg font-bold text-amber-700 dark:text-amber-200">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <p className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-200">
                             {student.lastEvaluation
                               ? student.lastEvaluation.toFixed(1)
                               : "N/A"}
@@ -496,10 +591,10 @@ const InstructorDashboard = ({
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Award
                                 key={star}
-                                className={`w-3 h-3 ${
+                                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
                                   student.lastEvaluation &&
                                   star <= Math.round(student.lastEvaluation)
-                                    ? "text-amber-600 dark:text-amber-300"
+                                    ? "text-amber-600 dark:text-amber-300 fill-current"
                                     : "text-amber-200 dark:text-amber-900"
                                 }`}
                               />
@@ -509,18 +604,19 @@ const InstructorDashboard = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {/* Footer - Mobile Optimized */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 pt-2 sm:pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center space-x-1.5 sm:space-x-2">
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                           Last activity: {student.lastActivity}
                         </span>
                       </div>
                       <button
                         onClick={() => handleViewStudentDetails(student)}
-                        className="flex items-center space-x-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 text-sm font-medium"
+                        className="w-full sm:w-auto flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         <span>View Details</span>
                       </button>
                     </div>

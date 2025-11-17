@@ -433,13 +433,13 @@ const SupervisorEvaluation = () => {
   const getStatusBadge = (intern: SupervisorStudent) => {
     if (intern.lastEvaluation) {
       return (
-        <span className="text-xs px-3 py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+        <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
           Finished
         </span>
       );
     } else {
       return (
-        <span className="text-xs px-3 py-1 rounded-full font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+        <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
           Pending
         </span>
       );
@@ -479,91 +479,151 @@ const SupervisorEvaluation = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">Intern Evaluations</h1>
-        <p className="text-blue-100 text-lg mb-1">Company: {companyName}</p>
-        <p className="text-blue-100">
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5 sm:mb-2">Intern Evaluations</h1>
+        <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1">Company: {companyName}</p>
+        <p className="text-blue-100 text-xs sm:text-sm lg:text-base">
           Evaluate and track intern performance - Rate skills and provide
           feedback
         </p>
         </div>
 
         {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Total Interns */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Total Interns
-                </p>
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+          {/* Mobile Layout */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Total Interns
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                {stats.totalInterns}
+              </p>
+              <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                Total interns
+              </span>
+            </div>
+            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
               <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {stats.totalInterns}
-                </p>
-          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
-            Total interns
-          </span>
+          {/* Desktop Layout */}
+          <div className="hidden md:block">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Total Interns
+              </p>
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
+                <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
-
-        {/* Pending Evaluation */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Pending Evaluation
-            </p>
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
-          </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {stats.pendingEvaluations}
-                </p>
-          <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
-            {stats.pendingEvaluations} pending
-          </span>
-          </div>
-
-        {/* Avg Rating */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-start justify-between mb-3">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Avg Rating
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {stats.totalInterns}
             </p>
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {stats.avgRating}
-                </p>
-          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-            Average score
-          </span>
+            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+              Total interns
+            </span>
           </div>
         </div>
 
+        {/* Pending Evaluation */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+          {/* Mobile Layout */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Pending Evaluation
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                {stats.pendingEvaluations}
+              </p>
+              <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">
+                {stats.pendingEvaluations} pending
+              </span>
+            </div>
+            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center flex-shrink-0 ml-3">
+              <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
+          </div>
+          {/* Desktop Layout */}
+          <div className="hidden md:block">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Pending Evaluation
+              </p>
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {stats.pendingEvaluations}
+            </p>
+            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+              {stats.pendingEvaluations} pending
+            </span>
+          </div>
+        </div>
+
+        {/* Avg Rating */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+          {/* Mobile Layout */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Avg Rating
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
+                {stats.avgRating}
+              </p>
+              <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                Average score
+              </span>
+            </div>
+            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          {/* Desktop Layout */}
+          <div className="hidden md:block">
+            <div className="flex items-start justify-between mb-2 sm:mb-3">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Avg Rating
+              </p>
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {stats.avgRating}
+            </p>
+            <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+              Average score
+            </span>
+          </div>
+        </div>
+      </div>
+
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 placeholder="Search interns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
               />
             </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
@@ -572,74 +632,76 @@ const SupervisorEvaluation = () => {
           </div>
         </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
         Showing {filteredInterns.length} of {interns.length} interns
       </p>
 
       {/* Interns Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 {filteredInterns.map((intern) => (
                   <div
                     key={intern.id}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
+                      <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                   {intern.name
                     .split(" ")
                     .map((n) => n[0])
                     .join("")
                     .substring(0, 2)}
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
                             {intern.name}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                     {intern.studentNumber}
                           </p>
-                  <p className="text-xs text-gray-500">{intern.program}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{intern.program}</p>
                         </div>
                       </div>
-              {getStatusBadge(intern)}
+              <div className="flex-shrink-0 ml-2">
+                {getStatusBadge(intern)}
+              </div>
                     </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
                   Hours
                 </p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                   {intern.completedHours}/{intern.totalHours}
                         </p>
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
                           Attendance
                         </p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                           {intern.attendanceRate}%
                         </p>
                       </div>
                     </div>
 
                     {intern.lastEvaluation && (
-              <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md sm:rounded-lg">
                         <div className="flex items-center justify-between">
                           <div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
                               Last Evaluation
                             </p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       {new Date(
                         intern.lastEvaluation.date
                       ).toLocaleDateString()}
                             </p>
                           </div>
                   <div className="flex items-center space-x-1">
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
+                    <span className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
                       {intern.lastEvaluation.overallRating.toFixed(1)}
                               </span>
                           </div>
@@ -649,9 +711,9 @@ const SupervisorEvaluation = () => {
 
                           <button
               onClick={() => handleStartEvaluation(intern)}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
                         >
-                          <Award className="w-4 h-4" />
+                          <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>
                 {intern.lastEvaluation ? "Re-evaluate" : "Evaluate Now"}
               </span>
@@ -661,9 +723,9 @@ const SupervisorEvaluation = () => {
                   </div>
 
                 {filteredInterns.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-          <Award className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">No interns found</p>
+        <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
+          <Award className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No interns found</p>
                   </div>
                 )}
 

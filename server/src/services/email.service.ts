@@ -260,7 +260,7 @@ class EmailService {
     }
   }
 
-  private generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
+  public generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
     const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
     const logoUrl = `${clientUrl}/logo_intrak.png`;
     

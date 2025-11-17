@@ -226,53 +226,53 @@ const SupervisorSettings = () => {
     "Company";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
-        <h1 className="text-3xl font-bold mb-2">Account Settings</h1>
-        <p className="text-blue-100 text-lg mb-1">Company: {companyName}</p>
-        <p className="text-blue-100">
+      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5 sm:mb-2">Account Settings</h1>
+        <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1">Company: {companyName}</p>
+        <p className="text-blue-100 text-xs sm:text-sm lg:text-base">
           Manage your account settings and preferences - Update profile and
           security
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-            <nav className="space-y-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+            <nav className="space-y-1.5 sm:space-y-2">
               <button
                 onClick={() => setActiveTab("profile")}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
                   activeTab === "profile"
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                    ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                <User className="w-5 h-5" />
+                <User className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Profile</span>
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
                   activeTab === "security"
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                    ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                <Lock className="w-5 h-5" />
+                <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Security</span>
               </button>
               <button
                 onClick={() => setActiveTab("notifications")}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
                   activeTab === "notifications"
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                    ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Notifications</span>
               </button>
             </nav>
@@ -281,18 +281,18 @@ const SupervisorSettings = () => {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm">
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <div className="space-y-4 sm:space-y-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                   Profile Information
                 </h2>
 
                 {/* Profile Photo */}
-                <div className="flex items-center space-x-6">
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                       {profilePhoto ? (
                         <img
                           src={profilePhoto}
@@ -300,7 +300,7 @@ const SupervisorSettings = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-white text-3xl font-semibold">
+                        <span className="text-white text-xl sm:text-2xl lg:text-3xl font-semibold">
                           {profileData.name
                             .split(" ")
                             .map((n) => n[0])
@@ -311,17 +311,17 @@ const SupervisorSettings = () => {
                     </div>
                     {uploadingPhoto && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-white animate-spin" />
+                        <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-white animate-spin" />
                       </div>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
                       Profile Photo
                     </h3>
-                    <div className="flex space-x-2">
-                      <label className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer transition-colors">
-                        <Camera className="w-4 h-4 inline mr-2" />
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <label className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 cursor-pointer transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start">
+                        <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1.5 sm:mr-2" />
                         Upload Photo
                         <input
                           type="file"
@@ -334,9 +334,9 @@ const SupervisorSettings = () => {
                       {profilePhoto && (
                         <button
                           onClick={handleDeletePhoto}
-                          className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          className="px-3 sm:px-4 py-1.5 sm:py-2 border border-red-300 text-red-600 rounded-md sm:rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start"
                         >
-                          <X className="w-4 h-4 inline mr-2" />
+                          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1.5 sm:mr-2" />
                           Remove
                         </button>
                       )}
@@ -345,13 +345,13 @@ const SupervisorSettings = () => {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Full Name
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <User className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                       <input
                         type="text"
                         value={profileData.name}
@@ -361,17 +361,17 @@ const SupervisorSettings = () => {
                             name: e.target.value,
                           })
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Email
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Mail className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                       <input
                         type="email"
                         value={profileData.email}
@@ -381,17 +381,17 @@ const SupervisorSettings = () => {
                             email: e.target.value,
                           })
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Phone
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Phone className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                       <input
                         type="tel"
                         value={profileData.phone}
@@ -401,17 +401,17 @@ const SupervisorSettings = () => {
                             phone: e.target.value,
                           })
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Company
                     </label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Building2 className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                       <input
                         type="text"
                         value={profileData.company}
@@ -421,7 +421,7 @@ const SupervisorSettings = () => {
                             company: e.target.value,
                           })
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         disabled
                       />
                     </div>
@@ -429,11 +429,11 @@ const SupervisorSettings = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                     Address
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
+                    <MapPin className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                     <textarea
                       value={profileData.address}
                       onChange={(e) =>
@@ -443,7 +443,7 @@ const SupervisorSettings = () => {
                         })
                       }
                       rows={3}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
                 </div>
@@ -452,16 +452,16 @@ const SupervisorSettings = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    className="flex items-center space-x-1.5 sm:space-x-2 px-4 sm:px-6 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 font-medium w-full sm:w-auto justify-center sm:justify-start"
                   >
                     {saving ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                         <span>Saving...</span>
                       </>
                     ) : (
                       <>
-                        <Save className="w-5 h-5" />
+                        <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span>Save Changes</span>
                       </>
                     )}

@@ -793,17 +793,36 @@ export const createSupervisorAccount = async (req: AuthRequest, res: Response) =
     try {
       if (created && temporaryPassword) {
         const subject = `INTRAK: Supervisor Account Created for ${companyName}`;
-        const html = `
-          <h1>Welcome to INTRAK${contactPerson ? `, ${contactPerson}` : ""}!</h1>
-          <p>Your supervisor account for <strong>${companyName}</strong> has been created.</p>
-          <h2>Account Credentials</h2>
-          <p><strong>Email:</strong> ${supervisorUser.email}</p>
-          <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
-          <p class="text-sm"><em>Please change this password immediately after your first login.</em></p>
-          <p>You can sign in using the button below:</p>
-          <p><a href="${loginUrl}" target="_blank" rel="noopener" style="display:inline-block;padding:10px 16px;background-color:#6b21a8;color:#ffffff;border-radius:6px;text-decoration:none;font-weight:bold;">Login to INTRAK</a></p>
-          <p>If you did not expect this account, please contact the coordinator right away.</p>
-        `;
+        
+        const content = `
+      <p>Hello ${supervisorDisplayName}!</p>
+      <p>Your Supervisor account has been successfully created in the INTRAK OJT Management System.</p>
+      
+      <div class="credentials-box">
+        <p><strong>Account Credentials:</strong></p>
+      <p><strong>Email:</strong> ${supervisorUser.email}</p>
+      <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+      <p><strong>Role:</strong> Supervisor</p>
+      <p><strong>Company:</strong> ${companyName}</p>
+      </div>
+
+      <p><strong>Important:</strong> This is a temporary password that you must change on your first login for security purposes.</p>
+      
+      <a href="${loginUrl}" class="login-button">Login to INTRAK</a>
+      
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${loginUrl}</span></p>
+      
+      <p>If you have any questions or need assistance, please contact your system administrator.</p>
+      
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+        const html = emailService.generateEmailTemplate(
+          content,
+          'Welcome to INTRAK',
+          'https://img.icons8.com/ios-filled/50/ffffff/user-male-circle.png'
+        );
         const text = `Supervisor Account Created
 
 Your supervisor account for ${companyName} has been created.
@@ -829,26 +848,38 @@ Please change this password immediately after your first login. If you did not e
           : `Supervisor account created, but failed to send credentials email to ${supervisorUser.email}. ${emailResult.error || ''}`;
       } else {
         const subject = `INTRAK: Supervisor Account Linked to ${companyName}`;
-        const html = `
-          <h1>Supervisor Account Linked</h1>
-          <p>Hello ${supervisorDisplayName},</p>
-          <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong> in the INTRAK system.</p>
-          <p>
-            ${temporaryPassword
-              ? `Use the temporary password below to sign in. Please change it immediately after logging in.`
-              : `You can sign in using your existing INTRAK credentials.`}
-          </p>
-          <p><a href="${loginUrl}" target="_blank" rel="noopener">Login to INTRAK</a></p>
-          ${
-            temporaryPassword
-              ? `<div style="margin-top:16px;padding:12px;border-radius:8px;background:#f3e8ff;color:#5b21b6;font-weight:600;">
-                  Temporary Password: ${temporaryPassword}
-                 </div>
-                 <p style="font-size:12px;color:#6b7280;">For security, update this password after your first login.</p>`
-              : ''
-          }
-          <p>If you did not expect this change, please contact the coordinator immediately.</p>
-        `;
+        
+        const content = `
+      <p>Hello ${supervisorDisplayName}!</p>
+      <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong> in the INTRAK system.</p>
+      ${
+        temporaryPassword
+          ? `<div class="credentials-box">
+              <p><strong>Account Credentials:</strong></p>
+              <p><strong>Email:</strong> ${supervisorUser.email}</p>
+              <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
+              <p><strong>Role:</strong> Supervisor</p>
+              <p><strong>Company:</strong> ${companyName}</p>
+            </div>
+            <p><strong>Important:</strong> This is a temporary password that you must change on your first login for security purposes.</p>`
+          : `<p>You can sign in using your existing INTRAK credentials.</p>`
+      }
+      
+      <a href="${loginUrl}" class="login-button">Login to INTRAK</a>
+      
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${loginUrl}</span></p>
+      
+      <p>If you did not expect this change, please contact the coordinator immediately.</p>
+      
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+        const html = emailService.generateEmailTemplate(
+          content,
+          'Supervisor Account Linked',
+          'https://img.icons8.com/ios-filled/50/ffffff/user-male-circle.png'
+        );
         const text = `Supervisor Account Linked
  
  Your email ${supervisorUser.email} is now linked as the supervisor for ${companyName}.
