@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import {
   MessageSquare,
   Send,
-  User,
-  AlertCircle,
   ChevronDown,
 } from "lucide-react";
 import api from "../services/api";
@@ -38,7 +36,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (studentId) {
