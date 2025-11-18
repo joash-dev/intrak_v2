@@ -90,7 +90,7 @@ const AdminUserManagement = () => {
     email: "",
     role: "STUDENT",
     studentNumber: "",
-    program: "",
+    program: "Computer Engineering",
     year: "",
     company: "",
     department: "",
@@ -177,7 +177,7 @@ const AdminUserManagement = () => {
       email: "",
       role: "STUDENT",
       studentNumber: "",
-      program: "",
+      program: "Computer Engineering",
       year: "",
       company: "",
       department: "",
@@ -364,7 +364,7 @@ const AdminUserManagement = () => {
       email: user.email,
       role: user.role,
       studentNumber: user.student?.studentNumber || "",
-      program: user.student?.program || "",
+      program: user.role === "STUDENT" ? "Computer Engineering" : (user.student?.program || ""),
       year: user.student?.year?.toString() || "",
       company: user.student?.company?.name || "",
       department: "",
@@ -770,9 +770,15 @@ const AdminUserManagement = () => {
                 </label>
                 <select
                   value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const newRole = e.target.value;
+                    setFormData({ 
+                      ...formData, 
+                      role: newRole,
+                      // Auto-set program to Computer Engineering when role is STUDENT
+                      program: newRole === "STUDENT" ? "Computer Engineering" : formData.program
+                    });
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="STUDENT">Student</option>
@@ -828,30 +834,16 @@ const AdminUserManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Program *
                     </label>
-                    <input
-                      type="text"
-                      value={formData.program}
+                    <select
+                      value={formData.program || "Computer Engineering"}
                       onChange={(e) =>
                         setFormData({ ...formData, program: e.target.value })
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="e.g., Computer Engineering, Information Technology"
-                      title="Enter the academic program name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Company
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.company}
-                      onChange={(e) =>
-                        setFormData({ ...formData, company: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="Optional"
-                    />
+                      disabled
+                    >
+                      <option value="Computer Engineering">Computer Engineering</option>
+                    </select>
                   </div>
                 </>
               )}

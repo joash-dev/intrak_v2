@@ -260,3 +260,60 @@ body.modal-open {
   background-color: rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(2px) !important;
 }
+
+/* Auto-hiding scrollbar styles */
+.scrollbar-hidden {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: #6366f1 transparent;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #6366f1;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
+}
+
+/* Dark mode scrollbar */
+.dark .scrollbar-visible {
+  scrollbar-color: #818cf8 transparent;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #818cf8;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}

@@ -154,6 +154,7 @@ model User {
   feedbackAuthored   DocumentFeedback[] @relation("DocumentFeedbackAuthor")
   notifications      Notification[]     @relation("UserNotifications")
   companiesSupervised Company[]         @relation("CompanySupervisor")
+  partnershipMessagesSent PartnershipMessage[] @relation("PartnershipMessageSender")
 
   @@map("users")
 }
@@ -195,6 +196,7 @@ model Student {
   attendanceLogs AttendanceLog[]
   evaluations   Evaluation[]
   applications  CompanyApplication[]
+  partnershipMessages PartnershipMessage[] @relation("PartnershipMessages")
 
   @@map("students")
 }
@@ -478,4 +480,18 @@ model Activity {
   createdAt   DateTime     @default(now())
 
   @@map("activities")
+}
+
+model PartnershipMessage {
+  id        String   @id @default(uuid())
+  studentId String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  student Student @relation("PartnershipMessages", fields: [studentId], references: [id], onDelete: Cascade)
+  sender  User    @relation("PartnershipMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("partnership_messages")
 }

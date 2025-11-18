@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Download,
   Loader2,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StudentDocumentsTab from "./StudentDocumentsTab";
@@ -28,6 +29,7 @@ import StudentAttendanceTab from "./StudentAttendance";
 import StudentEvaluationsTab from "./StudentEvaluation";
 import StudentReportsTab from "./StudentReport";
 import StudentCompanySelection from "./StudentCompanySelection";
+import StudentCompanyPartnershipAssistance from "./StudentCompanyPartnershipAssistance";
 import Setting from "./Settings";
 import { dashboardService } from "../../services/dashboardService";
 import type { DashboardData } from "../../services/dashboardService";
@@ -989,6 +991,7 @@ const StudentDashboard = () => {
     { id: "documents", label: "Documents", icon: FileText },
     { id: "templates", label: "Templates", icon: Download },
     { id: "companies", label: "Companies", icon: Building2 },
+    { id: "partnership-assistance", label: "Find Company", icon: Search },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "evaluations", label: "Evaluations", icon: Star },
     { id: "reports", label: "Reports", icon: TrendingUp },
@@ -1015,6 +1018,8 @@ const StudentDashboard = () => {
         return (
           <StudentCompanySelection onCompanyUpdate={refreshDashboardData} />
         );
+      case "partnership-assistance":
+        return <StudentCompanyPartnershipAssistance />;
       case "attendance":
         return <StudentAttendanceTab />;
       case "evaluations":
@@ -1393,8 +1398,8 @@ const StudentDashboard = () => {
       {/* No Company Warning Modal */}
       {showNoCompanyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ margin: "0" }}>
-          <div className="bg-gradient-to-br from-white to-orange-50 dark:from-gray-800 dark:to-orange-900/20 rounded-2xl shadow-2xl max-w-lg w-full p-8 border-4 border-orange-400 dark:border-orange-600">
-            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mx-auto mb-6 shadow-lg animate-bounce">
+          <div className="bg-gradient-to-br from-white to-orange-50 dark:from-gray-800 dark:to-orange-900/20 rounded-2xl shadow-2xl max-w-lg w-full p-8 border border-orange-200 dark:border-orange-800">
+            <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl mx-auto mb-6 shadow-lg">
               <AlertTriangle className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-3">
@@ -1407,7 +1412,7 @@ const StudentDashboard = () => {
 
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg p-4 mb-6">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                <strong>📌 Note:</strong> Your application will be reviewed by
+                <strong>Note:</strong> Your application will be reviewed by
                 your instructor. Once approved, you'll be assigned to the
                 company automatically!
               </p>
@@ -1423,6 +1428,24 @@ const StudentDashboard = () => {
               >
                 <Building2 className="w-5 h-5 mr-2" />
                 Browse Companies & Apply Now
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setShowNoCompanyModal(false);
+                    await api.post('/students/request-company-partnership');
+                    toast.success('Request submitted! Your instructor and coordinator have been notified.', {
+                      duration: 5000,
+                    });
+                  } catch (error: any) {
+                    console.error('Error submitting request:', error);
+                    toast.error(error.response?.data?.message || 'Failed to submit request. Please try again.');
+                  }
+                }}
+                className="w-full inline-flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                I will find a Company
               </button>
               <button
                 onClick={() => setShowNoCompanyModal(false)}

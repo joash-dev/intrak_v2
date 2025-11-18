@@ -19,6 +19,7 @@ import {
   instructorService,
   type InstructorStudent,
 } from "../../services/instructorService";
+import PartnershipMessageThread from "../../components/PartnershipMessageThread";
 import toast from "react-hot-toast";
 
 // Utility function to format student ID
@@ -1623,6 +1624,17 @@ const InstructorStudentManagement: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Partnership Communication */}
+              {selectedStudent && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <PartnershipMessageThread
+                    studentId={selectedStudent.id}
+                    studentName={selectedStudent.name}
+                    currentUserRole="INSTRUCTOR"
+                  />
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">

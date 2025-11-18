@@ -1,7 +1,8 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
 
@@ -854,5 +855,389 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error applying to company:', error);
     res.status(500).json({ message: 'Failed to submit application', error });
+  }
+};
+
+// Request company partnership (student will find their own company)
+export const requestCompanyPartnership = async (req: AuthRequest, res: Response) => {
+  try {
+    // Get the student record
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: { 
+        user: { select: { name: true, email: true } },
+        instructor: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // Check if student already has a company assigned
+    if (student.companyId) {
+      return res.status(400).json({ 
+        message: 'Student already has a company assigned. Please contact your instructor to change companies.' 
+      });
+    }
+
+    // Get all coordinators
+    const coordinators = await prisma.user.findMany({
+      where: { 
+        role: 'COORDINATOR',
+        active: true
+      },
+      select: { id: true, name: true, email: true }
+    });
+
+    // Create notifications for instructor and coordinators
+    const notifications: Array<{ userId: string; title: string; message: string; link: string | null; type: NotificationType }> = [];
+
+    // Notify instructor if assigned
+    if (student.instructorId && student.instructor) {
+      notifications.push({
+        userId: student.instructorId,
+        title: 'Student Company Partnership Request',
+        message: `${student.user.name} (${student.studentNumber}) wants to find their own company and process the MOA. Please review and assist with the partnership setup.`,
+        link: `/instructor/students`,
+        type: NotificationType.SYSTEM
+      });
+    }
+
+    // Notify all coordinators
+    coordinators.forEach(coordinator => {
+      notifications.push({
+        userId: coordinator.id,
+        title: 'Student Company Partnership Request',
+        message: `${student.user.name} (${student.studentNumber}) wants to find their own company and process the MOA. Please review and assist with the partnership setup.`,
+        link: `/coordinator/students`,
+        type: NotificationType.SYSTEM
+      });
+    });
+
+    // Create all notifications
+    if (notifications.length > 0) {
+      await Promise.all(
+        notifications.map(notification => 
+          notificationService.createNotification(notification)
+        )
+      );
+    }
+
+    // Log the request for audit purposes
+    await auditLog(req.user!.id, 'STUDENT_COMPANY_PARTNERSHIP_REQUEST', {
+      studentId: student.id,
+      studentName: student.user.name,
+      studentNumber: student.studentNumber,
+      instructorId: student.instructorId,
+      coordinatorCount: coordinators.length
+    }, req);
+
+    res.json({
+      message: 'Company partnership request submitted successfully. Your instructor and coordinator have been notified.',
+      notified: {
+        instructor: student.instructor ? true : false,
+        coordinators: coordinators.length
+      }
+    });
+  } catch (error) {
+    console.error('Error requesting company partnership:', error);
+    res.status(500).json({ message: 'Failed to submit company partnership request', error });
+  }
+};
+
+// Get partnership messages
+export const getPartnershipMessages = async (req: AuthRequest, res: Response) => {
+  try {
+    let studentId: string;
+    let student: any;
+
+    // If user is student, get their own student record
+    if (req.user!.role === 'STUDENT') {
+      const studentRecord = await prisma.student.findUnique({
+        where: { userId: req.user!.id },
+        include: {
+          instructor: { select: { id: true } }
+        }
+      });
+
+      if (!studentRecord) {
+        return res.status(404).json({ message: 'Student record not found' });
+      }
+      student = studentRecord;
+      studentId = studentRecord.id;
+    } else {
+      // If instructor/coordinator, they can view messages for a specific student
+      const { studentId: requestedStudentId } = req.query;
+      if (!requestedStudentId || typeof requestedStudentId !== 'string') {
+        return res.status(400).json({ message: 'Student ID is required' });
+      }
+      
+      // Get student record with instructor info for security check
+      const studentRecord = await prisma.student.findUnique({
+        where: { id: requestedStudentId },
+        include: {
+          instructor: { select: { id: true } },
+          user: { select: { id: true } }
+        }
+      });
+
+      if (!studentRecord) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // SECURITY CHECK: Verify user has access to this student's messages
+      // Only the student, their assigned instructor, or coordinators can access
+      const hasAccess = 
+        req.user!.role === 'COORDINATOR' || // Coordinators can access all students
+        (req.user!.role === 'INSTRUCTOR' && studentRecord.instructorId === req.user!.id); // Instructors can only access their assigned students
+
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          message: 'Access denied. You do not have permission to view messages for this student.' 
+        });
+      }
+
+      student = studentRecord;
+      studentId = requestedStudentId;
+    }
+
+    // Get messages for this student
+    const messages = await prisma.partnershipMessage.findMany({
+      where: { studentId },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            role: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // Format messages for frontend
+    const formattedMessages = messages.map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      senderId: msg.senderId,
+      senderName: msg.sender.name,
+      senderRole: msg.sender.role,
+      createdAt: msg.createdAt.toISOString()
+    }));
+
+    res.json({ messages: formattedMessages });
+  } catch (error: any) {
+    console.error('Error fetching partnership messages:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch messages', 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
+  }
+};
+
+// Send partnership message
+export const sendPartnershipMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const { content, studentId: targetStudentId } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: 'Message content is required' });
+    }
+
+    let studentId: string;
+    let student: any;
+
+    // If user is student, get their own student record
+    if (req.user!.role === 'STUDENT') {
+      const studentRecord = await prisma.student.findUnique({
+        where: { userId: req.user!.id },
+        include: { 
+          user: { select: { id: true, name: true, role: true } },
+          instructor: { select: { id: true, name: true } }
+        }
+      });
+
+      if (!studentRecord) {
+        return res.status(404).json({ message: 'Student record not found' });
+      }
+      student = studentRecord;
+      studentId = studentRecord.id;
+    } else {
+      // If instructor/coordinator, they can send messages to a specific student
+      if (!targetStudentId) {
+        return res.status(400).json({ message: 'Student ID is required' });
+      }
+      const studentRecord = await prisma.student.findUnique({
+        where: { id: targetStudentId },
+        include: { 
+          user: { select: { id: true, name: true, role: true } },
+          instructor: { select: { id: true, name: true } }
+        }
+      });
+
+      if (!studentRecord) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // SECURITY CHECK: Verify user has permission to send messages to this student
+      // Only the student, their assigned instructor, or coordinators can send messages
+      const hasPermission = 
+        req.user!.role === 'COORDINATOR' || // Coordinators can message any student
+        (req.user!.role === 'INSTRUCTOR' && studentRecord.instructorId === req.user!.id); // Instructors can only message their assigned students
+
+      if (!hasPermission) {
+        return res.status(403).json({ 
+          message: 'Access denied. You do not have permission to send messages to this student.' 
+        });
+      }
+
+      student = studentRecord;
+      studentId = targetStudentId;
+    }
+
+    // Create the message in database
+    const message = await prisma.partnershipMessage.create({
+      data: {
+        studentId,
+        senderId: req.user!.id,
+        content: content.trim()
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+
+    // Create notifications for relevant parties
+    const notifications: Array<{ userId: string; title: string; message: string; link: string | null; type: NotificationType }> = [];
+
+    if (req.user!.role === 'STUDENT') {
+      // Student sent message - notify instructor and coordinators
+      if (student.instructorId) {
+        notifications.push({
+          userId: student.instructorId,
+          title: 'New Message from Student',
+          message: `${student.user.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
+          link: `/instructor/students?studentId=${studentId}`,
+          type: NotificationType.SYSTEM
+        });
+      }
+
+      const coordinators = await prisma.user.findMany({
+        where: { role: 'COORDINATOR', active: true },
+        select: { id: true }
+      });
+
+      coordinators.forEach(coordinator => {
+        notifications.push({
+          userId: coordinator.id,
+          title: 'New Message from Student',
+          message: `${student.user.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
+          link: `/coordinator/students?studentId=${studentId}`,
+          type: NotificationType.SYSTEM
+        });
+      });
+    } else {
+      // Instructor/Coordinator sent message - notify student
+      notifications.push({
+        userId: student.userId,
+        title: 'New Message from ' + (req.user!.role === 'INSTRUCTOR' ? 'Instructor' : 'Coordinator'),
+        message: `${req.user!.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
+        link: `/student/dashboard?tab=partnership-assistance`,
+        type: NotificationType.SYSTEM
+      });
+    }
+
+    if (notifications.length > 0) {
+      await Promise.all(
+        notifications.map(notification => 
+          notificationService.createNotification(notification)
+        )
+      );
+    }
+
+    // Return formatted message
+    res.json({
+      message: {
+        id: message.id,
+        content: message.content,
+        senderId: message.senderId,
+        senderName: message.sender.name,
+        senderRole: message.sender.role,
+        createdAt: message.createdAt.toISOString()
+      }
+    });
+  } catch (error: any) {
+    console.error('Error sending partnership message:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+    res.status(500).json({ 
+      message: 'Failed to send message', 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details: process.env.NODE_ENV === 'development' ? {
+        code: error.code,
+        meta: error.meta
+      } : undefined
+    });
+  }
+};
+
+// Get partnership checklist
+export const getPartnershipChecklist = async (req: AuthRequest, res: Response) => {
+  try {
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // For now, return default checklist - can be extended to store in database
+    const defaultChecklist = [
+      { id: '1', name: 'Resume/CV', description: 'Updated resume highlighting your skills and experience', required: true, completed: false },
+      { id: '2', name: 'Cover Letter', description: 'Personalized cover letter for the company', required: true, completed: false },
+      { id: '3', name: 'Transcript of Records', description: 'Official transcript from the university', required: true, completed: false },
+      { id: '4', name: 'Recommendation Letter', description: 'Letter of recommendation from a professor or advisor', required: false, completed: false },
+      { id: '5', name: 'Portfolio/Projects', description: 'Portfolio showcasing your work and projects', required: false, completed: false },
+      { id: '6', name: 'MOA Template', description: 'Memorandum of Agreement template from the university', required: true, completed: false },
+    ];
+
+    res.json({ checklist: defaultChecklist });
+  } catch (error) {
+    console.error('Error fetching partnership checklist:', error);
+    res.status(500).json({ message: 'Failed to fetch checklist', error });
+  }
+};
+
+// Update partnership checklist
+export const updatePartnershipChecklist = async (req: AuthRequest, res: Response) => {
+  try {
+    const { checklist } = req.body;
+
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // For now, just return success - can be extended to store in database
+    // This could be stored in a JSON field or a separate checklist table
+    res.json({ message: 'Checklist updated successfully', checklist });
+  } catch (error) {
+    console.error('Error updating partnership checklist:', error);
+    res.status(500).json({ message: 'Failed to update checklist', error });
   }
 };
