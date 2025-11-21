@@ -12,8 +12,8 @@ const prisma = new PrismaClient();
 const templateName = '17 INTERNSHIP WEEKLY REPORT_2024.docx';
 const srcTemplatePath = path.resolve(process.cwd(), 'server', 'src', 'templates', templateName);
 const distTemplatePath = path.resolve(__dirname, '../templates', templateName);
-const WEEKLY_REPORT_TEMPLATE_FILE = fs.existsSync(srcTemplatePath) 
-  ? srcTemplatePath 
+const WEEKLY_REPORT_TEMPLATE_FILE = fs.existsSync(srcTemplatePath)
+  ? srcTemplatePath
   : distTemplatePath;
 
 interface WeekData {
@@ -27,7 +27,7 @@ interface WeekData {
 export const getWeeklyReport = async (req: AuthRequest, res: Response) => {
   try {
     const student = await prisma.student.findUnique({
-      where: { userId: req.user.id },
+      where: { userId: req.user!.id },
       include: {
         user: { select: { name: true, email: true } },
         instructor: { select: { name: true } },
@@ -47,7 +47,7 @@ export const getWeeklyReport = async (req: AuthRequest, res: Response) => {
       select: { weeklyReportData: true },
     });
 
-    const weeks: WeekData[] = weeklyReport?.weeklyReportData 
+    const weeks: WeekData[] = weeklyReport?.weeklyReportData
       ? (weeklyReport.weeklyReportData as any).weeks || []
       : [];
 
@@ -82,7 +82,7 @@ export const saveWeeklyReport = async (req: AuthRequest, res: Response) => {
     }
 
     const student = await prisma.student.findUnique({
-      where: { userId: req.user.id },
+      where: { userId: req.user!.id },
     });
 
     if (!student) {
@@ -108,7 +108,7 @@ export const saveWeeklyReport = async (req: AuthRequest, res: Response) => {
 export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
   try {
     const student = await prisma.student.findUnique({
-      where: { userId: req.user.id },
+      where: { userId: req.user!.id },
       include: {
         user: { select: { name: true, email: true } },
         instructor: { select: { name: true } },
@@ -126,7 +126,7 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
       select: { weeklyReportData: true },
     });
 
-    const weeks: WeekData[] = weeklyReport?.weeklyReportData 
+    const weeks: WeekData[] = weeklyReport?.weeklyReportData
       ? (weeklyReport.weeklyReportData as any).weeks || []
       : [];
 
@@ -136,7 +136,7 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
 
     // Check if template exists
     if (!fs.existsSync(WEEKLY_REPORT_TEMPLATE_FILE)) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: 'Weekly report template not found',
         details: { templatePath: WEEKLY_REPORT_TEMPLATE_FILE }
       });
@@ -145,7 +145,7 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
     // Load template
     const templateBuffer = fs.readFileSync(WEEKLY_REPORT_TEMPLATE_FILE);
     const zip = new PizZip(templateBuffer);
-    
+
     let doc: Docxtemplater;
     try {
       doc = new Docxtemplater(zip, {
@@ -219,7 +219,7 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
     const buffer = doc.getZip().generate({
       type: 'nodebuffer',
       compression: 'DEFLATE',
-    });
+    } as any);
 
     // Set response headers
     res.setHeader(

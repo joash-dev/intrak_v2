@@ -10,8 +10,11 @@ interface WeekData {
   knowledgeSkillsValues: string;
 }
 
-interface WeeklyReportData {
-  weeks: WeekData[];
+interface WeekData {
+  weekNumber: number;
+  dateRange: string;
+  tasksAccomplished: string;
+  knowledgeSkillsValues: string;
 }
 
 const StudentWeeklyReport: React.FC = () => {
@@ -19,13 +22,13 @@ const StudentWeeklyReport: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [studentInfo, setStudentInfo] = useState<any>(null);
 
   // Initialize 7 weeks
   useEffect(() => {
     initializeWeeks();
     loadWeeklyReport();
-    loadStudentInfo();
+    initializeWeeks();
+    loadWeeklyReport();
   }, []);
 
   const initializeWeeks = () => {
@@ -41,14 +44,7 @@ const StudentWeeklyReport: React.FC = () => {
     setWeeks(initialWeeks);
   };
 
-  const loadStudentInfo = async () => {
-    try {
-      const response = await api.get("/students/profile");
-      setStudentInfo(response.data);
-    } catch (error) {
-      console.error("Error loading student info:", error);
-    }
-  };
+
 
   const loadWeeklyReport = async () => {
     try {
@@ -110,8 +106,8 @@ const StudentWeeklyReport: React.FC = () => {
         const errorData = JSON.parse(text);
         throw new Error(
           errorData.message ||
-            errorData.details?.message ||
-            "Failed to export weekly report"
+          errorData.details?.message ||
+          "Failed to export weekly report"
         );
       }
 

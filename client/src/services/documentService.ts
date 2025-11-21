@@ -10,12 +10,20 @@ export interface Document {
   remarks: string | null;
   fileSize?: string;
   fileSizeMB?: string;
+  mimeType?: string;
 }
 
 export interface UploadDocumentRequest {
   file: File;
   type: string;
   studentId?: string;
+}
+
+export interface WeekData {
+  weekNumber: number;
+  dateRange: string;
+  tasksAccomplished: string;
+  knowledgeSkillsValues: string;
 }
 
 export interface DocumentStats {
@@ -135,7 +143,7 @@ class DocumentService {
         rejected: 0,
       };
     }
-    
+
     return {
       total: documents.length,
       approved: documents.filter(d => d.status === 'APPROVED').length,

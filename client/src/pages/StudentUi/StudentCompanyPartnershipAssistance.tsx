@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Circle,
   MessageSquare,
   Send,
   CheckCircle2,
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 import api from "../../services/api";
 import { documentService } from "../../services/documentService";
-import type { Document } from "../../services/documentService";
+import type { Document as AppDocument } from "../../services/documentService";
 import toast from "react-hot-toast";
 
 interface PartnershipMessage {
@@ -35,7 +34,7 @@ interface PartnershipDocument {
   formNumber: string;
   description: string;
   required: boolean;
-  document?: Document | null;
+  document?: AppDocument | null;
   uploading?: boolean;
 }
 
@@ -111,13 +110,13 @@ const StudentCompanyPartnershipAssistance = () => {
       required: true,
     },
   ]);
-  
-  const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+
+  const [previewDoc, setPreviewDoc] = useState<AppDocument | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
-    
+
     // Set up polling for real-time updates (poll every 3 seconds)
     const pollInterval = setInterval(() => {
       loadMessages(false); // Don't show loading state on polling
@@ -142,10 +141,10 @@ const StudentCompanyPartnershipAssistance = () => {
   // Check scroll position when messages change
   useEffect(() => {
     // Check if user sent a new message (message count increased and last message is from student)
-    const userSentMessage = messages.length > lastMessageCount && 
-      messages.length > 0 && 
+    const userSentMessage = messages.length > lastMessageCount &&
+      messages.length > 0 &&
       messages[messages.length - 1].senderRole === "STUDENT";
-    
+
     if (userSentMessage) {
       // User sent a message - auto scroll to bottom
       scrollToBottom();
@@ -156,7 +155,7 @@ const StudentCompanyPartnershipAssistance = () => {
         checkIfAtBottom();
       }, 100);
     }
-    
+
     setLastMessageCount(messages.length);
   }, [messages, lastMessageCount]);
 
@@ -168,12 +167,12 @@ const StudentCompanyPartnershipAssistance = () => {
     const handleScroll = () => {
       setIsScrolling(true);
       checkIfAtBottom();
-      
+
       // Clear existing timeout
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
-      
+
       // Hide scrollbar after 1 second of no scrolling
       scrollTimeoutRef.current = setTimeout(() => {
         setIsScrolling(false);
@@ -230,7 +229,7 @@ const StudentCompanyPartnershipAssistance = () => {
     try {
       // Get all student documents
       const documents = await documentService.getStudentDocuments();
-      
+
       // Map documents to pre-deployment document types (only show documents uploaded in Documents tab)
       setPreDeploymentDocuments(prev => prev.map(doc => {
         const uploadedDoc = documents.find(d => d.type === doc.type);
@@ -244,7 +243,7 @@ const StudentCompanyPartnershipAssistance = () => {
     }
   };
 
-  const handlePreview = async (document: Document) => {
+  const handlePreview = async (document: AppDocument) => {
     try {
       setPreviewDoc(document);
       const blob = await documentService.downloadDocument(document.id);
@@ -256,16 +255,16 @@ const StudentCompanyPartnershipAssistance = () => {
     }
   };
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (document: AppDocument) => {
     try {
       const blob = await documentService.downloadDocument(document.id);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = window.document.createElement("a");
       a.href = url;
       a.download = document.filename;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       toast.success("Document downloaded");
     } catch (error: any) {
@@ -281,23 +280,23 @@ const StudentCompanyPartnershipAssistance = () => {
       }
       const messagesResponse = await api.get("/students/partnership-messages");
       const newMessages = messagesResponse.data.messages || [];
-      
+
       // Update messages - React will handle re-rendering only if changed
-      const hasNewMessages = messages.length !== newMessages.length || 
+      const hasNewMessages = messages.length !== newMessages.length ||
         messages.some((msg, idx) => !newMessages[idx] || msg.id !== newMessages[idx].id);
-      
+
       setMessages(prevMessages => {
         // Only update if the message count or IDs have changed
         if (prevMessages.length !== newMessages.length) {
           return newMessages;
         }
         // Check if any message IDs are different
-        const hasChanges = prevMessages.some((msg, idx) => 
+        const hasChanges = prevMessages.some((msg, idx) =>
           !newMessages[idx] || msg.id !== newMessages[idx].id
         );
         return hasChanges ? newMessages : prevMessages;
       });
-      
+
       // Check scroll position after messages update (if there were changes)
       if (hasNewMessages) {
         setTimeout(() => {
@@ -335,12 +334,12 @@ const StudentCompanyPartnershipAssistance = () => {
       setMessages(updatedMessages);
       setNewMessage("");
       toast.success("Message sent successfully");
-      
+
       // Auto-scroll to bottom when user sends a message
       setTimeout(() => {
         scrollToBottom();
       }, 100);
-      
+
       // Reload messages to get the latest from server (in case of any sync issues)
       setTimeout(() => {
         loadMessages(false);
@@ -365,9 +364,9 @@ const StudentCompanyPartnershipAssistance = () => {
     if (!container) return;
 
     const threshold = 100; // 100px threshold
-    const isAtBottom = 
+    const isAtBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-    
+
     setShowScrollToBottom(!isAtBottom && messages.length > 0);
   };
 
@@ -437,119 +436,116 @@ const StudentCompanyPartnershipAssistance = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col p-6 flex-1 min-h-0">
 
-            {/* Messages */}
-            <div className="relative mb-4" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
-              <div 
-                ref={messagesContainerRef}
-                className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${
-                  isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
-                }`}
-              >
-                {messages.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No messages yet</p>
-                    <p className="text-xs mt-1">Start a conversation with your instructor or coordinator</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3 py-2">
-                      {messages.map((message) => {
-                        const isStudent = message.senderRole === "STUDENT";
-                        return (
-                          <div
-                            key={message.id}
-                            className={`flex flex-col ${isStudent ? "items-end" : "items-start"}`}
-                          >
-                            <div className={`flex items-start space-x-2 max-w-[85%] ${isStudent ? "flex-row-reverse space-x-reverse" : ""}`}>
-                              {/* Avatar */}
-                              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                                message.senderRole === "STUDENT"
+              {/* Messages */}
+              <div className="relative mb-4" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
+                <div
+                  ref={messagesContainerRef}
+                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
+                    }`}
+                >
+                  {messages.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No messages yet</p>
+                      <p className="text-xs mt-1">Start a conversation with your instructor or coordinator</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3 py-2">
+                        {messages.map((message) => {
+                          const isStudent = message.senderRole === "STUDENT";
+                          return (
+                            <div
+                              key={message.id}
+                              className={`flex flex-col ${isStudent ? "items-end" : "items-start"}`}
+                            >
+                              <div className={`flex items-start space-x-2 max-w-[85%] ${isStudent ? "flex-row-reverse space-x-reverse" : ""}`}>
+                                {/* Avatar */}
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${message.senderRole === "STUDENT"
                                   ? "bg-blue-500 text-white"
                                   : message.senderRole === "INSTRUCTOR"
-                                  ? "bg-green-500 text-white"
-                                  : "bg-purple-500 text-white"
-                              }`}>
-                                {message.senderName.charAt(0).toUpperCase()}
-                              </div>
-                              
-                              {/* Message Bubble */}
-                              <div className="flex flex-col space-y-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    {message.senderName}
-                                  </span>
-                                  <span
-                                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getRoleBadgeColor(
-                                      message.senderRole
-                                    )}`}
-                                  >
-                                    {message.senderRole}
-                                  </span>
+                                    ? "bg-green-500 text-white"
+                                    : "bg-purple-500 text-white"
+                                  }`}>
+                                  {message.senderName.charAt(0).toUpperCase()}
                                 </div>
-                                <div
-                                  className={`rounded-2xl px-4 py-2.5 shadow-sm ${
-                                    isStudent
+
+                                {/* Message Bubble */}
+                                <div className="flex flex-col space-y-1">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                      {message.senderName}
+                                    </span>
+                                    <span
+                                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getRoleBadgeColor(
+                                        message.senderRole
+                                      )}`}
+                                    >
+                                      {message.senderRole}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className={`rounded-2xl px-4 py-2.5 shadow-sm ${isStudent
                                       ? "bg-indigo-600 text-white rounded-br-sm"
                                       : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
-                                  }`}
-                                >
-                                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                    {message.content}
-                                  </p>
+                                      }`}
+                                  >
+                                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                      {message.content}
+                                    </p>
+                                  </div>
+                                  <span className={`text-[10px] text-gray-500 dark:text-gray-400 px-1 ${isStudent ? "text-right" : "text-left"}`}>
+                                    {formatDate(message.createdAt)}
+                                  </span>
                                 </div>
-                                <span className={`text-[10px] text-gray-500 dark:text-gray-400 px-1 ${isStudent ? "text-right" : "text-left"}`}>
-                                  {formatDate(message.createdAt)}
-                                </span>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </>
+                          );
+                        })}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Scroll to Bottom Button */}
+                {showScrollToBottom && (
+                  <button
+                    onClick={scrollToBottom}
+                    className="absolute bottom-20 right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 animate-bounce"
+                    title="Scroll to latest message"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
                 )}
               </div>
-              
-              {/* Scroll to Bottom Button */}
-              {showScrollToBottom && (
-                <button
-                  onClick={scrollToBottom}
-                  className="absolute bottom-20 right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 animate-bounce"
-                  title="Scroll to latest message"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              )}
-            </div>
 
-            {/* Message Input */}
-            <div className="flex space-x-3 items-end bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Type your message..."
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={sending || !newMessage.trim()}
-                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+              {/* Message Input */}
+              <div className="flex space-x-3 items-end bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  placeholder="Type your message..."
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={sending || !newMessage.trim()}
+                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -570,10 +566,10 @@ const StudentCompanyPartnershipAssistance = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-indigo-600 dark:bg-indigo-500 rounded-full h-2 transition-all duration-300"
-                    style={{ 
-                      width: `${(preDeploymentDocuments.filter((doc) => doc.document?.status === 'APPROVED').length / preDeploymentDocuments.length) * 100}%` 
+                    style={{
+                      width: `${(preDeploymentDocuments.filter((doc) => doc.document?.status === 'APPROVED').length / preDeploymentDocuments.length) * 100}%`
                     }}
                   />
                 </div>
@@ -585,112 +581,110 @@ const StudentCompanyPartnershipAssistance = () => {
                 Documents uploaded in the Documents tab will appear here
               </p>
             </div>
-            
+
             <div className="p-4">
-            <div className="space-y-3">
-              {preDeploymentDocuments.map((doc) => {
-                const document = doc.document;
-                const isApproved = document?.status === 'APPROVED';
-                const isPending = document?.status === 'PENDING';
-                const isRejected = document?.status === 'REJECTED';
-                const isUploaded = !!document;
-                
-                return (
-                  <div
-                    key={doc.id}
-                    className={`p-4 rounded-lg border transition-all ${
-                      isApproved
+              <div className="space-y-3">
+                {preDeploymentDocuments.map((doc) => {
+                  const document = doc.document;
+                  const isApproved = document?.status === 'APPROVED';
+                  const isPending = document?.status === 'PENDING';
+                  const isRejected = document?.status === 'REJECTED';
+                  const isUploaded = !!document;
+
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`p-4 rounded-lg border transition-all ${isApproved
                         ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
                         : isPending
-                        ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
-                        : isRejected
-                        ? "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
-                        : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-semibold text-gray-900 dark:text-white">
-                            {doc.name}
-                          </span>
-                          {doc.required && (
-                            <span className="text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-0.5 rounded">
-                              Required
+                          ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+                          : isRejected
+                            ? "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+                            : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700"
+                        }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {doc.name}
                             </span>
-                          )}
-                          {isApproved && (
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          )}
-                          {isPending && (
-                            <AlertCircle className="w-4 h-4 text-yellow-600" />
-                          )}
-                          {isRejected && (
-                            <XCircle className="w-4 h-4 text-red-600" />
-                          )}
+                            {doc.required && (
+                              <span className="text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-0.5 rounded">
+                                Required
+                              </span>
+                            )}
+                            {isApproved && (
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            )}
+                            {isPending && (
+                              <AlertCircle className="w-4 h-4 text-yellow-600" />
+                            )}
+                            {isRejected && (
+                              <XCircle className="w-4 h-4 text-red-600" />
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            {doc.formNumber}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {doc.description}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                          {doc.formNumber}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {doc.description}
-                        </p>
                       </div>
-                    </div>
-                    
-                    {isUploaded ? (
-                      <div className="mt-3 flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
-                            {document!.filename}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
-                            isApproved
+
+                      {isUploaded ? (
+                        <div className="mt-3 flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                              {document!.filename}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${isApproved
                               ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
                               : isPending
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
-                              : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
-                          }`}>
-                            {document!.status}
-                          </span>
+                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
+                                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                              }`}>
+                              {document!.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => handlePreview(document!)}
+                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                              title="Preview"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDownload(document!)}
+                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                              title="Download"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={() => handlePreview(document!)}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                            title="Preview"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDownload(document!)}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
+                      ) : (
+                        <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                            Not uploaded yet. Upload in <strong>Documents</strong> tab.
+                          </p>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                          Not uploaded yet. Upload in <strong>Documents</strong> tab.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {isRejected && document?.remarks && (
-                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
-                        <strong>Remarks:</strong> {document.remarks}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      )}
+
+                      {isRejected && document?.remarks && (
+                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
+                          <strong>Remarks:</strong> {document.remarks}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            </div>
-            
+
             {/* Button to open Steps Modal */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               <button
@@ -704,11 +698,11 @@ const StudentCompanyPartnershipAssistance = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Document Preview Modal */}
       {previewDoc && previewUrl && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
           onClick={() => {
             setPreviewDoc(null);
             if (previewUrl) {
@@ -717,7 +711,7 @@ const StudentCompanyPartnershipAssistance = () => {
             }
           }}
         >
-          <div 
+          <div
             className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
@@ -803,7 +797,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto flex-1">
               <div className="space-y-4">
@@ -868,7 +862,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
               <button

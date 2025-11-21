@@ -156,9 +156,9 @@ const OverviewTab = ({
   const avgRating =
     Array.isArray(data.evaluations) && data.evaluations.length > 0
       ? (
-          data.evaluations.reduce((sum, e) => sum + e.rating, 0) /
-          data.evaluations.length
-        ).toFixed(1)
+        data.evaluations.reduce((sum, e) => sum + e.rating, 0) /
+        data.evaluations.length
+      ).toFixed(1)
       : "N/A";
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
@@ -310,11 +310,10 @@ const OverviewTab = ({
                 <button
                   key={notification.id}
                   onClick={() => onNotificationClick(notification)}
-                  className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${
-                    notification.read
+                  className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${notification.read
                       ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
                       : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
@@ -415,42 +414,41 @@ const OverviewTab = ({
                 });
                 const limited = Array.from(byType.values()).slice(0, 4);
                 return limited.map((doc: any) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    {doc.status === "APPROVED" && (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    )}
-                    {doc.status === "PENDING" && (
-                      <AlertCircle className="w-5 h-5 text-yellow-500" />
-                    )}
-                    {doc.status === "REJECTED" && (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    )}
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {doc.type}
-                      </p>
-                      {doc.remarks && (
-                        <p className="text-xs text-red-500">{doc.remarks}</p>
-                      )}
-                    </div>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      doc.status === "APPROVED"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        : doc.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                        : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                    }`}
+                  <div
+                    key={doc.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                   >
-                    {doc.status}
-                  </span>
-                </div>
-              ));
+                    <div className="flex items-center space-x-3">
+                      {doc.status === "APPROVED" && (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      )}
+                      {doc.status === "PENDING" && (
+                        <AlertCircle className="w-5 h-5 text-yellow-500" />
+                      )}
+                      {doc.status === "REJECTED" && (
+                        <XCircle className="w-5 h-5 text-red-500" />
+                      )}
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {doc.type}
+                        </p>
+                        {doc.remarks && (
+                          <p className="text-xs text-red-500">{doc.remarks}</p>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${doc.status === "APPROVED"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : doc.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        }`}
+                    >
+                      {doc.status}
+                    </span>
+                  </div>
+                ));
               })()
             ) : (
               <div className="text-center py-4 text-gray-500 dark:text-gray-400">
@@ -499,16 +497,16 @@ const OverviewTab = ({
                     <span className="text-gray-900 dark:text-white">
                       {log.timeIn
                         ? new Date(log.timeIn).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "N/A"}{" "}
                       -{" "}
                       {log.timeOut
                         ? new Date(log.timeOut).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "In Progress"}
                     </span>
                     <span className="font-medium text-purple-600">
@@ -581,7 +579,7 @@ const OverviewTab = ({
         </h3>
         <div className="space-y-3">
           {Array.isArray(data.announcements) &&
-          data.announcements.length > 0 ? (
+            data.announcements.length > 0 ? (
             data.announcements.map((announcement) => (
               <div
                 key={announcement.id}
@@ -778,13 +776,13 @@ const StudentDashboard = () => {
             } else {
               // If disabled, navigate to companies tab instead
               setActiveTab("companies");
-              toast.info("You already have a company or pending application. Redirected to Companies tab.");
+              toast("You already have a company or pending application. Redirected to Companies tab.", { icon: 'ℹ️' });
             }
             setShowNotifications(false);
             return;
           }
         }
-        
+
         // Also handle if the link directly points to partnership-assistance
         if (notification.link && (notification.link.includes('partnership-assistance') || notification.link.includes('tab=partnership-assistance'))) {
           const hasCompanyOrApp = data.student.company || companyApplications.some(
@@ -794,7 +792,7 @@ const StudentDashboard = () => {
             setActiveTab("partnership-assistance");
           } else {
             setActiveTab("companies");
-            toast.info("You already have a company or pending application. Redirected to Companies tab.");
+            toast("You already have a company or pending application. Redirected to Companies tab.", { icon: 'ℹ️' });
           }
           setShowNotifications(false);
           return;
@@ -851,7 +849,7 @@ const StudentDashboard = () => {
         setCompanyApplications([]);
       }
     };
-    
+
     if (data.student.id) {
       loadApplications();
     }
@@ -1148,9 +1146,8 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex h-screen overflow-hidden font-outfit">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:relative lg:flex-shrink-0`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 lg:relative lg:flex-shrink-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -1191,13 +1188,12 @@ const StudentDashboard = () => {
                     }
                   }}
                   disabled={isDisabled}
-                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    isDisabled
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${isDisabled
                       ? "opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600"
                       : activeTab === item.id
-                      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
-                  }`}
+                        ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
+                    }`}
                   title={isDisabled ? "You already have a company or a pending application" : ""}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
@@ -1283,11 +1279,10 @@ const StudentDashboard = () => {
                                 <button
                                   key={notification.id}
                                   onClick={() => handleNotificationClick(notification)}
-                                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
-                                    notification.read
+                                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${notification.read
                                       ? "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
                                       : "border-purple-200 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-900/30 shadow-sm hover:shadow-md"
-                                  }`}
+                                    }`}
                                 >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
@@ -1331,7 +1326,7 @@ const StudentDashboard = () => {
                           Announcements
                         </h4>
                         {Array.isArray(data.announcements) &&
-                        data.announcements.length > 0 ? (
+                          data.announcements.length > 0 ? (
                           <div className="space-y-3">
                             {data.announcements.map((announcement) => (
                               <div

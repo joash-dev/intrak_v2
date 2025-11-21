@@ -187,6 +187,7 @@ model Student {
   totalHours     Int       @default(240)
   completedHours Int       @default(0)
   weeklyReportData Json?   // Store weekly report data as JSON
+  jobDescription   String? // Job description for the internship
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
