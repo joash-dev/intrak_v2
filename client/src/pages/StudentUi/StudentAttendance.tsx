@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   QrCode,
-  Upload,
   CheckCircle,
   AlertCircle,
   FileText,
@@ -18,6 +17,7 @@ import {
   type AttendanceLog,
   type AttendanceStats,
 } from "../../services/attendanceService";
+import { roundToOfficialTime } from "../../utils/attendanceCalculations";
 import toast from "react-hot-toast";
 
 const StudentAttendanceTab: React.FC = () => {
@@ -26,7 +26,6 @@ const StudentAttendanceTab: React.FC = () => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
   const [polling, setPolling] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [qrExpiresAt, setQrExpiresAt] = useState<string>("");
@@ -192,9 +191,12 @@ const StudentAttendanceTab: React.FC = () => {
 
     if (logsForDay.length === 0) return null;
 
-    // Aggregate: sum duration across segments; verified only if all segments verified
+    // Aggregate: sum duration across segments with official time rounding; verified only if all segments verified
     const totalMinutes = logsForDay.reduce(
-      (sum, l) => sum + (Number(l.durationMinutes) || 0),
+      (sum, l) => {
+        const roundedMinutes = roundToOfficialTime(Number(l.durationMinutes) || 0);
+        return sum + roundedMinutes;
+      },
       0
     );
     const allVerified = logsForDay.every((l) => !!l.verified);
@@ -274,12 +276,11 @@ const StudentAttendanceTab: React.FC = () => {
       const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11
       const currentYear = currentDate.getFullYear();
 
-      await attendanceService.exportDTR({
+      await attendanceService.exportDTRDocx({
         month: currentMonth,
         year: currentYear,
       });
-
-      toast.success(`DTR for ${monthYear} exported successfully!`);
+      toast.success(`DTR Word document for ${monthYear} exported successfully!`);
     } catch (error) {
       console.error("Error exporting DTR:", error);
       toast.error("Failed to export DTR. Please try again.");
@@ -293,6 +294,7 @@ const StudentAttendanceTab: React.FC = () => {
     month: "long",
     year: "numeric",
   });
+
 
   if (loading) {
     return (
@@ -430,7 +432,7 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <button
           onClick={handleGenerateQR}
           disabled={qrLoading}
@@ -478,28 +480,16 @@ const StudentAttendanceTab: React.FC = () => {
               <Download className="w-6 h-6 text-white" />
             )}
           </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-            Export DTR
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Download as PDF
-          </p>
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+              Export DTR
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Download as Word Document (.docx)
+            </p>
+          </div>
         </button>
 
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
-        >
-          <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Upload className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-            Upload DTR
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Scan hardcopy sheet
-          </p>
-        </button>
       </div>
 
       {/* Attendance Records Header */}
@@ -874,43 +864,6 @@ const StudentAttendanceTab: React.FC = () => {
             >
               Close
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Upload DTR Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Upload DTR Hardcopy
-            </h2>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  Upload scanned DTR document
-                </p>
-                <label className="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer">
-                  <span>Choose File</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                  />
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                  PDF, JPG, or PNG (Max 10MB)
-                </p>
-              </div>
-
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="w-full py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
           </div>
         </div>
       )}

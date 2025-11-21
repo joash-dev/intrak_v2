@@ -1,0 +1,108 @@
+%% Intrak V2 - Use Case Diagram
+%% Paste this into: https://mermaid.live/
+
+graph TB
+    subgraph SYSTEM["Intrak V2 System"]
+        %% Student Use Cases
+        UC1["Upload Documents"]
+        UC2["View Document Status"]
+        UC3["Log Attendance"]
+        UC4["Apply to Companies"]
+        UC5["View Attendance History"]
+        UC6["View Announcements"]
+        UC7["Send Messages to Partners"]
+        UC8["View Evaluations"]
+        
+        %% Instructor Use Cases
+        UC9["Review Documents"]
+        UC10["Approve/Reject Documents"]
+        UC11["View Student Attendance"]
+        UC12["Manage Assigned Students"]
+        UC13["Submit Evaluations"]
+        UC14["View Student Applications"]
+        UC15["Approve/Reject Applications"]
+        
+        %% Coordinator Use Cases
+        UC16["Manage All Students"]
+        UC17["Bulk Document Operations"]
+        UC18["Generate Reports"]
+        UC19["Manage Companies"]
+        UC20["Create Announcements"]
+        UC21["View System Analytics"]
+        UC22["Manage Instructors"]
+        
+        %% Admin Use Cases
+        UC23["Manage All Users"]
+        UC24["System Settings"]
+        UC25["View Audit Logs"]
+        UC26["Maintenance Mode"]
+        UC27["Manage System Alerts"]
+        UC28["Backup & Restore"]
+        
+        %% Industry Partner Use Cases
+        UC29["View Student Applications"]
+        UC30["Communicate with Students"]
+        UC31["View Company Profile"]
+    end
+    
+    %% Actors
+    STUDENT["👤 Student"]
+    INSTRUCTOR["👨‍🏫 Instructor"]
+    COORDINATOR["👔 Coordinator"]
+    ADMIN["⚙️ Admin"]
+    PARTNER["🏢 Industry Partner"]
+    
+    %% Student connections
+    STUDENT --> UC1
+    STUDENT --> UC2
+    STUDENT --> UC3
+    STUDENT --> UC4
+    STUDENT --> UC5
+    STUDENT --> UC6
+    STUDENT --> UC7
+    STUDENT --> UC8
+    
+    %% Instructor connections
+    INSTRUCTOR --> UC9
+    INSTRUCTOR --> UC10
+    INSTRUCTOR --> UC11
+    INSTRUCTOR --> UC12
+    INSTRUCTOR --> UC13
+    INSTRUCTOR --> UC14
+    INSTRUCTOR --> UC15
+    
+    %% Coordinator connections
+    COORDINATOR --> UC16
+    COORDINATOR --> UC17
+    COORDINATOR --> UC18
+    COORDINATOR --> UC19
+    COORDINATOR --> UC20
+    COORDINATOR --> UC21
+    COORDINATOR --> UC22
+    COORDINATOR --> UC9
+    COORDINATOR --> UC10
+    COORDINATOR --> UC15
+    
+    %% Admin connections (can do everything)
+    ADMIN --> UC23
+    ADMIN --> UC24
+    ADMIN --> UC25
+    ADMIN --> UC26
+    ADMIN --> UC27
+    ADMIN --> UC28
+    ADMIN --> UC16
+    ADMIN --> UC18
+    ADMIN --> UC21
+    
+    %% Industry Partner connections
+    PARTNER --> UC29
+    PARTNER --> UC30
+    PARTNER --> UC31
+    
+    %% Extend relationships
+    UC1 -.->|extends| UC2
+    UC4 -.->|extends| UC14
+    UC9 -.->|extends| UC10
+    UC14 -.->|extends| UC15
+
+

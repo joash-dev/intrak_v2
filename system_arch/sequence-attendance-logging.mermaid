@@ -1,0 +1,70 @@
+%% Intrak V2 - Attendance Logging Sequence Diagram
+%% Paste this into: https://mermaid.live/
+
+sequenceDiagram
+    participant Student
+    participant Frontend
+    participant API as Backend API
+    participant Auth as Auth Middleware
+    participant AttService as Attendance Service
+    participant QRService as QR Service
+    participant GPS as GPS Verification
+    participant Database as PostgreSQL
+    
+    Note over Student,Database: Attendance Logging Flow (QR Method)
+    
+    Student->>Frontend: 1. Request QR Code
+    Frontend->>API: 2. GET /api/attendance/qr-token
+    API->>Auth: 3. Verify JWT Token
+    Auth-->>API: 4. Token Valid
+    
+    API->>QRService: 5. Generate QR Token
+    QRService->>Database: 6. Save QR Token<br/>(expires in 5 min)
+    Database-->>QRService: 7. Token Created
+    QRService-->>API: 8. QR Token
+    API-->>Frontend: 9. QR Token Data
+    Frontend-->>Student: 10. Display QR Code
+    
+    Note over Student,Database: Student Scans QR Code
+    
+    Student->>Frontend: 11. Scan QR Code<br/>(at company location)
+    Frontend->>API: 12. POST /api/attendance/qr-verify<br/>(token + location)
+    
+    API->>Auth: 13. Verify JWT Token
+    Auth-->>API: 14. Token Valid
+    
+    API->>QRService: 15. Validate QR Token
+    QRService->>Database: 16. Check Token<br/>(exists, not expired, not used)
+    Database-->>QRService: 17. Token Valid
+    
+    QRService->>GPS: 18. Verify Location<br/>(if GPS enabled)
+    GPS-->>QRService: 19. Location Verified
+    
+    QRService->>AttService: 20. Create Attendance Log
+    AttService->>Database: 21. Create Attendance Record<br/>(timeIn, verified: true)
+    Database-->>AttService: 22. Record Created
+    
+    AttService->>Database: 23. Update Student<br/>completedHours
+    Database-->>AttService: 24. Updated
+    
+    AttService->>Database: 25. Mark QR Token as Used
+    Database-->>AttService: 26. Token Updated
+    
+    AttService-->>API: 27. Attendance Logged
+    API-->>Frontend: 28. Success Response
+    Frontend-->>Student: 29. Show Success<br/>"Attendance Logged"
+    
+    Note over Student,Database: Time Out Process
+    
+    Student->>Frontend: 30. Log Time Out
+    Frontend->>API: 31. PUT /api/attendance/:id/timeout
+    API->>Auth: 32. Verify Token
+    Auth-->>API: 33. Authorized
+    API->>AttService: 34. Update Attendance Log
+    AttService->>Database: 35. Update timeOut<br/>Calculate duration
+    Database-->>AttService: 36. Updated
+    AttService-->>API: 37. Success
+    API-->>Frontend: 38. Success Response
+    Frontend-->>Student: 39. Time Out Logged
+
+

@@ -28,6 +28,21 @@ export interface AttendanceStats {
 }
 
 /**
+ * Round minutes to the nearest 30-minute increment (official time standard)
+ * - If minutes >= 30, round to 30 minutes
+ * - If minutes < 30, round to 0 minutes (don't count)
+ */
+export function roundToOfficialTime(minutes: number): number {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  
+  // If minutes >= 30, count as 30 minutes; otherwise, don't count (0 minutes)
+  const roundedMinutes = mins >= 30 ? 30 : 0;
+  
+  return hours * 60 + roundedMinutes;
+}
+
+/**
  * Calculate attendance statistics using consistent logic
  * This ensures both student and instructor views show the same data
  */
@@ -50,8 +65,13 @@ export function calculateAttendanceStats(
   }
 
   // Calculate completed hours from verified logs only
+  // Apply official time rounding (30-minute increments)
   const verifiedLogs = logs.filter(log => log.verified);
-  const completedHours = verifiedLogs.reduce((sum, log) => sum + (log.durationMinutes || 0), 0) / 60;
+  const completedMinutes = verifiedLogs.reduce((sum, log) => {
+    const roundedMinutes = roundToOfficialTime(log.durationMinutes || 0);
+    return sum + roundedMinutes;
+  }, 0);
+  const completedHours = completedMinutes / 60;
   
   // Calculate attendance metrics
   const verifiedDays = verifiedLogs.length;
@@ -126,15 +146,17 @@ export function determineStudentStatus(
 }
 
 /**
- * Format duration for display
+ * Format duration for display (with official time rounding)
  */
 export function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+  // Apply official time rounding (30-minute increments)
+  const roundedMinutes = roundToOfficialTime(minutes);
+  const hours = Math.floor(roundedMinutes / 60);
+  const mins = roundedMinutes % 60;
   if (hours > 0) {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   }
-  return `${mins}m`;
+  return mins > 0 ? `${mins}m` : '0m';
 }
 
 /**

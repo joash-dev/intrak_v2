@@ -9,8 +9,14 @@ import {
   FileCheck,
   Briefcase,
   ChevronDown,
+  Eye,
+  Download,
+  FileText,
+  AlertCircle,
 } from "lucide-react";
 import api from "../../services/api";
+import { documentService } from "../../services/documentService";
+import type { Document } from "../../services/documentService";
 import toast from "react-hot-toast";
 
 interface PartnershipMessage {
@@ -22,12 +28,15 @@ interface PartnershipMessage {
   createdAt: string;
 }
 
-interface DocumentChecklistItem {
+interface PartnershipDocument {
   id: string;
+  type: string;
   name: string;
+  formNumber: string;
   description: string;
   required: boolean;
-  completed: boolean;
+  document?: Document | null;
+  uploading?: boolean;
 }
 
 const StudentCompanyPartnershipAssistance = () => {
@@ -43,51 +52,68 @@ const StudentCompanyPartnershipAssistance = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Documents checklist
-  const [documentsChecklist, setDocumentsChecklist] = useState<DocumentChecklistItem[]>([
+  // Pre-deployment required documents (uploaded in Documents tab)
+  const [preDeploymentDocuments, setPreDeploymentDocuments] = useState<PartnershipDocument[]>([
     {
-      id: "1",
-      name: "Resume/CV",
-      description: "Updated resume highlighting your skills and experience",
+      id: "application-internship",
+      type: "APPLICATION_INTERNSHIP",
+      name: "Application for Internship",
+      formNumber: "Form FM-AA-INT-01",
+      description: "Application form for internship program",
       required: true,
-      completed: false,
     },
     {
-      id: "2",
-      name: "Cover Letter",
-      description: "Personalized cover letter for the company",
+      id: "medical-certificate",
+      type: "MEDICAL_CERTIFICATE",
+      name: "Medical Certificate and Psychological Test from any government physician",
+      formNumber: "From any government physician",
+      description: "Medical certificate and psychological test results from any government physician",
       required: true,
-      completed: false,
     },
     {
-      id: "3",
-      name: "Transcript of Records",
-      description: "Official transcript from the university",
+      id: "certification-units",
+      type: "CERTIFICATION_UNITS",
+      name: "Certification of Units Earned",
+      formNumber: "Form FM-AA-INT-02",
+      description: "Certification of units earned for practicum/internship",
       required: true,
-      completed: false,
     },
     {
-      id: "4",
-      name: "Recommendation Letter",
-      description: "Letter of recommendation from a professor or advisor",
-      required: false,
-      completed: false,
-    },
-    {
-      id: "5",
-      name: "Portfolio/Projects",
-      description: "Portfolio showcasing your work and projects",
-      required: false,
-      completed: false,
-    },
-    {
-      id: "6",
-      name: "MOA Template",
-      description: "Memorandum of Agreement template from the university",
+      id: "internship-resume",
+      type: "INTERNSHIP_RESUME",
+      name: "Internship Resume",
+      formNumber: "Form FM-AA-INT-09",
+      description: "Resume specifically formatted for internship applications",
       required: true,
-      completed: false,
+    },
+    {
+      id: "consent-form",
+      type: "CONSENT_FORM",
+      name: "Consent Form",
+      formNumber: "Form FM-AA-INT-03",
+      description: "Consent form for internship participation",
+      required: true,
+    },
+    {
+      id: "endorsement-letter",
+      type: "ENDORSEMENT_LETTER",
+      name: "Endorsement Letter",
+      formNumber: "Form FM-AA-INT-05",
+      description: "Official endorsement letter from the university",
+      required: true,
+    },
+    {
+      id: "internship-release",
+      type: "INTERNSHIP_RELEASE",
+      name: "Internship Release Form",
+      formNumber: "Form FM-AA-INT-12",
+      description: "Form authorizing the student for internship",
+      required: true,
     },
   ]);
+  
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -190,23 +216,61 @@ const StudentCompanyPartnershipAssistance = () => {
       // Load partnership messages
       loadMessages(true);
 
-      // Load checklist status
-      try {
-        const checklistResponse = await api.get("/students/partnership-checklist");
-        if (checklistResponse.data.checklist) {
-          setDocumentsChecklist(checklistResponse.data.checklist);
-        }
-      } catch (error: any) {
-        // If endpoint doesn't exist yet, just use default checklist
-        if (error.response?.status !== 404) {
-          console.error("Error loading checklist:", error);
-        }
-      }
+      // Load partnership documents
+      await loadPartnershipDocuments();
     } catch (error: any) {
       console.error("Error loading data:", error);
       toast.error("Failed to load partnership assistance data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPartnershipDocuments = async () => {
+    try {
+      // Get all student documents
+      const documents = await documentService.getStudentDocuments();
+      
+      // Map documents to pre-deployment document types (only show documents uploaded in Documents tab)
+      setPreDeploymentDocuments(prev => prev.map(doc => {
+        const uploadedDoc = documents.find(d => d.type === doc.type);
+        return {
+          ...doc,
+          document: uploadedDoc || null,
+        };
+      }));
+    } catch (error: any) {
+      console.error("Error loading pre-deployment documents:", error);
+    }
+  };
+
+  const handlePreview = async (document: Document) => {
+    try {
+      setPreviewDoc(document);
+      const blob = await documentService.downloadDocument(document.id);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (error: any) {
+      console.error("Error previewing document:", error);
+      toast.error("Failed to preview document");
+    }
+  };
+
+  const handleDownload = async (document: Document) => {
+    try {
+      const blob = await documentService.downloadDocument(document.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = document.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Document downloaded");
+    } catch (error: any) {
+      console.error("Error downloading document:", error);
+      toast.error("Failed to download document");
     }
   };
 
@@ -307,21 +371,6 @@ const StudentCompanyPartnershipAssistance = () => {
     setShowScrollToBottom(!isAtBottom && messages.length > 0);
   };
 
-  const toggleChecklistItem = async (itemId: string) => {
-    const updatedChecklist = documentsChecklist.map((item) =>
-      item.id === itemId ? { ...item, completed: !item.completed } : item
-    );
-    setDocumentsChecklist(updatedChecklist);
-
-    try {
-      await api.put("/students/partnership-checklist", {
-        checklist: updatedChecklist,
-      });
-    } catch (error: any) {
-      // Silently fail - checklist is saved locally
-      console.error("Error saving checklist:", error);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -524,54 +573,121 @@ const StudentCompanyPartnershipAssistance = () => {
                   <div 
                     className="bg-indigo-600 dark:bg-indigo-500 rounded-full h-2 transition-all duration-300"
                     style={{ 
-                      width: `${(documentsChecklist.filter((item) => item.completed).length / documentsChecklist.length) * 100}%` 
+                      width: `${(preDeploymentDocuments.filter((doc) => doc.document?.status === 'APPROVED').length / preDeploymentDocuments.length) * 100}%` 
                     }}
                   />
                 </div>
                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  {documentsChecklist.filter((item) => item.completed).length} / {documentsChecklist.length}
+                  {preDeploymentDocuments.filter((doc) => doc.document?.status === 'APPROVED').length} / {preDeploymentDocuments.length}
                 </span>
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Documents uploaded in the Documents tab will appear here
+              </p>
             </div>
             
             <div className="p-4">
-            <div className="space-y-2">
-              {documentsChecklist.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex items-start space-x-3 p-3 rounded-lg border transition-all hover:shadow-md ${
-                    item.completed
-                      ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 shadow-sm"
-                      : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
-                >
-                  <button
-                    onClick={() => toggleChecklistItem(item.id)}
-                    className="mt-0.5 flex-shrink-0"
+            <div className="space-y-3">
+              {preDeploymentDocuments.map((doc) => {
+                const document = doc.document;
+                const isApproved = document?.status === 'APPROVED';
+                const isPending = document?.status === 'PENDING';
+                const isRejected = document?.status === 'REJECTED';
+                const isUploaded = !!document;
+                
+                return (
+                  <div
+                    key={doc.id}
+                    className={`p-4 rounded-lg border transition-all ${
+                      isApproved
+                        ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
+                        : isPending
+                        ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+                        : isRejected
+                        ? "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+                        : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700"
+                    }`}
                   >
-                    {item.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-gray-400" />
-                    )}
-                  </button>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {item.name}
-                      </span>
-                      {item.required && (
-                        <span className="text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-0.5 rounded">
-                          Required
-                        </span>
-                      )}
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {doc.name}
+                          </span>
+                          {doc.required && (
+                            <span className="text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-0.5 rounded">
+                              Required
+                            </span>
+                          )}
+                          {isApproved && (
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          )}
+                          {isPending && (
+                            <AlertCircle className="w-4 h-4 text-yellow-600" />
+                          )}
+                          {isRejected && (
+                            <XCircle className="w-4 h-4 text-red-600" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          {doc.formNumber}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {doc.description}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {item.description}
-                    </p>
+                    
+                    {isUploaded ? (
+                      <div className="mt-3 flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                            {document!.filename}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${
+                            isApproved
+                              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
+                              : isPending
+                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                          }`}>
+                            {document!.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => handlePreview(document!)}
+                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                            title="Preview"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDownload(document!)}
+                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                          Not uploaded yet. Upload in <strong>Documents</strong> tab.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {isRejected && document?.remarks && (
+                      <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
+                        <strong>Remarks:</strong> {document.remarks}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             </div>
             
@@ -589,6 +705,83 @@ const StudentCompanyPartnershipAssistance = () => {
         </div>
       </div>
       
+      {/* Document Preview Modal */}
+      {previewDoc && previewUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" 
+          onClick={() => {
+            setPreviewDoc(null);
+            if (previewUrl) {
+              window.URL.revokeObjectURL(previewUrl);
+              setPreviewUrl(null);
+            }
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-6 h-6 text-indigo-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {previewDoc.filename}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {previewDoc.type.replace(/_/g, " ")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setPreviewDoc(null);
+                  if (previewUrl) {
+                    window.URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                  }
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+              {previewDoc.mimeType === 'application/pdf' ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full"
+                  title={previewDoc.filename}
+                />
+              ) : previewDoc.mimeType?.startsWith('image/') ? (
+                <div className="flex items-center justify-center h-full p-4">
+                  <img
+                    src={previewUrl}
+                    alt={previewDoc.filename}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Preview not available for this file type
+                    </p>
+                    <button
+                      onClick={() => handleDownload(previewDoc)}
+                      className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                    >
+                      Download to view
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Steps Modal */}
       {showStepsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ marginTop: 0 }} onClick={() => setShowStepsModal(false)}>

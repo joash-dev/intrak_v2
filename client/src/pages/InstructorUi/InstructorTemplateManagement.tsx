@@ -398,14 +398,14 @@ const InstructorTemplateManagement: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* View All Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
             !category
               ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
           }`}
           onClick={() => setSearchParams({})}
         >
-          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-300" />
             </div>
@@ -418,21 +418,21 @@ const InstructorTemplateManagement: React.FC = () => {
             </p>
           </div>
           </div>
-          <div className="w-full mt-6 sm:mt-10 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg text-center font-medium text-xs sm:text-sm">
+          <button className="w-full mt-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-center font-medium text-xs sm:text-sm transition-colors">
             View All
-          </div>
+          </button>
         </div>
 
         {/* Pre-deployment Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
             category === "PRE_DEPLOYMENT"
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
           }`}
           onClick={() => setSearchParams({ category: "PRE_DEPLOYMENT" })}
         >
-          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-300" />
             </div>
@@ -465,7 +465,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
+            className="w-full mt-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>
@@ -473,14 +473,14 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Upon Approval Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
             category === "UPON_APPROVAL"
               ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-yellow-300"
           }`}
           onClick={() => setSearchParams({ category: "UPON_APPROVAL" })}
         >
-          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center flex-shrink-0">
               <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-300" />
             </div>
@@ -510,7 +510,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
+            className="w-full mt-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-600 text-white hover:bg-yellow-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>
@@ -518,14 +518,14 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Post-OJT Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
             category === "POST_OJT"
               ? "border-green-500 bg-green-50 dark:bg-green-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-green-300"
           }`}
           onClick={() => setSearchParams({ category: "POST_OJT" })}
         >
-          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+          <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center flex-shrink-0">
               <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-300" />
             </div>
@@ -554,7 +554,7 @@ const InstructorTemplateManagement: React.FC = () => {
               setFileValidationMap({});
               setShowUploadModal(true);
             }}
-            className="w-full px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
+            className="w-full mt-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
           >
             Upload Template
           </button>

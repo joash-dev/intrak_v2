@@ -88,6 +88,37 @@ const formatStudentId = (studentNumber: string) => {
   return studentNumber || "22-UR-0592";
 };
 
+// Shared function for notification accent colors
+const getNotificationAccent = (type: string) => {
+  switch (type) {
+    case "DOCUMENT":
+      return {
+        badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
+        iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200",
+      };
+    case "ATTENDANCE":
+      return {
+        badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
+        iconBg: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-200",
+      };
+    case "SYSTEM":
+      return {
+        badge: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+        iconBg: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300",
+      };
+    case "ALERT":
+      return {
+        badge: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200",
+        iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-200",
+      };
+    default:
+      return {
+        badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
+        iconBg: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-200",
+      };
+  }
+};
+
 // Overview Component
 const OverviewTab = ({
   data,
@@ -145,25 +176,6 @@ const OverviewTab = ({
     });
   };
 
-  const getNotificationAccent = (type: string) => {
-    switch (type) {
-      case "DOCUMENT":
-        return {
-          badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
-          iconBg: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-200",
-        };
-      case "ATTENDANCE":
-        return {
-          badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
-          iconBg: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-200",
-        };
-      default:
-        return {
-          badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
-          iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200",
-        };
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -618,6 +630,7 @@ const StudentDashboard = () => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [companyApplications, setCompanyApplications] = useState<any[]>([]);
 
   // Prevent back button after logout
   useEffect(() => {
@@ -639,6 +652,15 @@ const StudentDashboard = () => {
       setError(null);
       const dashboardData = await dashboardService.getDashboardData();
       setData(dashboardData);
+
+      // Fetch company applications
+      try {
+        const applicationsResponse = await api.get("/company-applications/my-applications");
+        setCompanyApplications(applicationsResponse.data.applications || []);
+      } catch (error) {
+        console.error("Error loading company applications:", error);
+        setCompanyApplications([]);
+      }
 
       // Show modal if student has no company
       if (!dashboardData.student.company && activeTab === "overview") {
@@ -717,6 +739,19 @@ const StudentDashboard = () => {
     [setActiveTab]
   );
 
+  // Check if student has company or pending/approved applications
+  const hasCompanyOrApplication = useCallback(() => {
+    // Check if student has a company assigned
+    if (data.student.company) {
+      return true;
+    }
+    // Check if student has any pending or approved applications
+    const hasActiveApplication = companyApplications.some(
+      (app) => app.status === "PENDING" || app.status === "APPROVED"
+    );
+    return hasActiveApplication;
+  }, [data.student.company, companyApplications]);
+
   const handleNotificationClick = useCallback(
     async (notification: NotificationItem) => {
       try {
@@ -727,6 +762,42 @@ const StudentDashboard = () => {
               item.id === notification.id ? { ...item, read: true } : item
             )
           );
+        }
+
+        // Handle message notifications - navigate to partnership assistance tab
+        // Only if student doesn't have a company or active application
+        if (notification.title && notification.title.includes("New Message from") && notification.link) {
+          // Check if link contains partnership-assistance
+          if (notification.link.includes('partnership-assistance') || notification.link.includes('tab=partnership-assistance')) {
+            // Check if Find Company tab is disabled
+            const hasCompanyOrApp = data.student.company || companyApplications.some(
+              (app) => app.status === "PENDING" || app.status === "APPROVED"
+            );
+            if (!hasCompanyOrApp) {
+              setActiveTab("partnership-assistance");
+            } else {
+              // If disabled, navigate to companies tab instead
+              setActiveTab("companies");
+              toast.info("You already have a company or pending application. Redirected to Companies tab.");
+            }
+            setShowNotifications(false);
+            return;
+          }
+        }
+        
+        // Also handle if the link directly points to partnership-assistance
+        if (notification.link && (notification.link.includes('partnership-assistance') || notification.link.includes('tab=partnership-assistance'))) {
+          const hasCompanyOrApp = data.student.company || companyApplications.some(
+            (app) => app.status === "PENDING" || app.status === "APPROVED"
+          );
+          if (!hasCompanyOrApp) {
+            setActiveTab("partnership-assistance");
+          } else {
+            setActiveTab("companies");
+            toast.info("You already have a company or pending application. Redirected to Companies tab.");
+          }
+          setShowNotifications(false);
+          return;
         }
 
         if (notification.link) {
@@ -757,7 +828,7 @@ const StudentDashboard = () => {
         setShowNotifications(false);
       }
     },
-    [handleInternalNavigation, navigate]
+    [handleInternalNavigation, navigate, setActiveTab, data.student.company, companyApplications]
   );
 
   const handleMarkAllNotificationsRead = useCallback(async () => {
@@ -768,6 +839,23 @@ const StudentDashboard = () => {
       console.error("Failed to mark notifications as read", error);
     }
   }, []);
+
+  // Load company applications on mount and when data changes
+  useEffect(() => {
+    const loadApplications = async () => {
+      try {
+        const applicationsResponse = await api.get("/company-applications/my-applications");
+        setCompanyApplications(applicationsResponse.data.applications || []);
+      } catch (error) {
+        console.error("Error loading company applications:", error);
+        setCompanyApplications([]);
+      }
+    };
+    
+    if (data.student.id) {
+      loadApplications();
+    }
+  }, [data.student.id]);
 
   // Check authentication and fetch data on mount
   useEffect(() => {
@@ -986,12 +1074,14 @@ const StudentDashboard = () => {
     );
   }
 
+  const isFindCompanyDisabled = hasCompanyOrApplication();
+
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "documents", label: "Documents", icon: FileText },
     { id: "templates", label: "Templates", icon: Download },
     { id: "companies", label: "Companies", icon: Building2 },
-    { id: "partnership-assistance", label: "Find Company", icon: Search },
+    { id: "partnership-assistance", label: "Find Company", icon: Search, disabled: isFindCompanyDisabled },
     { id: "attendance", label: "Attendance", icon: Clock },
     { id: "evaluations", label: "Evaluations", icon: Star },
     { id: "reports", label: "Reports", icon: TrendingUp },
@@ -1019,6 +1109,18 @@ const StudentDashboard = () => {
           <StudentCompanySelection onCompanyUpdate={refreshDashboardData} />
         );
       case "partnership-assistance":
+        // Prevent access if student has company or active application
+        if (hasCompanyOrApplication()) {
+          return (
+            <div className="p-6">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <p className="text-yellow-800 dark:text-yellow-200">
+                  You already have a company assigned or a pending application. Please check the Companies tab for more information.
+                </p>
+              </div>
+            </div>
+          );
+        }
         return <StudentCompanyPartnershipAssistance />;
       case "attendance":
         return <StudentAttendanceTab />;
@@ -1078,18 +1180,25 @@ const StudentDashboard = () => {
           <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const isDisabled = (item as any).disabled || false;
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
-                    setSidebarOpen(false);
+                    if (!isDisabled) {
+                      setActiveTab(item.id);
+                      setSidebarOpen(false);
+                    }
                   }}
+                  disabled={isDisabled}
                   className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    activeTab === item.id
+                    isDisabled
+                      ? "opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600"
+                      : activeTab === item.id
                       ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
                   }`}
+                  title={isDisabled ? "You already have a company or a pending application" : ""}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
@@ -1167,36 +1276,49 @@ const StudentDashboard = () => {
                             <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
                           </div>
                         ) : notifications.length > 0 ? (
-                          <div className="space-y-3">
-                            {notifications.map((notification) => (
-                              <button
-                                key={notification.id}
-                                onClick={() => handleNotificationClick(notification)}
-                                className={`w-full text-left p-4 rounded-lg border transition-all duration-200 ${
-                                  notification.read
-                                    ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                    : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow"
-                                }`}
-                              >
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {notification.title}
-                                  </p>
-                                  {!notification.read && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
-                                      New
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">
-                                  {notification.message}
-                                </p>
-                                <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
-                                  <span>{notification.type.replace(/_/g, " ")}</span>
-                                  <span>{formatNotificationTimestamp(notification.createdAt)}</span>
-                                </div>
-                              </button>
-                            ))}
+                          <div className="space-y-2">
+                            {notifications.map((notification) => {
+                              const { badge } = getNotificationAccent(notification.type);
+                              return (
+                                <button
+                                  key={notification.id}
+                                  onClick={() => handleNotificationClick(notification)}
+                                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
+                                    notification.read
+                                      ? "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                      : "border-purple-200 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-900/30 shadow-sm hover:shadow-md"
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                          {notification.title}
+                                        </h4>
+                                        {!notification.read && (
+                                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500 text-white dark:bg-purple-600 flex-shrink-0">
+                                            New
+                                          </span>
+                                        )}
+                                      </div>
+                                      {notification.message && (
+                                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 leading-relaxed line-clamp-2">
+                                          {notification.message}
+                                        </p>
+                                      )}
+                                      <div className="mt-3 flex items-center justify-between gap-2">
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium ${badge}`}>
+                                          {notification.type.replace(/_/g, " ")}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                          {formatNotificationTimestamp(notification.createdAt)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
                         ) : (
                           <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">

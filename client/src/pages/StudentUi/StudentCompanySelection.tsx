@@ -54,11 +54,44 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
   const [applying, setApplying] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<any>(null);
   const [applicationMessage, setApplicationMessage] = useState("");
+  const [companyDetails, setCompanyDetails] = useState<Company | null>(null);
+  const [loadingCompanyDetails, setLoadingCompanyDetails] = useState(false);
 
   // Load companies, applications, and current student data
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load company details when student has a company
+  useEffect(() => {
+    if (currentStudent?.company) {
+      loadCompanyDetails();
+    }
+  }, [currentStudent?.company]);
+
+  const loadCompanyDetails = async () => {
+    if (!currentStudent?.company) return;
+    
+    try {
+      setLoadingCompanyDetails(true);
+      // Find company by name from the companies list
+      const companiesData = await companyService.getAllCompanies();
+      const foundCompany = companiesData.find(
+        (c) => c.name === currentStudent.company
+      );
+      
+      if (foundCompany) {
+        // Fetch full company details by ID
+        const fullDetails = await companyService.getCompanyById(foundCompany.id);
+        setCompanyDetails(fullDetails);
+      }
+    } catch (err: any) {
+      console.error("Error loading company details:", err);
+      // Don't show error toast, just log it
+    } finally {
+      setLoadingCompanyDetails(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -184,6 +217,21 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
   // Check if student already has a company
   if (currentStudent?.company) {
+    const formatDate = (dateString?: string | null) => {
+      if (!dateString) return "Not set";
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    };
+
+    const hoursProgress = currentStudent.totalHours
+      ? Math.round(
+          (currentStudent.completedHours / currentStudent.totalHours) * 100
+        )
+      : 0;
+
     return (
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -195,29 +243,158 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
             Company Assigned!
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-center mb-4">
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
             You are currently assigned to:
           </p>
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+          
+          {/* Company Card */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800 mb-6">
+            <div className="flex items-start space-x-4 mb-4">
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+              <div className="flex-1">
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                   {currentStudent.company}
                 </h4>
-                {currentStudent.supervisor && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Supervisor: {currentStudent.supervisor}
-                  </p>
+                {companyDetails?.industry && (
+                  <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md mb-2">
+                    {companyDetails.industry}
+                  </span>
                 )}
               </div>
             </div>
+
+            {/* Company Details */}
+            {loadingCompanyDetails ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+              </div>
+            ) : (
+              <div className="space-y-3 mt-4">
+                {companyDetails?.address && (
+                  <div className="flex items-start space-x-3 text-sm">
+                    <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {companyDetails.address}
+                    </span>
+                  </div>
+                )}
+                
+                {companyDetails?.contactPerson && (
+                  <div className="flex items-center space-x-3 text-sm">
+                    <Users className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      <strong>Contact Person:</strong> {companyDetails.contactPerson}
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {companyDetails?.contactEmail && (
+                    <div className="flex items-center space-x-3 text-sm">
+                      <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <a
+                        href={`mailto:${companyDetails.contactEmail}`}
+                        className="text-purple-600 dark:text-purple-400 hover:underline"
+                      >
+                        {companyDetails.contactEmail}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {companyDetails?.contactNumber && (
+                    <div className="flex items-center space-x-3 text-sm">
+                      <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                      <a
+                        href={`tel:${companyDetails.contactNumber}`}
+                        className="text-purple-600 dark:text-purple-400 hover:underline"
+                      >
+                        {companyDetails.contactNumber}
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {companyDetails?.description && (
+                  <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {companyDetails.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
-            If you need to change your company, please contact your instructor.
-          </p>
+
+          {/* Supervisor Information */}
+          {currentStudent.supervisor && (
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6">
+              <div className="flex items-center space-x-3">
+                <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Supervisor
+                  </p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white">
+                    {currentStudent.supervisor}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Internship Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Start Date
+              </p>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                {formatDate(currentStudent.startDate)}
+              </p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                End Date
+              </p>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                {formatDate(currentStudent.endDate)}
+              </p>
+            </div>
+          </div>
+
+          {/* Hours Progress */}
+          {currentStudent.totalHours && (
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Hours Progress
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {currentStudent.completedHours || 0} / {currentStudent.totalHours} hours
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(hoursProgress, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {hoursProgress}% completed
+              </p>
+            </div>
+          )}
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+            <div className="flex items-start space-x-2">
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                If you need to change your company, please contact your instructor.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );

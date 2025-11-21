@@ -1,0 +1,46 @@
+%% Intrak V2 - Document Approval Workflow Activity Diagram
+%% Paste this into: https://mermaid.live/
+
+flowchart TD
+    Start([Student Starts]) --> SelectDoc[Select Document to Upload]
+    SelectDoc --> ValidateFile{Validate File<br/>Size & Type}
+    
+    ValidateFile -->|Invalid| ShowError[Show Error Message]
+    ShowError --> SelectDoc
+    
+    ValidateFile -->|Valid| UploadFile[Upload File to Server]
+    UploadFile --> SaveFile[Save File to Storage]
+    SaveFile --> CreateRecord[Create Document Record<br/>Status: PENDING]
+    CreateRecord --> NotifyReviewer[Notify Reviewer<br/>via Email]
+    NotifyReviewer --> WaitReview{Wait for Review}
+    
+    WaitReview --> CheckStatus[Reviewer Views Document]
+    CheckStatus --> ReviewDoc{Review Document}
+    
+    ReviewDoc -->|Needs Changes| RequestChanges[Request Resubmission<br/>Status: RESUBMISSION_REQUESTED]
+    RequestChanges --> NotifyStudent1[Notify Student]
+    NotifyStudent1 --> StudentAction{Student Action}
+    
+    StudentAction -->|Resubmit| SelectDoc
+    StudentAction -->|Cancel| End([End])
+    
+    ReviewDoc -->|Approve| ApproveDoc[Approve Document<br/>Status: APPROVED]
+    ApproveDoc --> NotifyStudent2[Notify Student<br/>via Email]
+    NotifyStudent2 --> UpdateHours[Update Student Progress<br/>if applicable]
+    UpdateHours --> End
+    
+    ReviewDoc -->|Reject| RejectDoc[Reject Document<br/>Status: REJECTED]
+    RejectDoc --> AddRemarks[Add Rejection Remarks]
+    AddRemarks --> NotifyStudent3[Notify Student<br/>via Email]
+    NotifyStudent3 --> End
+    
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style ValidateFile fill:#FFE4B5
+    style ReviewDoc fill:#FFE4B5
+    style StudentAction fill:#FFE4B5
+    style CreateRecord fill:#87CEEB
+    style ApproveDoc fill:#90EE90
+    style RejectDoc fill:#FF6B6B
+
+

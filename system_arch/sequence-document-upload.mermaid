@@ -1,0 +1,73 @@
+%% Intrak V2 - Document Upload & Approval Sequence Diagram
+%% Paste this into: https://mermaid.live/
+
+sequenceDiagram
+    participant Student
+    participant Frontend
+    participant API as Backend API
+    participant Auth as Auth Middleware
+    participant DocService as Document Service
+    participant FileStorage as File Storage
+    participant Database as PostgreSQL
+    participant EmailService as Email Service
+    participant Instructor
+    
+    Note over Student,Instructor: Document Upload & Approval Flow
+    
+    Student->>Frontend: 1. Select Document File
+    Frontend->>Frontend: 2. Validate File (size, type)
+    Student->>Frontend: 3. Submit Upload
+    
+    Frontend->>API: 4. POST /api/documents<br/>(with file + metadata)
+    API->>Auth: 5. Verify JWT Token
+    Auth-->>API: 6. Token Valid
+    
+    API->>DocService: 7. Process Document Upload
+    DocService->>FileStorage: 8. Save File to Storage
+    FileStorage-->>DocService: 9. File Path
+    
+    DocService->>Database: 10. Create Document Record<br/>(status: PENDING)
+    Database-->>DocService: 11. Document Created
+    
+    DocService->>EmailService: 12. Send Notification<br/>to Reviewer
+    EmailService-->>DocService: 13. Email Sent
+    
+    DocService-->>API: 14. Upload Success
+    API-->>Frontend: 15. Success Response
+    Frontend-->>Student: 16. Show Success Message
+    
+    Note over Instructor,Database: Document Review Process
+    
+    Instructor->>Frontend: 17. View Pending Documents
+    Frontend->>API: 18. GET /api/documents?status=PENDING
+    API->>Auth: 19. Verify Token & Role
+    Auth-->>API: 20. Authorized (Instructor)
+    API->>Database: 21. Query Pending Documents
+    Database-->>API: 22. Return Documents
+    API-->>Frontend: 23. Document List
+    Frontend-->>Instructor: 24. Display Documents
+    
+    Instructor->>Frontend: 25. Review Document<br/>(Approve/Reject)
+    Frontend->>API: 26. PUT /api/documents/:id/approve<br/>or /reject
+    API->>Auth: 27. Verify Token & Role
+    Auth-->>API: 28. Authorized
+    API->>DocService: 29. Update Document Status
+    DocService->>Database: 30. Update Document<br/>(status: APPROVED/REJECTED)
+    Database-->>DocService: 31. Updated
+    
+    DocService->>EmailService: 32. Notify Student<br/>of Status Change
+    EmailService-->>DocService: 33. Email Sent
+    DocService-->>API: 34. Update Success
+    API-->>Frontend: 35. Success Response
+    Frontend-->>Instructor: 36. Show Success
+    
+    Note over Student: Student receives notification
+    
+    Student->>Frontend: 37. Check Document Status
+    Frontend->>API: 38. GET /api/documents/:id
+    API->>Database: 39. Query Document
+    Database-->>API: 40. Document with Status
+    API-->>Frontend: 41. Document Data
+    Frontend-->>Student: 42. Show Status (Approved/Rejected)
+
+

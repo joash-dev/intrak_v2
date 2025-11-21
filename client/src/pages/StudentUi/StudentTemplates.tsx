@@ -52,8 +52,27 @@ const StudentTemplates: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Extract form number from template type display name
+  const getFormNumber = (template: DocumentTemplate): number => {
+    const displayName = templateService.getDocumentTypeDisplay(template.type);
+    // Match patterns like "Form FM-AA-INT-01", "Form FM-AA-INT-14", etc.
+    const match = displayName.match(/Form\s+FM-AA-INT-(\d+)/i);
+    if (match && match[1]) {
+      return parseInt(match[1], 10);
+    }
+    // If no form number found, assign a high number to push to end
+    return 999;
+  };
+
+  // Sort templates by form number
+  const sortedTemplates = [...filteredTemplates].sort((a, b) => {
+    const formNumA = getFormNumber(a);
+    const formNumB = getFormNumber(b);
+    return formNumA - formNumB;
+  });
+
   // Group templates by category
-  const groupedTemplates = filteredTemplates.reduce((acc, template) => {
+  const groupedTemplates = sortedTemplates.reduce((acc, template) => {
     const category = template.category || "PRE_DEPLOYMENT";
     if (!acc[category]) {
       acc[category] = [];
@@ -61,6 +80,15 @@ const StudentTemplates: React.FC = () => {
     acc[category].push(template);
     return acc;
   }, {} as Record<string, DocumentTemplate[]>);
+
+  // Sort templates within each category by form number
+  Object.keys(groupedTemplates).forEach((category) => {
+    groupedTemplates[category].sort((a, b) => {
+      const formNumA = getFormNumber(a);
+      const formNumB = getFormNumber(b);
+      return formNumA - formNumB;
+    });
+  });
 
   const categoryOptions = templateService.getCategoryOptions();
 

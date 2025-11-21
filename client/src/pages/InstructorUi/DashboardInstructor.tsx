@@ -1595,8 +1595,39 @@ const InstructorPortal = () => {
                                   console.error('Failed to mark notification as read', error);
                                 }
                               }
+                              
+                              // Handle message notifications - navigate to student messages
+                              if (notification.title === "New Message from Student" && notification.link) {
+                                // Extract studentId from link like /instructor/students?studentId=xxx
+                                const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
+                                const studentId = urlParams.get('studentId');
+                                if (studentId) {
+                                  // Store studentId in sessionStorage to be picked up by InstructorStudentManagement
+                                  sessionStorage.setItem('openStudentId', studentId);
+                                  setActiveTab('students');
+                                  setShowNotifications(false);
+                                  return;
+                                }
+                              }
+                              
                               if (notification.link) {
-                                window.open(notification.link, '_blank');
+                                // Check if it's an external link
+                                if (/^https?:\/\//i.test(notification.link)) {
+                                  window.open(notification.link, '_blank');
+                                } else {
+                                  // Internal link - try to handle it
+                                  const link = notification.link;
+                                  if (link.includes('/instructor/students')) {
+                                    const urlParams = new URLSearchParams(link.split('?')[1] || '');
+                                    const studentId = urlParams.get('studentId');
+                                    if (studentId) {
+                                      sessionStorage.setItem('openStudentId', studentId);
+                                      setActiveTab('students');
+                                      setShowNotifications(false);
+                                      return;
+                                    }
+                                  }
+                                }
                               }
                             }}
                           >

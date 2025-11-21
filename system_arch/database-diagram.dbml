@@ -1,0 +1,457 @@
+// Database Diagram for Intrak V2 - OJT/Internship Management System
+// Paste this into https://dbdiagram.io/
+
+// ============================================
+// ENUMS
+// ============================================
+
+Enum Role {
+  ADMIN
+  COORDINATOR
+  INSTRUCTOR
+  STUDENT
+  INDUSTRY_PARTNER
+}
+
+Enum DocumentType {
+  APPLICATION_LETTER
+  MOA
+  ACCEPTANCE
+  EVALUATION_FORM
+  DTR_HARDCOPY
+  OTHER
+  RECORD_FILE
+  APPLICATION_INTERNSHIP
+  MEDICAL_CERTIFICATE
+  CERTIFICATION_UNITS
+  INTERNSHIP_RESUME
+  CONSENT_FORM
+  ENDORSEMENT_LETTER
+  INTERNSHIP_RELEASE
+  INTERNSHIP_AGREEMENT
+  TRAINING_AGREEMENT
+  INTERNSHIP_EVALUATION
+  CERTIFICATE_COMPLETION
+  NARRATIVE_REPORT
+  DTR_PHOTOCOPY
+  TIME_FRAMES
+  WEEKLY_REPORTS
+  STUDENT_FEEDBACK
+  SUPERVISOR_FEEDBACK
+  AGENCY_SELF_EVALUATION
+  AGENCY_STUDENT_EVALUATION
+}
+
+Enum DocumentCategory {
+  PRE_DEPLOYMENT
+  UPON_APPROVAL
+  POST_OJT
+}
+
+Enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESUBMISSION_REQUESTED
+}
+
+Enum VerificationMethod {
+  MANUAL
+  QR
+  GPS
+  IP
+  FACIAL
+}
+
+Enum AnnouncementAudience {
+  ALL
+  STUDENTS
+  COORDINATORS
+  INSTRUCTORS
+  PARTNERS
+}
+
+Enum AlertType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+Enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+Enum ActivityType {
+  USER_REGISTERED
+  USER_UPDATED
+  USER_DELETED
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
+  ATTENDANCE_LOGGED
+  EVALUATION_SUBMITTED
+  ANNOUNCEMENT_CREATED
+  COMPANY_ADDED
+  STUDENT_ASSIGNED
+  SETTINGS_UPDATED
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGED
+}
+
+Enum DocumentFeedbackType {
+  COMMENT
+  REQUEST_CHANGES
+  APPROVAL_NOTE
+  STUDENT_RESPONSE
+}
+
+Enum NotificationType {
+  DOCUMENT
+  ATTENDANCE
+  SYSTEM
+  ALERT
+  OTHER
+}
+
+Enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+// ============================================
+// TABLES
+// ============================================
+
+Table users {
+  id uuid [pk, default: `uuid()`]
+  email varchar [unique, not null]
+  name varchar [not null]
+  password_hash varchar [not null]
+  role Role [not null]
+  active boolean [default: true]
+  profile_photo varchar
+  phone varchar
+  department varchar
+  office varchar
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Base user model for all roles (Admin, Coordinator, Instructor, Student, Industry Partner)'
+}
+
+Table refresh_tokens {
+  id uuid [pk, default: `uuid()`]
+  token varchar [unique, not null]
+  user_id uuid [not null]
+  expires_at timestamp [not null]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'JWT refresh tokens for authentication'
+}
+
+Table students {
+  id uuid [pk, default: `uuid()`]
+  user_id uuid [unique, not null]
+  student_number varchar [unique, not null]
+  program varchar [not null]
+  year integer [not null]
+  section varchar [not null]
+  company_id uuid
+  supervisor_name varchar
+  instructor_id uuid
+  start_date date
+  end_date date
+  total_hours integer [default: 240]
+  completed_hours integer [default: 0]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Student-specific information and internship details'
+}
+
+Table companies {
+  id uuid [pk, default: `uuid()`]
+  name varchar [not null]
+  address varchar [not null]
+  contact_person varchar [not null]
+  contact_email varchar [not null]
+  contact_number varchar [not null]
+  latitude float
+  longitude float
+  radius_meters integer [default: 100]
+  max_slots integer [default: 10]
+  description text
+  industry varchar
+  supervisor_id uuid
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Industry partner companies for internships'
+}
+
+Table company_applications {
+  id uuid [pk, default: `uuid()`]
+  student_id uuid [not null]
+  company_id uuid [not null]
+  status ApplicationStatus [default: 'PENDING']
+  message text
+  rejection_reason text
+  applied_at timestamp [default: `now()`]
+  reviewed_at timestamp
+  reviewed_by uuid
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  indexes {
+    (student_id, company_id) [unique]
+  }
+  
+  Note: 'Student applications to companies'
+}
+
+Table documents {
+  id uuid [pk, default: `uuid()`]
+  student_id uuid [not null]
+  type DocumentType [not null]
+  filename varchar [not null]
+  filepath varchar [not null]
+  mime_type varchar [not null]
+  status DocumentStatus [default: 'PENDING']
+  remarks text
+  uploaded_by_id uuid [not null]
+  uploaded_at timestamp [default: `now()`]
+  reviewed_at timestamp
+  requires_signature boolean [default: false]
+  signed_at timestamp
+  signature_data text
+  
+  Note: 'Student-uploaded documents with approval workflow'
+}
+
+Table attendance_logs {
+  id uuid [pk, default: `uuid()`]
+  student_id uuid [not null]
+  date date [not null]
+  time_in timestamp
+  time_out timestamp
+  duration_minutes integer [default: 0]
+  verified boolean [default: false]
+  verification_method VerificationMethod [default: 'MANUAL']
+  verification_metadata jsonb
+  remarks text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Student attendance records with multiple verification methods'
+}
+
+Table qr_tokens {
+  id uuid [pk, default: `uuid()`]
+  token varchar [unique, not null]
+  student_id uuid [not null]
+  expires_at timestamp [not null]
+  used boolean [default: false]
+  used_at timestamp
+  created_at timestamp [default: `now()`]
+  
+  Note: 'QR codes for attendance verification'
+}
+
+Table evaluations {
+  id uuid [pk, default: `uuid()`]
+  student_id uuid [not null]
+  evaluator_id uuid [not null]
+  evaluator_role varchar [not null]
+  rating float [not null]
+  criteria jsonb
+  comments text
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Student evaluations by instructors/supervisors'
+}
+
+Table document_feedback {
+  id uuid [pk, default: `uuid()`]
+  document_id uuid [not null]
+  author_id uuid [not null]
+  message text [not null]
+  type DocumentFeedbackType [default: 'COMMENT']
+  requires_action boolean [default: false]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Feedback and comments on documents'
+}
+
+Table document_templates {
+  id uuid [pk, default: `uuid()`]
+  name varchar [not null]
+  description text
+  type DocumentType [not null]
+  category DocumentCategory [not null]
+  filename varchar [not null]
+  filepath varchar [not null]
+  mime_type varchar [not null]
+  is_active boolean [default: true]
+  uploaded_by_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Document templates for students to download'
+}
+
+Table announcements {
+  id uuid [pk, default: `uuid()`]
+  title varchar [not null]
+  content text [not null]
+  audience AnnouncementAudience [default: 'ALL']
+  views integer [default: 0]
+  created_by_id uuid [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'System announcements for different user groups'
+}
+
+Table notifications {
+  id uuid [pk, default: `uuid()`]
+  user_id uuid [not null]
+  title varchar [not null]
+  message text [not null]
+  type NotificationType [default: 'OTHER']
+  link varchar
+  read boolean [default: false]
+  created_at timestamp [default: `now()`]
+  read_at timestamp
+  
+  Note: 'User notifications for various events'
+}
+
+Table audit_logs {
+  id uuid [pk, default: `uuid()`]
+  user_id uuid [not null]
+  action varchar [not null]
+  meta jsonb
+  ip_address varchar
+  user_agent varchar
+  created_at timestamp [default: `now()`]
+  
+  Note: 'System audit trail for security and compliance'
+}
+
+Table admin_settings {
+  id uuid [pk, default: `uuid()`]
+  user_id uuid [unique, not null]
+  maintenance_mode boolean [default: false]
+  email_notifications boolean [default: true]
+  system_alerts boolean [default: true]
+  auto_backup boolean [default: true]
+  session_timeout integer [default: 30]
+  max_login_attempts integer [default: 5]
+  email_system_alerts boolean [default: true]
+  email_user_activity boolean [default: true]
+  email_maintenance boolean [default: true]
+  push_notifications boolean [default: true]
+  sms_alerts boolean [default: false]
+  theme varchar [default: 'system']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Admin user-specific settings'
+}
+
+Table coordinator_settings {
+  id uuid [pk, default: `uuid()`]
+  user_id uuid [unique, not null]
+  auto_approve_documents boolean [default: false]
+  require_document_review boolean [default: true]
+  attendance_reminder_time varchar [default: '09:00']
+  default_announcement_audience varchar [default: 'ALL']
+  enable_bulk_operations boolean [default: true]
+  show_advanced_metrics boolean [default: false]
+  notification_frequency varchar [default: 'immediate']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Coordinator user-specific settings'
+}
+
+Table system_alerts {
+  id uuid [pk, default: `uuid()`]
+  type AlertType [default: 'INFO']
+  priority AlertPriority [default: 'MEDIUM']
+  title varchar [not null]
+  message text [not null]
+  resolved boolean [default: false]
+  resolved_at timestamp
+  resolved_by uuid
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'System-wide alerts and notifications'
+}
+
+Table activities {
+  id uuid [pk, default: `uuid()`]
+  type ActivityType [not null]
+  description text [not null]
+  user_id uuid
+  user_name varchar
+  metadata jsonb
+  ip_address varchar
+  created_at timestamp [default: `now()`]
+  
+  Note: 'System activity log for tracking user actions'
+}
+
+Table partnership_messages {
+  id uuid [pk, default: `uuid()`]
+  student_id uuid [not null]
+  sender_id uuid [not null]
+  content text [not null]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Messages between students and industry partners'
+}
+
+// ============================================
+// RELATIONSHIPS
+// ============================================
+
+// User relationships
+Ref: refresh_tokens.user_id > users.id [delete: cascade]
+Ref: students.user_id - users.id [delete: cascade]
+Ref: documents.uploaded_by_id > users.id
+Ref: evaluations.evaluator_id > users.id
+Ref: announcements.created_by_id > users.id
+Ref: audit_logs.user_id > users.id
+Ref: document_templates.uploaded_by_id > users.id
+Ref: admin_settings.user_id - users.id [delete: cascade]
+Ref: coordinator_settings.user_id - users.id [delete: cascade]
+Ref: company_applications.reviewed_by > users.id
+Ref: document_feedback.author_id > users.id [delete: cascade]
+Ref: notifications.user_id > users.id [delete: cascade]
+Ref: companies.supervisor_id > users.id
+Ref: partnership_messages.sender_id > users.id [delete: cascade]
+
+// Student relationships
+Ref: students.instructor_id > users.id
+Ref: students.company_id > companies.id
+Ref: documents.student_id > students.id [delete: cascade]
+Ref: attendance_logs.student_id > students.id [delete: cascade]
+Ref: evaluations.student_id > students.id [delete: cascade]
+Ref: company_applications.student_id > students.id [delete: cascade]
+Ref: partnership_messages.student_id > students.id [delete: cascade]
+
+// Company relationships
+Ref: company_applications.company_id > companies.id [delete: cascade]
+
+// Document relationships
+Ref: document_feedback.document_id > documents.id [delete: cascade]
+

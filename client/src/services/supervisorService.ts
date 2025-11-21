@@ -63,6 +63,20 @@ export interface CompetencyEvaluation {
   remarks: string;
 }
 
+export interface TerminationData {
+  lackOfWork?: boolean;
+  violationRules?: boolean;
+  unfavorableHabits?: boolean;
+  altercation?: boolean;
+  absencesTardiness?: boolean;
+  disrespectful?: boolean;
+  noInterest?: boolean;
+  other?: boolean;
+  otherSpecify?: string;
+  futureEmployment?: boolean;
+  needsImprovement?: boolean;
+}
+
 export interface InternshipEvaluationData {
   studentId: string;
   competencies: Record<string, CompetencyEvaluation>;
@@ -70,6 +84,7 @@ export interface InternshipEvaluationData {
   evaluatorName?: string;
   evaluatorPosition?: string;
   ojtGrade: number;
+  termination?: TerminationData;
 }
 
 export interface EvaluationExportPayload extends InternshipEvaluationData {
@@ -273,7 +288,13 @@ class SupervisorService {
 
   async exportEvaluation(payload: EvaluationExportPayload): Promise<void> {
     try {
-      const response = await api.post('/evaluations/export', payload, {
+      // Include studentId in payload for PDF generation
+      const exportPayload = {
+        ...payload,
+        studentId: payload.studentId,
+      };
+      
+      const response = await api.post('/evaluations/export', exportPayload, {
         responseType: 'blob',
       });
 

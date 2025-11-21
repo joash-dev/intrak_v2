@@ -1,0 +1,106 @@
+%% Intrak V2 - Data Flow Diagram (Level 0 - Context Diagram)
+%% Paste this into: https://mermaid.live/
+
+flowchart TB
+    subgraph SYSTEM["Intrak V2 System"]
+        direction LR
+        
+        subgraph PROCESSES["Main Processes"]
+            direction TB
+            P1["1.0 User Management"]
+            P2["2.0 Document Management"]
+            P3["3.0 Attendance Tracking"]
+            P4["4.0 Company Management"]
+            P5["5.0 Evaluation System"]
+            P6["6.0 Notification System"]
+        end
+        
+        subgraph DATA_STORES["Data Stores"]
+            direction TB
+            D1[("D1: Users & Students")]
+            D2[("D2: Documents & Templates")]
+            D3[("D3: Attendance & Logs")]
+            D4[("D4: Companies & Applications")]
+            D5[("D5: Evaluations")]
+            D6[("D6: Notifications & Alerts")]
+        end
+        
+        PROCESSES --> DATA_STORES
+    end
+    
+    %% External Entities - Left Side
+    subgraph EXTERNAL_LEFT["External Entities"]
+        direction TB
+        Student["👤 Student"]
+        Instructor["👨‍🏫 Instructor"]
+        Coordinator["👔 Coordinator"]
+        Admin["⚙️ Admin"]
+        Partner["🏢 Industry Partner"]
+    end
+    
+    %% External Entities - Right Side
+    subgraph EXTERNAL_RIGHT["External Systems"]
+        direction TB
+        EmailSys["✉️ Email System"]
+        FileSys["📁 File Storage"]
+    end
+    
+    %% Input Flows from Users
+    Student -->|"Login, Upload, Log, Apply"| P1
+    Student -->|"Upload, View Status"| P2
+    Student -->|"Log, View"| P3
+    Student -->|"Apply, View"| P4
+    
+    Instructor -->|"Review, Manage"| P2
+    Instructor -->|"View, Monitor"| P3
+    Instructor -->|"Submit"| P5
+    Instructor -->|"Manage"| P1
+    
+    Coordinator -->|"Manage All"| P1
+    Coordinator -->|"Bulk Operations"| P2
+    Coordinator -->|"Generate Reports"| P3
+    Coordinator -->|"Manage"| P4
+    Coordinator -->|"System Management"| P6
+    
+    Admin -->|"Administration"| P1
+    Admin -->|"Settings"| P6
+    
+    Partner -->|"View Applications"| P4
+    
+    %% Process to Data Store Flows
+    P1 <-->|"User Data"| D1
+    P2 <-->|"Document Data"| D2
+    P3 <-->|"Attendance Data"| D3
+    P4 <-->|"Application Data"| D4
+    P5 <-->|"Evaluation Data"| D5
+    P6 <-->|"Notification Data"| D6
+    
+    %% External System Flows
+    P2 <-->|"File Operations"| FileSys
+    P6 <-->|"Email Operations"| EmailSys
+    
+    %% Output Flows to Users
+    P1 -.->|"Dashboard"| Student
+    P1 -.->|"Dashboard"| Instructor
+    P1 -.->|"Dashboard"| Coordinator
+    P1 -.->|"Dashboard"| Admin
+    
+    P2 -.->|"Status & Reports"| Student
+    P2 -.->|"Document List"| Instructor
+    P2 -.->|"Reports"| Coordinator
+    
+    P3 -.->|"Summary & Reports"| Student
+    P3 -.->|"Reports"| Instructor
+    P3 -.->|"Analytics"| Coordinator
+    
+    P4 -.->|"Company List & Status"| Student
+    P4 -.->|"Dashboard"| Partner
+    
+    P5 -.->|"Results"| Student
+    P5 -.->|"Reports"| Instructor
+    
+    P6 -.->|"Notifications"| Student
+    P6 -.->|"Notifications"| Instructor
+    P6 -.->|"Notifications"| Coordinator
+    P6 -.->|"System Alerts"| Admin
+

@@ -175,11 +175,11 @@ class DocumentService {
       'INTERNSHIP_RESUME',
       'CONSENT_FORM',
       'ENDORSEMENT_LETTER',
-      'INTERNSHIP_RELEASE',
-      'TIME_FRAMES'
+      'INTERNSHIP_RELEASE'
     ];
 
     const uponApprovalTypes = [
+      'MOA',
       'INTERNSHIP_AGREEMENT',
       'TRAINING_AGREEMENT'
     ];
@@ -187,8 +187,9 @@ class DocumentService {
     const postOjtTypes = [
       'INTERNSHIP_EVALUATION',
       'CERTIFICATE_COMPLETION',
-      'NARRATIVE_REPORT',
+      'INTERNSHIP_NARRATIVE_REPORT',
       'DTR_PHOTOCOPY',
+      'TIME_FRAMES',
       'WEEKLY_REPORTS',
       'STUDENT_FEEDBACK',
       'SUPERVISOR_FEEDBACK',
@@ -211,9 +212,9 @@ class DocumentService {
   getCategoryDisplay(category: string): string {
     switch (category) {
       case 'PRE_DEPLOYMENT':
-        return 'Pre-deployment Documents';
+        return 'Pre-OJT Documents';
       case 'UPON_APPROVAL':
-        return 'Upon Approval Documents';
+        return 'Upon OJT Documents';
       case 'POST_OJT':
         return 'Post-OJT Documents';
       default:
@@ -225,8 +226,8 @@ class DocumentService {
   getCategoryOptions(): Array<{ value: string; label: string }> {
     return [
       { value: 'all', label: 'All Categories' },
-      { value: 'PRE_DEPLOYMENT', label: 'Pre-deployment' },
-      { value: 'UPON_APPROVAL', label: 'Upon Approval' },
+      { value: 'PRE_DEPLOYMENT', label: 'Pre-OJT' },
+      { value: 'UPON_APPROVAL', label: 'Upon OJT' },
       { value: 'POST_OJT', label: 'Post-OJT' }
     ];
   }

@@ -18,5 +18,6 @@ router.put(
   attendanceController.verifyAttendance
 );
 router.get('/export-dtr/:studentId', attendanceController.exportDTR);
+router.get('/export-dtr-docx/:studentId', attendanceController.exportDTRDocx);
 
 export default router;

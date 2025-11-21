@@ -65,7 +65,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
     },
     {
       value: "MEDICAL_CERTIFICATE",
-      label: "Medical Certificate and Psychological Test",
+      label: "Medical Certificate and Psychological Test from any government physician",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
@@ -100,23 +100,23 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       required: true,
       category: "PRE_DEPLOYMENT",
     },
-    {
-      value: "TIME_FRAMES",
-      label: "Internship Time Frames (Form FM-AA-INT-14)",
-      required: true,
-      category: "PRE_DEPLOYMENT",
-    },
 
     // II. UPON APPROVAL OF COMPANY
     {
+      value: "MOA",
+      label: "Memorandum of Agreement (MOA) (Form FM-AA-INT-10)",
+      required: true,
+      category: "UPON_APPROVAL",
+    },
+    {
       value: "INTERNSHIP_AGREEMENT",
-      label: "Memorandum / Internship Agreement (Form FM-AA-INT-10)",
+      label: "Internship Agreement (Form FM-AA-INT-10)",
       required: true,
       category: "UPON_APPROVAL",
     },
     {
       value: "TRAINING_AGREEMENT",
-      label: "Training Agreement and Liability Waiver Form (Form FM-AA-INT-15)",
+      label: "In case of overtime: Training Agreement and Liability Waiver Form (Form FM-AA-INT-15)",
       required: false,
       category: "UPON_APPROVAL",
     },
@@ -135,7 +135,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       category: "POST_OJT",
     },
     {
-      value: "INTERNSHIP_NARRATIVE_REPORT",
+      value: "NARRATIVE_REPORT",
       label: "Internship Narrative Report [by the Student-Intern]",
       required: true,
       category: "POST_OJT",
@@ -143,6 +143,12 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
     {
       value: "DTR_PHOTOCOPY",
       label: "Photocopy of Daily Time Record",
+      required: true,
+      category: "POST_OJT",
+    },
+    {
+      value: "TIME_FRAMES",
+      label: "Internship Time Frames (Form FM-AA-INT-14)",
       required: true,
       category: "POST_OJT",
     },

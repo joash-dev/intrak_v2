@@ -1,0 +1,78 @@
+%% Intrak V2 - Deployment Diagram
+%% Paste this into: https://mermaid.live/
+
+graph TB
+    subgraph INTERNET["🌐 Internet"]
+        USERS["👥 Users<br/>Students, Instructors,<br/>Coordinators, Admins"]
+    end
+    
+    subgraph DMZ["🛡️ DMZ / Edge"]
+        LB["⚖️ Load Balancer<br/>Nginx/HAProxy<br/>SSL Termination"]
+        CDN["📦 CDN<br/>Static Assets<br/>Images, CSS, JS"]
+    end
+    
+    subgraph WEB_TIER["🌐 Web Tier"]
+        WEB1["🖥️ Web Server 1<br/>Nginx<br/>Port 80/443"]
+        WEB2["🖥️ Web Server 2<br/>Nginx<br/>Port 80/443<br/>(Redundant)"]
+    end
+    
+    subgraph APP_TIER["⚙️ Application Tier"]
+        APP1["🚀 App Server 1<br/>Node.js + Express<br/>PM2 Process Manager<br/>Port 5000"]
+        APP2["🚀 App Server 2<br/>Node.js + Express<br/>PM2 Process Manager<br/>Port 5000<br/>(Redundant)"]
+    end
+    
+    subgraph DATA_TIER["💾 Data Tier"]
+        DB_PRIMARY["🐘 PostgreSQL Primary<br/>Port 5432<br/>Read/Write"]
+        DB_REPLICA["🐘 PostgreSQL Replica<br/>Port 5432<br/>Read Only"]
+        REDIS["⚡ Redis Cache<br/>Port 6379<br/>Session Storage"]
+    end
+    
+    subgraph STORAGE_TIER["📁 Storage Tier"]
+        NAS["💿 Network Attached Storage<br/>Document Storage<br/>Profile Photos<br/>Templates"]
+        BACKUP["💾 Backup Storage<br/>Daily Backups<br/>Database Dumps"]
+    end
+    
+    subgraph EXTERNAL["☁️ External Services"]
+        SMTP["✉️ SMTP Server<br/>Email Service<br/>Notifications"]
+        MONITOR["📊 Monitoring<br/>Uptime Monitoring<br/>Error Tracking"]
+    end
+    
+    %% Connections
+    USERS -->|HTTPS| LB
+    LB --> CDN
+    LB --> WEB1
+    LB --> WEB2
+    
+    WEB1 --> APP1
+    WEB2 --> APP2
+    
+    APP1 --> DB_PRIMARY
+    APP2 --> DB_PRIMARY
+    APP1 --> DB_REPLICA
+    APP2 --> DB_REPLICA
+    APP1 --> REDIS
+    APP2 --> REDIS
+    
+    APP1 --> NAS
+    APP2 --> NAS
+    
+    DB_PRIMARY --> BACKUP
+    DB_PRIMARY -.->|Replication| DB_REPLICA
+    
+    APP1 --> SMTP
+    APP2 --> SMTP
+    
+    MONITOR --> APP1
+    MONITOR --> APP2
+    MONITOR --> DB_PRIMARY
+    
+    %% Styling
+    style INTERNET fill:#E3F2FD
+    style DMZ fill:#FFF9C4
+    style WEB_TIER fill:#C8E6C9
+    style APP_TIER fill:#FFE0B2
+    style DATA_TIER fill:#E1BEE7
+    style STORAGE_TIER fill:#F5F5F5
+    style EXTERNAL fill:#FFCDD2
+
+

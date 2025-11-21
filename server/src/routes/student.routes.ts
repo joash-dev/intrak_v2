@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
 import * as studentController from '../controllers/student.controller';
+import * as weeklyReportController from '../controllers/weeklyReport.controller';
 
 const router = Router();
 
@@ -18,6 +19,10 @@ router.get('/partnership-checklist', authorize(['STUDENT']), studentController.g
 router.put('/partnership-checklist', authorize(['STUDENT']), studentController.updatePartnershipChecklist);
 router.post('/apply-company', authorize(['STUDENT']), studentController.applyToCompany);
 router.post('/request-company-partnership', authorize(['STUDENT']), studentController.requestCompanyPartnership);
+// Weekly report routes
+router.get('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.getWeeklyReport);
+router.post('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.saveWeeklyReport);
+router.get('/weekly-reports/export/me', authorize(['STUDENT']), weeklyReportController.exportWeeklyReport);
 // Parameterized routes - must come after specific routes
 router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);

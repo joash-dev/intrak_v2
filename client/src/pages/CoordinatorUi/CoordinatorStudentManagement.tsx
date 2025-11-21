@@ -5,12 +5,11 @@ import {
   UserCheck,
   UserX,
   Building2,
-  // CheckCircle,
-  // AlertTriangle,
-  // X,
+  CheckCircle,
+  XCircle,
   Loader2,
   Eye,
-  // Edit,
+  FileText,
   X,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -21,6 +20,9 @@ import {
 import { instructorService } from "../../services/instructorService";
 import type { Company } from "../../services/companyService";
 import PartnershipMessageThread from "../../components/PartnershipMessageThread";
+import { documentService } from "../../services/documentService";
+import type { Document } from "../../services/documentService";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 
 // Utility function to format student ID
@@ -84,6 +86,56 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
     ttl: 3 * 60 * 1000,
   });
   const students = studentsData ?? [];
+
+  // Fetch company applications to check if students are finding companies
+  const [companyApplications, setCompanyApplications] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const loadApplications = async () => {
+      try {
+        const response = await api.get("/company-applications?status=PENDING");
+        setCompanyApplications(response.data.applications || []);
+      } catch (error) {
+        console.error("Error loading company applications:", error);
+        setCompanyApplications([]);
+      }
+    };
+    loadApplications();
+  }, []);
+
+  // Get company display text based on student and applications
+  const getCompanyDisplay = (student: Student): string => {
+    // If student has a company, show it
+    if (student.company && student.company !== 'No Company') {
+      return student.company;
+    }
+    
+    // Check if student has pending applications
+    const hasPendingApplication = companyApplications.some(
+      (app: any) => app.studentId === student.id && app.status === 'PENDING'
+    );
+    
+    if (hasPendingApplication) {
+      return 'Finding Company';
+    }
+    
+    // Default to "No Company"
+    return 'No Company';
+  };
+
+  // Check for studentId in sessionStorage to auto-open student (from notification click)
+  useEffect(() => {
+    const openStudentId = sessionStorage.getItem('openStudentId');
+    if (openStudentId && students.length > 0) {
+      const studentToOpen = students.find(s => s.id === openStudentId);
+      if (studentToOpen) {
+        setDetailStudent(studentToOpen);
+        setShowStudentDetailsModal(true);
+        // Clear the sessionStorage after opening
+        sessionStorage.removeItem('openStudentId');
+      }
+    }
+  }, [students]);
 
   // Fetch instructors
   const { data: instructorsData, loading: instructorsLoading } = useOptimizedData(
@@ -488,6 +540,11 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                 </div>
               )}
 
+              {/* Partnership Documents */}
+              {detailStudent && (
+                <PartnershipDocumentsSection studentId={detailStudent.id} studentName={detailStudent.name} />
+              )}
+
               {/* Partnership Communication */}
               {detailStudent && (
                 <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
@@ -651,7 +708,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                       <div className="flex items-center">
                         <Building2 className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="text-sm text-gray-900 dark:text-white">
-                          {student.company}
+                          {getCompanyDisplay(student)}
                         </span>
                       </div>
                     </td>
@@ -777,7 +834,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               <div className="flex items-center space-x-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
                 <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span className="text-xs text-gray-600 dark:text-gray-400">
-                  {student.company}
+                  {getCompanyDisplay(student)}
                 </span>
               </div>
 
@@ -1038,6 +1095,323 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                   "Unassign Student"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Partnership Documents Section Component
+const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: string }> = ({ studentId, studentName }) => {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
+  const [remarks, setRemarks] = useState("");
+
+  const preDeploymentDocTypes = [
+    "APPLICATION_INTERNSHIP",
+    "MEDICAL_CERTIFICATE",
+    "CERTIFICATION_UNITS",
+    "INTERNSHIP_RESUME",
+    "CONSENT_FORM",
+    "ENDORSEMENT_LETTER",
+    "INTERNSHIP_RELEASE",
+  ];
+
+  useEffect(() => {
+    loadDocuments();
+  }, [studentId]);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/documents?studentId=${studentId}`);
+      const allDocs = response.data.documents || [];
+      const preDeploymentDocs = allDocs.filter((doc: Document) => preDeploymentDocTypes.includes(doc.type));
+      setDocuments(preDeploymentDocs);
+    } catch (error) {
+      console.error("Error loading partnership documents:", error);
+      toast.error("Failed to load documents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePreview = async (document: Document) => {
+    try {
+      setSelectedDoc(document);
+      const blob = await documentService.downloadDocument(document.id);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Error previewing document:", error);
+      toast.error("Failed to preview document");
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!selectedDoc) return;
+    try {
+      await documentService.approveDocument(selectedDoc.id, remarks);
+      toast.success("Document approved successfully");
+      setReviewAction(null);
+      setRemarks("");
+      setSelectedDoc(null);
+      if (previewUrl) {
+        window.URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+      await loadDocuments();
+    } catch (error: any) {
+      console.error("Error approving document:", error);
+      toast.error(error.response?.data?.message || "Failed to approve document");
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedDoc) return;
+    try {
+      await documentService.rejectDocument(selectedDoc.id, remarks);
+      toast.success("Document rejected");
+      setReviewAction(null);
+      setRemarks("");
+      setSelectedDoc(null);
+      if (previewUrl) {
+        window.URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
+      await loadDocuments();
+    } catch (error: any) {
+      console.error("Error rejecting document:", error);
+      toast.error(error.response?.data?.message || "Failed to reject document");
+    }
+  };
+
+  const getDocName = (type: string) => {
+    const names: Record<string, string> = {
+      APPLICATION_INTERNSHIP: "Application for Internship (Form FM-AA-INT-01)",
+      MEDICAL_CERTIFICATE: "Medical Certificate and Psychological Test",
+      CERTIFICATION_UNITS: "Certification of Units Earned (Form FM-AA-INT-02)",
+      INTERNSHIP_RESUME: "Internship Resume (Form FM-AA-INT-09)",
+      CONSENT_FORM: "Consent Form (Form FM-AA-INT-03)",
+      ENDORSEMENT_LETTER: "Endorsement Letter (Form FM-AA-INT-05)",
+      INTERNSHIP_RELEASE: "Internship Release Form (Form FM-AA-INT-12)",
+    };
+    return names[type] || type.replace(/_/g, " ");
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Pre-Deployment Required Documents
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Review and approve pre-deployment documents for {studentName}
+          </p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+        </div>
+      ) : documents.length === 0 ? (
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+          <p>No pre-deployment documents uploaded yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className={`p-4 rounded-lg border ${
+                doc.status === "APPROVED"
+                  ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
+                  : doc.status === "PENDING"
+                  ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+                  : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {getDocName(doc.type)}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      doc.status === "APPROVED"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
+                        : doc.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
+                        : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                    }`}>
+                      {doc.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {doc.filename}
+                  </p>
+                  {doc.remarks && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Remarks: {doc.remarks}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    onClick={() => handlePreview(doc)}
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                    title="Preview"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {doc.status === "PENDING" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setSelectedDoc(doc);
+                          setReviewAction("approve");
+                          setRemarks("");
+                        }}
+                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                        title="Approve"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedDoc(doc);
+                          setReviewAction("reject");
+                          setRemarks("");
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title="Reject"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {selectedDoc && reviewAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => {
+          setReviewAction(null);
+          setRemarks("");
+        }}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {reviewAction === "approve" ? "Approve" : "Reject"} Document
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              {getDocName(selectedDoc.type)}
+            </p>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder={reviewAction === "approve" ? "Optional remarks..." : "Reason for rejection (required)"}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4"
+              rows={4}
+            />
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={reviewAction === "approve" ? handleApprove : handleReject}
+                disabled={reviewAction === "reject" && !remarks.trim()}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  reviewAction === "approve"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
+              >
+                {reviewAction === "approve" ? "Approve" : "Reject"}
+              </button>
+              <button
+                onClick={() => {
+                  setReviewAction(null);
+                  setRemarks("");
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {selectedDoc && previewUrl && !reviewAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" onClick={() => {
+          setSelectedDoc(null);
+          if (previewUrl) {
+            window.URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }
+        }}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <FileText className="w-6 h-6 text-indigo-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedDoc.filename}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {getDocName(selectedDoc.type)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedDoc(null);
+                  if (previewUrl) {
+                    window.URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                  }
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+              {selectedDoc.mimeType === 'application/pdf' ? (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full"
+                  title={selectedDoc.filename}
+                />
+              ) : selectedDoc.mimeType?.startsWith('image/') ? (
+                <div className="flex items-center justify-center h-full p-4">
+                  <img
+                    src={previewUrl}
+                    alt={selectedDoc.filename}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Preview not available for this file type
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

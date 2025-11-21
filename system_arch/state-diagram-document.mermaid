@@ -1,0 +1,49 @@
+%% Intrak V2 - Document Status State Diagram
+%% Paste this into: https://mermaid.live/
+
+stateDiagram-v2
+    [*] --> PENDING: Student Uploads Document
+    
+    PENDING --> REVIEWING: Reviewer Opens Document
+    REVIEWING --> PENDING: Reviewer Closes Without Action
+    
+    PENDING --> RESUBMISSION_REQUESTED: Reviewer Requests Changes
+    RESUBMISSION_REQUESTED --> PENDING: Student Resubmits Document
+    
+    REVIEWING --> APPROVED: Reviewer Approves
+    REVIEWING --> REJECTED: Reviewer Rejects
+    
+    APPROVED --> [*]: Document Complete
+    REJECTED --> [*]: Document Rejected
+    
+    note right of PENDING
+        Initial state when
+        document is uploaded
+        Student can view status
+    end note
+    
+    note right of REVIEWING
+        Reviewer is currently
+        examining the document
+        Can approve or reject
+    end note
+    
+    note right of RESUBMISSION_REQUESTED
+        Changes needed
+        Student notified
+        Can resubmit or cancel
+    end note
+    
+    note right of APPROVED
+        Document accepted
+        Student notified
+        Progress updated
+    end note
+    
+    note right of REJECTED
+        Document rejected
+        Reason provided
+        Student notified
+    end note
+
+

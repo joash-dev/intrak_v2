@@ -127,13 +127,24 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Student profile not found' });
     }
 
-    // Calculate completed hours from attendance logs
+    // Calculate completed hours from attendance logs with official time rounding
     const attendanceLogs = await prisma.attendanceLog.findMany({
       where: { studentId: student.id, verified: true },
       select: { durationMinutes: true }
     });
 
-    const completedHours = Math.round(attendanceLogs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60);
+    // Round to official time (30-minute increments)
+    const roundToOfficialTime = (minutes: number): number => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      const roundedMinutes = mins >= 30 ? 30 : 0;
+      return hours * 60 + roundedMinutes;
+    };
+
+    const totalMinutes = attendanceLogs.reduce((sum, log) => {
+      return sum + roundToOfficialTime(log.durationMinutes);
+    }, 0);
+    const completedHours = Math.round(totalMinutes / 60);
 
     res.json({
       id: student.id,
@@ -705,7 +716,18 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         select: { durationMinutes: true }
       });
 
-      const completedHours = Math.round(attendanceLogs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60);
+      // Round to official time (30-minute increments)
+      const roundToOfficialTime = (minutes: number): number => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        const roundedMinutes = mins >= 30 ? 30 : 0;
+        return hours * 60 + roundedMinutes;
+      };
+
+      const totalMinutes = attendanceLogs.reduce((sum, log) => {
+        return sum + roundToOfficialTime(log.durationMinutes);
+      }, 0);
+      const completedHours = Math.round(totalMinutes / 60);
 
       const lastAttendanceDate = student.attendanceLogs[0]?.date
         ? new Date(student.attendanceLogs[0].date)

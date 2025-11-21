@@ -223,7 +223,18 @@ export async function generateDTRPDF(options: DTROptions): Promise<Buffer> {
     doc.rect(tableLeft, currentY, colWidths.date + colWidths.day + colWidths.hours, 25).stroke();
     doc.moveTo(tableLeft + colWidths.date + colWidths.day, currentY).lineTo(tableLeft + colWidths.date + colWidths.day, currentY + 25).stroke();
     
-    const totalHours = logs.reduce((sum, log) => sum + log.durationMinutes, 0) / 60;
+    // Round to official time (30-minute increments)
+    const roundToOfficialTime = (minutes: number): number => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      const roundedMinutes = mins >= 30 ? 30 : 0;
+      return hours * 60 + roundedMinutes;
+    };
+
+    const totalMinutes = logs.reduce((sum, log) => {
+      return sum + roundToOfficialTime(log.durationMinutes);
+    }, 0);
+    const totalHours = totalMinutes / 60;
     doc.text('TOTAL NUMBER OF HOURS:', tableLeft + 5, currentY + 8, { width: colWidths.date + colWidths.day - 10, align: 'right' });
     doc.text(totalHours.toFixed(2), tableLeft + colWidths.date + colWidths.day + 5, currentY + 8, { width: colWidths.hours - 10, align: 'center' });
 

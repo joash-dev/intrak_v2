@@ -1,0 +1,109 @@
+%% Intrak V2 - System Architecture (Mermaid)
+%% Paste this into: https://mermaid.live/ or GitHub/GitLab markdown
+%% Enhanced with better styling, icons, and visual representation
+
+graph TB
+    subgraph CLIENT["🌐 CLIENT LAYER"]
+        direction TB
+        
+        subgraph FRONTEND["Frontend Framework"]
+            REACT["⚛️ React + TypeScript + Vite<br/>━━━━━━━━━━━━━━━━<br/>📦 Tailwind CSS<br/>🔄 React Router<br/>🌍 i18next"]
+        end
+        
+        subgraph UI_ROLES["Role-Based UI"]
+            direction LR
+            STUDENT_UI["👤 Student UI<br/>━━━━━━━━━━━━<br/>• Document Upload<br/>• Attendance Logging<br/>• Company Applications"]
+            INSTRUCTOR_UI["👨‍🏫 Instructor UI<br/>━━━━━━━━━━━━<br/>• Student Management<br/>• Document Review<br/>• Attendance Monitoring"]
+            COORDINATOR_UI["👔 Coordinator UI<br/>━━━━━━━━━━━━<br/>• Bulk Operations<br/>• Reports & Analytics<br/>• System Management"]
+            ADMIN_UI["⚙️ Admin UI<br/>━━━━━━━━━━━━<br/>• User Management<br/>• System Settings<br/>• Audit Logs"]
+        end
+        
+        subgraph SERVICES_CLIENT_GROUP["API Services Layer"]
+            SERVICES_CLIENT["🔌 Services Layer<br/>━━━━━━━━━━━━━━━━━━━━<br/>🔐 authService<br/>👥 studentService<br/>📄 documentService<br/>⏰ attendanceService<br/>🏢 companyService<br/>📊 coordinatorService<br/>📧 notificationService"]
+        end
+        
+        REACT --> UI_ROLES
+        STUDENT_UI --> SERVICES_CLIENT
+        INSTRUCTOR_UI --> SERVICES_CLIENT
+        COORDINATOR_UI --> SERVICES_CLIENT
+        ADMIN_UI --> SERVICES_CLIENT
+    end
+    
+    subgraph SERVER["🖥️ SERVER LAYER"]
+        direction TB
+        
+        subgraph SERVER_FRAMEWORK["Backend Framework"]
+            EXPRESS["🚀 Express.js + TypeScript + Node.js<br/>━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br/>📝 RESTful API<br/>🔒 JWT Authentication<br/>⚡ High Performance"]
+        end
+        
+        subgraph MIDDLEWARE_GROUP["🔐 Middleware Stack"]
+            MIDDLEWARE["Middleware<br/>━━━━━━━━━━━━━━━━<br/>🔑 Authentication JWT<br/>🚦 Rate Limiting<br/>🌐 CORS<br/>⚠️ Error Handler<br/>🔧 Maintenance Mode"]
+        end
+        
+        subgraph ROUTES_GROUP["🛣️ API Routes"]
+            ROUTES["REST API Endpoints<br/>━━━━━━━━━━━━━━━━━━━━<br/>/api/auth<br/>/api/students<br/>/api/documents<br/>/api/attendance<br/>/api/companies<br/>/api/coordinator<br/>/api/admin"]
+        end
+        
+        subgraph CONTROLLERS_GROUP["🎮 Controllers"]
+            CONTROLLERS["Request Handlers<br/>━━━━━━━━━━━━━━━━━━━━<br/>Auth Controller<br/>Student Controller<br/>Document Controller<br/>Attendance Controller<br/>Company Controller"]
+        end
+        
+        subgraph SERVICES_SERVER_GROUP["⚙️ Business Logic Services"]
+            SERVICES_SERVER["Services Layer<br/>━━━━━━━━━━━━━━━━━━━━<br/>💼 Business Logic<br/>✅ Data Validation<br/>📁 File Processing<br/>📧 Email Service<br/>🔍 Query Optimization"]
+        end
+        
+        EXPRESS --> MIDDLEWARE
+        MIDDLEWARE --> ROUTES
+        ROUTES --> CONTROLLERS
+        CONTROLLERS --> SERVICES_SERVER
+    end
+    
+    subgraph DATABASE["💾 DATABASE LAYER"]
+        direction TB
+        
+        subgraph DB_MAIN["Database System"]
+            POSTGRES["🐘 PostgreSQL Database<br/>━━━━━━━━━━━━━━━━━━━━<br/>🔗 Prisma ORM<br/>📊 19 Tables<br/>🔒 ACID Compliance<br/>⚡ Optimized Queries"]
+        end
+        
+        subgraph DB_TABLES["Database Tables"]
+            direction LR
+            
+            subgraph DB_GROUP1["Core Entities"]
+                USERS_DB["👥 Users & Students<br/>━━━━━━━━━━━━━━━━<br/>• users<br/>• students<br/>• refresh_tokens"]
+                DOCS_DB["📄 Documents & Templates<br/>━━━━━━━━━━━━━━━━<br/>• documents<br/>• document_templates<br/>• document_feedback"]
+            end
+            
+            subgraph DB_GROUP2["Operations"]
+                ATTENDANCE_DB["⏰ Attendance & Logs<br/>━━━━━━━━━━━━━━━━<br/>• attendance_logs<br/>• qr_tokens"]
+                COMPANIES_DB["🏢 Companies & Applications<br/>━━━━━━━━━━━━━━━━<br/>• companies<br/>• company_applications"]
+            end
+            
+            subgraph DB_GROUP3["Management"]
+                EVALS_DB["📊 Evaluations & Reports<br/>━━━━━━━━━━━━━━━━<br/>• evaluations"]
+                NOTIFS_DB["🔔 Notifications & Alerts<br/>━━━━━━━━━━━━━━━━<br/>• notifications<br/>• announcements<br/>• system_alerts<br/>• activities"]
+            end
+        end
+        
+        POSTGRES --> DB_TABLES
+        USERS_DB --> POSTGRES
+        DOCS_DB --> POSTGRES
+        ATTENDANCE_DB --> POSTGRES
+        COMPANIES_DB --> POSTGRES
+        EVALS_DB --> POSTGRES
+        NOTIFS_DB --> POSTGRES
+    end
+    
+    subgraph EXTERNAL["☁️ EXTERNAL SERVICES"]
+        direction LR
+        FILE_STORAGE["📁 File Storage<br/>━━━━━━━━━━━━━━━━<br/>NAS/Local Storage<br/>Document Management"]
+        EMAIL_SERVICE["✉️ Email Service<br/>━━━━━━━━━━━━━━━━<br/>SMTP Server<br/>Notifications"]
+        QR_SERVICE["📱 QR Code Generator<br/>━━━━━━━━━━━━━━━━<br/>Attendance Verification<br/>Token Generation"]
+    end
+    
+    %% Main connections with labels
+    SERVICES_CLIENT -.->|"🌐 HTTPS/REST API<br/>Axios Client"| ROUTES
+    SERVICES_SERVER -.->|"🔗 Prisma ORM<br/>Database Queries"| POSTGRES
+    SERVICES_SERVER -.->|"📁 File Operations<br/>Upload/Download"| FILE_STORAGE
+    SERVICES_SERVER -.->|"📧 SMTP<br/>Email Delivery"| EMAIL_SERVICE
+    SERVICES_SERVER -.->|"🔐 Generate QR<br/>Token Creation"| QR_SERVICE
+

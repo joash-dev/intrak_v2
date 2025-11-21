@@ -172,6 +172,100 @@ class AttendanceService {
       throw new Error('Failed to export DTR. Please try again.');
     }
   }
+
+  // Export DTR as Word Document (DOCX)
+  async exportDTRDocx(options?: {
+    month?: number;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<void> {
+    try {
+      const params = new URLSearchParams();
+      
+      if (options?.month) params.append('month', options.month.toString());
+      if (options?.year) params.append('year', options.year.toString());
+      if (options?.startDate) params.append('startDate', options.startDate);
+      if (options?.endDate) params.append('endDate', options.endDate);
+
+      const queryString = params.toString();
+      const url = `/attendance/export-dtr-docx/me${queryString ? `?${queryString}` : ''}`;
+
+      try {
+        const response = await api.get(url, {
+          responseType: 'blob'
+        });
+
+        // Check if response is actually an error (JSON error response disguised as blob)
+        const contentType = response.headers['content-type'] || '';
+        if (contentType.includes('application/json')) {
+          const text = await (response.data as Blob).text();
+          const errorData = JSON.parse(text);
+          console.error('Server returned JSON error:', errorData);
+          throw new Error(errorData.message || errorData.details?.message || JSON.stringify(errorData.details) || 'Failed to export DTR document');
+        }
+
+        // Create blob link to download
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        
+        // Generate filename
+        const monthYear = options?.month && options?.year 
+          ? `${options.year}-${options.month.toString().padStart(2, '0')}`
+          : new Date().toISOString().split('T')[0];
+        link.download = `Internship_TimeFrame_${monthYear}.docx`;
+        
+        link.click();
+        window.URL.revokeObjectURL(link.href);
+      } catch (axiosError: any) {
+        // Handle axios errors - check if response is a blob that contains JSON error
+        if (axiosError.response && axiosError.response.data) {
+          const data = axiosError.response.data;
+          
+          // If it's a blob, try to extract JSON error
+          if (data instanceof Blob) {
+            try {
+              const text = await data.text();
+              // Check if it's JSON
+              if (text.trim().startsWith('{')) {
+                const errorData = JSON.parse(text);
+                console.error('Server error (from blob):', errorData);
+                console.error('Full error details:', JSON.stringify(errorData, null, 2));
+                // Extract error message from details object
+                let errorMsg = errorData.message || 'Failed to export DTR document';
+                if (errorData.details) {
+                  if (typeof errorData.details === 'string') {
+                    errorMsg += `: ${errorData.details}`;
+                  } else if (errorData.details.message) {
+                    errorMsg += `: ${errorData.details.message}`;
+                  } else {
+                    errorMsg += `: ${JSON.stringify(errorData.details)}`;
+                  }
+                }
+                throw new Error(errorMsg);
+              }
+            } catch (parseError) {
+              // Not JSON, just a generic error
+            }
+          } else if (typeof data === 'object' && data.message) {
+            // Direct JSON error
+            console.error('Server error:', data);
+            throw new Error(data.message || data.details?.message || 'Failed to export DTR document');
+          }
+        }
+        
+        // Re-throw if we haven't handled it
+        throw axiosError;
+      }
+    } catch (error: any) {
+      console.error('Error exporting DTR DOCX:', error);
+      const errorMessage = error.message || 'Failed to export DTR document. Please check server logs for details.';
+      throw new Error(errorMessage);
+    }
+  }
 }
 
 export const attendanceService = new AttendanceService();

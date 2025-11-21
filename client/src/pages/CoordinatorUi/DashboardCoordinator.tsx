@@ -956,6 +956,20 @@ const CoordinatorPortal: React.FC = () => {
         refreshNotifications();
       }
 
+      // Handle message notifications - navigate to student messages
+      if (notification.title === "New Message from Student" && notification.link) {
+        // Extract studentId from link like /coordinator/students?studentId=xxx
+        const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
+        const studentId = urlParams.get('studentId');
+        if (studentId) {
+          // Store studentId in sessionStorage to be picked up by CoordinatorStudentManagement
+          sessionStorage.setItem('openStudentId', studentId);
+          setActiveTab('students');
+          setShowNotifications(false);
+          return;
+        }
+      }
+
       if (notification.type === "DOCUMENT") {
         setActiveTab("documents");
         navigate("/coordinator/dashboard");
@@ -967,6 +981,17 @@ const CoordinatorPortal: React.FC = () => {
           const normalizedLink = link.startsWith("/") ? link : `/${link}`;
           if (normalizedLink.startsWith("/login")) {
             navigate("/coordinator/dashboard");
+          } else if (normalizedLink.includes('/coordinator/students')) {
+            // Handle coordinator students link with studentId
+            const urlParams = new URLSearchParams(link.split('?')[1] || '');
+            const studentId = urlParams.get('studentId');
+            if (studentId) {
+              sessionStorage.setItem('openStudentId', studentId);
+              setActiveTab('students');
+              setShowNotifications(false);
+              return;
+            }
+            navigate(normalizedLink);
           } else {
             navigate(normalizedLink);
           }

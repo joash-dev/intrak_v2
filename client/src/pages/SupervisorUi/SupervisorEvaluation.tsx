@@ -258,6 +258,7 @@ const createInitialCompetencyState = (): CompetencyFormState =>
   }, {} as CompetencyFormState);
 
 const SupervisorEvaluation = () => {
+  const [activeTab, setActiveTab] = useState<"form11" | "form18" | "form19b">("form11");
   const [selectedIntern, setSelectedIntern] =
     useState<SupervisorStudent | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -272,6 +273,20 @@ const SupervisorEvaluation = () => {
   const [competencyRatings, setCompetencyRatings] = useState<CompetencyFormState>(
     createInitialCompetencyState()
   );
+
+  const [terminationData, setTerminationData] = useState({
+    lackOfWork: false,
+    violationRules: false,
+    unfavorableHabits: false,
+    altercation: false,
+    absencesTardiness: false,
+    disrespectful: false,
+    noInterest: false,
+    other: false,
+    otherSpecify: "",
+    futureEmployment: false,
+    needsImprovement: false,
+  });
 
   useEffect(() => {
     fetchInterns();
@@ -319,6 +334,19 @@ const SupervisorEvaluation = () => {
 
   const resetForm = () => {
     setCompetencyRatings(createInitialCompetencyState());
+    setTerminationData({
+      lackOfWork: false,
+      violationRules: false,
+      unfavorableHabits: false,
+      altercation: false,
+      absencesTardiness: false,
+      disrespectful: false,
+      noInterest: false,
+      other: false,
+      otherSpecify: "",
+      futureEmployment: false,
+      needsImprovement: false,
+    });
   };
 
   const handleStartEvaluation = (intern: SupervisorStudent) => {
@@ -356,6 +384,7 @@ const SupervisorEvaluation = () => {
         evaluatorName: user?.name || "",
         evaluatorPosition: user?.position || "",
         ojtGrade,
+        termination: terminationData,
       };
 
       await supervisorService.submitEvaluation(evaluationData);
@@ -411,6 +440,7 @@ const SupervisorEvaluation = () => {
 
       await supervisorService.exportEvaluation({
         studentId: selectedIntern.id,
+        termination: terminationData,
         studentName: selectedIntern.name,
         companyName,
         companyAddress,
@@ -488,9 +518,9 @@ const SupervisorEvaluation = () => {
           Evaluate and track intern performance - Rate skills and provide
           feedback
         </p>
-        </div>
+      </div>
 
-        {/* Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Total Interns */}
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
@@ -607,6 +637,47 @@ const SupervisorEvaluation = () => {
         </div>
       </div>
 
+      {/* Evaluation Form Tabs */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="flex space-x-1 p-1" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab("form11")}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "form11"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Form 11 - Internship Evaluation
+            </button>
+            <button
+              onClick={() => setActiveTab("form18")}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "form18"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Form 18 - Supervisor Feedback
+            </button>
+            <button
+              onClick={() => setActiveTab("form19b")}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "form19b"
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Form 19b - Agency Self-Evaluation
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "form11" && (
+        <div className="space-y-4 sm:space-y-6">
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
@@ -737,10 +808,10 @@ const SupervisorEvaluation = () => {
           onClick={() => !submitting && setShowEvaluationForm(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 my-8"
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 my-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   Evaluate Intern
@@ -758,8 +829,8 @@ const SupervisorEvaluation = () => {
                   </button>
               </div>
 
-            <div className="space-y-6 max-h-[420px] overflow-y-auto pr-2">
-              <div className="space-y-5">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-slim">
+              <div className="space-y-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white">
                   Internship Evaluation Competencies
                       </h4>
@@ -862,10 +933,212 @@ const SupervisorEvaluation = () => {
                   );
                 })}
                       </div>
-                    </div>
+
+            {/* Termination Section */}
+            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="font-semibold text-gray-900 dark:text-white text-base">
+                Termination Information
+              </h4>
+              <p className="text-xs italic font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                The Internship Practicum was terminated:
+              </p>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                {/* Termination Reasons - Compact */}
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.lackOfWork}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        lackOfWork: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    due "only" for lack of work
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.absencesTardiness}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        absencesTardiness: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    too much absences and tardiness
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.violationRules}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        violationRules: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    violation of Company Rules
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.disrespectful}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        disrespectful: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    disrespectful to co-trainee or personnel
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.unfavorableHabits}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        unfavorableHabits: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    unfavorable work habits and practices
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.noInterest}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        noInterest: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    does not demonstrate interest and desire to learn
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.altercation}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        altercation: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    altercation on the job
+                  </span>
+                </label>
+
+                <div className="space-y-1">
+                  <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                    <input
+                      type="checkbox"
+                      checked={terminationData.other}
+                      onChange={(e) =>
+                        setTerminationData((prev) => ({
+                          ...prev,
+                          other: e.target.checked,
+                        }))
+                      }
+                      className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                      other(s), please specify
+                    </span>
+                  </label>
+                  {terminationData.other && (
+                    <input
+                      type="text"
+                      value={terminationData.otherSpecify}
+                      onChange={(e) =>
+                        setTerminationData((prev) => ({
+                          ...prev,
+                          otherSpecify: e.target.value,
+                        }))
+                      }
+                      placeholder="Specify other reason..."
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-purple-500"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Additional Statements */}
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.futureEmployment}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        futureEmployment: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    We would be pleased to employ this <em>Student-Trainee</em> in the future
+                  </span>
+                </label>
+
+                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={terminationData.needsImprovement}
+                    onChange={(e) =>
+                      setTerminationData((prev) => ({
+                        ...prev,
+                        needsImprovement: e.target.checked,
+                      }))
+                    }
+                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                    He/She needs to improve his/her performance.
+                  </span>
+                </label>
+              </div>
+            </div>
+            </div>
 
             {/* Form Actions */}
-            <div className="flex flex-col md:flex-row gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col md:flex-row gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowEvaluationForm(false)}
                 className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
@@ -932,6 +1205,63 @@ const SupervisorEvaluation = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+        </div>
+      )}
+
+      {/* Form 18 - Training Supervisor's Feedback Form */}
+      {activeTab === "form18" && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Form 18 - Training Supervisor's Feedback Form
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              This form will be implemented soon.
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Training Supervisor's Feedback Form (Form FM-AA-INT-18)
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Form 19b - Evaluation Instrument of PSU Partner Agencies (Self Ratee) - One to All */}
+      {activeTab === "form19b" && (
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                  One-to-All Evaluation Form
+                </h4>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  This evaluation form applies to all students. Fill it out once and it will be associated with all interns.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Form 19b - Evaluation Instrument of PSU Partner Agencies (Self Ratee)
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                This form will be implemented soon.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Evaluation Instrument of PSU Partner Agencies (Self Ratee) (Form FM-AA-INT-19b)
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                This form applies to all students - fill once for all interns
+              </p>
+            </div>
           </div>
         </div>
       )}
