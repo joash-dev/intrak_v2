@@ -5,8 +5,6 @@ import {
   Bell,
   Moon,
   Sun,
-  Globe,
-  Calendar,
   HelpCircle,
   Shield,
   Mail,
@@ -18,7 +16,11 @@ import {
   Camera,
   Loader2,
   AlertCircle,
-  FileText,
+  Palette,
+  Monitor,
+  SlidersHorizontal,
+  Book,
+  X,
 } from "lucide-react";
 import {
   settingsService,
@@ -34,10 +36,13 @@ interface StudentSettingsTabProps {
 }
 
 const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
-  const [activeSection, setActiveSection] = useState("profile");
+  const [activeSection, setActiveSection] = useState<
+    "profile" | "password" | "appearance" | "notifications" | "preferences" | "student" | "help"
+  >("profile");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,6 +51,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
     null
   );
+  const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(null);
 
   // Form states
   const [profileData, setProfileData] = useState<UserProfile>({
@@ -75,14 +81,51 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
     language: "en",
     dateFormat: "MM/DD/YYYY",
     timeFormat: "12hr",
-    theme: "auto",
+    theme: "system",
   });
+
+  const [studentSettings, setStudentSettings] = useState({
+    autoSubmitAttendance: false,
+    requireConfirmation: true,
+    defaultWeeklyReportReminder: true,
+  });
+
+  // Help links
+  const HELP_LINKS = {
+    faq: "https://intrak.site/faq",
+    studentGuide: "https://intrak.site/student-guide",
+    privacy: "https://intrak.site/privacy",
+    supportEmail: "intraksystem@gmail.com",
+  };
 
   // Load user data on component mount
   useEffect(() => {
     loadUserData();
     loadPreferences();
+    loadTheme();
   }, []);
+
+  const loadTheme = () => {
+    const savedTheme =
+      (localStorage.getItem("theme") as "light" | "dark" | "system") ||
+      "system";
+    setTheme(savedTheme);
+  };
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    
+    // Apply theme immediately
+    if (newTheme === "system") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", prefersDark);
+    } else {
+      document.documentElement.classList.toggle("dark", newTheme === "dark");
+    }
+    
+    toast.success(`Theme changed to ${newTheme}`);
+  };
 
   // Cleanup preview URL on unmount (only for object URLs, not base64)
   useEffect(() => {
@@ -125,7 +168,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
     setNotifications(notificationPrefs);
     setPreferences(appPrefs);
-    setDarkMode(appPrefs.theme === "dark");
+    
+    // Set theme from preferences
+    const savedTheme = appPrefs.theme === "auto" ? "system" : (appPrefs.theme as "light" | "dark" | "system");
+    setTheme(savedTheme);
 
     // Load saved profile photo from server
     try {
@@ -238,7 +284,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
   const handleSavePreferences = () => {
     const updatedPreferences = {
       ...preferences,
-      theme: (darkMode ? "dark" : "light") as "light" | "dark" | "auto",
+      theme: theme,
     };
     settingsService.saveAppPreferences(updatedPreferences);
     settingsService.applyTheme(updatedPreferences.theme);
@@ -313,11 +359,12 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
   };
 
   const sections = [
-    { id: "profile", label: "Profile Information", icon: User },
-    { id: "security", label: "Security", icon: Lock },
+    { id: "profile", label: "Profile", icon: User },
+    { id: "password", label: "Password", icon: Lock },
+    { id: "appearance", label: "Appearance", icon: Palette },
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "appearance", label: "Appearance", icon: Moon },
-    { id: "preferences", label: "Preferences", icon: Globe },
+    { id: "preferences", label: "Preferences", icon: Monitor },
+    { id: "student", label: "Student", icon: SlidersHorizontal },
     { id: "help", label: "Help & Support", icon: HelpCircle },
   ];
 
@@ -377,7 +424,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 return (
                   <button
                     key={section.id}
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() => setActiveSection(section.id as typeof activeSection)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
                       activeSection === section.id
                         ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
@@ -601,21 +648,42 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
               </div>
             )}
 
-            {/* Security */}
-            {activeSection === "security" && (
-              <div className="space-y-6">
+            {/* Password */}
+            {activeSection === "password" && (
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    Security Settings
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    Password & Security
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Manage your password and security preferences
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Update your password and security settings
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {/* Security Info */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 sm:p-6">
+                  <div className="flex items-start space-x-2 sm:space-x-3">
+                    <div className="flex-shrink-0">
+                      <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100 mb-1.5 sm:mb-2">
+                        Password Security
+                      </h3>
+                      <p className="text-blue-700 dark:text-blue-300 text-xs sm:text-sm">
+                        Keep your account secure by using a strong password with
+                        at least 8 characters, including numbers and special
+                        characters.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Password Form */}
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Current Password */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       Current Password
                     </label>
                     <div className="relative">
@@ -628,25 +696,28 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                             currentPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter your current password"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                       />
                       <button
+                        type="button"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showCurrentPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                       New Password
                     </label>
                     <div className="relative">
@@ -659,84 +730,124 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                             newPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter your new password"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
                       />
                       <button
+                        type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showNewPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Must be at least 8 characters with uppercase, lowercase,
-                      and numbers
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Confirm New Password
-                    </label>
-                    <input
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Two-Factor Authentication
-                  </h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Shield className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          Enable 2FA
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Add an extra layer of security
+                    {/* Password Strength Indicator */}
+                    {passwordData.newPassword && (
+                      <div className="space-y-2">
+                        <div className="flex space-x-1">
+                          {[1, 2, 3, 4].map((level) => (
+                            <div
+                              key={level}
+                              className={`h-1 flex-1 rounded-full ${
+                                passwordData.newPassword.length >= level * 2
+                                  ? passwordData.newPassword.length >= 8
+                                    ? "bg-green-500"
+                                    : "bg-yellow-500"
+                                  : "bg-gray-200 dark:bg-gray-600"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {passwordData.newPassword.length < 8
+                            ? "Password should be at least 8 characters"
+                            : "Strong password"}
                         </p>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        placeholder="Confirm your new password"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
+                        ) : (
+                          <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
+                        )}
+                      </button>
                     </div>
-                    <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
-                      Enable
+                    {/* Password Match Indicator */}
+                    {passwordData.confirmPassword && (
+                      <div className="flex items-center space-x-2">
+                        {passwordData.newPassword ===
+                        passwordData.confirmPassword ? (
+                          <>
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                            <span className="text-xs sm:text-sm text-green-600">
+                              Passwords match
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
+                            <span className="text-xs sm:text-sm text-red-600">
+                              Passwords do not match
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-4">
+                    <button
+                      onClick={handleChangePassword}
+                      disabled={
+                        saving ||
+                        passwordData.newPassword !==
+                          passwordData.confirmPassword ||
+                        passwordData.newPassword.length < 8
+                      }
+                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                    >
+                      {saving ? (
+                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                      ) : (
+                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
+                      <span>Update Password</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleChangePassword}
-                    disabled={saving}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Updating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4" />
-                        <span>Update Password</span>
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
             )}
 
@@ -893,108 +1004,144 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
             {/* Appearance */}
             {activeSection === "appearance" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Appearance Settings
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Customize how the portal looks
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Customize your interface appearance
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">
-                      Theme
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        onClick={() => setDarkMode(false)}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center space-x-2 transition-colors ${
-                          !darkMode
-                            ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                      >
-                        <Sun className="w-5 h-5" />
-                        <span className="font-medium">Light Mode</span>
-                      </button>
-                      <button
-                        onClick={() => setDarkMode(true)}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center space-x-2 transition-colors ${
-                          darkMode
-                            ? "border-purple-600 bg-purple-50 dark:bg-purple-900/20"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                      >
-                        <Moon className="w-5 h-5" />
-                        <span className="font-medium">Dark Mode</span>
-                      </button>
-                    </div>
+                <div className="space-y-4 sm:space-y-6">
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
+                      Theme Settings
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
+                      Choose your preferred theme appearance
+                    </p>
                   </div>
-                </div>
 
-                <div className="flex justify-end">
-                  <button
-                    onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
-                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                    {/* Light Theme */}
+                    <button
+                      onClick={() => handleThemeChange("light")}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "light"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
+                          <Sun className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">Light</h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Bright theme</p>
+                        </div>
+                      </div>
+                      {theme === "light" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Dark Theme */}
+                    <button
+                      onClick={() => handleThemeChange("dark")}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "dark"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
+                          <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">Dark</h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Dark theme</p>
+                        </div>
+                      </div>
+                      {theme === "dark" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
+
+                    {/* System Theme */}
+                    <button
+                      onClick={() => handleThemeChange("system")}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
+                        theme === "system"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                          <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">System</h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Follow system</p>
+                        </div>
+                      </div>
+                      {theme === "system" && (
+                        <div className="absolute top-2 right-2">
+                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                        </div>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Preferences */}
             {activeSection === "preferences" && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                    General Preferences
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    App Preferences
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Customize your portal experience
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Language and format settings
                   </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Globe className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Language
                     </label>
                     <select
                       value={preferences.language}
                       onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          language: e.target.value,
-                        })
+                        setPreferences({ ...preferences, language: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
                       <option value="en">English</option>
-                      <option value="fil">Filipino</option>
-                      <option value="es">Spanish</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-1" />
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Date Format
                     </label>
                     <select
                       value={preferences.dateFormat}
                       onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          dateFormat: e.target.value,
-                        })
+                        setPreferences({ ...preferences, dateFormat: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -1003,20 +1150,17 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Time Format
                     </label>
                     <select
                       value={preferences.timeFormat}
                       onChange={(e) =>
-                        setPreferences({
-                          ...preferences,
-                          timeFormat: e.target.value,
-                        })
+                        setPreferences({ ...preferences, timeFormat: e.target.value })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     >
-                      <option value="12hr">12 Hour (AM/PM)</option>
+                      <option value="12hr">12 Hour</option>
                       <option value="24hr">24 Hour</option>
                     </select>
                   </div>
@@ -1024,11 +1168,116 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
                 <div className="flex justify-end">
                   <button
-                    onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    onClick={() => {
+                      handleSavePreferences();
+                    }}
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-5 h-5" />
                     <span>Save Preferences</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Student Tab */}
+            {activeSection === "student" && (
+              <div className="space-y-4 sm:space-y-6">
+                <div>
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                    Student Settings
+                  </h2>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                    Configure student-specific settings
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        Auto Submit Attendance
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Automatically submit attendance logs
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={studentSettings.autoSubmitAttendance}
+                        onChange={(e) =>
+                          setStudentSettings({
+                            ...studentSettings,
+                            autoSubmitAttendance: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        Require Confirmation
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Require confirmation before submitting documents
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={studentSettings.requireConfirmation}
+                        onChange={(e) =>
+                          setStudentSettings({
+                            ...studentSettings,
+                            requireConfirmation: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        Weekly Report Reminder
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Send reminders for weekly report submissions
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={studentSettings.defaultWeeklyReportReminder}
+                        onChange={(e) =>
+                          setStudentSettings({
+                            ...studentSettings,
+                            defaultWeeklyReportReminder: e.target.checked,
+                          })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      toast.success("Student settings saved");
+                    }}
+                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Save className="w-5 h-5" />
+                    <span>Save Settings</span>
                   </button>
                 </div>
               </div>
@@ -1036,86 +1285,148 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
             {/* Help & Support */}
             {activeSection === "help" && (
-              <div className="space-y-6">
+              <div className="space-y-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-1">
                     Help & Support
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Get help and learn more about the portal
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <a
-                    href="#"
-                    className="p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {/* FAQ */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("faq")}
+                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <HelpCircle className="w-8 h-8 text-purple-600 mb-3" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      FAQ
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Find answers to common questions
-                    </p>
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-600/30 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
+                          Find answers to common questions
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Contact Support */}
+                  <a
+                    href={`mailto:${HELP_LINKS.supportEmail}`}
+                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
+                  >
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Contact Support</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
+                          Email: {HELP_LINKS.supportEmail}
+                        </p>
+                      </div>
+                    </div>
                   </a>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow"
+                  {/* Student Guide */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("guide")}
+                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <Mail className="w-8 h-8 text-blue-600 mb-3" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      Contact Support
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Email: support@intrak.edu
-                    </p>
-                  </a>
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center flex-shrink-0">
+                        <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Student Guide</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
+                          Learn how to use student features
+                        </p>
+                      </div>
+                    </div>
+                  </button>
 
-                  <a
-                    href="#"
-                    className="p-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
+                  {/* Privacy Policy */}
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal("privacy")}
+                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-4 sm:p-5"
                   >
-                    <FileText className="w-8 h-8 text-green-600 mb-3" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      User Guide
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Learn how to use the portal
-                    </p>
-                  </a>
-
-                  <a
-                    href="#"
-                    className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <Shield className="w-8 h-8 text-yellow-600 mb-3" />
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                      Privacy Policy
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Read our privacy terms
-                    </p>
-                  </a>
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-600/30 flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
+                      </div>
+                      <div>
+                        <h3 className="text-base sm:text-lg font-semibold text-white">Privacy Policy</h3>
+                        <p className="text-xs sm:text-sm text-gray-300">
+                          Read our privacy terms
+                        </p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    App Information
-                  </h3>
-                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                {/* App Information */}
+                <div className="pt-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-200">App Information</h3>
+                  <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
                     <p>
-                      <span className="font-medium">Version:</span> 1.0.0
+                      <span className="text-gray-400">Version:</span> 1.0.0
                     </p>
                     <p>
-                      <span className="font-medium">Last Updated:</span> October
-                      2024
+                      <span className="text-gray-400">Last Updated:</span> October 2024
                     </p>
                     <p>
-                      <span className="font-medium">License:</span> Educational
-                      Use
+                      <span className="text-gray-400">License:</span> Educational Use
                     </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Help Modal */}
+            {helpModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
+                style={{ marginTop: 0 }}
+              >
+                <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => setHelpModal(null)}
+                    className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-full p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  >
+                    <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      {helpModal === "faq" && "Frequently Asked Questions"}
+                      {helpModal === "guide" && "Student Quick Guide"}
+                      {helpModal === "privacy" && "Privacy Overview"}
+                    </h3>
+                    <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300 space-y-4">
+                      {helpModal === "faq" && (
+                        <div>
+                          <p>FAQ content will be available soon.</p>
+                        </div>
+                      )}
+                      {helpModal === "guide" && (
+                        <div>
+                          <p>Student guide content will be available soon.</p>
+                        </div>
+                      )}
+                      {helpModal === "privacy" && (
+                        <div>
+                          <p>Privacy policy content will be available soon.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

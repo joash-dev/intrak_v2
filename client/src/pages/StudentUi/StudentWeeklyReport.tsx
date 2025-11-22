@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Save, Download, Loader2, Calendar } from "lucide-react";
+import { FileText, Save, Download, Loader2, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api";
-
-interface WeekData {
-  weekNumber: number;
-  dateRange: string;
-  tasksAccomplished: string;
-  knowledgeSkillsValues: string;
-}
 
 interface WeekData {
   weekNumber: number;
@@ -22,49 +15,39 @@ const StudentWeeklyReport: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Initialize 7 weeks
   useEffect(() => {
-    initializeWeeks();
-    loadWeeklyReport();
-    initializeWeeks();
     loadWeeklyReport();
   }, []);
-
-  const initializeWeeks = () => {
-    const initialWeeks: WeekData[] = [];
-    for (let i = 1; i <= 7; i++) {
-      initialWeeks.push({
-        weekNumber: i,
-        dateRange: "",
-        tasksAccomplished: "",
-        knowledgeSkillsValues: "",
-      });
-    }
-    setWeeks(initialWeeks);
-  };
-
-
 
   const loadWeeklyReport = async () => {
     try {
       setLoading(true);
       const response = await api.get("/students/weekly-reports/me");
-      if (response.data && response.data.weeks) {
-        // Merge with initialized weeks to ensure all 7 weeks exist
-        const loadedWeeks = response.data.weeks;
-        setWeeks((prevWeeks) => {
-          const mergedWeeks = prevWeeks.map((week) => {
-            const loadedWeek = loadedWeeks.find((w: WeekData) => w.weekNumber === week.weekNumber);
-            return loadedWeek || week;
-          });
-          return mergedWeeks;
-        });
+      if (response.data && response.data.weeks && response.data.weeks.length > 0) {
+        setWeeks(response.data.weeks);
+      } else {
+        // Initialize with just 1 week if no data exists
+        setWeeks([{
+          weekNumber: 1,
+          dateRange: "",
+          tasksAccomplished: "",
+          knowledgeSkillsValues: "",
+        }]);
       }
     } catch (error: any) {
       if (error.response?.status !== 404) {
         console.error("Error loading weekly report:", error);
         toast.error("Failed to load weekly report");
+      } else {
+        // If 404 (not found), initialize with 1 week
+        setWeeks([{
+          weekNumber: 1,
+          dateRange: "",
+          tasksAccomplished: "",
+          knowledgeSkillsValues: "",
+        }]);
       }
     } finally {
       setLoading(false);
@@ -79,11 +62,38 @@ const StudentWeeklyReport: React.FC = () => {
     );
   };
 
+  const handleAddWeek = () => {
+    setWeeks((prevWeeks) => {
+      const nextWeekNumber = prevWeeks.length + 1;
+      return [
+        ...prevWeeks,
+        {
+          weekNumber: nextWeekNumber,
+          dateRange: "",
+          tasksAccomplished: "",
+          knowledgeSkillsValues: "",
+        },
+      ];
+    });
+    toast.success("New week added!");
+  };
+
+  const handleDeleteWeek = (weekNumber: number) => {
+    if (window.confirm("Are you sure you want to delete this week?")) {
+      setWeeks((prevWeeks) => {
+        const filtered = prevWeeks.filter((w) => w.weekNumber !== weekNumber);
+        // Re-index weeks to ensure sequential order (1, 2, 3...)
+        return filtered.map((w, index) => ({ ...w, weekNumber: index + 1 }));
+      });
+      toast.success("Week deleted");
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
       await api.post("/students/weekly-reports/me", { weeks });
-      toast.success("Weekly report saved successfully!");
+      setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Error saving weekly report:", error);
       toast.error(error.response?.data?.message || "Failed to save weekly report");
@@ -143,22 +153,22 @@ const StudentWeeklyReport: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FileText className="w-6 h-6" />
-              Weekly Report (Form FM-AA-INT-17)
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="line-clamp-2 sm:line-clamp-1">Weekly Report (Form FM-AA-INT-17)</span>
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
               Fill out your tasks accomplished and knowledge, skills, values learned for each week
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -170,7 +180,7 @@ const StudentWeeklyReport: React.FC = () => {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
               {exporting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -194,10 +204,13 @@ const StudentWeeklyReport: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Week {week.weekNumber}
               </h3>
-              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                <Calendar className="w-4 h-4 mr-1" />
-                <span>Date Range</span>
-              </div>
+              <button
+                onClick={() => handleDeleteWeek(week.weekNumber)}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                title="Delete Week"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Date Range */}
@@ -249,6 +262,19 @@ const StudentWeeklyReport: React.FC = () => {
             </div>
           </div>
         ))}
+
+        {/* Add Week Button */}
+        <button
+          onClick={handleAddWeek}
+          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all group min-h-[400px]"
+        >
+          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors mb-4">
+            <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-600 dark:text-gray-500 dark:group-hover:text-purple-400" />
+          </div>
+          <span className="text-lg font-medium text-gray-500 group-hover:text-purple-700 dark:text-gray-400 dark:group-hover:text-purple-300">
+            Add Week {weeks.length + 1}
+          </span>
+        </button>
       </div>
 
       {/* Info Card */}
@@ -270,6 +296,31 @@ const StudentWeeklyReport: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Save className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Saved Successfully!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Your weekly report progress has been saved. You can continue editing or come back later.
+              </p>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Continue Editing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

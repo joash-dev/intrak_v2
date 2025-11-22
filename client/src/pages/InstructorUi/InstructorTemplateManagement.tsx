@@ -359,33 +359,33 @@ const InstructorTemplateManagement: React.FC = () => {
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {category
                   ? `${category
-                      .replace("_", " ")
-                      .toLowerCase()
-                      .replace(/\b\w/g, (l) => l.toUpperCase())} Documents`
+                    .replace("_", " ")
+                    .toLowerCase()
+                    .replace(/\b\w/g, (l) => l.toUpperCase())} Documents`
                   : "Document Templates"}
               </h2>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 {category
                   ? `Manage ${category
-                      .replace("_", " ")
-                      .toLowerCase()} document templates`
+                    .replace("_", " ")
+                    .toLowerCase()} document templates`
                   : "Manage document templates for students"}
               </p>
             </div>
           </div>
           <button
             onClick={() => {
-            setUploadForm({
-              description: "",
-              category:
-                (category as "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT") ||
-                "PRE_DEPLOYMENT",
-              files: [],
-            });
-            setValidationErrors({});
-            setFileValidationMap({});
-            setShowUploadModal(true);
-          }}
+              setUploadForm({
+                description: "",
+                category:
+                  (category as "PRE_DEPLOYMENT" | "UPON_APPROVAL" | "POST_OJT") ||
+                  "PRE_DEPLOYMENT",
+                files: [],
+              });
+              setValidationErrors({});
+              setFileValidationMap({});
+              setShowUploadModal(true);
+            }}
             className="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
           >
             <Plus className="w-5 h-5" />
@@ -398,25 +398,24 @@ const InstructorTemplateManagement: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* View All Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
-            !category
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${!category
               ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
-          }`}
+            }`}
           onClick={() => setSearchParams({})}
         >
           <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-300" />
             </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-              All Templates
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              {templates.length} template{templates.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                All Templates
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                {templates.length} template{templates.length !== 1 ? "s" : ""}
+              </p>
+            </div>
           </div>
           <button className="w-full mt-auto px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-center font-medium text-xs sm:text-sm transition-colors">
             View All
@@ -425,11 +424,10 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Pre-deployment Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
-            category === "PRE_DEPLOYMENT"
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "PRE_DEPLOYMENT"
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
-          }`}
+            }`}
           onClick={() => setSearchParams({ category: "PRE_DEPLOYMENT" })}
         >
           <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
@@ -473,11 +471,10 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Upon Approval Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
-            category === "UPON_APPROVAL"
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "UPON_APPROVAL"
               ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-yellow-300"
-          }`}
+            }`}
           onClick={() => setSearchParams({ category: "UPON_APPROVAL" })}
         >
           <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
@@ -518,11 +515,10 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Post-OJT Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${
-            category === "POST_OJT"
+          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "POST_OJT"
               ? "border-green-500 bg-green-50 dark:bg-green-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-green-300"
-          }`}
+            }`}
           onClick={() => setSearchParams({ category: "POST_OJT" })}
         >
           <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
@@ -575,8 +571,8 @@ const InstructorTemplateManagement: React.FC = () => {
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 max-w-md mx-auto">
                 {category
                   ? `No templates found in the ${category
-                      .replace("_", " ")
-                      .toLowerCase()} category.`
+                    .replace("_", " ")
+                    .toLowerCase()} category.`
                   : "Upload your first document template to help students with standardized document formats."}
               </p>
               {!category && (
@@ -601,22 +597,20 @@ const InstructorTemplateManagement: React.FC = () => {
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div
-                      className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
-                        category === "PRE_DEPLOYMENT"
+                      className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${category === "PRE_DEPLOYMENT"
                           ? "bg-blue-100 dark:bg-blue-900/20"
                           : category === "UPON_APPROVAL"
-                          ? "bg-yellow-100 dark:bg-yellow-900/20"
-                          : "bg-green-100 dark:bg-green-900/20"
-                      }`}
+                            ? "bg-yellow-100 dark:bg-yellow-900/20"
+                            : "bg-green-100 dark:bg-green-900/20"
+                        }`}
                     >
                       <FileText
-                        className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                          category === "PRE_DEPLOYMENT"
+                        className={`w-4 h-4 sm:w-5 sm:h-5 ${category === "PRE_DEPLOYMENT"
                             ? "text-blue-600 dark:text-blue-400"
                             : category === "UPON_APPROVAL"
-                            ? "text-yellow-600 dark:text-yellow-400"
-                            : "text-green-600 dark:text-green-400"
-                        }`}
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-green-600 dark:text-green-400"
+                          }`}
                       />
                     </div>
                     <div>
@@ -721,64 +715,71 @@ const InstructorTemplateManagement: React.FC = () => {
                 </div>
 
                 {/* Mobile Card View - Hidden on Desktop */}
-                <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-600">
+                <div className="lg:hidden space-y-3 p-3">
                   {categoryTemplates.map((template) => (
                     <div
                       key={template.id}
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
                     >
+                      {/* Template Name and Icon */}
                       <div className="flex items-start space-x-3 mb-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-                          <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+                          <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm text-gray-900 dark:text-white mb-1 break-words">
+                          <h4 className="font-semibold text-base text-gray-900 dark:text-white mb-1 break-words">
                             {template.name}
-                          </div>
+                          </h4>
                           {template.description && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                               {template.description}
-                            </div>
+                            </p>
                           )}
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
-                            {templateService.getDocumentTypeDisplay(
-                              template.type
-                            )}
-                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
-                        <div className="flex flex-col space-y-1">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            <span className="font-medium">Uploaded by:</span> {template.uploadedBy?.name || "Unknown"}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            <span className="font-medium">Created:</span> {new Date(template.createdAt).toLocaleDateString()}
-                          </div>
+
+                      {/* Type Badge */}
+                      <div className="mb-3">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                          {templateService.getDocumentTypeDisplay(template.type)}
+                        </span>
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="space-y-1.5 mb-3 text-xs">
+                        <div className="flex items-center text-gray-600 dark:text-gray-400">
+                          <span className="font-medium mr-1.5">Uploaded by:</span>
+                          <span>{template.uploadedBy?.name || "Unknown"}</span>
                         </div>
-                        <div className="flex items-center space-x-1.5 flex-shrink-0 ml-2">
-                          <button
-                            onClick={() => handleDownload(template)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(template)}
-                            className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(template)}
-                            className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <div className="flex items-center text-gray-600 dark:text-gray-400">
+                          <span className="font-medium mr-1.5">Created:</span>
+                          <span>{new Date(template.createdAt).toLocaleDateString()}</span>
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-600">
+                        <button
+                          onClick={() => handleDownload(template)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 dark:text-blue-400 rounded-lg transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Download</span>
+                        </button>
+                        <button
+                          onClick={() => openEditModal(template)}
+                          className="flex items-center justify-center p-2 text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(template)}
+                          className="flex items-center justify-center p-2 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -812,16 +813,15 @@ const InstructorTemplateManagement: React.FC = () => {
                   onChange={(e) =>
                     handleCategoryChange(
                       e.target.value as
-                        | "PRE_DEPLOYMENT"
-                        | "UPON_APPROVAL"
-                        | "POST_OJT"
+                      | "PRE_DEPLOYMENT"
+                      | "UPON_APPROVAL"
+                      | "POST_OJT"
                     )
                   }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    validationErrors.category
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${validationErrors.category
                       ? "border-red-500 dark:border-red-500"
                       : "border-gray-200 dark:border-gray-600"
-                  }`}
+                    }`}
                 >
                   {templateService.getCategoryOptions().map((option) => (
                     <option key={option.value} value={option.value}>
@@ -862,11 +862,10 @@ const InstructorTemplateManagement: React.FC = () => {
                   type="file"
                   multiple
                   onChange={handleFileSelection}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                    validationErrors.files
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${validationErrors.files
                       ? "border-red-500 dark:border-red-500"
                       : "border-gray-200 dark:border-gray-600"
-                  }`}
+                    }`}
                   accept=".pdf,.doc,.docx,.xls,.xlsx"
                 />
                 {validationErrors.files && (
@@ -916,11 +915,10 @@ const InstructorTemplateManagement: React.FC = () => {
                               onChange={(e) =>
                                 handleFileFieldChange(entry.id, "name", e.target.value)
                               }
-                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                                entryErrors.name
+                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${entryErrors.name
                                   ? "border-red-500 dark:border-red-500"
                                   : "border-gray-200 dark:border-gray-600"
-                              }`}
+                                }`}
                               placeholder="Enter template name"
                             />
                             {entryErrors.name && (
@@ -938,11 +936,10 @@ const InstructorTemplateManagement: React.FC = () => {
                               onChange={(e) =>
                                 handleFileFieldChange(entry.id, "type", e.target.value)
                               }
-                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                                entryErrors.type
+                              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${entryErrors.type
                                   ? "border-red-500 dark:border-red-500"
                                   : "border-gray-200 dark:border-gray-600"
-                              }`}
+                                }`}
                             >
                               <option value="">Select document type</option>
                               {documentTypeOptions.map((option) => (

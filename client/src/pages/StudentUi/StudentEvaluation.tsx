@@ -67,14 +67,69 @@ const StudentEvaluationsTab: React.FC = () => {
   const fetchEvaluationForms = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch documents for all forms (including Form 11 PDF)
       const documents = await documentService.getStudentDocuments();
-      
+
+      // Fetch student profile to get ID
+      const studentProfile = await dashboardService.getStudentProfile();
+
       // Fetch Form 11 evaluations from API
       const evaluations: any[] = await dashboardService.getStudentEvaluations();
       const form11Evaluation = evaluations.length > 0 ? evaluations[0] : null;
-      
+
+      // Fetch Form 18 feedback
+      let form18Feedback = null;
+      try {
+        if (studentProfile?.id) {
+          console.log("Fetching Form 18 feedback for student ID:", studentProfile.id);
+          const feedback = await supervisorService.getSupervisorFeedback(studentProfile.id);
+          if (feedback && feedback.id) {
+            form18Feedback = feedback;
+            console.log("✅ Form 18 feedback found:", {
+              id: feedback.id,
+              supervisor: feedback.supervisor?.name,
+              ratings: {
+                punctual: feedback.punctualRating,
+                knowledge: feedback.knowledgeRating,
+                teamwork: feedback.teamworkRating,
+              }
+            });
+          } else {
+            console.log("⚠️ Form 18 feedback API returned null or missing ID - feedback may not exist yet");
+          }
+        } else {
+          console.warn("⚠️ Student profile ID not found:", studentProfile);
+        }
+      } catch (error: any) {
+        // Only log if it's not a 404 (which means no feedback exists yet)
+        if (error?.response?.status !== 404) {
+          console.error("❌ Error fetching Form 18 feedback:", error);
+        } else {
+          console.log("ℹ️ Form 18 feedback not found (404) - supervisor hasn't submitted feedback yet for this student");
+        }
+      }
+
+      // Fetch Form 19b - Agency Self Evaluation
+      let form19bEvaluation = null;
+      try {
+        const evaluation = await supervisorService.getAgencySelfEvaluation();
+        if (evaluation && evaluation.id) {
+          form19bEvaluation = evaluation;
+          console.log("✅ Form 19b evaluation found:", {
+            id: evaluation.id,
+            supervisor: evaluation.supervisor?.name,
+          });
+        }
+      } catch (error: any) {
+        // Only log if it's not a 404 (which means no evaluation exists yet)
+        if (error?.response?.status !== 404) {
+          console.error("❌ Error fetching Form 19b evaluation:", error);
+        } else {
+          console.log("ℹ️ Form 19b evaluation not found (404) - supervisor hasn't submitted it yet");
+        }
+      }
+
       // Find Form 11 DOCX document (INTERNSHIP_EVALUATION type) - for download
       const form11Document = documents.find(
         (doc) => doc.type === "INTERNSHIP_EVALUATION"
@@ -95,8 +150,6 @@ const StudentEvaluationsTab: React.FC = () => {
             evaluatorRole: form11Evaluation.evaluatorRole || "INDUSTRY_PARTNER",
             date: form11Evaluation.date || new Date().toISOString().split('T')[0],
             overallRating: form11Evaluation.overallRating || form11Evaluation.rating || 0,
-            // Use raw criteria from database (abilityToLearn, workAttitude, etc.) if available
-            // Otherwise use mapped criteria (technicalSkills, communication, etc.)
             criteria: form11Evaluation.criteria || {},
             comments: form11Evaluation.comments || "",
             termination: (form11Evaluation as any).termination || undefined,
@@ -109,6 +162,23 @@ const StudentEvaluationsTab: React.FC = () => {
           documentType: "SUPERVISOR_FEEDBACK",
           description: "Feedback form from your training supervisor",
           document: null,
+          evaluation: form18Feedback ? {
+            id: form18Feedback.id || "form-18-feedback",
+            evaluatorName: form18Feedback.supervisor?.name || "Supervisor",
+            evaluatorRole: "INDUSTRY_PARTNER",
+            date: form18Feedback.updatedAt || form18Feedback.createdAt || new Date().toISOString(),
+            overallRating: 0,
+            criteria: {
+              punctuality: { rating: form18Feedback.punctualRating || 0 },
+              knowledge: { rating: form18Feedback.knowledgeRating || 0 },
+              teamwork: { rating: form18Feedback.teamworkRating || 0 },
+              taskPerformance: { rating: form18Feedback.taskPerformanceRating || 0 },
+              policyCompliance: { rating: form18Feedback.policyComplianceRating || 0 },
+              conduct: { rating: form18Feedback.conductRating || 0 },
+              traits: { rating: form18Feedback.traitsRating || 0 },
+            },
+            comments: form18Feedback.comments || "",
+          } : null,
         },
         {
           id: "form-19b",
@@ -117,6 +187,36 @@ const StudentEvaluationsTab: React.FC = () => {
           documentType: "AGENCY_SELF_EVALUATION",
           description: "Agency self-evaluation form applicable to students",
           document: null,
+          evaluation: form19bEvaluation ? {
+            id: form19bEvaluation.id || "form-19b-evaluation",
+            evaluatorName: form19bEvaluation.supervisor?.name || "Supervisor",
+            evaluatorRole: "INDUSTRY_PARTNER",
+            date: form19bEvaluation.updatedAt || form19bEvaluation.createdAt || new Date().toISOString(),
+            overallRating: 0,
+            criteria: {
+              // Communication
+              communicationConnectivity: { rating: form19bEvaluation.communicationConnectivity || 0 },
+              communicationDialogue: { rating: form19bEvaluation.communicationDialogue || 0 },
+              communicationParticipation: { rating: form19bEvaluation.communicationParticipation || 0 },
+              // Ethical Dealings
+              ethicalReputation: { rating: form19bEvaluation.ethicalReputation || 0 },
+              ethicalCSR: { rating: form19bEvaluation.ethicalCSR || 0 },
+              ethicalSupport: { rating: form19bEvaluation.ethicalSupport || 0 },
+              // Student Satisfaction - PSU
+              psuSupervisorQualified: { rating: form19bEvaluation.psuSupervisorQualified || 0 },
+              psuSupportActivities: { rating: form19bEvaluation.psuSupportActivities || 0 },
+              psuFacilities: { rating: form19bEvaluation.psuFacilities || 0 },
+              // Student Satisfaction - HTE
+              hteSupervision: { rating: form19bEvaluation.hteSupervision || 0 },
+              hteSupervisorQualified: { rating: form19bEvaluation.hteSupervisorQualified || 0 },
+              hteFeedback: { rating: form19bEvaluation.hteFeedback || 0 },
+              // Quality Delivery
+              qualityTimeliness: { rating: form19bEvaluation.qualityTimeliness || 0 },
+              qualityObjectives: { rating: form19bEvaluation.qualityObjectives || 0 },
+              qualityResources: { rating: form19bEvaluation.qualityResources || 0 },
+            },
+            comments: "",
+          } : null,
         },
       ];
 
@@ -132,6 +232,15 @@ const StudentEvaluationsTab: React.FC = () => {
         }
       });
 
+      // Debug: Log Form 18 evaluation status
+      const form18 = forms.find(f => f.id === "form-18");
+      console.log("Form 18 evaluation status:", {
+        hasFeedback: !!form18Feedback,
+        hasEvaluation: !!form18?.evaluation,
+        feedback: form18Feedback,
+        evaluation: form18?.evaluation
+      });
+
       setEvaluationForms(forms);
     } catch (error) {
       console.error("Error fetching evaluation forms:", error);
@@ -142,8 +251,8 @@ const StudentEvaluationsTab: React.FC = () => {
   };
 
   const handlePreview = async (form: EvaluationForm) => {
-    // For Form 11, show evaluation details (scores and remarks)
-    if (form.id === "form-11") {
+    // For Form 11, Form 18, and Form 19b, show evaluation details (scores and remarks)
+    if (form.id === "form-11" || form.id === "form-18" || form.id === "form-19b") {
       if (!form.evaluation) {
         toast.error("Evaluation not available yet. Please wait for your supervisor to submit the evaluation.");
         return;
@@ -153,7 +262,7 @@ const StudentEvaluationsTab: React.FC = () => {
       return;
     }
 
-    // For Form 18 and Form 19b, show document preview
+    // For other forms, show document preview
     if (!form.document) {
       toast.error("No document available to preview");
       return;
@@ -179,12 +288,12 @@ const StudentEvaluationsTab: React.FC = () => {
       try {
         // Get student profile information
         const studentProfile = await dashboardService.getStudentProfile();
-        
+
         // Calculate OJT grade
         const criteria = form.evaluation.criteria || {};
         const totalPoints = Object.values(criteria).reduce((sum, value) => {
-          const rating = typeof value === 'object' && value !== null 
-            ? (value as { rating: number; remarks?: string }).rating 
+          const rating = typeof value === 'object' && value !== null
+            ? (value as { rating: number; remarks?: string }).rating
             : (typeof value === 'number' ? value : 0);
           return sum + rating;
         }, 0);
@@ -193,10 +302,10 @@ const StudentEvaluationsTab: React.FC = () => {
         // Transform criteria to match export payload format
         const competencies: Record<string, { rating: number; remarks: string }> = {};
         Object.entries(criteria).forEach(([key, value]) => {
-          const rating = typeof value === 'object' && value !== null 
-            ? (value as { rating: number; remarks?: string }).rating 
+          const rating = typeof value === 'object' && value !== null
+            ? (value as { rating: number; remarks?: string }).rating
             : (typeof value === 'number' ? value : 0);
-          const remarks = typeof value === 'object' && value !== null 
+          const remarks = typeof value === 'object' && value !== null
             ? (value as { rating: number; remarks?: string }).remarks || ''
             : '';
           competencies[key] = { rating, remarks };
@@ -232,6 +341,31 @@ const StudentEvaluationsTab: React.FC = () => {
       return;
     }
 
+    // For Form 18, export using supervisor feedback export endpoint
+    if (form.id === "form-18" && form.evaluation) {
+      try {
+        const studentProfile = await dashboardService.getStudentProfile();
+        await supervisorService.exportSupervisorFeedback(studentProfile.id);
+        toast.success("Feedback exported successfully");
+      } catch (error) {
+        console.error("Error exporting feedback:", error);
+        toast.error("Failed to export feedback");
+      }
+      return;
+    }
+
+    // For Form 19b, export using agency self-evaluation export endpoint
+    if (form.id === "form-19b" && form.evaluation) {
+      try {
+        await supervisorService.exportAgencySelfEvaluation();
+        toast.success("Form 19b exported successfully");
+      } catch (error) {
+        console.error("Error exporting Form 19b:", error);
+        toast.error("Failed to export Form 19b");
+      }
+      return;
+    }
+
     // For other forms, download the document if available
     if (!form.document) {
       toast.error("No document available to download");
@@ -256,10 +390,10 @@ const StudentEvaluationsTab: React.FC = () => {
   };
 
   const getStatusIcon = (form: EvaluationForm) => {
-    if (form.id === "form-11") {
+    if (form.id === "form-11" || (form.id === "form-18" && form.evaluation) || (form.id === "form-19b" && form.evaluation)) {
       return <FileText className="w-5 h-5 text-blue-500" />;
     }
-    
+
     if (!form.document) {
       return <Clock className="w-5 h-5 text-gray-400" />;
     }
@@ -279,7 +413,15 @@ const StudentEvaluationsTab: React.FC = () => {
     if (form.id === "form-11") {
       return "Export Available";
     }
-    
+
+    if (form.id === "form-18") {
+      return form.evaluation ? "Export Available" : "Not Filled";
+    }
+
+    if (form.id === "form-19b") {
+      return form.evaluation ? "Export Available" : "Not Filled";
+    }
+
     if (!form.document) {
       return "Not Filled";
     }
@@ -302,7 +444,14 @@ const StudentEvaluationsTab: React.FC = () => {
       }
       return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
     }
-    
+
+    if (form.id === "form-18" || form.id === "form-19b") {
+      if (form.evaluation) {
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      }
+      return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+    }
+
     if (!form.document) {
       return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
     }
@@ -364,7 +513,7 @@ const StudentEvaluationsTab: React.FC = () => {
           {evaluationForms.map((form) => (
             <div
               key={form.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow flex flex-col"
             >
               {/* Form Header */}
               <div className="flex items-start justify-between mb-4">
@@ -400,25 +549,8 @@ const StudentEvaluationsTab: React.FC = () => {
                 </span>
               </div>
 
-              {/* Form 11 PDF Document Info */}
-              {form.id === "form-11" && form.document && (
-                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                    PDF Document Available
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Uploaded: {new Date(form.document.uploadedAt || "").toLocaleDateString()}
-                  </p>
-                  {form.document.reviewedAt && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Reviewed: {new Date(form.document.reviewedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Document Info for Form 18 and Form 19b */}
-              {form.id !== "form-11" && form.document && (
+              {/* Document Info for Form 19b only (Form 18 doesn't have documents) */}
+              {form.id === "form-19b" && form.document && (
                 <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                   <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                     Uploaded:{" "}
@@ -434,13 +566,13 @@ const StudentEvaluationsTab: React.FC = () => {
               )}
 
               {/* Actions */}
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2 mt-auto">
                 {form.id === "form-11" ? (
                   form.evaluation ? (
                     <>
                       <button
                         onClick={() => handlePreview(form)}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
                       >
                         <Eye className="w-4 h-4" />
                         <span>View Details</span>
@@ -448,10 +580,10 @@ const StudentEvaluationsTab: React.FC = () => {
                       {form.document && (
                         <button
                           onClick={() => handleDownload(form)}
-                          className="flex items-center justify-center space-x-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                          className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
                           title="Export"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="w-6 h-6" />
                         </button>
                       )}
                     </>
@@ -460,21 +592,67 @@ const StudentEvaluationsTab: React.FC = () => {
                       Evaluation not submitted yet
                     </div>
                   )
+                ) : form.id === "form-18" ? (
+                  form.evaluation ? (
+                    <>
+                      <button
+                        onClick={() => handlePreview(form)}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View Details</span>
+                      </button>
+                      <button
+                        onClick={() => handleDownload(form)}
+                        className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                        title="Export"
+                      >
+                        <Download className="w-6 h-6" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                      Not yet filled by supervisor
+                    </div>
+                  )
+                ) : form.id === "form-19b" ? (
+                  form.evaluation ? (
+                    <>
+                      <button
+                        onClick={() => handlePreview(form)}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View Details</span>
+                      </button>
+                      <button
+                        onClick={() => handleDownload(form)}
+                        className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                        title="Export"
+                      >
+                        <Download className="w-6 h-6" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                      Not yet filled by supervisor
+                    </div>
+                  )
                 ) : form.document ? (
                   <>
                     <button
                       onClick={() => handlePreview(form)}
                       disabled={previewLoading}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Eye className="w-4 h-4" />
                       <span>Preview</span>
                     </button>
                     <button
                       onClick={() => handleDownload(form)}
-                      className="flex items-center justify-center space-x-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                      className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="w-6 h-6" />
                     </button>
                   </>
                 ) : (
@@ -530,30 +708,74 @@ const StudentEvaluationsTab: React.FC = () => {
                       <span className="font-medium">Date:</span>{" "}
                       <span className="text-gray-900 dark:text-white">{new Date(selectedForm.evaluation.date).toLocaleDateString()}</span>
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      <span className="font-medium">Overall Rating:</span>{" "}
-                      <span className="font-bold text-purple-600 dark:text-purple-400">
-                        {selectedForm.evaluation.overallRating.toFixed(1)} / 5.0
-                      </span>
-                    </p>
-                    {/* OJT Grade Calculation */}
-                    {(() => {
+                    {selectedForm.id === "form-11" && (
+                      <>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">Overall Rating:</span>{" "}
+                          <span className="font-bold text-purple-600 dark:text-purple-400">
+                            {selectedForm.evaluation.overallRating.toFixed(1)} / 5.0
+                          </span>
+                        </p>
+                        {/* OJT Grade Calculation - Only for Form 11 */}
+                        {(() => {
+                          const criteria = selectedForm.evaluation.criteria || {};
+                          const totalPoints = Object.values(criteria).reduce((sum, value) => {
+                            const rating = typeof value === 'object' && value !== null
+                              ? (value as { rating: number; remarks?: string }).rating
+                              : (typeof value === 'number' ? value : 0);
+                            return sum + rating;
+                          }, 0);
+                          const ojtGrade = (totalPoints * 10) + 50;
+                          return (
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              <span className="font-medium">OJT Grade:</span>{" "}
+                              <span className="font-bold text-purple-600 dark:text-purple-400">
+                                {ojtGrade.toFixed(0)}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                (Total Points: {totalPoints} × 10 + 50)
+                              </span>
+                            </p>
+                          );
+                        })()}
+                      </>
+                    )}
+                    {selectedForm.id === "form-18" && (() => {
+                      // Calculate average rating for Form 18
                       const criteria = selectedForm.evaluation.criteria || {};
-                      const totalPoints = Object.values(criteria).reduce((sum, value) => {
-                        const rating = typeof value === 'object' && value !== null 
-                          ? (value as { rating: number; remarks?: string }).rating 
+                      const ratings = Object.values(criteria).map(value => {
+                        return typeof value === 'object' && value !== null
+                          ? (value as { rating: number; remarks?: string }).rating
                           : (typeof value === 'number' ? value : 0);
-                        return sum + rating;
-                      }, 0);
-                      const ojtGrade = (totalPoints * 10) + 50;
+                      }).filter(r => r > 0);
+                      const averageRating = ratings.length > 0
+                        ? (ratings.reduce((sum, r) => sum + r, 0) / ratings.length)
+                        : 0;
                       return (
                         <p className="text-sm text-gray-700 dark:text-gray-300">
-                          <span className="font-medium">OJT Grade:</span>{" "}
+                          <span className="font-medium">Average Rating:</span>{" "}
                           <span className="font-bold text-purple-600 dark:text-purple-400">
-                            {ojtGrade.toFixed(0)}
+                            {averageRating.toFixed(2)} / 5.0
                           </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            (Total Points: {totalPoints} × 10 + 50)
+                        </p>
+                      );
+                    })()}
+                    {selectedForm.id === "form-19b" && (() => {
+                      // Calculate average rating for Form 19b
+                      const criteria = selectedForm.evaluation.criteria || {};
+                      const ratings = Object.values(criteria).map(value => {
+                        return typeof value === 'object' && value !== null
+                          ? (value as { rating: number; remarks?: string }).rating
+                          : (typeof value === 'number' ? value : 0);
+                      }).filter(r => r > 0);
+                      const averageRating = ratings.length > 0
+                        ? (ratings.reduce((sum, r) => sum + r, 0) / ratings.length)
+                        : 0;
+                      return (
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <span className="font-medium">Average Rating:</span>{" "}
+                          <span className="font-bold text-purple-600 dark:text-purple-400">
+                            {averageRating.toFixed(2)} / 5.0
                           </span>
                         </p>
                       );
@@ -564,11 +786,156 @@ const StudentEvaluationsTab: React.FC = () => {
                 {/* Competency Ratings */}
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                    Competency Ratings
+                    {selectedForm.id === "form-18" ? "Feedback Ratings" : selectedForm.id === "form-19b" ? "Evaluation Criteria Ratings" : "Competency Ratings"}
                   </h3>
                   <div className="space-y-4">
                     {(() => {
-                      // Define the order and mapping
+                      const criteria = selectedForm.evaluation.criteria || {};
+
+                      // Form 19b criteria mapping
+                      if (selectedForm.id === "form-19b") {
+                        const form19bCriteria: Array<{ key: string; label: string; section: string }> = [
+                          // Communication
+                          { key: "communicationConnectivity", label: "High connectivity through electronic communication.", section: "I. Communication" },
+                          { key: "communicationDialogue", label: "Management accepts requests for dialogue.", section: "I. Communication" },
+                          { key: "communicationParticipation", label: "Management participates in university activities.", section: "I. Communication" },
+                          // Ethical Dealings
+                          { key: "ethicalReputation", label: "High reputation and stature.", section: "II. Ethical Dealings" },
+                          { key: "ethicalCSR", label: "Established Corporate Social Responsibility (CSR).", section: "II. Ethical Dealings" },
+                          { key: "ethicalSupport", label: "Support for educational institution mandate.", section: "II. Ethical Dealings" },
+                          // Student Satisfaction - PSU
+                          { key: "psuSupervisorQualified", label: "Qualified supervisors are provided by the university.", section: "III. Student Satisfaction - PSU" },
+                          { key: "psuSupportActivities", label: "University provides support for activities.", section: "III. Student Satisfaction - PSU" },
+                          { key: "psuFacilities", label: "Availability of facilities for student-interns.", section: "III. Student Satisfaction - PSU" },
+                          // Student Satisfaction - HTE
+                          { key: "hteSupervision", label: "Required supervision is provided by the Host Training Establishment (HTE).", section: "IV. Student Satisfaction - HTE" },
+                          { key: "hteSupervisorQualified", label: "Qualified host training supervisors are provided.", section: "IV. Student Satisfaction - HTE" },
+                          { key: "hteFeedback", label: "Feedback and coaching are provided to student-interns.", section: "IV. Student Satisfaction - HTE" },
+                          // Quality Delivery
+                          { key: "qualityTimeliness", label: "Timeliness are strictly observed.", section: "V. Quality Delivery" },
+                          { key: "qualityObjectives", label: "Objectives specified in Internship Plan are met.", section: "V. Quality Delivery" },
+                          { key: "qualityResources", label: "Adequate resources needed for the Internship purpose are made accessible and provided.", section: "V. Quality Delivery" },
+                        ];
+
+                        let currentSection = "";
+                        let itemIndex = 0;
+                        return form19bCriteria.map(({ key, label, section }) => {
+                          const value = criteria[key];
+                          if (!value) return null;
+
+                          const rating = typeof value === 'object' && value !== null
+                            ? (value as { rating: number; remarks?: string }).rating
+                            : (typeof value === 'number' ? value : 0);
+
+                          if (rating === 0) return null;
+
+                          // Show section header when section changes
+                          const showSectionHeader = currentSection !== section;
+                          if (showSectionHeader) {
+                            currentSection = section;
+                            itemIndex = 0;
+                          }
+                          itemIndex++;
+
+                          return (
+                            <div key={key}>
+                              {showSectionHeader && (
+                                <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 mt-4 first:mt-0">
+                                  {section}
+                                </h4>
+                              )}
+                              <div className="bg-white dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1 mr-4">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                                      {itemIndex}. {label}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center space-x-1 flex-shrink-0">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`w-5 h-5 ${star <= rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-gray-300 dark:text-gray-600"
+                                          }`}
+                                      />
+                                    ))}
+                                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                                      {rating} / 5
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      }
+
+                      // Form 18 criteria mapping
+                      if (selectedForm.id === "form-18") {
+                        const form18Criteria: Array<{ key: string; label: string }> = [
+                          { key: "punctuality", label: "The student-trainee is punctual in attending works and assignments" },
+                          { key: "knowledge", label: "The student-trainee has sufficient knowledge to contribute in the organization" },
+                          { key: "teamwork", label: "The student-trainee knows how to work with the group" },
+                          { key: "taskPerformance", label: "The student-trainee performs tasks as prescribed in the Internship Training Plan" },
+                          { key: "policyCompliance", label: "The student-trainee follows and abides with the policies of the company" },
+                          { key: "conduct", label: "The student-trainee maintains an upright conduct while in the company" },
+                          { key: "traits", label: "The student-trainee shows desirable traits, virtues, and work habits" },
+                        ];
+
+                        return form18Criteria.map(({ key, label }, index) => {
+                          const value = criteria[key];
+                          if (!value) return null;
+
+                          const rating = typeof value === 'object' && value !== null
+                            ? (value as { rating: number; remarks?: string }).rating
+                            : (typeof value === 'number' ? value : 0);
+                          const remarks = typeof value === 'object' && value !== null
+                            ? (value as { rating: number; remarks?: string }).remarks
+                            : '';
+
+                          if (rating === 0) return null;
+
+                          return (
+                            <div
+                              key={key}
+                              className="bg-white dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 mr-4">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                                    {index + 1}. {label}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`w-5 h-5 ${star <= rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300 dark:text-gray-600"
+                                        }`}
+                                    />
+                                  ))}
+                                  <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                                    {rating} / 5
+                                  </span>
+                                </div>
+                              </div>
+                              {remarks && (
+                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    <span className="font-medium">Remarks:</span> {remarks}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      }
+
+                      // Form 11 competency order and mapping
                       const competencyOrder: Array<{ key: string; displayName: string }> = [
                         { key: "abilityToLearn", displayName: "ABILITY TO LEARN" },
                         { key: "workAttitude", displayName: "WORK ATTITUDE" },
@@ -580,17 +947,15 @@ const StudentEvaluationsTab: React.FC = () => {
                         { key: "appearanceHygiene", displayName: "APPEARANCE/HYGIENE" },
                       ];
 
-                      const criteria = selectedForm.evaluation.criteria || {};
-
                       return competencyOrder.map(({ key, displayName }) => {
                         const value = criteria[key];
                         if (!value) return null;
 
-                        const rating = typeof value === 'object' && value !== null 
-                          ? (value as { rating: number; remarks?: string }).rating 
+                        const rating = typeof value === 'object' && value !== null
+                          ? (value as { rating: number; remarks?: string }).rating
                           : (typeof value === 'number' ? value : 0);
-                        const remarks = typeof value === 'object' && value !== null 
-                          ? (value as { rating: number; remarks?: string }).remarks 
+                        const remarks = typeof value === 'object' && value !== null
+                          ? (value as { rating: number; remarks?: string }).remarks
                           : '';
 
                         return (
@@ -606,11 +971,10 @@ const StudentEvaluationsTab: React.FC = () => {
                                 {[1, 2, 3, 4, 5].map((star) => (
                                   <Star
                                     key={star}
-                                    className={`w-5 h-5 ${
-                                      star <= rating
-                                        ? "fill-yellow-400 text-yellow-400"
-                                        : "text-gray-300 dark:text-gray-600"
-                                    }`}
+                                    className={`w-5 h-5 ${star <= rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300 dark:text-gray-600"
+                                      }`}
                                   />
                                 ))}
                                 <span className="ml-2 font-semibold text-gray-900 dark:text-white">
@@ -657,14 +1021,14 @@ const StudentEvaluationsTab: React.FC = () => {
               >
                 Close
               </button>
-              {selectedForm.document && (
+              {(selectedForm.document || (selectedForm.id === "form-18" && selectedForm.evaluation)) && (
                 <button
                   onClick={() => {
                     handleDownload(selectedForm);
                   }}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
-                  <Download className="w-4 h-4" />
+                      <Download className="w-6 h-6" />
                   <span>Export</span>
                 </button>
               )}
@@ -735,7 +1099,7 @@ const StudentEvaluationsTab: React.FC = () => {
                   onClick={() => handleDownload(selectedForm)}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
-                  <Download className="w-4 h-4" />
+                      <Download className="w-6 h-6" />
                   <span>Download</span>
                 </button>
               )}
@@ -745,21 +1109,21 @@ const StudentEvaluationsTab: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {!loading && evaluationForms.every((form) => 
-        (form.id === "form-11" && !form.evaluation) || 
+      {!loading && evaluationForms.every((form) =>
+        (form.id === "form-11" && !form.evaluation) ||
         (form.id !== "form-11" && !form.document)
       ) && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
-            No evaluation forms available yet
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">
-            Your supervisor will fill out the evaluation forms, and they will
-            appear here once submitted.
-          </p>
-        </div>
-      )}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
+              No evaluation forms available yet
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Your supervisor will fill out the evaluation forms, and they will
+              appear here once submitted.
+            </p>
+          </div>
+        )}
     </div>
   );
 };

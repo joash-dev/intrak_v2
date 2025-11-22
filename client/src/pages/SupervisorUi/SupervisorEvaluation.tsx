@@ -9,6 +9,7 @@ import {
   Star,
   TrendingUp,
   FileText,
+  Download,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type {
@@ -288,9 +289,96 @@ const SupervisorEvaluation = () => {
     needsImprovement: false,
   });
 
+  // Form 18 - Supervisor Feedback state
+  const [form18Ratings, setForm18Ratings] = useState({
+    punctualRating: 0,
+    knowledgeRating: 0,
+    teamworkRating: 0,
+    taskPerformanceRating: 0,
+    policyComplianceRating: 0,
+    conductRating: 0,
+    traitsRating: 0,
+  });
+  const [form18Comments, setForm18Comments] = useState("");
+  const [form18Loading, setForm18Loading] = useState(false);
+  const [form18Submitting, setForm18Submitting] = useState(false);
+  const [form18Exporting, setForm18Exporting] = useState(false);
+  const [form18SuccessModal, setForm18SuccessModal] = useState(false);
+  const [studentFeedbackStatus, setStudentFeedbackStatus] = useState<Record<string, boolean>>({});
+
+  // Form 19b - Agency Self Evaluation state
+  const [form19bInfo, setForm19bInfo] = useState({
+    unitDivision: "",
+    age: "",
+    sex: "",
+  });
+  const [form19bRatings, setForm19bRatings] = useState({
+    // Communication (3 criteria)
+    communicationConnectivity: 0,
+    communicationDialogue: 0,
+    communicationParticipation: 0,
+    // Ethical Dealings (3 criteria)
+    ethicalReputation: 0,
+    ethicalCSR: 0,
+    ethicalSupport: 0,
+    // Student Satisfaction - PSU (3 criteria)
+    psuSupervisorQualified: 0,
+    psuSupportActivities: 0,
+    psuFacilities: 0,
+    // Student Satisfaction - HTE (3 criteria)
+    hteSupervision: 0,
+    hteSupervisorQualified: 0,
+    hteFeedback: 0,
+    // Quality Delivery (3 criteria)
+    qualityTimeliness: 0,
+    qualityObjectives: 0,
+    qualityResources: 0,
+  });
+  const [form19bLoading, setForm19bLoading] = useState(false);
+  const [form19bSubmitting, setForm19bSubmitting] = useState(false);
+  const [form19bExporting, setForm19bExporting] = useState(false);
+  const [form19bSuccessModal, setForm19bSuccessModal] = useState(false);
+
   useEffect(() => {
     fetchInterns();
+    loadForm19bData();
   }, []);
+
+  // Load existing Form 19b data if available
+  const loadForm19bData = async () => {
+    try {
+      setForm19bLoading(true);
+      const data = await supervisorService.getAgencySelfEvaluation();
+      if (data) {
+        setForm19bInfo({
+          unitDivision: data.unitDivision || "",
+          age: data.age || "",
+          sex: data.sex || "",
+        });
+        setForm19bRatings({
+          communicationConnectivity: data.communicationConnectivity || 0,
+          communicationDialogue: data.communicationDialogue || 0,
+          communicationParticipation: data.communicationParticipation || 0,
+          ethicalReputation: data.ethicalReputation || 0,
+          ethicalCSR: data.ethicalCSR || 0,
+          ethicalSupport: data.ethicalSupport || 0,
+          psuSupervisorQualified: data.psuSupervisorQualified || 0,
+          psuSupportActivities: data.psuSupportActivities || 0,
+          psuFacilities: data.psuFacilities || 0,
+          hteSupervision: data.hteSupervision || 0,
+          hteSupervisorQualified: data.hteSupervisorQualified || 0,
+          hteFeedback: data.hteFeedback || 0,
+          qualityTimeliness: data.qualityTimeliness || 0,
+          qualityObjectives: data.qualityObjectives || 0,
+          qualityResources: data.qualityResources || 0,
+        });
+      }
+    } catch (error) {
+      console.log("No existing Form 19b data found");
+    } finally {
+      setForm19bLoading(false);
+    }
+  };
 
   const userString =
     typeof window !== "undefined" ? localStorage.getItem("user") : null;
@@ -310,6 +398,15 @@ const SupervisorEvaluation = () => {
       setLoading(true);
       const students = await supervisorService.getMyStudents();
       setInterns(students);
+      
+      // Initialize feedback status from backend data
+      const feedbackStatus: Record<string, boolean> = {};
+      students.forEach((student) => {
+        if (student.hasSupervisorFeedback) {
+          feedbackStatus[student.id] = true;
+        }
+      });
+      setStudentFeedbackStatus(feedbackStatus);
     } catch (error) {
       console.error("Error fetching interns:", error);
       toast.error("Failed to load interns");
@@ -324,11 +421,11 @@ const SupervisorEvaluation = () => {
     avgRating:
       interns.length > 0
         ? (
-            interns.reduce(
-              (sum, i) => sum + (i.lastEvaluation?.overallRating || 0),
-              0
-            ) / interns.length
-          ).toFixed(1)
+          interns.reduce(
+            (sum, i) => sum + (i.lastEvaluation?.overallRating || 0),
+            0
+          ) / interns.length
+        ).toFixed(1)
         : "0.0",
   };
 
@@ -374,8 +471,6 @@ const SupervisorEvaluation = () => {
         (sum, entry) => sum + entry.rating,
         0
       );
-      const averageRating =
-        totalPoints / Object.keys(competencyRatings).length || 0;
       const ojtGrade = totalPoints * 10 + 50;
 
       const evaluationData: InternshipEvaluationData = {
@@ -388,28 +483,15 @@ const SupervisorEvaluation = () => {
       };
 
       await supervisorService.submitEvaluation(evaluationData);
-      const evaluationDate = new Date().toISOString();
-
-      setInterns((prev) =>
-        prev.map((intern) =>
-          intern.id === selectedIntern.id
-            ? {
-                ...intern,
-                lastEvaluation: {
-                  date: evaluationDate,
-                  overallRating: Number(averageRating.toFixed(1)),
-                },
-              }
-            : intern
-        )
-      );
 
       toast.success(`Evaluation submitted for ${selectedIntern.name}`);
       setShowEvaluationForm(false);
       setShowSuccessModal(true);
       setSelectedIntern(null);
       resetForm();
-      fetchInterns(); // Refresh data
+
+      // Refetch all data from backend to get updated evaluation status
+      await fetchInterns();
     } catch (error) {
       console.error("Error submitting evaluation:", error);
       toast.error("Failed to submit evaluation");
@@ -432,11 +514,11 @@ const SupervisorEvaluation = () => {
 
     try {
       setExporting(true);
-    const totalPoints = Object.values(competencyRatings).reduce(
-      (sum, entry) => sum + entry.rating,
-      0
-    );
-    const ojtGrade = totalPoints * 10 + 50;
+      const totalPoints = Object.values(competencyRatings).reduce(
+        (sum, entry) => sum + entry.rating,
+        0
+      );
+      const ojtGrade = totalPoints * 10 + 50;
 
       await supervisorService.exportEvaluation({
         studentId: selectedIntern.id,
@@ -460,8 +542,159 @@ const SupervisorEvaluation = () => {
     }
   };
 
+  // Form 18 - Supervisor Feedback handlers
+  const handleLoadForm18Feedback = async (intern: SupervisorStudent) => {
+    setSelectedIntern(intern);
+    setForm18Loading(true);
+    try {
+      const feedback = await supervisorService.getSupervisorFeedback(intern.id);
+      if (feedback) {
+        setForm18Ratings({
+          punctualRating: feedback.punctualRating,
+          knowledgeRating: feedback.knowledgeRating,
+          teamworkRating: feedback.teamworkRating,
+          taskPerformanceRating: feedback.taskPerformanceRating,
+          policyComplianceRating: feedback.policyComplianceRating,
+          conductRating: feedback.conductRating,
+          traitsRating: feedback.traitsRating,
+        });
+        setForm18Comments(feedback.comments || "");
+      } else {
+        // Reset form for new feedback
+        setForm18Ratings({
+          punctualRating: 0,
+          knowledgeRating: 0,
+          teamworkRating: 0,
+          taskPerformanceRating: 0,
+          policyComplianceRating: 0,
+          conductRating: 0,
+          traitsRating: 0,
+        });
+        setForm18Comments("");
+      }
+    } catch (error) {
+      console.error("Error loading feedback:", error);
+      toast.error("Failed to load existing feedback");
+    } finally {
+      setForm18Loading(false);
+    }
+  };
+
+  const handleSubmitForm18 = async () => {
+    if (!selectedIntern) return;
+
+    // Validate all ratings
+    const allRated = Object.values(form18Ratings).every((rating) => rating > 0);
+    if (!allRated) {
+      toast.error("Please rate all criteria (1-5)");
+      return;
+    }
+
+    try {
+      setForm18Submitting(true);
+      await supervisorService.submitSupervisorFeedback({
+        studentId: selectedIntern.id,
+        ...form18Ratings,
+        comments: form18Comments,
+      });
+
+      // Immediately update the status to show "Completed" badge
+      setStudentFeedbackStatus((prev) => ({
+        ...prev,
+        [selectedIntern.id]: true,
+      }));
+
+      setForm18SuccessModal(true);
+      setSelectedIntern(null);
+
+      // Refetch data to ensure everything is in sync
+      await fetchInterns();
+    } catch (error: any) {
+      console.error("Error submitting feedback:", error);
+      toast.error(error.response?.data?.message || "Failed to submit feedback");
+    } finally {
+      setForm18Submitting(false);
+    }
+  };
+
+  const handleExportForm18 = async () => {
+    if (!selectedIntern) return;
+
+    const allRated = Object.values(form18Ratings).every((rating) => rating > 0);
+    if (!allRated) {
+      toast.error("Please rate all criteria before exporting");
+      return;
+    }
+
+    try {
+      setForm18Exporting(true);
+      await supervisorService.exportSupervisorFeedback(selectedIntern.id);
+      toast.success("Supervisor feedback exported successfully!");
+    } catch (error: any) {
+      console.error("Error exporting feedback:", error);
+      toast.error(error.response?.data?.message || "Failed to export feedback");
+    } finally {
+      setForm18Exporting(false);
+    }
+  };
+
+  // Form 19b - Agency Self Evaluation handlers
+  const handleSubmitForm19b = async () => {
+    // Validate all ratings
+    const allRated = Object.values(form19bRatings).every((rating) => rating > 0);
+    if (!allRated) {
+      toast.error("Please rate all criteria (1-5)");
+      return;
+    }
+
+    try {
+      setForm19bSubmitting(true);
+      await supervisorService.submitAgencySelfEvaluation({
+        ...form19bInfo,
+        ...form19bRatings,
+      });
+      
+      toast.success("Form 19b submitted successfully!");
+      setForm19bSuccessModal(true);
+      
+      // Don't reset form - keep data for potential edits
+    } catch (error: any) {
+      console.error("Error submitting Form 19b:", error);
+      toast.error(error.response?.data?.message || "Failed to submit Form 19b");
+    } finally {
+      setForm19bSubmitting(false);
+    }
+  };
+
+  const handleExportForm19b = async () => {
+    const allRated = Object.values(form19bRatings).every((rating) => rating > 0);
+    if (!allRated) {
+      toast.error("Please rate all criteria before exporting");
+      return;
+    }
+
+    try {
+      setForm19bExporting(true);
+      await supervisorService.exportAgencySelfEvaluation();
+      toast.success("Form 19b exported successfully!");
+    } catch (error: any) {
+      console.error("Error exporting Form 19b:", error);
+      toast.error(error.response?.data?.message || "Failed to export Form 19b");
+    } finally {
+      setForm19bExporting(false);
+    }
+  };
+
   const getStatusBadge = (intern: SupervisorStudent) => {
-    if (intern.lastEvaluation) {
+    let isCompleted = false;
+
+    if (activeTab === "form11") {
+      isCompleted = !!intern.lastEvaluation;
+    } else if (activeTab === "form18") {
+      isCompleted = !!intern.hasSupervisorFeedback;
+    }
+
+    if (isCompleted) {
       return (
         <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
           Finished
@@ -496,14 +729,14 @@ const SupervisorEvaluation = () => {
   );
 
   if (loading) {
-  return (
+    return (
       <div className="flex items-center justify-center min-h-[500px]">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">
             Loading evaluations...
-            </p>
-          </div>
+          </p>
+        </div>
       </div>
     );
   }
@@ -643,31 +876,28 @@ const SupervisorEvaluation = () => {
           <nav className="flex space-x-1 p-1" aria-label="Tabs">
             <button
               onClick={() => setActiveTab("form11")}
-              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === "form11"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form11"
+                ? "bg-purple-600 text-white"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
             >
               Form 11 - Internship Evaluation
             </button>
             <button
               onClick={() => setActiveTab("form18")}
-              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === "form18"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form18"
+                ? "bg-purple-600 text-white"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
             >
               Form 18 - Supervisor Feedback
             </button>
             <button
               onClick={() => setActiveTab("form19b")}
-              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === "form19b"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+              className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form19b"
+                ? "bg-purple-600 text-white"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
             >
               Form 19b - Agency Self-Evaluation
             </button>
@@ -678,554 +908,757 @@ const SupervisorEvaluation = () => {
       {/* Tab Content */}
       {activeTab === "form11" && (
         <div className="space-y-4 sm:space-y-6">
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="text"
-                placeholder="Search interns..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-              />
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <input
+                  type="text"
+                  placeholder="Search interns..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Evaluated</option>
+              </select>
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-            <option value="completed">Evaluated</option>
-            </select>
           </div>
+
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            Showing {filteredInterns.length} of {interns.length} interns
+          </p>
+
+          {/* Interns Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            {filteredInterns.map((intern) => (
+              <div
+                key={intern.id}
+                className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                      {intern.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .substring(0, 2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                        {intern.name}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {intern.studentNumber}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{intern.program}</p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 ml-2">
+                    {getStatusBadge(intern)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
+                      Hours
+                    </p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                      {intern.completedHours}/{intern.totalHours}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
+                      Attendance
+                    </p>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                      {intern.attendanceRate}%
+                    </p>
+                  </div>
+                </div>
+
+                {intern.lastEvaluation && (
+                  <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md sm:rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
+                          Last Evaluation
+                        </p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          {new Date(
+                            intern.lastEvaluation.date
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
+                          {intern.lastEvaluation.overallRating.toFixed(1)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleStartEvaluation(intern)}
+                  className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span>
+                    {intern.lastEvaluation ? "Re-evaluate" : "Evaluate Now"}
+                  </span>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {filteredInterns.length === 0 && (
+            <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
+              <Award className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No interns found</p>
+            </div>
+          )}
+
+          {/* Evaluation Form Modal */}
+          {showEvaluationForm && selectedIntern && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+              style={{ marginTop: "0px" }}
+              onClick={() => !submitting && setShowEvaluationForm(false)}
+            >
+              <div
+                className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 my-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      Evaluate Intern
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedIntern.name} - {selectedIntern.studentNumber}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => !submitting && setShowEvaluationForm(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                    disabled={submitting}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-slim">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      Internship Evaluation Competencies
+                    </h4>
+
+                    {competencyList.map((competency) => {
+                      const state = competencyRatings[competency.id];
+                      return (
+                        <div
+                          key={competency.id}
+                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <div>
+                              <p className="text-sm uppercase text-gray-500 dark:text-gray-400 font-semibold">
+                                {competency.weight}
+                              </p>
+                              <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                {competency.title}
+                              </h5>
+                            </div>
+                            <span className="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-200">
+                              Rate 1 (lowest) - 5 (highest)
+                            </span>
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Criteria
+                              </p>
+                              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                {competency.criteria.map((criterion) => (
+                                  <li
+                                    key={`${competency.id}-${criterion.rating}`}
+                                    className="flex space-x-2"
+                                  >
+                                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                                      {criterion.rating}.
+                                    </span>
+                                    <span>{criterion.text}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Select Rating
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {[1, 2, 3, 4, 5].map((rating) => (
+                                    <button
+                                      key={`${competency.id}-${rating}`}
+                                      type="button"
+                                      onClick={() =>
+                                        setCompetencyRatings((prev) => ({
+                                          ...prev,
+                                          [competency.id]: {
+                                            ...prev[competency.id],
+                                            rating,
+                                          },
+                                        }))
+                                      }
+                                      className={`w-12 h-12 rounded-lg border-2 transition-all ${state.rating === rating
+                                        ? "border-purple-600 bg-purple-600 text-white"
+                                        : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                        }`}
+                                    >
+                                      {rating}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Remarks
+                                </p>
+                                <textarea
+                                  value={state.remarks}
+                                  onChange={(e) =>
+                                    setCompetencyRatings((prev) => ({
+                                      ...prev,
+                                      [competency.id]: {
+                                        ...prev[competency.id],
+                                        remarks: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  rows={3}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                                  placeholder="Enter remarks for this competency..."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Termination Section */}
+                  <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 className="font-semibold text-gray-900 dark:text-white text-base">
+                      Termination Information
+                    </h4>
+                    <p className="text-xs italic font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      The Internship Practicum was terminated:
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {/* Termination Reasons - Compact */}
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.lackOfWork}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              lackOfWork: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          due "only" for lack of work
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.absencesTardiness}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              absencesTardiness: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          too much absences and tardiness
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.violationRules}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              violationRules: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          violation of Company Rules
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.disrespectful}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              disrespectful: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          disrespectful to co-trainee or personnel
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.unfavorableHabits}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              unfavorableHabits: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          unfavorable work habits and practices
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.noInterest}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              noInterest: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          does not demonstrate interest and desire to learn
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.altercation}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              altercation: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          altercation on the job
+                        </span>
+                      </label>
+
+                      <div className="space-y-1">
+                        <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                          <input
+                            type="checkbox"
+                            checked={terminationData.other}
+                            onChange={(e) =>
+                              setTerminationData((prev) => ({
+                                ...prev,
+                                other: e.target.checked,
+                              }))
+                            }
+                            className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          />
+                          <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                            other(s), please specify
+                          </span>
+                        </label>
+                        {terminationData.other && (
+                          <input
+                            type="text"
+                            value={terminationData.otherSpecify}
+                            onChange={(e) =>
+                              setTerminationData((prev) => ({
+                                ...prev,
+                                otherSpecify: e.target.value,
+                              }))
+                            }
+                            placeholder="Specify other reason..."
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-purple-500"
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Additional Statements */}
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.futureEmployment}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              futureEmployment: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          We would be pleased to employ this <em>Student-Trainee</em> in the future
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
+                        <input
+                          type="checkbox"
+                          checked={terminationData.needsImprovement}
+                          onChange={(e) =>
+                            setTerminationData((prev) => ({
+                              ...prev,
+                              needsImprovement: e.target.checked,
+                            }))
+                          }
+                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
+                          He/She needs to improve his/her performance.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex flex-col md:flex-row gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={() => setShowEvaluationForm(false)}
+                    className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleExportOfficialForm}
+                    disabled={!allCompetenciesRated || exporting}
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                  >
+                    {exporting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-5 h-5" />
+                        <span>Export Official Form</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleSubmitEvaluation}
+                    disabled={!allCompetenciesRated || submitting}
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Submit Evaluation</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {showSuccessModal && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              style={{ margin: "0" }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 space-y-4 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                  Intern Evaluated
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  The evaluation has been submitted and marked as finished.
+                </p>
+                <button
+                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  onClick={() => setShowSuccessModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+      )}
 
-      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-        Showing {filteredInterns.length} of {interns.length} interns
-      </p>
+      {/* Form 18 - Training Supervisor's Feedback Form */}
+      {activeTab === "form18" && (
+        <div className="space-y-4 sm:space-y-6">
+          {!selectedIntern ? (
+            <>
+              {/* Filters */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+                <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search interns..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
 
-      {/* Interns Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Showing {filteredInterns.length} of {interns.length} interns
+              </p>
+
+              {/* Interns Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                 {filteredInterns.map((intern) => (
                   <div
                     key={intern.id}
-            className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+                    className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
                   >
                     <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
-                  {intern.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .substring(0, 2)}
+                          {intern.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .substring(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
                             {intern.name}
                           </h3>
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {intern.studentNumber}
+                            {intern.studentNumber}
                           </p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{intern.program}</p>
-                        </div>
-                      </div>
-              <div className="flex-shrink-0 ml-2">
-                {getStatusBadge(intern)}
-              </div>
-                    </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
-                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
-                  Hours
-                </p>
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                  {intern.completedHours}/{intern.totalHours}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
-                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
-                          Attendance
-                        </p>
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                          {intern.attendanceRate}%
-                        </p>
-                      </div>
-                    </div>
-
-                    {intern.lastEvaluation && (
-              <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md sm:rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
-                              Last Evaluation
-                            </p>
-                            <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                      {new Date(
-                        intern.lastEvaluation.date
-                      ).toLocaleDateString()}
-                            </p>
-                          </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
-                      {intern.lastEvaluation.overallRating.toFixed(1)}
-                              </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                          <button
-              onClick={() => handleStartEvaluation(intern)}
-              className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                        >
-                          <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>
-                {intern.lastEvaluation ? "Re-evaluate" : "Evaluate Now"}
-              </span>
-                        </button>
-                      </div>
-        ))}
-                  </div>
-
-                {filteredInterns.length === 0 && (
-        <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
-          <Award className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
-          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No interns found</p>
-                  </div>
-                )}
-
-        {/* Evaluation Form Modal */}
-        {showEvaluationForm && selectedIntern && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          style={{ marginTop: "0px" }}
-          onClick={() => !submitting && setShowEvaluationForm(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 my-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Evaluate Intern
-                      </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedIntern.name} - {selectedIntern.studentNumber}
-                      </p>
-                  </div>
-                  <button
-                onClick={() => !submitting && setShowEvaluationForm(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                disabled={submitting}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-              </div>
-
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-slim">
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white">
-                  Internship Evaluation Competencies
-                      </h4>
-
-                {competencyList.map((competency) => {
-                  const state = competencyRatings[competency.id];
-                  return (
-                    <div
-                      key={competency.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                        <div>
-                          <p className="text-sm uppercase text-gray-500 dark:text-gray-400 font-semibold">
-                            {competency.weight}
+                          <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {intern.program}
                           </p>
-                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {competency.title}
-                          </h5>
                         </div>
-                        <span className="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-200">
-                          Rate 1 (lowest) - 5 (highest)
+                      </div>
+                      {/* Status Badge */}
+                      {studentFeedbackStatus[intern.id] && (
+                        <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex-shrink-0">
+                          Completed
                         </span>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Criteria
-                          </p>
-                          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                            {competency.criteria.map((criterion) => (
-                              <li
-                                key={`${competency.id}-${criterion.rating}`}
-                                className="flex space-x-2"
-                              >
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                                  {criterion.rating}.
-                                </span>
-                                <span>{criterion.text}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Select Rating
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <button
-                                  key={`${competency.id}-${rating}`}
-                          type="button"
-                          onClick={() =>
-                                    setCompetencyRatings((prev) => ({
-                                      ...prev,
-                                      [competency.id]: {
-                                        ...prev[competency.id],
-                                        rating,
-                                      },
-                                    }))
-                          }
-                          className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                                    state.rating === rating
-                                      ? "border-purple-600 bg-purple-600 text-white"
-                                      : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                          }`}
-                        >
-                          {rating}
-                        </button>
-                      ))}
-                          </div>
+                      )}
                     </div>
 
-                      <div>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Remarks
-                            </p>
-                        <textarea
-                              value={state.remarks}
-                              onChange={(e) =>
-                                setCompetencyRatings((prev) => ({
+                    <button
+                      onClick={() => handleLoadForm18Feedback(intern)}
+                      className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    >
+                      <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Provide Feedback</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {filteredInterns.length === 0 && (
+                <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
+                  <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                    No interns found
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Feedback Form */
+            <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                    Training Supervisor's Feedback Form
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedIntern.name} - {selectedIntern.studentNumber}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedIntern(null)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {form18Loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Rating Criteria */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      Rate the following criteria (1 = Strongly Disagree, 5 = Strongly Agree)
+                    </h4>
+
+                    {[
+                      { key: "punctualRating", label: "The student-trainee is punctual in attending works and assignments" },
+                      { key: "knowledgeRating", label: "The student-trainee has sufficient knowledge to contribute in the organization" },
+                      { key: "teamworkRating", label: "The student-trainee knows how to work with the group" },
+                      { key: "taskPerformanceRating", label: "The student-trainee performs tasks as prescribed in the Internship Training Plan" },
+                      { key: "policyComplianceRating", label: "The student-trainee follows and abides with the policies of the company" },
+                      { key: "conductRating", label: "The student-trainee maintains an upright conduct while in the company" },
+                      { key: "traitsRating", label: "The student-trainee shows desirable traits, virtues, and work habits" },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm18Ratings((prev) => ({
                                   ...prev,
-                                  [competency.id]: {
-                                    ...prev[competency.id],
-                                    remarks: e.target.value,
-                                  },
+                                  [criterion.key]: rating,
                                 }))
                               }
-                          rows={3}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                              placeholder="Enter remarks for this competency..."
-                        />
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form18Ratings[criterion.key as keyof typeof form18Ratings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Strongly Disagree</span>
+                          <span>Strongly Agree</span>
+                        </div>
                       </div>
-                      </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                      </div>
+                    ))}
+                  </div>
 
-            {/* Termination Section */}
-            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="font-semibold text-gray-900 dark:text-white text-base">
-                Termination Information
-              </h4>
-              <p className="text-xs italic font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                The Internship Practicum was terminated:
-              </p>
-
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {/* Termination Reasons - Compact */}
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.lackOfWork}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        lackOfWork: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    due "only" for lack of work
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.absencesTardiness}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        absencesTardiness: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    too much absences and tardiness
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.violationRules}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        violationRules: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    violation of Company Rules
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.disrespectful}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        disrespectful: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    disrespectful to co-trainee or personnel
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.unfavorableHabits}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        unfavorableHabits: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    unfavorable work habits and practices
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.noInterest}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        noInterest: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    does not demonstrate interest and desire to learn
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.altercation}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        altercation: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    altercation on the job
-                  </span>
-                </label>
-
-                <div className="space-y-1">
-                  <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                    <input
-                      type="checkbox"
-                      checked={terminationData.other}
-                      onChange={(e) =>
-                        setTerminationData((prev) => ({
-                          ...prev,
-                          other: e.target.checked,
-                        }))
-                      }
-                      className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                  {/* Comments */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Other Comments and Suggestions
+                    </label>
+                    <textarea
+                      value={form18Comments}
+                      onChange={(e) => setForm18Comments(e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                      placeholder="Enter any additional comments or suggestions..."
                     />
-                    <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                      other(s), please specify
-                    </span>
-                  </label>
-                  {terminationData.other && (
-                    <input
-                      type="text"
-                      value={terminationData.otherSpecify}
-                      onChange={(e) =>
-                        setTerminationData((prev) => ({
-                          ...prev,
-                          otherSpecify: e.target.value,
-                        }))
-                      }
-                      placeholder="Specify other reason..."
-                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-purple-500"
-                    />
-                  )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => setSelectedIntern(null)}
+                      className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                      disabled={form18Submitting || form18Exporting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleExportForm18}
+                      disabled={form18Exporting || Object.values(form18Ratings).some((r) => r === 0)}
+                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {form18Exporting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Exporting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-5 h-5" />
+                          <span>Export Form</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleSubmitForm18}
+                      disabled={form18Submitting || Object.values(form18Ratings).some((r) => r === 0)}
+                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {form18Submitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Submit Feedback</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Additional Statements */}
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-1.5">
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.futureEmployment}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        futureEmployment: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    We would be pleased to employ this <em>Student-Trainee</em> in the future
-                  </span>
-                </label>
-
-                <label className="flex items-center space-x-1.5 cursor-pointer py-0.5">
-                  <input
-                    type="checkbox"
-                    checked={terminationData.needsImprovement}
-                    onChange={(e) =>
-                      setTerminationData((prev) => ({
-                        ...prev,
-                        needsImprovement: e.target.checked,
-                      }))
-                    }
-                    className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
-                  />
-                  <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
-                    He/She needs to improve his/her performance.
-                  </span>
-                </label>
-              </div>
+              )}
             </div>
-            </div>
-
-            {/* Form Actions */}
-            <div className="flex flex-col md:flex-row gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setShowEvaluationForm(false)}
-                className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExportOfficialForm}
-                disabled={!allCompetenciesRated || exporting}
-                className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
-              >
-                {exporting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-5 h-5" />
-                    <span>Export Official Form</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleSubmitEvaluation}
-                disabled={!allCompetenciesRated || submitting}
-                className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Submit Evaluation</span>
-                  </>
-                )}
-              </button>
-            </div>
-            </div>
-          </div>
-        )}
-      {showSuccessModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-          style={{ marginTop: "0px" }}
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 space-y-4 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-              Intern Evaluated
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              The evaluation has been submitted and marked as finished.
-            </p>
-            <button
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              onClick={() => setShowSuccessModal(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-        </div>
-      )}
-
-      {/* Form 18 - Training Supervisor's Feedback Form */}
-      {activeTab === "form18" && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Form 18 - Training Supervisor's Feedback Form
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              This form will be implemented soon.
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Training Supervisor's Feedback Form (Form FM-AA-INT-18)
-            </p>
-          </div>
+          )}
         </div>
       )}
 
@@ -1247,20 +1680,402 @@ const SupervisorEvaluation = () => {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Form 19b - Evaluation Instrument of PSU Partner Agencies (Self Ratee)
+            {form19bLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+              </div>
+            ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Evaluation Instrument of PSU Partner Agencies (Self Ratee)
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Form FM-AA-INT-19b
+                </p>
+              </div>
+
+              {/* Personal Information */}
+              <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+                <h4 className="font-semibold text-gray-900 dark:text-white">
+                  Personal Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Unit/Division
+                    </label>
+                    <input
+                      type="text"
+                      value={form19bInfo.unitDivision}
+                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, unitDivision: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="Enter unit/division"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      value={form19bInfo.age}
+                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, age: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      placeholder="Enter age"
+                      min="1"
+                      max="120"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Sex
+                    </label>
+                    <select
+                      value={form19bInfo.sex}
+                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, sex: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Select sex</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rating Criteria */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                    Rate the following criteria (1 = Not Satisfied, 5 = Extremely Satisfied)
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    Please rate each criterion based on your level of satisfaction
+                  </p>
+                </div>
+
+                {/* Communication Category */}
+                <div className="space-y-4">
+                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    COMMUNICATION
+                  </h5>
+                  {[
+                    { key: "communicationConnectivity", label: "Is there high connectivity through electronic communication of the host-training agency?" },
+                    { key: "communicationDialogue", label: "Does the management frequently accept request for dialogue and interaction as needed?" },
+                    { key: "communicationParticipation", label: "Is the management willing to participate in the university activities and programs when they are invited?" },
+                  ].map((criterion, index) => (
+                    <div
+                      key={criterion.key}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        {index + 1}. {criterion.label}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() =>
+                              setForm19bRatings((prev) => ({
+                                ...prev,
+                                [criterion.key]: rating,
+                              }))
+                            }
+                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                            }`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>Not Satisfied</span>
+                        <span>Extremely Satisfied</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Ethical Dealings Category */}
+                <div className="space-y-4">
+                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    ETHICAL DEALINGS
+                  </h5>
+                  {[
+                    { key: "ethicalReputation", label: "High reputations and stature of the industry." },
+                    { key: "ethicalCSR", label: "Established Corporate Social Responsibility of the industry." },
+                    { key: "ethicalSupport", label: "Manifested support for the mandate and program of the educational institution." },
+                  ].map((criterion, index) => (
+                    <div
+                      key={criterion.key}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        {index + 1}. {criterion.label}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() =>
+                              setForm19bRatings((prev) => ({
+                                ...prev,
+                                [criterion.key]: rating,
+                              }))
+                            }
+                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                            }`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>Not Satisfied</span>
+                        <span>Extremely Satisfied</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Student Satisfaction - PSU Category */}
+                <div className="space-y-4">
+                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    STUDENT SATISFACTION - PSU
+                  </h5>
+                  {[
+                    { key: "psuSupervisorQualified", label: "The assigned Internship or Practicum Supervisor are qualified and competent." },
+                    { key: "psuSupportActivities", label: "The University provides support to various activities concerning internship." },
+                    { key: "psuFacilities", label: "Availability of facilities for student-interns to use." },
+                  ].map((criterion, index) => (
+                    <div
+                      key={criterion.key}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        {index + 1}. {criterion.label}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() =>
+                              setForm19bRatings((prev) => ({
+                                ...prev,
+                                [criterion.key]: rating,
+                              }))
+                            }
+                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                            }`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>Not Satisfied</span>
+                        <span>Extremely Satisfied</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Student Satisfaction - HTE Category */}
+                <div className="space-y-4">
+                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    STUDENT SATISFACTION - HOST TRAINING ESTABLISHMENT
+                  </h5>
+                  {[
+                    { key: "hteSupervision", label: "The partner-agencies provides the required supervision and conduct monitoring of trainees." },
+                    { key: "hteSupervisorQualified", label: "The assigned Host Training Supervisors are qualified and competent to handle student-interns." },
+                    { key: "hteFeedback", label: "Provide feedback and coaching or monitoring activities to further improve performance of student-interns." },
+                  ].map((criterion, index) => (
+                    <div
+                      key={criterion.key}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        {index + 1}. {criterion.label}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() =>
+                              setForm19bRatings((prev) => ({
+                                ...prev,
+                                [criterion.key]: rating,
+                              }))
+                            }
+                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                            }`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>Not Satisfied</span>
+                        <span>Extremely Satisfied</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quality Delivery Category */}
+                <div className="space-y-4">
+                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                    QUALITY DELIVERY
+                  </h5>
+                  {[
+                    { key: "qualityTimeliness", label: "Timeliness are strictly observed." },
+                    { key: "qualityObjectives", label: "Objectives specified in Internship Plan are met." },
+                    { key: "qualityResources", label: "Adequate resources needed for the Internship purpose are made accessible and provided." },
+                  ].map((criterion, index) => (
+                    <div
+                      key={criterion.key}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                    >
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                        {index + 1}. {criterion.label}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() =>
+                              setForm19bRatings((prev) => ({
+                                ...prev,
+                                [criterion.key]: rating,
+                              }))
+                            }
+                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                            }`}
+                          >
+                            {rating}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span>Not Satisfied</span>
+                        <span>Extremely Satisfied</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={handleExportForm19b}
+                  disabled={form19bExporting || Object.values(form19bRatings).some((r) => r === 0)}
+                  className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {form19bExporting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      <span>Export Form</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleSubmitForm19b}
+                  disabled={form19bSubmitting || Object.values(form19bRatings).some((r) => r === 0)}
+                  className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {form19bSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Submit Evaluation</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Form 18 Success Modal */}
+      {form18SuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Feedback Submitted Successfully!
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                This form will be implemented soon.
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Your supervisor feedback has been saved. The student's card will now show as "Completed".
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Evaluation Instrument of PSU Partner Agencies (Self Ratee) (Form FM-AA-INT-19b)
+              <button
+                onClick={() => setForm18SuccessModal(false)}
+                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Form 19b Success Modal */}
+      {form19bSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Form 19b Submitted Successfully!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Your agency self-evaluation has been saved and will be associated with all interns.
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                This form applies to all students - fill once for all interns
-              </p>
+              <button
+                onClick={() => setForm19bSuccessModal(false)}
+                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Continue
+              </button>
             </div>
           </div>
         </div>

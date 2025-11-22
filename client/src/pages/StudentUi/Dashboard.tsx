@@ -16,11 +16,11 @@ import {
   LogOut,
   Settings,
   Home,
-  Calendar,
   AlertTriangle,
   Download,
   Loader2,
   Search,
+  Activity,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StudentDocumentsTab from "./StudentDocumentsTab";
@@ -311,8 +311,8 @@ const OverviewTab = ({
                   key={notification.id}
                   onClick={() => onNotificationClick(notification)}
                   className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${notification.read
-                      ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"
+                    ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"
                     }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -439,10 +439,10 @@ const OverviewTab = ({
                     </div>
                     <span
                       className={`text-xs px-2 py-1 rounded-full ${doc.status === "APPROVED"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : doc.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                        : doc.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                         }`}
                     >
                       {doc.status}
@@ -987,39 +987,6 @@ const StudentDashboard = () => {
     setShowUserMenu(!showUserMenu);
   };
 
-  const unreadNotificationCount = notifications.filter(
-    (notification) => !notification.read
-  ).length;
-  const announcementCount = Array.isArray(data.announcements)
-    ? data.announcements.length
-    : 0;
-  const totalNotificationCount = unreadNotificationCount + announcementCount;
-
-  const formatNotificationTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-      return "";
-    }
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case "HIGH":
-        return "text-red-600 bg-red-100 dark:bg-red-900/20";
-      case "MEDIUM":
-        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20";
-      case "LOW":
-        return "text-blue-600 bg-blue-100 dark:bg-blue-900/20";
-      default:
-        return "text-gray-600 bg-gray-100 dark:bg-gray-900/20";
-    }
-  };
 
   const refreshDocuments = async () => {
     try {
@@ -1189,10 +1156,10 @@ const StudentDashboard = () => {
                   }}
                   disabled={isDisabled}
                   className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${isDisabled
-                      ? "opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600"
-                      : activeTab === item.id
-                        ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
+                    ? "opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600"
+                    : activeTab === item.id
+                      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
                     }`}
                   title={isDisabled ? "You already have a company or a pending application" : ""}
                 >
@@ -1223,165 +1190,73 @@ const StudentDashboard = () => {
                   className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
-                  {totalNotificationCount > 0 && (
+                  {notifications.some((n) => !n.read) && (
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
 
-                {/* Notification Dropdown */}
+                {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-[500px] overflow-y-auto notification-scrollbar animate-in slide-in-from-top-2 duration-200">
-                    <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                            Notifications
-                          </h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-medium">
-                            {unreadNotificationCount} unread updates
-                          </span>
-                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-200 rounded-full text-xs font-medium">
-                            {announcementCount} announcement{announcementCount === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                      </div>
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Notifications
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {notifications.filter((n) => !n.read).length} new notifications
+                      </p>
                     </div>
-
-                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                      <div className="p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                            Document Updates
-                          </h4>
-                          <button
-                            onClick={async () => {
-                              await handleMarkAllNotificationsRead();
-                              loadNotifications();
-                            }}
-                            disabled={notifications.length === 0 || unreadNotificationCount === 0}
-                            className="text-xs font-semibold text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed"
-                          >
-                            Mark all read
-                          </button>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notificationsLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
                         </div>
-                        {notificationsLoading ? (
-                          <div className="flex items-center justify-center py-6">
-                            <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
-                          </div>
-                        ) : notifications.length > 0 ? (
-                          <div className="space-y-2">
-                            {notifications.map((notification) => {
-                              const { badge } = getNotificationAccent(notification.type);
-                              return (
-                                <button
-                                  key={notification.id}
-                                  onClick={() => handleNotificationClick(notification)}
-                                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${notification.read
-                                      ? "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                                      : "border-purple-200 dark:border-purple-800 bg-purple-50/80 dark:bg-purple-900/30 shadow-sm hover:shadow-md"
-                                    }`}
-                                >
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                          {notification.title}
-                                        </h4>
-                                        {!notification.read && (
-                                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500 text-white dark:bg-purple-600 flex-shrink-0">
-                                            New
-                                          </span>
-                                        )}
-                                      </div>
-                                      {notification.message && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 leading-relaxed line-clamp-2">
-                                          {notification.message}
-                                        </p>
-                                      )}
-                                      <div className="mt-3 flex items-center justify-between gap-2">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium ${badge}`}>
-                                          {notification.type.replace(/_/g, " ")}
-                                        </span>
-                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 flex-shrink-0">
-                                          {formatNotificationTimestamp(notification.createdAt)}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
-                            No document updates yet.
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                          Announcements
-                        </h4>
-                        {Array.isArray(data.announcements) &&
-                          data.announcements.length > 0 ? (
-                          <div className="space-y-3">
-                            {data.announcements.map((announcement) => (
-                              <div
-                                key={announcement.id}
-                                className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
-                              >
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex items-center space-x-2">
-                                    {announcement.priority === "HIGH" && (
-                                      <AlertTriangle className="w-5 h-5 text-red-500" />
-                                    )}
-                                    <h4 className="font-semibold text-gray-900 dark:text-white text-base">
-                                      {announcement.title}
-                                    </h4>
-                                  </div>
-                                  {announcement.priority && (
-                                    <span
-                                      className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                                        announcement.priority
-                                      )}`}
-                                    >
-                                      {announcement.priority}
-                                    </span>
-                                  )}
-                                </div>
-                                <p
-                                  className="text-sm text-gray-600 dark:text-gray-400 mb-3 overflow-hidden leading-relaxed"
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 3,
-                                    WebkitBoxOrient: "vertical",
-                                  }}
-                                >
-                                  {announcement.content}
-                                </p>
-                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                  <Calendar className="w-4 h-4 mr-2" />
-                                  {new Date(announcement.date).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
-                                    }
-                                  )}
-                                </div>
+                      ) : notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                              notification.read ? "opacity-70" : ""
+                            }`}
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0 mt-1">
+                                <Activity className="w-4 h-4 text-purple-500" />
                               </div>
-                            ))}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {notification.title}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                  {new Date(notification.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">
-                            No announcements yet.
-                          </div>
-                        )}
-                      </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            No notifications
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                      <button
+                        onClick={async () => {
+                          await handleMarkAllNotificationsRead();
+                          loadNotifications();
+                        }}
+                        className="text-sm text-purple-600 dark:text-purple-300 hover:text-purple-700"
+                      >
+                        Mark all as read
+                      </button>
                     </div>
                   </div>
                 )}

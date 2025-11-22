@@ -493,17 +493,17 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Attendance Records Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Attendance Records
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Track your daily attendance and progress
               </p>
             </div>
@@ -511,22 +511,20 @@ const StudentAttendanceTab: React.FC = () => {
           <div className="flex space-x-2">
             <button
               onClick={() => setViewMode("calendar")}
-              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-                viewMode === "calendar"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-              }`}
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-1.5 sm:space-x-2 transition-colors text-sm ${viewMode === "calendar"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                }`}
             >
               <CalendarIcon className="w-4 h-4" />
               <span>Calendar</span>
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
-                viewMode === "list"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-              }`}
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-1.5 sm:space-x-2 transition-colors text-sm ${viewMode === "list"
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                }`}
             >
               <FileText className="w-4 h-4" />
               <span>List</span>
@@ -537,32 +535,32 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
               {monthYear}
             </h3>
-            <div className="flex space-x-2">
+            <div className="flex space-x-1 sm:space-x-2">
               <button
                 onClick={previousMonth}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={nextMonth}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div
                 key={day}
-                className="text-center text-sm font-medium text-gray-600 dark:text-gray-400 py-2"
+                className="text-center text-[10px] sm:text-sm font-medium text-gray-600 dark:text-gray-400 py-1 sm:py-2"
               >
                 {day}
               </div>
@@ -573,15 +571,14 @@ const StudentAttendanceTab: React.FC = () => {
               return (
                 <div
                   key={index}
-                  className={`aspect-square p-2 rounded-lg text-center relative ${
-                    day
+                  className={`aspect-square p-1 sm:p-2 rounded-lg text-center relative ${day
                       ? log
                         ? log.verified
                           ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
                           : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
                         : "bg-gray-50 dark:bg-gray-700"
                       : ""
-                  }`}
+                    }`}
                   onClick={() => {
                     if (!day || !log) return;
                     setSelectedDate(log.date);
@@ -591,20 +588,23 @@ const StudentAttendanceTab: React.FC = () => {
                 >
                   {day && (
                     <>
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium text-xs sm:text-base text-gray-900 dark:text-white">
                         {day}
                       </div>
                       {log && (
-                        <div className="text-xs mt-1">
-                          <div className="font-semibold text-gray-700 dark:text-gray-300">
+                        <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
+                          <div className="font-semibold text-gray-700 dark:text-gray-300 hidden sm:block">
                             {attendanceService.formatDuration(
                               log.durationMinutes
                             )}
                           </div>
+                          <div className="text-[10px] sm:hidden font-medium text-gray-700 dark:text-gray-300">
+                            {Math.floor(log.durationMinutes / 60)}h
+                          </div>
                           {log.verified ? (
-                            <CheckCircle className="w-3 h-3 text-green-600 mx-auto mt-1" />
+                            <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-600 mx-auto mt-0.5 sm:mt-1" />
                           ) : (
-                            <AlertCircle className="w-3 h-3 text-yellow-600 mx-auto mt-1" />
+                            <AlertCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-600 mx-auto mt-0.5 sm:mt-1" />
                           )}
                         </div>
                       )}
@@ -615,17 +615,17 @@ const StudentAttendanceTab: React.FC = () => {
             })}
           </div>
 
-          <div className="mt-6 flex items-center justify-center space-x-6 text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-100 dark:bg-green-900 rounded"></div>
+          <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-100 dark:bg-green-900 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">Verified</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-900 rounded"></div>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-100 dark:bg-yellow-900 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">Pending</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-gray-50 dark:bg-gray-700 rounded"></div>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 dark:bg-gray-700 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">No entry</span>
             </div>
           </div>
@@ -635,7 +635,7 @@ const StudentAttendanceTab: React.FC = () => {
       {/* Day Details Modal */}
       {showDayModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => setShowDayModal(false)}
         >
           <div
@@ -674,15 +674,15 @@ const StudentAttendanceTab: React.FC = () => {
                     {selectedDayLogs.map((seg, idx) => {
                       const timeInLabel = seg.timeIn
                         ? new Date(seg.timeIn).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "-";
                       const timeOutLabel = seg.timeOut
                         ? new Date(seg.timeOut).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : "-";
                       const hoursLabel = attendanceService.formatDuration(
                         seg.durationMinutes || 0
@@ -839,7 +839,7 @@ const StudentAttendanceTab: React.FC = () => {
       {/* QR Scan Success Modal */}
       {showScanSuccessModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => setShowScanSuccessModal(false)}
         >
           <div

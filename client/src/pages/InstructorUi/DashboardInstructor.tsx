@@ -28,7 +28,6 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
 import InstructorMonitoringTab from "./InstructorStudent";
-import InstructorEvaluationsTab from "./InstructorEvaluation";
 import DocumentChecklistTab from "./InstructorDocumentChecklist";
 import InstructorStudentManagement from "./InstructorStudentManagement";
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
@@ -1186,16 +1185,6 @@ const InstructorDashboard = ({
                   <span>View Documents</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setActiveTab("evaluations");
-                    setShowStudentModal(false);
-                  }}
-                  className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium"
-                >
-                  <Award className="w-4 h-4" />
-                  <span>Evaluate Student</span>
-                </button>
-                <button
                   onClick={() => setShowStudentModal(false)}
                   className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
                 >
@@ -1473,12 +1462,6 @@ const InstructorPortal = () => {
       label: "Student Management",
       description: "Manage assigned students"
     },
-    {
-      id: "evaluations",
-      icon: Award,
-      label: "Evaluations",
-      description: "Submit student evaluations"
-    }
   ];
 
   const renderContent = () => {
@@ -1503,8 +1486,6 @@ const InstructorPortal = () => {
         return <InstructorMonitoringTab />;
       case "students":
         return <InstructorStudentManagement />;
-      case "evaluations":
-        return <InstructorEvaluationsTab />;
       case "settings":
         return <InstructorSettings />;
       default:
@@ -1857,7 +1838,7 @@ const InstructorPortal = () => {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <LogOut className="w-6 h-6 text-red-600" />

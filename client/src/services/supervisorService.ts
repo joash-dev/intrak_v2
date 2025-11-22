@@ -24,6 +24,7 @@ export interface SupervisorStudent {
   status: 'active' | 'needs_attention' | 'completed';
   lastActivity?: string;
   pendingApprovals?: number;
+  hasSupervisorFeedback?: boolean;
 }
 
 export interface AttendanceLog {
@@ -100,10 +101,10 @@ class SupervisorService {
   async getMyStudents(): Promise<SupervisorStudent[]> {
     try {
       const response = await api.get('/students/');
-      
+
       // Transform the data to match our interface
       const students = response.data.students || response.data || [];
-      
+
       return students.map((student: any) => ({
         id: student.id,
         studentId: student.studentNumber,
@@ -123,10 +124,11 @@ class SupervisorService {
         pendingApprovals: student.pendingApprovals || 0,
         lastEvaluation: student.evaluations?.[0]
           ? {
-              date: student.evaluations[0].createdAt,
-              overallRating: student.evaluations[0].rating || 0,
-            }
+            date: student.evaluations[0].createdAt,
+            overallRating: student.evaluations[0].rating || 0,
+          }
           : undefined,
+        hasSupervisorFeedback: !!(student.supervisorFeedbacks && student.supervisorFeedbacks.length > 0),
       }));
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -163,7 +165,7 @@ class SupervisorService {
         durationMinutes: log.durationMinutes || 0,
         method: log.verificationMethod || log.method || 'MANUAL',
         location: log.location,
-        coordinates: log.latitude && log.longitude 
+        coordinates: log.latitude && log.longitude
           ? `${log.latitude}° N, ${log.longitude}° E`
           : undefined,
         status: log.verified ? 'approved' : 'pending',
@@ -239,7 +241,7 @@ class SupervisorService {
       const blob = new Blob([response.data]);
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
-      
+
       // Get filename from response headers or use default
       const contentDisposition = response.headers['content-disposition'];
       let filename = 'document';
@@ -249,7 +251,7 @@ class SupervisorService {
           filename = match[1];
         }
       }
-      
+
       link.download = filename;
       link.click();
       window.URL.revokeObjectURL(link.href);
@@ -293,7 +295,7 @@ class SupervisorService {
         ...payload,
         studentId: payload.studentId,
       };
-      
+
       const response = await api.post('/evaluations/export', exportPayload, {
         responseType: 'blob',
       });
@@ -348,7 +350,7 @@ class SupervisorService {
     try {
       const students = await this.getMyStudents();
       const attendanceLogs = await this.getAttendanceLogs({ status: 'pending' });
-      
+
       const activeStudents = students.filter(s => s.status === 'active').length;
       const pendingApprovals = attendanceLogs.filter(l => l.status === 'pending').length;
       const avgAttendance = students.length > 0
@@ -373,12 +375,12 @@ class SupervisorService {
     if (student.completedHours >= student.totalHours) {
       return 'completed';
     }
-    
+
     const attendanceRate = student.attendanceRate || 0;
     if (attendanceRate < 85) {
       return 'needs_attention';
     }
-    
+
     return 'active';
   }
 
@@ -412,6 +414,140 @@ class SupervisorService {
       await api.post('/attendance/qr/verify', payload);
     } catch (error) {
       console.error('Error verifying QR attendance:', error);
+      throw error;
+    }
+  }
+
+  // Submit supervisor feedback (Form 18)
+  async submitSupervisorFeedback(data: {
+    studentId: string;
+    punctualRating: number;
+    knowledgeRating: number;
+    teamworkRating: number;
+    taskPerformanceRating: number;
+    policyComplianceRating: number;
+    conductRating: number;
+    traitsRating: number;
+    comments?: string;
+  }): Promise<void> {
+    try {
+      await api.post('/students/supervisor-feedback', data);
+    } catch (error) {
+      console.error('Error submitting supervisor feedback:', error);
+      throw error;
+    }
+  }
+
+  // Get supervisor feedback for a student
+  async getSupervisorFeedback(studentId: string): Promise<any> {
+    try {
+      const response = await api.get(`/students/supervisor-feedback/${studentId}`);
+      return response.data;
+    } catch (error) {
+      if ((error as any)?.response?.status === 404) {
+        return null; // No feedback exists yet
+      }
+      console.error('Error fetching supervisor feedback:', error);
+      throw error;
+    }
+  }
+
+  // Submit Form 19b - Agency Self Evaluation
+  async submitAgencySelfEvaluation(data: {
+    unitDivision?: string;
+    age?: string;
+    sex?: string;
+    communicationConnectivity: number;
+    communicationDialogue: number;
+    communicationParticipation: number;
+    ethicalReputation: number;
+    ethicalCSR: number;
+    ethicalSupport: number;
+    psuSupervisorQualified: number;
+    psuSupportActivities: number;
+    psuFacilities: number;
+    hteSupervision: number;
+    hteSupervisorQualified: number;
+    hteFeedback: number;
+    qualityTimeliness: number;
+    qualityObjectives: number;
+    qualityResources: number;
+  }): Promise<void> {
+    try {
+      await api.post('/students/agency-self-evaluation', data);
+    } catch (error) {
+      console.error('Error submitting agency self-evaluation:', error);
+      throw error;
+    }
+  }
+
+  // Get Form 19b - Agency Self Evaluation
+  async getAgencySelfEvaluation(): Promise<any> {
+    try {
+      const response = await api.get('/students/agency-self-evaluation');
+      return response.data;
+    } catch (error) {
+      if ((error as any)?.response?.status === 404) {
+        return null; // No evaluation exists yet
+      }
+      console.error('Error fetching agency self-evaluation:', error);
+      throw error;
+    }
+  }
+
+  // Export Form 19b - Agency Self Evaluation
+  async exportAgencySelfEvaluation(): Promise<void> {
+    try {
+      const response = await api.get('/students/agency-self-evaluation/export', {
+        responseType: 'blob',
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Form_19b_Agency_Self_Evaluation_${new Date().toISOString().split('T')[0]}.docx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting agency self-evaluation:', error);
+      throw error;
+    }
+  }
+
+  // Export supervisor feedback as DOCX
+  async exportSupervisorFeedback(studentId: string): Promise<void> {
+    try {
+      const response = await api.get(`/students/supervisor-feedback/export/${studentId}`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `Supervisor_Feedback_${studentId}.docx`;
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?(.+)"?/i);
+        if (match?.[1]) {
+          filename = match[1];
+        }
+      }
+
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting supervisor feedback:', error);
       throw error;
     }
   }

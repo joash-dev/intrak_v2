@@ -604,36 +604,41 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* Search and Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
+        <div className="flex flex-col space-y-3">
+          {/* Search Bar - Full width on mobile */}
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
 
-            <div className="flex items-center space-x-2">
-              <Filter className="text-gray-400 w-4 h-4" />
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 min-w-[140px]"
-              >
-                {documentService.getCategoryOptions().map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+          {/* Filters and Upload Button */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Filter Dropdowns */}
+            <div className="flex gap-2 flex-1">
+              <div className="flex items-center space-x-2 flex-1">
+                <Filter className="text-gray-400 w-4 h-4 flex-shrink-0" />
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                >
+                  {documentService.getCategoryOptions().map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 min-w-[140px]"
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
               >
                 <option value="ALL">All Status</option>
                 <option value="APPROVED">Approved</option>
@@ -641,15 +646,16 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 <option value="REJECTED">Rejected</option>
               </select>
             </div>
-          </div>
 
-          <button
-            onClick={() => setUploadModalOpen(true)}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <Upload className="w-5 h-5" />
-            <span>Upload Document</span>
-          </button>
+            {/* Upload Button - Full width on mobile */}
+            <button
+              onClick={() => setUploadModalOpen(true)}
+              className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center space-x-2 transition-colors font-medium"
+            >
+              <Upload className="w-5 h-5" />
+              <span>Upload Document</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -692,22 +698,20 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`p-2 rounded-lg ${
-                      category === "PRE_DEPLOYMENT"
+                    className={`p-2 rounded-lg ${category === "PRE_DEPLOYMENT"
                         ? "bg-blue-100 dark:bg-blue-900/20"
                         : category === "UPON_APPROVAL"
-                        ? "bg-yellow-100 dark:bg-yellow-900/20"
-                        : "bg-green-100 dark:bg-green-900/20"
-                    }`}
+                          ? "bg-yellow-100 dark:bg-yellow-900/20"
+                          : "bg-green-100 dark:bg-green-900/20"
+                      }`}
                   >
                     <FileText
-                      className={`w-5 h-5 ${
-                        category === "PRE_DEPLOYMENT"
+                      className={`w-5 h-5 ${category === "PRE_DEPLOYMENT"
                           ? "text-blue-600 dark:text-blue-400"
                           : category === "UPON_APPROVAL"
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : "text-green-600 dark:text-green-400"
-                      }`}
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-green-600 dark:text-green-400"
+                        }`}
                     />
                   </div>
                   <div>
@@ -929,11 +933,10 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
                     ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                     : "border-gray-300 dark:border-gray-600"
-                }`}
+                  }`}
               >
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 {selectedFile ? (

@@ -72,6 +72,16 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
+          supervisorFeedbacks: req.user?.role === 'INDUSTRY_PARTNER'
+            ? {
+                where: { supervisorId: req.user.id },
+                select: { id: true },
+                take: 1,
+              }
+            : {
+                select: { id: true },
+                take: 1,
+              },
         },
         skip,
         take: Number(limit),
@@ -239,31 +249,37 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // If no instructor is specified, automatically assign one
+    // If no instructor is specified, automatically assign to the instructor creating the student
     let assignedInstructorId = instructorId;
     
     if (!assignedInstructorId) {
-      // Find the instructor with the least number of assigned students
-      const instructors = await prisma.user.findMany({
-        where: { role: 'INSTRUCTOR', active: true },
-        include: {
-          studentsAssigned: {
-            select: { id: true }
-          }
-        },
-        orderBy: {
-          studentsAssigned: {
-            _count: 'asc'
-          }
-        }
-      });
-
-      // If instructors exist, assign to the one with least students
-      if (instructors.length > 0) {
-        assignedInstructorId = instructors[0].id;
-        console.log(`Auto-assigning student to instructor: ${instructors[0].name} (${instructors[0].id})`);
+      // If the user creating the student is an instructor, assign to them
+      if (req.user?.role === 'INSTRUCTOR') {
+        assignedInstructorId = req.user.id;
+        console.log(`Auto-assigning student to creating instructor: ${req.user.name} (${req.user.id})`);
       } else {
-        console.log('No instructors available for auto-assignment');
+        // If not an instructor, find the instructor with the least number of assigned students
+        const instructors = await prisma.user.findMany({
+          where: { role: 'INSTRUCTOR', active: true },
+          include: {
+            studentsAssigned: {
+              select: { id: true }
+            }
+          },
+          orderBy: {
+            studentsAssigned: {
+              _count: 'asc'
+            }
+          }
+        });
+
+        // If instructors exist, assign to the one with least students
+        if (instructors.length > 0) {
+          assignedInstructorId = instructors[0].id;
+          console.log(`Auto-assigning student to instructor: ${instructors[0].name} (${instructors[0].id})`);
+        } else {
+          console.log('No instructors available for auto-assignment');
+        }
       }
     }
 

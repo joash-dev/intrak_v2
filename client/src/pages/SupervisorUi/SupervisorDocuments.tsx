@@ -333,7 +333,7 @@ const SupervisorDocuments = () => {
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
             style={{ margin: "0" }}
-          onClick={() => setSelectedDocument(null)}
+            onClick={() => setSelectedDocument(null)}
           >
             <div
             className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6"

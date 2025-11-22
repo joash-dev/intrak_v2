@@ -9,7 +9,7 @@ import Docxtemplater from 'docxtemplater';
 const prisma = new PrismaClient();
 
 // Resolve template path
-const templateName = '17 INTERNSHIP WEEKLY REPORT_2024.docx';
+const templateName = '16 PRACTICUM WEEKLY REPORT_2024.docx';
 const srcTemplatePath = path.resolve(process.cwd(), 'server', 'src', 'templates', templateName);
 const distTemplatePath = path.resolve(__dirname, '../templates', templateName);
 const WEEKLY_REPORT_TEMPLATE_FILE = fs.existsSync(srcTemplatePath)
@@ -51,21 +51,8 @@ export const getWeeklyReport = async (req: AuthRequest, res: Response) => {
       ? (weeklyReport.weeklyReportData as any).weeks || []
       : [];
 
-    // Ensure we have 7 weeks
-    const defaultWeeks: WeekData[] = [];
-    for (let i = 1; i <= 7; i++) {
-      const existingWeek = weeks.find((w: WeekData) => w.weekNumber === i);
-      defaultWeeks.push(
-        existingWeek || {
-          weekNumber: i,
-          dateRange: '',
-          tasksAccomplished: '',
-          knowledgeSkillsValues: '',
-        }
-      );
-    }
-
-    res.json({ weeks: defaultWeeks });
+    // Return saved weeks, or empty array if none
+    res.json({ weeks });
   } catch (error) {
     console.error('Error getting weekly report:', error);
     res.status(500).json({ message: 'Failed to get weekly report' });
@@ -151,6 +138,7 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
       doc = new Docxtemplater(zip, {
         paragraphLoop: true,
         linebreaks: true,
+        delimiters: { start: '${', end: '}' },
       });
     } catch (error: any) {
       console.error('Error creating Docxtemplater instance:', error);
@@ -187,7 +175,10 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
     };
 
     // Add week data
-    for (let i = 1; i <= 7; i++) {
+    // We loop up to the maximum week number found in data, or at least 5 (to satisfy current template)
+    const maxWeek = Math.max(5, ...weeks.map(w => w.weekNumber));
+
+    for (let i = 1; i <= maxWeek; i++) {
       const week = weeks.find((w) => w.weekNumber === i) || {
         weekNumber: i,
         dateRange: '',

@@ -525,7 +525,7 @@ const SupervisorAttendance = () => {
       {/* QR Verify Success Modal */}
       {showScanSuccessModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => setShowScanSuccessModal(false)}
         >
           <div

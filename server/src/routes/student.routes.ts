@@ -3,6 +3,8 @@ import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
 import * as studentController from '../controllers/student.controller';
 import * as weeklyReportController from '../controllers/weeklyReport.controller';
+import * as supervisorFeedbackController from '../controllers/supervisorFeedback.controller';
+import * as agencySelfEvaluationController from '../controllers/agencySelfEvaluation.controller';
 
 const router = Router();
 
@@ -23,6 +25,14 @@ router.post('/request-company-partnership', authorize(['STUDENT']), studentContr
 router.get('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.getWeeklyReport);
 router.post('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.saveWeeklyReport);
 router.get('/weekly-reports/export/me', authorize(['STUDENT']), weeklyReportController.exportWeeklyReport);
+// Supervisor feedback routes
+router.post('/supervisor-feedback', authorize(['INDUSTRY_PARTNER']), supervisorFeedbackController.submitFeedback);
+router.get('/supervisor-feedback/:studentId', authorize(['INDUSTRY_PARTNER', 'INSTRUCTOR', 'COORDINATOR', 'STUDENT']), supervisorFeedbackController.getFeedback);
+router.get('/supervisor-feedback/export/:studentId', authorize(['INDUSTRY_PARTNER', 'STUDENT']), supervisorFeedbackController.exportFeedback);
+// Agency self-evaluation routes (Form 19b)
+router.post('/agency-self-evaluation', authorize(['INDUSTRY_PARTNER']), agencySelfEvaluationController.submitAgencySelfEvaluation);
+router.get('/agency-self-evaluation', authorize(['INDUSTRY_PARTNER', 'STUDENT']), agencySelfEvaluationController.getAgencySelfEvaluation);
+router.get('/agency-self-evaluation/export', authorize(['INDUSTRY_PARTNER', 'STUDENT']), agencySelfEvaluationController.exportAgencySelfEvaluation);
 // Parameterized routes - must come after specific routes
 router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);

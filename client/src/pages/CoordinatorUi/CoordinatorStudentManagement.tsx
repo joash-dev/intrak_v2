@@ -1308,7 +1308,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
 
       {/* Review Modal */}
       {selectedDoc && reviewAction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={() => {
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }} onClick={() => {
           setReviewAction(null);
           setRemarks("");
         }}>
