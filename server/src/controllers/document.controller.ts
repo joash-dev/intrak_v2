@@ -6,6 +6,7 @@ import { validateNASConnection, getStoragePath, ensureNASDirectoryExists } from 
 import path from 'path';
 import fs from 'fs';
 import { notificationService } from '../services/notification.service';
+import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 
 const prisma = new PrismaClient();
 const uploadPath = getStoragePath();
@@ -132,6 +133,11 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
             name: true,
           },
         },
+        user: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -209,6 +215,18 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       filename: req.file.originalname,
       fileSize: fileSizeMB + ' MB'
     }, req);
+
+    // Emit real-time event
+    if (student.userId) {
+      emitDocumentUploaded({
+        documentId: document.id,
+        studentId: student.userId,
+        studentName: student.user?.name || 'Student',
+        documentType: type,
+        fileName: req.file.originalname,
+        uploadedAt: document.uploadedAt.toISOString(),
+      });
+    }
 
     res.status(201).json({ 
       document: {
@@ -436,8 +454,20 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
       remarks,
     }, req);
 
-    const recipients = new Set<string>();
+    // Emit real-time event
     const studentUserId = existing.student.user?.id;
+    if (studentUserId) {
+      emitDocumentStatusChanged({
+        documentId: id,
+        studentId: studentUserId,
+        status: 'APPROVED',
+        reviewedBy: req.user?.name,
+        reviewedAt: new Date().toISOString(),
+        comments: remarks,
+      });
+    }
+
+    const recipients = new Set<string>();
     if (studentUserId && studentUserId !== req.user!.id) {
       recipients.add(studentUserId);
     }
@@ -538,8 +568,20 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
       remarks: rejectionMessage,
     }, req);
 
-    const recipients = new Set<string>();
+    // Emit real-time event
     const studentUserId = existing.student.user?.id;
+    if (studentUserId) {
+      emitDocumentStatusChanged({
+        documentId: id,
+        studentId: studentUserId,
+        status: 'REJECTED',
+        reviewedBy: req.user?.name,
+        reviewedAt: new Date().toISOString(),
+        comments: rejectionMessage,
+      });
+    }
+
+    const recipients = new Set<string>();
     if (studentUserId && studentUserId !== req.user!.id) {
       recipients.add(studentUserId);
     }

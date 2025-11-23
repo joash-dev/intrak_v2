@@ -129,7 +129,7 @@ const InstructorSettings = () => {
           pushNotifications: !!notif.pushNotifications,
         });
       }
-    } catch {}
+    } catch { }
 
     try {
       const app = settingsService.loadAppPreferences?.();
@@ -141,7 +141,7 @@ const InstructorSettings = () => {
           theme: (app.theme as any) || "system",
         });
       }
-    } catch {}
+    } catch { }
 
     try {
       const instr = settingsService.loadInstructorSettings();
@@ -153,7 +153,7 @@ const InstructorSettings = () => {
             instr.defaultAnnouncementAudience || "All Users",
         });
       }
-    } catch {}
+    } catch { }
   };
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
@@ -180,7 +180,7 @@ const InstructorSettings = () => {
         settingsService.saveAppPreferences?.(updated as any);
         return updated;
       });
-    } catch {}
+    } catch { }
   };
 
   const loadProfile = async () => {
@@ -287,7 +287,7 @@ const InstructorSettings = () => {
             },
           })
         );
-      } catch {}
+      } catch { }
 
       // Reload profile photo to ensure it's up to date
       try {
@@ -499,11 +499,10 @@ const InstructorSettings = () => {
                   <button
                     key={section.id}
                     onClick={() => setActiveTab(section.id as any)}
-                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-left ${
-                      activeTab === section.id
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-left ${activeTab === section.id
                         ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                     <span className="font-medium text-xs sm:text-sm">{section.label}</span>
@@ -549,14 +548,14 @@ const InstructorSettings = () => {
                     </div>
                     <div className="flex flex-col">
                       {/* Hidden input triggered by the Change Photo button */}
-                        <input
+                      <input
                         id="profile-photo-input"
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                          disabled={saving}
-                        />
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        disabled={saving}
+                      />
                       <button
                         type="button"
                         onClick={() => document.getElementById("profile-photo-input")?.click()}
@@ -568,15 +567,15 @@ const InstructorSettings = () => {
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         JPG, PNG or GIF. Max size 2MB
                       </p>
-                    {profilePhoto && (
-                      <button
-                        onClick={handleRemovePhoto}
-                        disabled={saving}
+                      {profilePhoto && (
+                        <button
+                          onClick={handleRemovePhoto}
+                          disabled={saving}
                           className="mt-1 text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors"
-                      >
-                        Remove Photo
-                      </button>
-                    )}
+                        >
+                          Remove Photo
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -596,11 +595,10 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, name: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
-                            errors.name
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.name
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
-                          }`}
+                            }`}
                         />
                         {errors.name && (
                           <p className="mt-1 text-xs sm:text-sm text-red-600">
@@ -622,11 +620,10 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, email: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
-                            errors.email
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.email
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
-                          }`}
+                            }`}
                         />
                         {errors.email && (
                           <p className="mt-1 text-xs sm:text-sm text-red-600">
@@ -648,11 +645,10 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, phone: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${
-                            errors.phone
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.phone
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
-                          }`}
+                            }`}
                         />
                         {errors.phone && (
                           <p className="mt-1 text-xs sm:text-sm text-red-600">
@@ -861,13 +857,12 @@ const InstructorSettings = () => {
                           {[1, 2, 3, 4].map((level) => (
                             <div
                               key={level}
-                              className={`h-1 flex-1 rounded-full ${
-                                passwordData.newPassword.length >= level * 2
+                              className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
                                   ? passwordData.newPassword.length >= 8
                                     ? "bg-green-500"
                                     : "bg-yellow-500"
                                   : "bg-gray-200 dark:bg-gray-600"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>
@@ -916,7 +911,7 @@ const InstructorSettings = () => {
                     {passwordData.confirmPassword && (
                       <div className="flex items-center space-x-2">
                         {passwordData.newPassword ===
-                        passwordData.confirmPassword ? (
+                          passwordData.confirmPassword ? (
                           <>
                             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                             <span className="text-xs sm:text-sm text-green-600">
@@ -942,7 +937,7 @@ const InstructorSettings = () => {
                       disabled={
                         saving ||
                         passwordData.newPassword !==
-                          passwordData.confirmPassword ||
+                        passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
                       className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
@@ -986,11 +981,10 @@ const InstructorSettings = () => {
                     {/* Light Theme */}
                     <button
                       onClick={() => handleThemeChange("light")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "light"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
@@ -1015,11 +1009,10 @@ const InstructorSettings = () => {
                     {/* Dark Theme */}
                     <button
                       onClick={() => handleThemeChange("dark")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "dark"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
@@ -1044,11 +1037,10 @@ const InstructorSettings = () => {
                     {/* System Theme */}
                     <button
                       onClick={() => handleThemeChange("system")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "system"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
@@ -1088,17 +1080,17 @@ const InstructorSettings = () => {
 
                 <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <div className="flex-1 pr-2 sm:pr-4">
-                        <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
+                    <div className="flex-1 pr-2 sm:pr-4">
+                      <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
                         Student Document Submissions
-                        </h4>
-                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                      </h4>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                         Get notified when students submit documents for review
-                        </p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                        <input
-                          type="checkbox"
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                      <input
+                        type="checkbox"
                         checked={notifications.emailDocuments}
                         onChange={(e) =>
                           setNotifications({
@@ -1106,11 +1098,11 @@ const InstructorSettings = () => {
                             emailDocuments: e.target.checked,
                           })
                         }
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
-                      </label>
-                    </div>
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
 
                   <div className="flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <div className="flex-1 pr-2 sm:pr-4">
@@ -1174,7 +1166,7 @@ const InstructorSettings = () => {
                             detail: notifications,
                           })
                         );
-                      } catch {}
+                      } catch { }
                       toast.success("Notification preferences saved");
                     }}
                     className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -1322,7 +1314,7 @@ const InstructorSettings = () => {
                   <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Language and format settings
                   </p>
-          </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   <div>
@@ -1338,7 +1330,7 @@ const InstructorSettings = () => {
                     >
                       <option value="en">English</option>
                     </select>
-        </div>
+                  </div>
 
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
@@ -1385,7 +1377,7 @@ const InstructorSettings = () => {
                             detail: preferences,
                           })
                         );
-                      } catch {}
+                      } catch { }
                       toast.success("Preferences saved");
                     }}
                     className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"

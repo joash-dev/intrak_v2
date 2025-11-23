@@ -172,7 +172,15 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const http = require('http');
+  const { initializeSocketServer } = require('./socket');
+
+  const httpServer = http.createServer(app);
+
+  // Initialize Socket.IO
+  initializeSocketServer(httpServer);
+
+  httpServer.listen(PORT, () => {
     console.log('========================================');
     console.log(`🚀 INTRAK Server running on port ${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);

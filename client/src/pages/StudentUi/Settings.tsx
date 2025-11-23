@@ -115,7 +115,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
-    
+
     // Apply theme immediately
     if (newTheme === "system") {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -123,7 +123,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
     } else {
       document.documentElement.classList.toggle("dark", newTheme === "dark");
     }
-    
+
     toast.success(`Theme changed to ${newTheme}`);
   };
 
@@ -168,7 +168,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
     setNotifications(notificationPrefs);
     setPreferences(appPrefs);
-    
+
     // Set theme from preferences
     const savedTheme = appPrefs.theme === "auto" ? "system" : (appPrefs.theme as "light" | "dark" | "system");
     setTheme(savedTheme);
@@ -425,11 +425,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id as typeof activeSection)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                      activeSection === section.id
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${activeSection === section.id
+                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium text-sm">{section.label}</span>
@@ -481,7 +480,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     </label>
                   </div>
                   <div>
-                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors inline-block">
+                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
                       {uploadingPhoto ? (
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -504,7 +503,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     {profilePhotoPreview && (
                       <button
                         onClick={handleRemovePhoto}
-                        className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="mt-2 px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       >
                         Remove Photo
                       </button>
@@ -526,11 +525,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           name: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.name
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.name
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                     />
                     {errors.name && (
                       <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -551,11 +549,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           email: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.email
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.email
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                     />
                     {errors.email && (
                       <p className="text-red-500 text-xs mt-1">
@@ -578,11 +575,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           phone: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.phone
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.phone
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                       placeholder="Optional"
                     />
                     {errors.phone && (
@@ -752,13 +748,12 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           {[1, 2, 3, 4].map((level) => (
                             <div
                               key={level}
-                              className={`h-1 flex-1 rounded-full ${
-                                passwordData.newPassword.length >= level * 2
-                                  ? passwordData.newPassword.length >= 8
-                                    ? "bg-green-500"
-                                    : "bg-yellow-500"
-                                  : "bg-gray-200 dark:bg-gray-600"
-                              }`}
+                              className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
+                                ? passwordData.newPassword.length >= 8
+                                  ? "bg-green-500"
+                                  : "bg-yellow-500"
+                                : "bg-gray-200 dark:bg-gray-600"
+                                }`}
                             />
                           ))}
                         </div>
@@ -807,7 +802,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     {passwordData.confirmPassword && (
                       <div className="flex items-center space-x-2">
                         {passwordData.newPassword ===
-                        passwordData.confirmPassword ? (
+                          passwordData.confirmPassword ? (
                           <>
                             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                             <span className="text-xs sm:text-sm text-green-600">
@@ -833,7 +828,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       disabled={
                         saving ||
                         passwordData.newPassword !==
-                          passwordData.confirmPassword ||
+                        passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
                       className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
@@ -1028,11 +1023,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     {/* Light Theme */}
                     <button
                       onClick={() => handleThemeChange("light")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "light"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
@@ -1053,11 +1047,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     {/* Dark Theme */}
                     <button
                       onClick={() => handleThemeChange("dark")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "dark"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
@@ -1078,11 +1071,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     {/* System Theme */}
                     <button
                       onClick={() => handleThemeChange("system")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "system"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
@@ -1295,95 +1287,81 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* FAQ */}
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-4 sm:p-5"
+                    className="p-6 text-left bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-600/30 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
-                      </div>
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
-                          Find answers to common questions
-                        </p>
-                      </div>
-                    </div>
+                    <HelpCircle className="w-8 h-8 text-purple-600 mb-3" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      FAQ
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Find answers to common questions
+                    </p>
                   </button>
 
                   {/* Contact Support */}
                   <a
                     href={`mailto:${HELP_LINKS.supportEmail}`}
-                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
+                    className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
-                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
-                      </div>
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Contact Support</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
-                          Email: {HELP_LINKS.supportEmail}
-                        </p>
-                      </div>
-                    </div>
+                    <Mail className="w-8 h-8 text-blue-600 mb-3" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Contact Support
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Email: {HELP_LINKS.supportEmail}
+                    </p>
                   </a>
 
                   {/* Student Guide */}
                   <button
                     type="button"
                     onClick={() => setHelpModal("guide")}
-                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-4 sm:p-5"
+                    className="p-6 text-left bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center flex-shrink-0">
-                        <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
-                      </div>
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Student Guide</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
-                          Learn how to use student features
-                        </p>
-                      </div>
-                    </div>
+                    <Book className="w-8 h-8 text-emerald-600 mb-3" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Student Guide
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Learn how to use student features
+                    </p>
                   </button>
 
                   {/* Privacy Policy */}
                   <button
                     type="button"
                     onClick={() => setHelpModal("privacy")}
-                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-4 sm:p-5"
+                    className="p-6 text-left bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-600/30 flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-                      </div>
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Privacy Policy</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
-                          Read our privacy terms
-                        </p>
-                      </div>
-                    </div>
+                    <Shield className="w-8 h-8 text-yellow-600 mb-3" />
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Privacy Policy
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Read our privacy terms
+                    </p>
                   </button>
                 </div>
 
                 {/* App Information */}
-                <div className="pt-2">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-200">App Information</h3>
-                  <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    App Information
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                     <p>
-                      <span className="text-gray-400">Version:</span> 1.0.0
+                      <span className="font-medium">Version:</span> 1.0.0
                     </p>
                     <p>
-                      <span className="text-gray-400">Last Updated:</span> October 2024
+                      <span className="font-medium">Last Updated:</span> October 2024
                     </p>
                     <p>
-                      <span className="text-gray-400">License:</span> Educational Use
+                      <span className="font-medium">License:</span> Educational Use
                     </p>
                   </div>
                 </div>
@@ -1412,18 +1390,63 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     </h3>
                     <div className="text-sm sm:text-base text-gray-600 dark:text-gray-300 space-y-4">
                       {helpModal === "faq" && (
-                        <div>
-                          <p>FAQ content will be available soon.</p>
-                        </div>
+                        <ul className="space-y-4">
+                          <li>
+                            <p className="font-semibold text-gray-900 dark:text-white">How do I upload my documents?</p>
+                            <p className="mt-1">
+                              Navigate to the "Documents" tab, select the document type you wish to upload, and drag and drop your file or click to browse.
+                            </p>
+                          </li>
+                          <li>
+                            <p className="font-semibold text-gray-900 dark:text-white">How is my attendance tracked?</p>
+                            <p className="mt-1">
+                              Your attendance is logged daily. You can view your attendance history and total hours in the "Attendance" tab.
+                            </p>
+                          </li>
+                          <li>
+                            <p className="font-semibold text-gray-900 dark:text-white">Can I update my profile information?</p>
+                            <p className="mt-1">
+                              Yes, go to the "Settings" tab and select "Profile" to update your personal details and contact information.
+                            </p>
+                          </li>
+                        </ul>
                       )}
                       {helpModal === "guide" && (
-                        <div>
-                          <p>Student guide content will be available soon.</p>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">1. Complete Your Profile</p>
+                            <p className="mt-1">
+                              Ensure all your personal and academic details are up to date in the Settings &gt; Profile section.
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">2. Upload Required Documents</p>
+                            <p className="mt-1">
+                              Submit all necessary internship documents (e.g., MOA, Medical Certificate) via the Documents tab for approval.
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">3. Monitor Your Progress</p>
+                            <p className="mt-1">
+                              Regularly check your dashboard for announcements, task updates, and your accumulated internship hours.
+                            </p>
+                          </div>
                         </div>
                       )}
                       {helpModal === "privacy" && (
-                        <div>
-                          <p>Privacy policy content will be available soon.</p>
+                        <div className="space-y-3">
+                          <p>
+                            INTRAK values your privacy. We collect only the necessary information to manage your internship program effectively.
+                          </p>
+                          <p>
+                            Your data, including personal details and internship records, is shared only with authorized coordinators and your assigned supervisor.
+                          </p>
+                          <p>
+                            We do not share your information with third parties without your consent, except as required by university policy or law.
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                            For a full copy of our privacy policy, please contact the system administrator.
+                          </p>
                         </div>
                       )}
                     </div>

@@ -484,11 +484,10 @@ const CoordinatorSettingsTab = ({
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-left ${
-                      activeSection === section.id
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-left ${activeSection === section.id
+                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium text-sm">{section.label}</span>
@@ -585,11 +584,10 @@ const CoordinatorSettingsTab = ({
                           name: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.name
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.name
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                     />
                     {errors.name && (
                       <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -610,11 +608,10 @@ const CoordinatorSettingsTab = ({
                           email: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.email
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.email
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                     />
                     {errors.email && (
                       <p className="text-red-500 text-xs mt-1">
@@ -637,11 +634,10 @@ const CoordinatorSettingsTab = ({
                           phone: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
-                        errors.phone
-                          ? "border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
-                      }`}
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.phone
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                        }`}
                       placeholder={t("general.optional")}
                     />
                     {errors.phone && (
@@ -1000,11 +996,10 @@ const CoordinatorSettingsTab = ({
                     {/* Light Theme */}
                     <button
                       onClick={() => handleThemeChange("light")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "light"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
@@ -1029,11 +1024,10 @@ const CoordinatorSettingsTab = ({
                     {/* Dark Theme */}
                     <button
                       onClick={() => handleThemeChange("dark")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "dark"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
@@ -1058,11 +1052,10 @@ const CoordinatorSettingsTab = ({
                     {/* System Theme */}
                     <button
                       onClick={() => handleThemeChange("system")}
-                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "system"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
+                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">

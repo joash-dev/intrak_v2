@@ -9,6 +9,7 @@ import AdminPage from "./pages/AdminUi/AdminPage";
 import MaintenancePage from "./pages/MaintenancePage";
 import { adminService } from "./services/adminService";
 import { settingsService } from "./services/settingsService";
+import { SocketProvider } from "./contexts/SocketContext";
 import i18n from "i18next";
 
 type ProtectedRouteProps = {
@@ -99,69 +100,71 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
+    <SocketProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/student/dashboard"
-          element={
-            <MaintenanceWrapper>
-              <ProtectedRoute allowedRoles={["student"]}>
-                <Dashboard />
+          <Route
+            path="/student/dashboard"
+            element={
+              <MaintenanceWrapper>
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <Dashboard />
+                </ProtectedRoute>
+              </MaintenanceWrapper>
+            }
+          />
+
+          <Route
+            path="/coordinator/dashboard"
+            element={
+              <MaintenanceWrapper>
+                <ProtectedRoute allowedRoles={["coordinator"]}>
+                  <DashboardCoordinator />
+                </ProtectedRoute>
+              </MaintenanceWrapper>
+            }
+          />
+
+          <Route
+            path="/instructor/dashboard"
+            element={
+              <MaintenanceWrapper>
+                <ProtectedRoute allowedRoles={["instructor"]}>
+                  <DashboardInstructor />
+                </ProtectedRoute>
+              </MaintenanceWrapper>
+            }
+          />
+
+          <Route
+            path="/industry-partner/dashboard"
+            element={
+              <MaintenanceWrapper>
+                <ProtectedRoute allowedRoles={["industry_partner"]}>
+                  <DashboardIndustryPartner />
+                </ProtectedRoute>
+              </MaintenanceWrapper>
+            }
+          />
+
+          {/* Admin routes bypass maintenance mode */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminPage />
               </ProtectedRoute>
-            </MaintenanceWrapper>
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/coordinator/dashboard"
-          element={
-            <MaintenanceWrapper>
-              <ProtectedRoute allowedRoles={["coordinator"]}>
-                <DashboardCoordinator />
-              </ProtectedRoute>
-            </MaintenanceWrapper>
-          }
-        />
-
-        <Route
-          path="/instructor/dashboard"
-          element={
-            <MaintenanceWrapper>
-              <ProtectedRoute allowedRoles={["instructor"]}>
-                <DashboardInstructor />
-              </ProtectedRoute>
-            </MaintenanceWrapper>
-          }
-        />
-
-        <Route
-          path="/industry-partner/dashboard"
-          element={
-            <MaintenanceWrapper>
-              <ProtectedRoute allowedRoles={["industry_partner"]}>
-                <DashboardIndustryPartner />
-              </ProtectedRoute>
-            </MaintenanceWrapper>
-          }
-        />
-
-        {/* Admin routes bypass maintenance mode */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* default + catch-all */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* default + catch-all */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </SocketProvider>
   );
 };
 

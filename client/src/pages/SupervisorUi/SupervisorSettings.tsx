@@ -116,7 +116,7 @@ const SupervisorSettings = () => {
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
-    
+
     // Apply theme immediately
     if (newTheme === "system") {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -124,7 +124,7 @@ const SupervisorSettings = () => {
     } else {
       document.documentElement.classList.toggle("dark", newTheme === "dark");
     }
-    
+
     toast.success(`Theme changed to ${newTheme}`);
   };
 
@@ -302,77 +302,70 @@ const SupervisorSettings = () => {
             <nav className="space-y-1.5 sm:space-y-2">
               <button
                 onClick={() => setActiveTab("profile")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "profile"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "profile"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Profile</span>
               </button>
               <button
                 onClick={() => setActiveTab("password")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "password"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "password"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Password</span>
               </button>
               <button
                 onClick={() => setActiveTab("appearance")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "appearance"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "appearance"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Appearance</span>
               </button>
               <button
                 onClick={() => setActiveTab("notifications")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "notifications"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "notifications"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Notifications</span>
               </button>
               <button
                 onClick={() => setActiveTab("preferences")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "preferences"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "preferences"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Preferences</span>
               </button>
               <button
                 onClick={() => setActiveTab("supervisor")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "supervisor"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "supervisor"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Supervisor</span>
               </button>
               <button
                 onClick={() => setActiveTab("help")}
-                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${
-                  activeTab === "help"
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "help"
                     ? "bg-purple-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                  }`}
               >
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Help & Support</span>
@@ -676,13 +669,12 @@ const SupervisorSettings = () => {
                           {[1, 2, 3, 4].map((level) => (
                             <div
                               key={level}
-                              className={`h-1 flex-1 rounded-full ${
-                                passwordData.newPassword.length >= level * 2
+                              className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
                                   ? passwordData.newPassword.length >= 8
                                     ? "bg-green-500"
                                     : "bg-yellow-500"
                                   : "bg-gray-200 dark:bg-gray-600"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>
@@ -731,7 +723,7 @@ const SupervisorSettings = () => {
                     {passwordData.confirmPassword && (
                       <div className="flex items-center space-x-2">
                         {passwordData.newPassword ===
-                        passwordData.confirmPassword ? (
+                          passwordData.confirmPassword ? (
                           <>
                             <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
                             <span className="text-xs sm:text-sm text-green-600">
@@ -757,7 +749,7 @@ const SupervisorSettings = () => {
                       disabled={
                         saving ||
                         passwordData.newPassword !==
-                          passwordData.confirmPassword ||
+                        passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
                       className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
@@ -863,11 +855,10 @@ const SupervisorSettings = () => {
                     {/* Light Theme */}
                     <button
                       onClick={() => handleThemeChange("light")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "light"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
@@ -888,11 +879,10 @@ const SupervisorSettings = () => {
                     {/* Dark Theme */}
                     <button
                       onClick={() => handleThemeChange("dark")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "dark"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center">
@@ -913,11 +903,10 @@ const SupervisorSettings = () => {
                     {/* System Theme */}
                     <button
                       onClick={() => handleThemeChange("system")}
-                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${
-                        theme === "system"
+                      className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
                           ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
