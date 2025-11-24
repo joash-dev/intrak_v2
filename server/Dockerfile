@@ -4,8 +4,10 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y cifs-utils tailscale && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y curl cifs-utils ca-certificates && \
+    curl -fsSL -o /tmp/tailscale.deb https://pkgs.tailscale.com/stable/tailscale_latest_amd64.deb && \
+    dpkg -i /tmp/tailscale.deb || apt-get install -f -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/tailscale.deb
 
 # Copy package files
 COPY package*.json ./
