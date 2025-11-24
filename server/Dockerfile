@@ -25,8 +25,11 @@ RUN npm install
 # Copy source code
 COPY --chown=node:node . .
 
-# Build TypeScript
-RUN npm run build
+# Generate Prisma Client (needed for TypeScript types)
+RUN npx prisma generate
+
+# Build TypeScript (using build config that allows implicit any for deployment)
+RUN npx tsc -p tsconfig.build.json
 
 # Copy startup script (switch to root for mounting, but keep app owned by node)
 USER root
