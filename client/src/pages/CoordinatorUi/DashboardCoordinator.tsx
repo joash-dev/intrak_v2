@@ -22,7 +22,6 @@ import {
   Home,
   MessageSquare,
   // FileSpreadsheet,
-  Loader2,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 
@@ -206,12 +205,24 @@ const CoordinatorDashboard = ({
   });
 
   // Show loading state
+  // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">{t("dashboard.loading")}</p>
+      <div className="space-y-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+
+        {/* Students List Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex justify-between items-center mb-8">
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-1/3"></div>
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-1/4"></div>
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -219,41 +230,92 @@ const CoordinatorDashboard = ({
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent"></div>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/5 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+      {/* Header Section - Responsive Dynamic Design */}
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 text-white shadow-2xl">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-64 md:w-96 h-64 md:h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-64 md:w-96 h-64 md:h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                <TrendingUp className="w-5 h-5 text-white" />
+        {/* Floating Particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full opacity-60 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40 animate-float animation-delay-1000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-2.5 h-2.5 bg-white rounded-full opacity-50 animate-float animation-delay-2000"></div>
+          <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white rounded-full opacity-70 animate-float animation-delay-3000"></div>
+        </div>
+
+        {/* Content - Desktop Layout */}
+        <div className="hidden md:block relative z-10 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold animate-fade-in">
+                  {t("dashboard.header.title")}
+                </h1>
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
-                {t("dashboard.header.title")}
-              </h1>
+              <p className="text-purple-100 text-sm font-medium max-w-xl">
+                {t("dashboard.header.subtitle")}
+              </p>
             </div>
-            <p className="text-purple-100 text-sm font-medium max-w-xl">
-              {t("dashboard.header.subtitle")}
-            </p>
-          </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-md">
-                <Users className="w-6 h-6 text-white" />
+            {/* Total Students Badge - Desktop */}
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-5 py-4 border border-white/20">
+                <div className="flex flex-col items-center">
+                  <Users className="w-6 h-6 text-white mb-1" />
+                  <p className="text-white text-3xl font-bold leading-none mb-1">
+                    {stats?.totalStudents || 0}
+                  </p>
+                  <p className="text-purple-100 text-xs font-medium whitespace-nowrap">
+                    {t("dashboard.header.totalStudents")}
+                  </p>
+                </div>
               </div>
-              <p className="text-purple-100 text-xs font-medium mt-1">
-                {t("dashboard.header.totalStudents")}
-              </p>
-              <p className="text-2xl font-bold text-white">
-                {stats?.totalStudents || 0}
-              </p>
             </div>
           </div>
         </div>
+
+        {/* Content - Mobile Layout */}
+        <div className="md:hidden relative z-10 p-4">
+          {/* Mobile Header with Icon */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <TrendingUp className="w-4 h-4 text-white" />
+                </div>
+                <h1 className="text-xl font-bold animate-fade-in">
+                  Dashboard
+                </h1>
+              </div>
+              <p className="text-purple-100 text-xs font-medium">
+                Monitor and manage activities
+              </p>
+            </div>
+
+            {/* Mobile Total Students Badge */}
+            <div className="flex-shrink-0 bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20">
+              <div className="flex flex-col items-center">
+                <Users className="w-4 h-4 text-white mb-0.5" />
+                <p className="text-white text-lg font-bold leading-none mb-0.5">
+                  {stats?.totalStudents || 0}
+                </p>
+                <p className="text-purple-100 text-[9px] font-medium whitespace-nowrap">
+                  Total Students
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Accent Line */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
       </div>
 
       <div className="space-y-8">
@@ -394,13 +456,12 @@ const CoordinatorDashboard = ({
                           <div className="flex items-center space-x-3">
                             <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
                               <div
-                                className={`h-3 rounded-full transition-all duration-500 ${
-                                  student.attendance >= 90
-                                    ? "bg-gradient-to-r from-green-500 to-green-600"
-                                    : student.attendance >= 75
+                                className={`h-3 rounded-full transition-all duration-500 ${student.attendance >= 90
+                                  ? "bg-gradient-to-r from-green-500 to-green-600"
+                                  : student.attendance >= 75
                                     ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
                                     : "bg-gradient-to-r from-red-500 to-red-600"
-                                }`}
+                                  }`}
                                 style={{ width: `${student.attendance}%` }}
                               />
                             </div>
@@ -520,13 +581,12 @@ const CoordinatorDashboard = ({
                         <div className="flex items-center space-x-2">
                           <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                             <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                student.attendance >= 90
-                                  ? "bg-gradient-to-r from-green-500 to-green-600"
-                                  : student.attendance >= 75
+                              className={`h-2 rounded-full transition-all duration-500 ${student.attendance >= 90
+                                ? "bg-gradient-to-r from-green-500 to-green-600"
+                                : student.attendance >= 75
                                   ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
                                   : "bg-gradient-to-r from-red-500 to-red-600"
-                              }`}
+                                }`}
                               style={{ width: `${student.attendance}%` }}
                             />
                           </div>
@@ -638,12 +698,11 @@ const CoordinatorDashboard = ({
                 <div
                   className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-2 sm:h-3 lg:h-4 rounded-full transition-all duration-1000 ease-out"
                   style={{
-                    width: `${
-                      (((stats?.totalStudents || 0) -
-                        (stats?.documentsPending || 0)) /
-                        (stats?.totalStudents || 1)) *
+                    width: `${(((stats?.totalStudents || 0) -
+                      (stats?.documentsPending || 0)) /
+                      (stats?.totalStudents || 1)) *
                       100
-                    }%`,
+                      }%`,
                   }}
                 />
               </div>
@@ -1115,23 +1174,23 @@ const CoordinatorPortal: React.FC = () => {
 
                 {showNotifications && (
                   <div className="absolute right-0 mt-3 w-72 sm:w-80 md:w-96 bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 flex flex-col max-h-96 sm:max-h-[28rem] md:max-h-[32rem]">
-                      <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
-                            {t("dashboard.notifications.title")}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {t("dashboard.notifications.subtitle")}
-                          </p>
-                        </div>
-                        {unreadNotificationCount > 0 && (
-                          <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200 ml-2 flex-shrink-0">
-                            {t("dashboard.notifications.new", { count: unreadNotificationCount })}
-                          </span>
-                        )}
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          {t("dashboard.notifications.title")}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {t("dashboard.notifications.subtitle")}
+                        </p>
                       </div>
+                      {unreadNotificationCount > 0 && (
+                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200 ml-2 flex-shrink-0">
+                          {t("dashboard.notifications.new", { count: unreadNotificationCount })}
+                        </span>
+                      )}
+                    </div>
 
-                      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
+                    <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
                       {notificationsLoading ? (
                         <div className="px-4 sm:px-5 py-8 flex items-center justify-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           {t("dashboard.notifications.loading")}
@@ -1154,11 +1213,10 @@ const CoordinatorPortal: React.FC = () => {
                                 handleNotificationClick(notification);
                                 setShowNotifications(false);
                               }}
-                              className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${
-                                notification.read
-                                  ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                  : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
-                              }`}
+                              className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${notification.read
+                                ? "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                : "bg-purple-50/70 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/30"
+                                }`}
                             >
                               <div className="flex items-start justify-between gap-2 sm:gap-3">
                                 <div className="flex-1 min-w-0">
@@ -1311,9 +1369,8 @@ const CoordinatorPortal: React.FC = () => {
 
       {/* Sidebar Menu */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
@@ -1352,11 +1409,10 @@ const CoordinatorPortal: React.FC = () => {
                     // Only close sidebar on mobile
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
-                  }`}
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${activeTab === item.id
+                    ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
+                    }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
@@ -1369,7 +1425,9 @@ const CoordinatorPortal: React.FC = () => {
 
       {/* Content Area */}
       <main className="p-6 transition-all duration-300 lg:ml-72">
-        {renderContent()}
+        <div key={activeTab} className="tab-fade-in">
+          {renderContent()}
+        </div>
       </main>
 
       {/* Logout Confirmation Modal */}

@@ -343,14 +343,28 @@ const CoordinatorDocumentsTab: React.FC = () => {
   ];
 
   // Show loading state
+  // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-          <span className="text-gray-600 dark:text-gray-400">
-            Loading documents...
-          </span>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          ))}
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Documents List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          ))}
         </div>
       </div>
     );
@@ -659,11 +673,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
               {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
-                    className={`rounded-lg sm:rounded-2xl border p-3 sm:p-4 mb-3 sm:mb-4 ${
-                      doc.status === "APPROVED"
+                    className={`rounded-lg sm:rounded-2xl border p-3 sm:p-4 mb-3 sm:mb-4 ${doc.status === "APPROVED"
                         ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
                         : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start space-x-2 sm:space-x-3">
                       {doc.status === "APPROVED" ? (
@@ -845,11 +858,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
                 disabled={
                   submitting || (reviewAction === "reject" && !remarks.trim())
                 }
-                className={`px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 ${
-                  reviewAction === "approve"
+                className={`px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 ${reviewAction === "approve"
                     ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
                     : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                } disabled:cursor-not-allowed`}
+                  } disabled:cursor-not-allowed`}
               >
                 {submitting ? (
                   <>
@@ -917,12 +929,12 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
       {/* Preview Modal */}
       {previewDoc && previewUrl && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-3 sm:p-4" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-3 sm:p-4"
           style={{ margin: "0" }}
           onClick={closePreview}
         >
-          <div 
+          <div
             className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >

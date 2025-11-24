@@ -398,7 +398,7 @@ const SupervisorEvaluation = () => {
       setLoading(true);
       const students = await supervisorService.getMyStudents();
       setInterns(students);
-      
+
       // Initialize feedback status from backend data
       const feedbackStatus: Record<string, boolean> = {};
       students.forEach((student) => {
@@ -653,10 +653,10 @@ const SupervisorEvaluation = () => {
         ...form19bInfo,
         ...form19bRatings,
       });
-      
+
       toast.success("Form 19b submitted successfully!");
       setForm19bSuccessModal(true);
-      
+
       // Don't reset form - keep data for potential edits
     } catch (error: any) {
       console.error("Error submitting Form 19b:", error);
@@ -730,12 +730,25 @@ const SupervisorEvaluation = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading evaluations...
-          </p>
+      <div className="space-y-4 sm:space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg sm:rounded-xl"></div>
+          ))}
+        </div>
+
+        {/* Tabs/Filter Skeleton */}
+        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Interns List Skeleton */}
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          ))}
         </div>
       </div>
     );
@@ -1047,7 +1060,7 @@ const SupervisorEvaluation = () => {
                       Evaluate Intern
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedIntern.name} - {selectedIntern.studentNumber}
+                      {selectedIntern?.name} - {selectedIntern?.studentNumber}
                     </p>
                   </div>
                   <button
@@ -1530,7 +1543,7 @@ const SupervisorEvaluation = () => {
                     Training Supervisor's Feedback Form
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedIntern.name} - {selectedIntern.studentNumber}
+                    {selectedIntern?.name} - {selectedIntern?.studentNumber}
                   </p>
                 </div>
                 <button
@@ -1685,347 +1698,342 @@ const SupervisorEvaluation = () => {
                 <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
               </div>
             ) : (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  Evaluation Instrument of PSU Partner Agencies (Self Ratee)
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Form FM-AA-INT-19b
-                </p>
-              </div>
-
-              {/* Personal Information */}
-              <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
-                <h4 className="font-semibold text-gray-900 dark:text-white">
-                  Personal Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Unit/Division
-                    </label>
-                    <input
-                      type="text"
-                      value={form19bInfo.unitDivision}
-                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, unitDivision: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                      placeholder="Enter unit/division"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Age
-                    </label>
-                    <input
-                      type="number"
-                      value={form19bInfo.age}
-                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, age: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                      placeholder="Enter age"
-                      min="1"
-                      max="120"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Sex
-                    </label>
-                    <select
-                      value={form19bInfo.sex}
-                      onChange={(e) => setForm19bInfo((prev) => ({ ...prev, sex: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Select sex</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rating Criteria */}
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    Rate the following criteria (1 = Not Satisfied, 5 = Extremely Satisfied)
-                  </h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    Please rate each criterion based on your level of satisfaction
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Evaluation Instrument of PSU Partner Agencies (Self Ratee)
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Form FM-AA-INT-19b
                   </p>
                 </div>
 
-                {/* Communication Category */}
-                <div className="space-y-4">
-                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    COMMUNICATION
-                  </h5>
-                  {[
-                    { key: "communicationConnectivity", label: "Is there high connectivity through electronic communication of the host-training agency?" },
-                    { key: "communicationDialogue", label: "Does the management frequently accept request for dialogue and interaction as needed?" },
-                    { key: "communicationParticipation", label: "Is the management willing to participate in the university activities and programs when they are invited?" },
-                  ].map((criterion, index) => (
-                    <div
-                      key={criterion.key}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                    >
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {index + 1}. {criterion.label}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            type="button"
-                            onClick={() =>
-                              setForm19bRatings((prev) => ({
-                                ...prev,
-                                [criterion.key]: rating,
-                              }))
-                            }
-                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                            }`}
-                          >
-                            {rating}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>Not Satisfied</span>
-                        <span>Extremely Satisfied</span>
-                      </div>
+                {/* Personal Information */}
+                <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">
+                    Personal Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Unit/Division
+                      </label>
+                      <input
+                        type="text"
+                        value={form19bInfo.unitDivision}
+                        onChange={(e) => setForm19bInfo((prev) => ({ ...prev, unitDivision: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter unit/division"
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Age
+                      </label>
+                      <input
+                        type="number"
+                        value={form19bInfo.age}
+                        onChange={(e) => setForm19bInfo((prev) => ({ ...prev, age: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter age"
+                        min="1"
+                        max="120"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Sex
+                      </label>
+                      <select
+                        value={form19bInfo.sex}
+                        onChange={(e) => setForm19bInfo((prev) => ({ ...prev, sex: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      >
+                        <option value="">Select sex</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Ethical Dealings Category */}
-                <div className="space-y-4">
-                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    ETHICAL DEALINGS
-                  </h5>
-                  {[
-                    { key: "ethicalReputation", label: "High reputations and stature of the industry." },
-                    { key: "ethicalCSR", label: "Established Corporate Social Responsibility of the industry." },
-                    { key: "ethicalSupport", label: "Manifested support for the mandate and program of the educational institution." },
-                  ].map((criterion, index) => (
-                    <div
-                      key={criterion.key}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                    >
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {index + 1}. {criterion.label}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            type="button"
-                            onClick={() =>
-                              setForm19bRatings((prev) => ({
-                                ...prev,
-                                [criterion.key]: rating,
-                              }))
-                            }
-                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                {/* Rating Criteria */}
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                      Rate the following criteria (1 = Not Satisfied, 5 = Extremely Satisfied)
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                      Please rate each criterion based on your level of satisfaction
+                    </p>
+                  </div>
+
+                  {/* Communication Category */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                      COMMUNICATION
+                    </h5>
+                    {[
+                      { key: "communicationConnectivity", label: "Is there high connectivity through electronic communication of the host-training agency?" },
+                      { key: "communicationDialogue", label: "Does the management frequently accept request for dialogue and interaction as needed?" },
+                      { key: "communicationParticipation", label: "Is the management willing to participate in the university activities and programs when they are invited?" },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm19bRatings((prev) => ({
+                                  ...prev,
+                                  [criterion.key]: rating,
+                                }))
+                              }
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
                                 ? "border-purple-600 bg-purple-600 text-white"
                                 : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                            }`}
-                          >
-                            {rating}
-                          </button>
-                        ))}
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Not Satisfied</span>
+                          <span>Extremely Satisfied</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>Not Satisfied</span>
-                        <span>Extremely Satisfied</span>
+                    ))}
+                  </div>
+
+                  {/* Ethical Dealings Category */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                      ETHICAL DEALINGS
+                    </h5>
+                    {[
+                      { key: "ethicalReputation", label: "High reputations and stature of the industry." },
+                      { key: "ethicalCSR", label: "Established Corporate Social Responsibility of the industry." },
+                      { key: "ethicalSupport", label: "Manifested support for the mandate and program of the educational institution." },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm19bRatings((prev) => ({
+                                  ...prev,
+                                  [criterion.key]: rating,
+                                }))
+                              }
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Not Satisfied</span>
+                          <span>Extremely Satisfied</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  {/* Student Satisfaction - PSU Category */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                      STUDENT SATISFACTION - PSU
+                    </h5>
+                    {[
+                      { key: "psuSupervisorQualified", label: "The assigned Internship or Practicum Supervisor are qualified and competent." },
+                      { key: "psuSupportActivities", label: "The University provides support to various activities concerning internship." },
+                      { key: "psuFacilities", label: "Availability of facilities for student-interns to use." },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm19bRatings((prev) => ({
+                                  ...prev,
+                                  [criterion.key]: rating,
+                                }))
+                              }
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Not Satisfied</span>
+                          <span>Extremely Satisfied</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Student Satisfaction - HTE Category */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                      STUDENT SATISFACTION - HOST TRAINING ESTABLISHMENT
+                    </h5>
+                    {[
+                      { key: "hteSupervision", label: "The partner-agencies provides the required supervision and conduct monitoring of trainees." },
+                      { key: "hteSupervisorQualified", label: "The assigned Host Training Supervisors are qualified and competent to handle student-interns." },
+                      { key: "hteFeedback", label: "Provide feedback and coaching or monitoring activities to further improve performance of student-interns." },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm19bRatings((prev) => ({
+                                  ...prev,
+                                  [criterion.key]: rating,
+                                }))
+                              }
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Not Satisfied</span>
+                          <span>Extremely Satisfied</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Quality Delivery Category */}
+                  <div className="space-y-4">
+                    <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                      QUALITY DELIVERY
+                    </h5>
+                    {[
+                      { key: "qualityTimeliness", label: "Timeliness are strictly observed." },
+                      { key: "qualityObjectives", label: "Objectives specified in Internship Plan are met." },
+                      { key: "qualityResources", label: "Adequate resources needed for the Internship purpose are made accessible and provided." },
+                    ].map((criterion, index) => (
+                      <div
+                        key={criterion.key}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {index + 1}. {criterion.label}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[1, 2, 3, 4, 5].map((rating) => (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() =>
+                                setForm19bRatings((prev) => ({
+                                  ...prev,
+                                  [criterion.key]: rating,
+                                }))
+                              }
+                              className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
+                                ? "border-purple-600 bg-purple-600 text-white"
+                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                }`}
+                            >
+                              {rating}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          <span>Not Satisfied</span>
+                          <span>Extremely Satisfied</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Student Satisfaction - PSU Category */}
-                <div className="space-y-4">
-                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    STUDENT SATISFACTION - PSU
-                  </h5>
-                  {[
-                    { key: "psuSupervisorQualified", label: "The assigned Internship or Practicum Supervisor are qualified and competent." },
-                    { key: "psuSupportActivities", label: "The University provides support to various activities concerning internship." },
-                    { key: "psuFacilities", label: "Availability of facilities for student-interns to use." },
-                  ].map((criterion, index) => (
-                    <div
-                      key={criterion.key}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                    >
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {index + 1}. {criterion.label}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            type="button"
-                            onClick={() =>
-                              setForm19bRatings((prev) => ({
-                                ...prev,
-                                [criterion.key]: rating,
-                              }))
-                            }
-                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                            }`}
-                          >
-                            {rating}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>Not Satisfied</span>
-                        <span>Extremely Satisfied</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Student Satisfaction - HTE Category */}
-                <div className="space-y-4">
-                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    STUDENT SATISFACTION - HOST TRAINING ESTABLISHMENT
-                  </h5>
-                  {[
-                    { key: "hteSupervision", label: "The partner-agencies provides the required supervision and conduct monitoring of trainees." },
-                    { key: "hteSupervisorQualified", label: "The assigned Host Training Supervisors are qualified and competent to handle student-interns." },
-                    { key: "hteFeedback", label: "Provide feedback and coaching or monitoring activities to further improve performance of student-interns." },
-                  ].map((criterion, index) => (
-                    <div
-                      key={criterion.key}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                    >
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {index + 1}. {criterion.label}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            type="button"
-                            onClick={() =>
-                              setForm19bRatings((prev) => ({
-                                ...prev,
-                                [criterion.key]: rating,
-                              }))
-                            }
-                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                            }`}
-                          >
-                            {rating}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>Not Satisfied</span>
-                        <span>Extremely Satisfied</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Quality Delivery Category */}
-                <div className="space-y-4">
-                  <h5 className="font-semibold text-lg text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                    QUALITY DELIVERY
-                  </h5>
-                  {[
-                    { key: "qualityTimeliness", label: "Timeliness are strictly observed." },
-                    { key: "qualityObjectives", label: "Objectives specified in Internship Plan are met." },
-                    { key: "qualityResources", label: "Adequate resources needed for the Internship purpose are made accessible and provided." },
-                  ].map((criterion, index) => (
-                    <div
-                      key={criterion.key}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                    >
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                        {index + 1}. {criterion.label}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map((rating) => (
-                          <button
-                            key={rating}
-                            type="button"
-                            onClick={() =>
-                              setForm19bRatings((prev) => ({
-                                ...prev,
-                                [criterion.key]: rating,
-                              }))
-                            }
-                            className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                              form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
-                            }`}
-                          >
-                            {rating}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        <span>Not Satisfied</span>
-                        <span>Extremely Satisfied</span>
-                      </div>
-                    </div>
-                  ))}
+                {/* Action Buttons */}
+                <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={handleExportForm19b}
+                    disabled={form19bExporting || Object.values(form19bRatings).some((r) => r === 0)}
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {form19bExporting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Exporting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5" />
+                        <span>Export Form</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleSubmitForm19b}
+                    disabled={form19bSubmitting || Object.values(form19bRatings).some((r) => r === 0)}
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {form19bSubmitting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Submit Evaluation</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleExportForm19b}
-                  disabled={form19bExporting || Object.values(form19bRatings).some((r) => r === 0)}
-                  className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {form19bExporting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Exporting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-5 h-5" />
-                      <span>Export Form</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleSubmitForm19b}
-                  disabled={form19bSubmitting || Object.values(form19bRatings).some((r) => r === 0)}
-                  className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {form19bSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Submitting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Submit Evaluation</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
             )}
           </div>
         </div>

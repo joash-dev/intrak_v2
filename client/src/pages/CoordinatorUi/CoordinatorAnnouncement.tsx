@@ -193,8 +193,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     try {
       // For now, just show a message since pinning functionality isn't implemented in backend
       alert(
-        `Announcement ${
-          announcement.isPinned ? "unpinned" : "pinned"
+        `Announcement ${announcement.isPinned ? "unpinned" : "pinned"
         } successfully!`
       );
       // TODO: Implement pin/unpin API endpoint
@@ -219,14 +218,28 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
   const regularAnnouncements = filteredAnnouncements.filter((a) => !a.isPinned);
 
   // Loading state
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading announcements...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          ))}
+        </div>
+
+        {/* Search/Filter Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Announcements List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          ))}
         </div>
       </div>
     );
@@ -410,8 +423,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                             <span>
                               {announcementService.formatDate(
                                 announcement.createdAt ||
-                                  announcement.createdDate ||
-                                  ""
+                                announcement.createdDate ||
+                                ""
                               )}
                             </span>
                           </span>
@@ -506,8 +519,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                           <span>
                             {announcementService.formatDate(
                               announcement.createdAt ||
-                                announcement.createdDate ||
-                                ""
+                              announcement.createdDate ||
+                              ""
                             )}
                           </span>
                         </span>

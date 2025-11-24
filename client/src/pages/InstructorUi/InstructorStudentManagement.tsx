@@ -360,12 +360,28 @@ const InstructorStudentManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-          <span className="text-gray-600 dark:text-gray-400">
-            Loading students data...
-          </span>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          ))}
+        </div>
+
+        {/* Search/Filter Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Table Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="h-12 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"></div>
+          <div className="space-y-4 p-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -694,10 +710,9 @@ const InstructorStudentManagement: React.FC = () => {
                         <div
                           className="bg-purple-500 h-2 rounded-full"
                           style={{
-                            width: `${
-                              (student.hoursCompleted / student.requiredHours) *
+                            width: `${(student.hoursCompleted / student.requiredHours) *
                               100
-                            }%`,
+                              }%`,
                           }}
                         />
                       </div>
@@ -772,7 +787,7 @@ const InstructorStudentManagement: React.FC = () => {
           const attendancePercent = 0; // You may need to calculate this from student data
           const hoursProgress = `${student.hoursCompleted}/${student.requiredHours}`;
           const performanceRating = 3.5; // You may need to get this from student data
-          
+
           return (
             <div
               key={student.id}
@@ -839,13 +854,12 @@ const InstructorStudentManagement: React.FC = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <div
                           key={star}
-                          className={`w-2 h-2 rounded ${
-                            star <= Math.floor(performanceRating)
+                          className={`w-2 h-2 rounded ${star <= Math.floor(performanceRating)
                               ? "bg-orange-500"
                               : star === Math.ceil(performanceRating) && performanceRating % 1 !== 0
-                              ? "bg-orange-300"
-                              : "bg-gray-300 dark:bg-gray-600"
-                          }`}
+                                ? "bg-orange-300"
+                                : "bg-gray-300 dark:bg-gray-600"
+                            }`}
                         />
                       ))}
                     </div>
@@ -980,11 +994,10 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("studentNumber");
                   }}
                   placeholder="22-UR-0592"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.studentNumber
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.studentNumber
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
-                  }`}
+                    }`}
                 />
                 {fieldErrors.studentNumber && (
                   <p className="text-xs text-red-500 mt-1">
@@ -1006,11 +1019,10 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("name");
                   }}
                   placeholder="Juan Dela Cruz"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.name
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.name
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
-                  }`}
+                    }`}
                 />
                 {fieldErrors.name && (
                   <p className="text-xs text-red-500 mt-1">
@@ -1032,11 +1044,10 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("email");
                   }}
                   placeholder="juan.delacruz@email.com"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.email
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.email
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
-                  }`}
+                    }`}
                 />
                 {fieldErrors.email && (
                   <p className="text-xs text-red-500 mt-1">
@@ -1058,11 +1069,10 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("phone");
                   }}
                   placeholder="+63 912 345 6789"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.phone
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.phone
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
-                  }`}
+                    }`}
                 />
                 {fieldErrors.phone && (
                   <p className="text-xs text-red-500 mt-1">
@@ -1095,11 +1105,10 @@ const InstructorStudentManagement: React.FC = () => {
                     setNewStudent({ ...newStudent, year: e.target.value });
                     clearValidationError("year");
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                    fieldErrors.year
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.year
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
-                  }`}
+                    }`}
                 >
                   <option value="">Select Year</option>
                   <option value="1">1st Year</option>
@@ -1197,8 +1206,8 @@ const InstructorStudentManagement: React.FC = () => {
             <div className="space-y-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
               <p>Paste CSV with headers: <span className="font-semibold">studentNumber,name,email,year,phone</span></p>
               <pre className="bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg overflow-x-auto scrollbar-slim">
-22-UR-0592,Juan Dela Cruz,juan@example.com,4,+63 912 345 6789
-22-UR-0123,Ana Rodriguez,ana@example.com,3,+63 987 654 3210</pre>
+                22-UR-0592,Juan Dela Cruz,juan@example.com,4,+63 912 345 6789
+                22-UR-0123,Ana Rodriguez,ana@example.com,3,+63 987 654 3210</pre>
               <div className="flex items-center gap-3">
                 <label className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <input
@@ -1422,13 +1431,12 @@ const InstructorStudentManagement: React.FC = () => {
                       .substring(0, 2)}
                   </div>
                   <div
-                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${
-                      selectedStudent.status === "completed"
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${selectedStudent.status === "completed"
                         ? "bg-green-500"
                         : selectedStudent.status === "at_risk"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                    }`}
+                          ? "bg-red-500"
+                          : "bg-yellow-500"
+                      }`}
                   ></div>
                 </div>
                 <div className="flex-1">
@@ -1473,13 +1481,12 @@ const InstructorStudentManagement: React.FC = () => {
                     </div>
                     <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          (selectedStudent.attendanceRate || 0) >= 90
+                        className={`h-2 rounded-full transition-all duration-500 ${(selectedStudent.attendanceRate || 0) >= 90
                             ? "bg-gradient-to-r from-green-500 to-green-600"
                             : (selectedStudent.attendanceRate || 0) >= 75
-                            ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                            : "bg-gradient-to-r from-red-500 to-red-600"
-                        }`}
+                              ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                              : "bg-gradient-to-r from-red-500 to-red-600"
+                          }`}
                         style={{ width: `${selectedStudent.attendanceRate || 0}%` }}
                       />
                     </div>
@@ -1509,7 +1516,7 @@ const InstructorStudentManagement: React.FC = () => {
                           width: `${Math.min(
                             (selectedStudent.hoursCompleted /
                               selectedStudent.requiredHours) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -1537,12 +1544,11 @@ const InstructorStudentManagement: React.FC = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Award
                           key={star}
-                          className={`w-3 h-3 ${
-                            selectedStudent.lastEvaluation &&
-                            star <= Math.round(selectedStudent.lastEvaluation)
+                          className={`w-3 h-3 ${selectedStudent.lastEvaluation &&
+                              star <= Math.round(selectedStudent.lastEvaluation)
                               ? "text-purple-600 dark:text-purple-300 fill-current"
                               : "text-purple-200 dark:text-purple-900"
-                          }`}
+                            }`}
                         />
                       ))}
                     </div>

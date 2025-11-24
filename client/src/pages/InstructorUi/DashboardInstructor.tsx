@@ -18,7 +18,6 @@ import {
   Settings,
   Home,
   FileCheck,
-  Loader2,
   Calendar,
   Upload,
   ClipboardList,
@@ -217,14 +216,26 @@ const InstructorDashboard = ({
   }, [notifications]);
 
   // Show loading state
+  // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading dashboard...
-          </p>
+      <div className="space-y-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Students List Skeleton */}
+          <div className="lg:col-span-2 h-96 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl"></div>
+
+          {/* Recent Activity Skeleton */}
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl"></div>
         </div>
       </div>
     );
@@ -232,41 +243,92 @@ const InstructorDashboard = ({
 
   return (
     <div className="space-y-8">
-      {/* Header Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/8 to-transparent"></div>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/5 to-transparent rounded-full translate-y-12 -translate-x-12"></div>
+      {/* Header Section - Responsive Dynamic Design */}
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 text-white shadow-2xl">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-64 md:w-96 h-64 md:h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-64 md:w-96 h-64 md:h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                <TrendingUp className="w-5 h-5 text-white" />
+        {/* Floating Particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full opacity-60 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40 animate-float animation-delay-1000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-2.5 h-2.5 bg-white rounded-full opacity-50 animate-float animation-delay-2000"></div>
+          <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white rounded-full opacity-70 animate-float animation-delay-3000"></div>
+        </div>
+
+        {/* Content - Desktop Layout */}
+        <div className="hidden md:block relative z-10 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold animate-fade-in">
+                  Dashboard Overview
+                </h1>
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-100 bg-clip-text text-transparent">
-                Dashboard Overview
-              </h1>
+              <p className="text-purple-100 text-sm font-medium max-w-xl">
+                Monitor and evaluate BS Computer Engineering students
+              </p>
             </div>
-            <p className="text-purple-100 text-sm font-medium max-w-xl">
-              Monitor and evaluate BS Computer Engineering students
-            </p>
-          </div>
 
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-md">
-                <Users className="w-6 h-6 text-white" />
+            {/* Total Students Badge - Desktop */}
+            <div className="flex items-center space-x-4">
+              <div className="bg-white/10 backdrop-blur-md rounded-xl px-5 py-4 border border-white/20">
+                <div className="flex flex-col items-center">
+                  <Users className="w-6 h-6 text-white mb-1" />
+                  <p className="text-white text-3xl font-bold leading-none mb-1">
+                    {stats.totalStudents}
+                  </p>
+                  <p className="text-purple-100 text-xs font-medium whitespace-nowrap">
+                    Total Students
+                  </p>
+                </div>
               </div>
-              <p className="text-purple-100 text-xs font-medium mt-1">
-                Total Assigned
-              </p>
-              <p className="text-2xl font-bold text-white">
-                {stats.totalStudents}
-              </p>
             </div>
           </div>
         </div>
+
+        {/* Content - Mobile Layout */}
+        <div className="md:hidden relative z-10 p-4">
+          {/* Mobile Header with Icon */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                  <TrendingUp className="w-4 h-4 text-white" />
+                </div>
+                <h1 className="text-xl font-bold animate-fade-in">
+                  Dashboard
+                </h1>
+              </div>
+              <p className="text-purple-100 text-xs font-medium">
+                Monitor and evaluate students
+              </p>
+            </div>
+
+            {/* Mobile Total Students Badge */}
+            <div className="flex-shrink-0 bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20">
+              <div className="flex flex-col items-center">
+                <Users className="w-4 h-4 text-white mb-0.5" />
+                <p className="text-white text-lg font-bold leading-none mb-0.5">
+                  {stats.totalStudents}
+                </p>
+                <p className="text-purple-100 text-[9px] font-medium whitespace-nowrap">
+                  Total Students
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Accent Line */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
       </div>
 
       {/* Stats Cards - Desktop Grid View */}
@@ -560,13 +622,12 @@ const InstructorDashboard = ({
                             <div
                               className="bg-green-600 dark:bg-green-400 h-1 sm:h-1.5 rounded-full transition-all duration-500"
                               style={{
-                                width: `${
-                                  student.requiredHours
-                                    ? (student.hoursCompleted /
-                                        student.requiredHours) *
-                                      100
-                                    : 0
-                                }%`,
+                                width: `${student.requiredHours
+                                  ? (student.hoursCompleted /
+                                    student.requiredHours) *
+                                  100
+                                  : 0
+                                  }%`,
                               }}
                             />
                           </div>
@@ -590,12 +651,11 @@ const InstructorDashboard = ({
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Award
                                 key={star}
-                                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
-                                  student.lastEvaluation &&
+                                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${student.lastEvaluation &&
                                   star <= Math.round(student.lastEvaluation)
-                                    ? "text-amber-600 dark:text-amber-300 fill-current"
-                                    : "text-amber-200 dark:text-amber-900"
-                                }`}
+                                  ? "text-amber-600 dark:text-amber-300 fill-current"
+                                  : "text-amber-200 dark:text-amber-900"
+                                  }`}
                               />
                             ))}
                           </div>
@@ -651,8 +711,8 @@ const InstructorDashboard = ({
                 {filteredStudents.length > 3
                   ? "View More Students"
                   : filteredStudents.length > 0
-                  ? "Manage Students"
-                  : "Add Students"}
+                    ? "Manage Students"
+                    : "Add Students"}
                 <Users className="w-4 h-4 ml-2" />
               </button>
             </div>
@@ -810,9 +870,8 @@ const InstructorDashboard = ({
                   const url = URL.createObjectURL(dataBlob);
                   const link = document.createElement("a");
                   link.href = url;
-                  link.download = `instructor-report-${
-                    new Date().toISOString().split("T")[0]
-                  }.json`;
+                  link.download = `instructor-report-${new Date().toISOString().split("T")[0]
+                    }.json`;
                   link.click();
                   URL.revokeObjectURL(url);
                 }}
@@ -935,13 +994,12 @@ const InstructorDashboard = ({
                     {selectedStudent.avatar}
                   </div>
                   <div
-                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${
-                      selectedStudent.status === "completed"
-                        ? "bg-green-500"
-                        : selectedStudent.status === "at_risk"
+                    className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${selectedStudent.status === "completed"
+                      ? "bg-green-500"
+                      : selectedStudent.status === "at_risk"
                         ? "bg-red-500"
                         : "bg-yellow-500"
-                    }`}
+                      }`}
                   ></div>
                 </div>
                 <div className="flex-1">
@@ -986,13 +1044,12 @@ const InstructorDashboard = ({
                     </div>
                     <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full transition-all duration-500 ${
-                          selectedStudent.attendanceRate >= 90
-                            ? "bg-gradient-to-r from-green-500 to-green-600"
-                            : selectedStudent.attendanceRate >= 75
+                        className={`h-2 rounded-full transition-all duration-500 ${selectedStudent.attendanceRate >= 90
+                          ? "bg-gradient-to-r from-green-500 to-green-600"
+                          : selectedStudent.attendanceRate >= 75
                             ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
                             : "bg-gradient-to-r from-red-500 to-red-600"
-                        }`}
+                          }`}
                         style={{ width: `${selectedStudent.attendanceRate}%` }}
                       />
                     </div>
@@ -1022,7 +1079,7 @@ const InstructorDashboard = ({
                           width: `${Math.min(
                             (selectedStudent.hoursCompleted /
                               selectedStudent.requiredHours) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -1054,7 +1111,7 @@ const InstructorDashboard = ({
                           width: `${Math.min(
                             (selectedStudent.tasksCompleted /
                               selectedStudent.totalTasks) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -1285,11 +1342,11 @@ const InstructorPortal = () => {
           const user = JSON.parse(userData);
           const initials = user.name
             ? user.name
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")
-                .toUpperCase()
-                .substring(0, 2)
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .substring(0, 2)
             : "IN";
 
           setCurrentUser({
@@ -1353,7 +1410,7 @@ const InstructorPortal = () => {
           email: email ?? prev?.email ?? "instructor@university.edu",
           initials,
         }));
-      } catch {}
+      } catch { }
     };
     window.addEventListener("userUpdated", handleUserUpdated as EventListener);
     window.addEventListener("profileUpdated", handleUserUpdated as EventListener);
@@ -1557,9 +1614,8 @@ const InstructorPortal = () => {
                         localNotifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                              notification.read ? "opacity-70" : ""
-                            }`}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${notification.read ? "opacity-70" : ""
+                              }`}
                             onClick={async () => {
                               if (!notification.read) {
                                 try {
@@ -1576,7 +1632,7 @@ const InstructorPortal = () => {
                                   console.error('Failed to mark notification as read', error);
                                 }
                               }
-                              
+
                               // Handle message notifications - navigate to student messages
                               if (notification.title === "New Message from Student" && notification.link) {
                                 // Extract studentId from link like /instructor/students?studentId=xxx
@@ -1590,7 +1646,7 @@ const InstructorPortal = () => {
                                   return;
                                 }
                               }
-                              
+
                               if (notification.link) {
                                 // Check if it's an external link
                                 if (/^https?:\/\//i.test(notification.link)) {
@@ -1763,13 +1819,12 @@ const InstructorPortal = () => {
 
       {/* Sidebar Menu */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
-          sidebarOpen
-            ? "translate-x-0"
-            : isMobile
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${sidebarOpen
+          ? "translate-x-0"
+          : isMobile
             ? "-translate-x-full"
             : "translate-x-0"
-        }`}
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
@@ -1812,11 +1867,10 @@ const InstructorPortal = () => {
                       setSidebarOpen(false);
                     }
                   }}
-                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    activeTab === item.id
-                      ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
-                  }`}
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${activeTab === item.id
+                    ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
+                    }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
@@ -1829,11 +1883,12 @@ const InstructorPortal = () => {
 
       {/* Content Area */}
       <main
-        className={`p-6 transition-all duration-300 ${
-          sidebarOpen && !isMobile ? "ml-72" : "ml-0"
-        }`}
+        className={`p-6 transition-all duration-300 ${sidebarOpen && !isMobile ? "ml-72" : "ml-0"
+          }`}
       >
-        {renderContent()}
+        <div key={activeTab} className="tab-fade-in">
+          {renderContent()}
+        </div>
       </main>
 
       {/* Logout Confirmation Modal */}

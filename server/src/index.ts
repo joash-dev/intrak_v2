@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
+import { validateNASConnection } from './config/nas';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -172,28 +173,66 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  const http = require('http');
-  const { initializeSocketServer } = require('./socket');
+  // Wait for NAS to be ready (if enabled)
+  const waitForNAS = async () => {
+    if (process.env.USE_NAS === 'true') {
+      console.log('🔌 Checking NAS connection...');
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        const isValid = await validateNASConnection();
+        if (isValid) {
+          console.log('✅ NAS connection validated successfully');
+          return;
+        }
+        attempts++;
+        if (attempts < maxAttempts) {
+          console.log(`⏳ Waiting for NAS... (attempt ${attempts}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+      console.error('❌ NAS connection failed after 10 attempts - continuing with local storage');
+      process.env.USE_NAS = 'false';
+    }
+  };
 
-  const httpServer = http.createServer(app);
+  const startServer = async () => {
+    await waitForNAS();
+    
+    const http = require('http');
+    const { initializeSocketServer } = require('./socket');
 
-  // Initialize Socket.IO
-  initializeSocketServer(httpServer);
+    const httpServer = http.createServer(app);
 
-  httpServer.listen(PORT, () => {
-    console.log('========================================');
-    console.log(`🚀 INTRAK Server running on port ${PORT}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
-    console.log('========================================');
-    console.log('');
-    console.log('📋 Available endpoints:');
-    console.log('   POST   /api/auth/login');
-    console.log('   POST   /api/auth/register');
-    console.log('   GET    /api/test-auth (test authentication)');
-    console.log('   GET    /api/users (requires auth)');
-    console.log('   GET    /health');
-    console.log('');
+    // Initialize Socket.IO
+    initializeSocketServer(httpServer);
+
+    httpServer.listen(PORT, () => {
+      console.log('========================================');
+      console.log(`🚀 INTRAK Server running on port ${PORT}`);
+      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+      if (process.env.USE_NAS === 'true') {
+        console.log(`💾 Storage: NAS (${process.env.NAS_PATH})`);
+      } else {
+        console.log(`💾 Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);
+      }
+      console.log('========================================');
+      console.log('');
+      console.log('📋 Available endpoints:');
+      console.log('   POST   /api/auth/login');
+      console.log('   POST   /api/auth/register');
+      console.log('   GET    /api/test-auth (test authentication)');
+      console.log('   GET    /api/users (requires auth)');
+      console.log('   GET    /health');
+      console.log('');
+    });
+  };
+
+  startServer().catch((error) => {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
   });
 }
 

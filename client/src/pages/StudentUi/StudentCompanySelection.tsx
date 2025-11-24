@@ -71,7 +71,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
   const loadCompanyDetails = async () => {
     if (!currentStudent?.company) return;
-    
+
     try {
       setLoadingCompanyDetails(true);
       // Find company by name from the companies list
@@ -79,7 +79,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
       const foundCompany = companiesData.find(
         (c) => c.name === currentStudent.company
       );
-      
+
       if (foundCompany) {
         // Fetch full company details by ID
         const fullDetails = await companyService.getCompanyById(foundCompany.id);
@@ -187,12 +187,18 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600 mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading companies...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="bg-gray-200 dark:bg-gray-700 rounded-xl h-32 w-full"></div>
+
+        {/* Search Skeleton */}
+        <div className="bg-gray-200 dark:bg-gray-700 rounded-xl h-16 w-full"></div>
+
+        {/* Companies Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl h-64"></div>
+          ))}
         </div>
       </div>
     );
@@ -228,8 +234,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
     const hoursProgress = currentStudent.totalHours
       ? Math.round(
-          (currentStudent.completedHours / currentStudent.totalHours) * 100
-        )
+        (currentStudent.completedHours / currentStudent.totalHours) * 100
+      )
       : 0;
 
     return (
@@ -246,7 +252,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
           <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
             You are currently assigned to:
           </p>
-          
+
           {/* Company Card */}
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800 mb-6">
             <div className="flex items-start space-x-4 mb-4">
@@ -280,7 +286,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                     </span>
                   </div>
                 )}
-                
+
                 {companyDetails?.contactPerson && (
                   <div className="flex items-center space-x-3 text-sm">
                     <Users className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
@@ -302,7 +308,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                       </a>
                     </div>
                   )}
-                  
+
                   {companyDetails?.contactNumber && (
                     <div className="flex items-center space-x-3 text-sm">
                       <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
@@ -604,11 +610,10 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                   <button
                     onClick={() => handleApply(company)}
                     disabled={!canApply}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
-                      canApply
+                    className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${canApply
                         ? "bg-purple-600 text-white hover:bg-purple-700"
                         : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     {availableSlots > 0 ? "Apply Now" : "No Slots"}
                   </button>

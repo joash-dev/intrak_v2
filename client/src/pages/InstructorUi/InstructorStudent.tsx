@@ -15,7 +15,6 @@ import {
   BarChart3,
   Activity,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 import { instructorService } from "../../services/instructorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -267,12 +266,25 @@ const InstructorMonitoringTab = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading student monitoring data...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          ))}
+        </div>
+
+        {/* Search/Filter Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Students Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          ))}
         </div>
       </div>
     );
@@ -464,13 +476,12 @@ const InstructorMonitoringTab = () => {
                   <div className="flex items-center space-x-2">
                     <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${
-                          student.attendanceRate >= 90
+                        className={`h-2 rounded-full ${student.attendanceRate >= 90
                             ? "bg-green-500"
                             : student.attendanceRate >= 75
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
-                        }`}
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
+                          }`}
                         style={{ width: `${student.attendanceRate}%` }}
                       />
                     </div>
@@ -489,10 +500,9 @@ const InstructorMonitoringTab = () => {
                       <div
                         className="bg-purple-500 h-2 rounded-full"
                         style={{
-                          width: `${
-                            (student.hoursCompleted / student.requiredHours) *
+                          width: `${(student.hoursCompleted / student.requiredHours) *
                             100
-                          }%`,
+                            }%`,
                         }}
                       />
                     </div>
@@ -708,10 +718,10 @@ const InstructorMonitoringTab = () => {
                             s === 'approved'
                               ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                               : s === 'rejected'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                              : s === 'resubmission_requested'
-                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                                : s === 'resubmission_requested'
+                                  ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
                           return (
                             <span className={`text-xs px-2 py-1 rounded-full ${cls}`}>
                               {s || 'submitted'}

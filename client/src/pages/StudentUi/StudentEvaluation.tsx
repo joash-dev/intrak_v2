@@ -14,6 +14,7 @@ import { documentService, type Document } from "../../services/documentService";
 import { dashboardService } from "../../services/dashboardService";
 import { supervisorService, type EvaluationExportPayload } from "../../services/supervisorService";
 import { toast } from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 interface TerminationData {
   lackOfWork?: boolean;
@@ -497,87 +498,124 @@ const StudentEvaluationsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading evaluation forms...
-          </p>
-        </div>
-      )}
-
       {/* Evaluation Forms Grid */}
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {evaluationForms.map((form) => (
-            <div
-              key={form.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow flex flex-col"
-            >
-              {/* Form Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <FileCheck className="w-5 h-5 text-white" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex space-x-3">
+                      <Skeleton className="w-10 h-10 rounded-lg" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="w-5 h-5 rounded-full" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {form.formNumber}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {form.formName}
-                    </p>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <div className="flex space-x-2 pt-4 mt-auto">
+                    <Skeleton className="h-10 flex-1 rounded-lg" />
+                    <Skeleton className="h-10 w-10 rounded-lg" />
                   </div>
                 </div>
-                {getStatusIcon(form)}
-              </div>
-
-              {/* Description */}
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {form.description}
-              </p>
-
-              {/* Status Badge */}
-              <div className="mb-4">
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    form
-                  )}`}
-                >
-                  {getStatusText(form)}
-                </span>
-              </div>
-
-              {/* Document Info for Form 19b only (Form 18 doesn't have documents) */}
-              {form.id === "form-19b" && form.document && (
-                <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                    Uploaded:{" "}
-                    {new Date(form.document.uploadedAt || "").toLocaleDateString()}
-                  </p>
-                  {form.document.reviewedAt && (
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Reviewed:{" "}
-                      {new Date(form.document.reviewedAt).toLocaleDateString()}
-                    </p>
-                  )}
+              ))}
+            </>
+          ) : (
+            evaluationForms.map((form) => (
+              <div
+                key={form.id}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow flex flex-col"
+              >
+                {/* Form Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <FileCheck className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {form.formNumber}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {form.formName}
+                      </p>
+                    </div>
+                  </div>
+                  {getStatusIcon(form)}
                 </div>
-              )}
 
-              {/* Actions */}
-              <div className="flex items-center space-x-2 mt-auto">
-                {form.id === "form-11" ? (
-                  form.evaluation ? (
-                    <>
-                      <button
-                        onClick={() => handlePreview(form)}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View Details</span>
-                      </button>
-                      {form.document && (
+                {/* Description */}
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  {form.description}
+                </p>
+
+                {/* Status Badge */}
+                <div className="mb-4">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      form
+                    )}`}
+                  >
+                    {getStatusText(form)}
+                  </span>
+                </div>
+
+                {/* Document Info for Form 19b only (Form 18 doesn't have documents) */}
+                {form.id === "form-19b" && form.document && (
+                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      Uploaded:{" "}
+                      {new Date(form.document.uploadedAt || "").toLocaleDateString()}
+                    </p>
+                    {form.document.reviewedAt && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Reviewed:{" "}
+                        {new Date(form.document.reviewedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center space-x-2 mt-auto">
+                  {form.id === "form-11" ? (
+                    form.evaluation ? (
+                      <>
+                        <button
+                          onClick={() => handlePreview(form)}
+                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View Details</span>
+                        </button>
+                        {form.document && (
+                          <button
+                            onClick={() => handleDownload(form)}
+                            className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                            title="Export"
+                          >
+                            <Download className="w-6 h-6" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                        Evaluation not submitted yet
+                      </div>
+                    )
+                  ) : form.id === "form-18" ? (
+                    form.evaluation ? (
+                      <>
+                        <button
+                          onClick={() => handlePreview(form)}
+                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View Details</span>
+                        </button>
                         <button
                           onClick={() => handleDownload(form)}
                           className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
@@ -585,27 +623,48 @@ const StudentEvaluationsTab: React.FC = () => {
                         >
                           <Download className="w-6 h-6" />
                         </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                      Evaluation not submitted yet
-                    </div>
-                  )
-                ) : form.id === "form-18" ? (
-                  form.evaluation ? (
+                      </>
+                    ) : (
+                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                        Not yet filled by supervisor
+                      </div>
+                    )
+                  ) : form.id === "form-19b" ? (
+                    form.evaluation ? (
+                      <>
+                        <button
+                          onClick={() => handlePreview(form)}
+                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View Details</span>
+                        </button>
+                        <button
+                          onClick={() => handleDownload(form)}
+                          className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
+                          title="Export"
+                        >
+                          <Download className="w-6 h-6" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
+                        Not yet filled by supervisor
+                      </div>
+                    )
+                  ) : form.document ? (
                     <>
                       <button
                         onClick={() => handlePreview(form)}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                        disabled={previewLoading}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Eye className="w-4 h-4" />
-                        <span>View Details</span>
+                        <span>Preview</span>
                       </button>
                       <button
                         onClick={() => handleDownload(form)}
                         className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                        title="Export"
                       >
                         <Download className="w-6 h-6" />
                       </button>
@@ -614,57 +673,12 @@ const StudentEvaluationsTab: React.FC = () => {
                     <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
                       Not yet filled by supervisor
                     </div>
-                  )
-                ) : form.id === "form-19b" ? (
-                  form.evaluation ? (
-                    <>
-                      <button
-                        onClick={() => handlePreview(form)}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View Details</span>
-                      </button>
-                      <button
-                        onClick={() => handleDownload(form)}
-                        className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                        title="Export"
-                      >
-                        <Download className="w-6 h-6" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                      Not yet filled by supervisor
-                    </div>
-                  )
-                ) : form.document ? (
-                  <>
-                    <button
-                      onClick={() => handlePreview(form)}
-                      disabled={previewLoading}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Eye className="w-4 h-4" />
-                      <span>Preview</span>
-                    </button>
-                    <button
-                      onClick={() => handleDownload(form)}
-                      className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                    >
-                      <Download className="w-6 h-6" />
-                    </button>
-                  </>
-                ) : (
-                  <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                    Not yet filled by supervisor
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))
+          )}
+      </div>
 
       {/* Evaluation Details Modal (Form 11) */}
       {showEvaluationDetails && selectedForm && selectedForm.evaluation && (
@@ -1028,7 +1042,7 @@ const StudentEvaluationsTab: React.FC = () => {
                   }}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
-                      <Download className="w-6 h-6" />
+                  <Download className="w-6 h-6" />
                   <span>Export</span>
                 </button>
               )}
@@ -1099,7 +1113,7 @@ const StudentEvaluationsTab: React.FC = () => {
                   onClick={() => handleDownload(selectedForm)}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
-                      <Download className="w-6 h-6" />
+                  <Download className="w-6 h-6" />
                   <span>Download</span>
                 </button>
               )}
@@ -1107,23 +1121,6 @@ const StudentEvaluationsTab: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Empty State */}
-      {!loading && evaluationForms.every((form) =>
-        (form.id === "form-11" && !form.evaluation) ||
-        (form.id !== "form-11" && !form.document)
-      ) && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 text-lg font-medium mb-2">
-              No evaluation forms available yet
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Your supervisor will fill out the evaluation forms, and they will
-              appear here once submitted.
-            </p>
-          </div>
-        )}
     </div>
   );
 };

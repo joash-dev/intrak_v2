@@ -22,6 +22,7 @@ import {
   Book,
   X,
 } from "lucide-react";
+import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
   type UserProfile,
@@ -370,12 +371,55 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading settings...
-          </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Settings Navigation Skeleton */}
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
+            <div className="space-y-1">
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <div key={i} className="flex items-center space-x-3 px-4 py-3">
+                  <Skeleton className="w-5 h-5 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Content Skeleton */}
+        <div className="lg:col-span-3">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            {/* Header Skeleton */}
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+
+            {/* Profile Picture Skeleton */}
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-24 h-24 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-32 rounded-xl" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            </div>
+
+            {/* Form Fields Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2 space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

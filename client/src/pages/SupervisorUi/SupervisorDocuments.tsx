@@ -7,7 +7,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Loader2,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type { StudentDocument } from "../../services/supervisorService";
@@ -104,12 +103,25 @@ const SupervisorDocuments = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading documents...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-2xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          ))}
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Documents Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          ))}
         </div>
       </div>
     );
@@ -132,9 +144,9 @@ const SupervisorDocuments = () => {
         <p className="text-blue-100">
           View and download intern documents - Manage student submissions
         </p>
-        </div>
+      </div>
 
-        {/* Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Documents */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
@@ -152,7 +164,7 @@ const SupervisorDocuments = () => {
           <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
             Total documents
           </span>
-              </div>
+        </div>
 
         {/* Pending Review */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
@@ -170,7 +182,7 @@ const SupervisorDocuments = () => {
           <span className="text-xs text-orange-600 dark:text-orange-400 font-medium">
             {stats.pending} pending
           </span>
-              </div>
+        </div>
 
         {/* Approved */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
@@ -181,12 +193,12 @@ const SupervisorDocuments = () => {
             </div>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {stats.approved}
-                </p>
+            {stats.approved}
+          </p>
           <span className="text-xs text-green-600 dark:text-green-400 font-medium">
             Approved docs
           </span>
-              </div>
+        </div>
 
         {/* Rejected */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
@@ -202,46 +214,46 @@ const SupervisorDocuments = () => {
           <span className="text-xs text-red-600 dark:text-red-400 font-medium">
             Rejected docs
           </span>
-          </div>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search documents..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="all">All Types</option>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All Types</option>
             {documentTypes.map((type) => (
               <option key={type} value={type}>
                 {type}
               </option>
             ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="all">All Status</option>
+          </select>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All Status</option>
             <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
-            </select>
-          </div>
+          </select>
         </div>
+      </div>
 
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Showing {filteredDocuments.length} of {documents.length} documents
@@ -249,33 +261,33 @@ const SupervisorDocuments = () => {
 
       {/* Documents Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredDocuments.map((doc) => (
-              <div
-                key={doc.id}
+        {filteredDocuments.map((doc) => (
+          <div
+            key={doc.id}
             className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-3">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                   {getStatusIcon(doc.status)}
-                    </div>
-                        <div className="flex-1">
+                </div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                     {doc.filename}
-                          </h3>
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {doc.studentName}
-                          </p>
-                        </div>
-                      </div>
-                        <span
+                  </p>
+                </div>
+              </div>
+              <span
                 className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                            doc.status
-                          )}`}
-                        >
+                  doc.status
+                )}`}
+              >
                 {doc.status}
-                        </span>
-                      </div>
+              </span>
+            </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
@@ -289,8 +301,8 @@ const SupervisorDocuments = () => {
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {formatDate(doc.uploadedAt)}
                 </p>
-                    </div>
-                  </div>
+              </div>
+            </div>
 
             {doc.remarks && (
               <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -302,54 +314,54 @@ const SupervisorDocuments = () => {
             )}
 
             <div className="flex items-center space-x-2">
-                    <button
+              <button
                 onClick={() => setSelectedDocument(doc)}
                 className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                    >
+              >
                 <Eye className="w-4 h-4" />
                 <span className="text-sm">View Details</span>
-                    </button>
-                    <button
-                      onClick={() => handleDownload(doc)}
+              </button>
+              <button
+                onClick={() => handleDownload(doc)}
                 className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors"
-                    >
+              >
                 <Download className="w-4 h-4" />
                 <span className="text-sm">Download</span>
-                    </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredDocuments.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-              <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">No documents found</p>
+              </button>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+
+      {filteredDocuments.length === 0 && (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+          <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">No documents found</p>
+        </div>
+      )}
 
       {/* Document Detail Modal */}
       {selectedDocument && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => setSelectedDocument(null)}
+        >
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            style={{ margin: "0" }}
-            onClick={() => setSelectedDocument(null)}
-          >
-            <div
             className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Document Details
-                      </h3>
-                  <button
+              </h3>
+              <button
                 onClick={() => setSelectedDocument(null)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                  >
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
                 <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
+              </button>
+            </div>
 
             <div className="space-y-4">
               <div className="flex items-center space-x-4 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -359,38 +371,38 @@ const SupervisorDocuments = () => {
                     .map((n) => n[0])
                     .join("")
                     .substring(0, 2)}
-              </div>
-                  <div>
+                </div>
+                <div>
                   <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {selectedDocument.studentName}
-                    </h4>
+                  </h4>
                   <p className="text-sm text-gray-500">Student</p>
                 </div>
-                  </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div>
                   <p className="text-sm text-gray-500 mb-1">Filename</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {selectedDocument.filename}
                   </p>
-                  </div>
-                  <div>
+                </div>
+                <div>
                   <p className="text-sm text-gray-500 mb-1">Status</p>
-                    <span
+                  <span
                     className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                        selectedDocument.status
-                      )}`}
-                    >
-                        {selectedDocument.status}
-                      </span>
+                      selectedDocument.status
+                    )}`}
+                  >
+                    {selectedDocument.status}
+                  </span>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Type</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {selectedDocument.type}
                   </p>
-                  </div>
+                </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">MIME Type</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -401,9 +413,9 @@ const SupervisorDocuments = () => {
                   <p className="text-sm text-gray-500 mb-1">Uploaded Date</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {formatDate(selectedDocument.uploadedAt)}
-                    </p>
-                  </div>
+                  </p>
                 </div>
+              </div>
 
               {selectedDocument.remarks && (
                 <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -411,22 +423,22 @@ const SupervisorDocuments = () => {
                   <p className="text-sm text-gray-900 dark:text-white">
                     {selectedDocument.remarks}
                   </p>
-              </div>
+                </div>
               )}
 
               <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => handleDownload(selectedDocument)}
+                <button
+                  onClick={() => handleDownload(selectedDocument)}
                   className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    <Download className="w-5 h-5" />
-                    <span>Download</span>
-                  </button>
-                </div>
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Download</span>
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 };

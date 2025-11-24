@@ -88,52 +88,15 @@ const formatStudentId = (studentNumber: string) => {
   return studentNumber || "22-UR-0592";
 };
 
-// Shared function for notification accent colors
-const getNotificationAccent = (type: string) => {
-  switch (type) {
-    case "DOCUMENT":
-      return {
-        badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200",
-        iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-200",
-      };
-    case "ATTENDANCE":
-      return {
-        badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200",
-        iconBg: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-200",
-      };
-    case "SYSTEM":
-      return {
-        badge: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-        iconBg: "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300",
-      };
-    case "ALERT":
-      return {
-        badge: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200",
-        iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-200",
-      };
-    default:
-      return {
-        badge: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200",
-        iconBg: "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-200",
-      };
-  }
-};
+
 
 // Overview Component
 const OverviewTab = ({
   data,
   setActiveTab,
-  notifications,
-  notificationsLoading,
-  onNotificationClick,
-  onMarkAllNotificationsRead,
 }: {
   data: DashboardData;
   setActiveTab: (tab: string) => void;
-  notifications: NotificationItem[];
-  notificationsLoading: boolean;
-  onNotificationClick: (notification: NotificationItem) => void;
-  onMarkAllNotificationsRead: () => Promise<void>;
 }) => {
   const progress =
     data.student.totalHours && data.student.totalHours > 0
@@ -153,50 +116,134 @@ const OverviewTab = ({
       : 0,
   };
 
+  console.log('📊 Dashboard evaluations:', data.evaluations);
+
   const avgRating =
     Array.isArray(data.evaluations) && data.evaluations.length > 0
-      ? (
-        data.evaluations.reduce((sum, e) => sum + e.rating, 0) /
-        data.evaluations.length
-      ).toFixed(1)
+      ? (() => {
+        console.log('📊 Calculating average from evaluations:', data.evaluations);
+        const validEvaluations = data.evaluations.filter(e => e.rating != null && !isNaN(e.rating));
+        console.log('📊 Valid evaluations with ratings:', validEvaluations);
+        if (validEvaluations.length === 0) return "N/A";
+        const sum = validEvaluations.reduce((sum, e) => sum + e.rating, 0);
+        const average = (sum / validEvaluations.length).toFixed(1);
+        console.log('📊 Average rating:', average);
+        return average;
+      })()
       : "N/A";
 
-  const unreadCount = notifications.filter((notification) => !notification.read).length;
 
-  const formatNotificationTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
-      return "";
-    }
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">
-          Welcome back, {data.student.name}!
-        </h2>
-        <p className="text-sm opacity-80">
-          Student ID: {formatStudentId(data.student.studentNumber)}
-        </p>
-        {data.student.company ? (
-          <div className="flex items-center space-x-2 mt-2">
-            <Building2 className="w-5 h-5 opacity-90" />
-            <p className="opacity-90 font-semibold">{data.student.company}</p>
+      {/* Welcome Section - Responsive Dynamic Design */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 text-white shadow-2xl">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-64 md:w-96 h-64 md:h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+          <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-1/2 w-64 md:w-96 h-64 md:h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+
+        {/* Floating Particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white rounded-full opacity-60 animate-float"></div>
+          <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40 animate-float animation-delay-1000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-2.5 h-2.5 bg-white rounded-full opacity-50 animate-float animation-delay-2000"></div>
+          <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white rounded-full opacity-70 animate-float animation-delay-3000"></div>
+        </div>
+
+        {/* Content - Desktop Layout */}
+        <div className="hidden md:block relative z-10 p-8">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100 animate-fade-in">
+                Welcome back, {data.student.name}!
+              </h2>
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 w-fit">
+                  <User className="w-4 h-4 opacity-90" />
+                  <p className="text-sm font-medium opacity-90">
+                    ID: {formatStudentId(data.student.studentNumber)}
+                  </p>
+                </div>
+                {data.student.company && (
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 w-fit">
+                    <Building2 className="w-4 h-4 opacity-90" />
+                    <p className="text-sm font-semibold opacity-90">{data.student.company}</p>
+                  </div>
+                )}
+              </div>
+              {!data.student.company && (
+                <p className="mt-3 text-sm opacity-80 max-w-md">
+                  Track your internship progress and manage your requirements
+                </p>
+              )}
+            </div>
+
+            {/* Decorative Icon */}
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 rounded-full blur-xl"></div>
+                <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                  <Activity className="w-12 h-12 text-white animate-pulse" />
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <p className="opacity-90">
-            Track your internship progress and manage your requirements
-          </p>
-        )}
+        </div>
+
+        {/* Content - Mobile Layout */}
+        <div className="md:hidden relative z-10 p-5">
+          {/* Mobile Header with Icon */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold mb-1 leading-tight animate-fade-in">
+                Welcome back!
+              </h2>
+              <p className="text-xl font-semibold opacity-95">
+                {data.student.name.split(' ')[0]}
+              </p>
+            </div>
+
+            {/* Mobile Icon */}
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <div className="absolute inset-0 bg-white/20 rounded-full blur-lg"></div>
+                <div className="relative bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
+                  <Activity className="w-8 h-8 text-white animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Info Cards - Stacked */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2.5">
+              <User className="w-4 h-4 opacity-90 flex-shrink-0" />
+              <p className="text-sm font-medium opacity-90">
+                {formatStudentId(data.student.studentNumber)}
+              </p>
+            </div>
+
+            {data.student.company ? (
+              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2.5">
+                <Building2 className="w-4 h-4 opacity-90 flex-shrink-0" />
+                <p className="text-sm font-semibold opacity-90 truncate">{data.student.company}</p>
+              </div>
+            ) : (
+              <div className="bg-white/5 backdrop-blur-sm rounded-lg px-3 py-2.5">
+                <p className="text-xs opacity-75 leading-relaxed">
+                  Track your internship progress and manage your requirements
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Accent Line */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
       </div>
 
       {/* Stats Cards */}
@@ -279,82 +326,6 @@ const OverviewTab = ({
         </div>
       </div>
 
-      {/* Notification Center */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Notification Center
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Stay on top of document feedback and approvals
-            </p>
-          </div>
-          <button
-            onClick={onMarkAllNotificationsRead}
-            disabled={notifications.length === 0 || unreadCount === 0}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            Mark all as read
-          </button>
-        </div>
-        {notificationsLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
-          </div>
-        ) : notifications.length > 0 ? (
-          <div className="space-y-3">
-            {notifications.map((notification) => {
-              const { badge, iconBg } = getNotificationAccent(notification.type);
-              return (
-                <button
-                  key={notification.id}
-                  onClick={() => onNotificationClick(notification)}
-                  className={`w-full text-left p-5 rounded-xl border transition-all duration-200 ${notification.read
-                    ? "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    : "border-purple-200 dark:border-purple-700 bg-purple-50/70 dark:bg-purple-900/20 shadow-md"
-                    }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}>
-                      <Bell className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-semibold text-gray-900 dark:text-white truncate">
-                          {notification.title}
-                        </h4>
-                        {!notification.read && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200">
-                            New
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">
-                        {notification.message}
-                      </p>
-                      <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full font-medium ${badge}`}>
-                          {notification.type.replace(/_/g, " ")}
-                        </span>
-                        <span>{formatNotificationTimestamp(notification.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-            <Bell className="w-6 h-6 mb-3 text-gray-400" />
-            <p className="font-medium">No new notifications</p>
-            <p className="text-xs mt-1">
-              Once your submissions are reviewed, updates will appear here.
-            </p>
-          </div>
-        )}
-      </div>
 
       {/* Progress Bar */}
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
@@ -1008,14 +979,41 @@ const StudentDashboard = () => {
   }
 
   // Show loading state
+  // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading dashboard...
-          </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+        {/* Sidebar Skeleton */}
+        <div className="hidden lg:block w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 space-y-4">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-3/4"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col">
+          {/* Header Skeleton */}
+          <div className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex justify-between items-center">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/4"></div>
+            <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          </div>
+
+          <main className="flex-1 p-6 space-y-6 animate-pulse">
+            {/* Welcome Banner Skeleton */}
+            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl w-full"></div>
+
+            {/* Stats Grid Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+              ))}
+            </div>
+
+            {/* Recent Activity Skeleton */}
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          </main>
         </div>
       </div>
     );
@@ -1059,10 +1057,6 @@ const StudentDashboard = () => {
           <OverviewTab
             data={data}
             setActiveTab={setActiveTab}
-            notifications={notifications}
-            notificationsLoading={notificationsLoading}
-            onNotificationClick={handleNotificationClick}
-            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
           />
         );
       case "documents":
@@ -1100,10 +1094,6 @@ const StudentDashboard = () => {
           <OverviewTab
             data={data}
             setActiveTab={setActiveTab}
-            notifications={notifications}
-            notificationsLoading={notificationsLoading}
-            onNotificationClick={handleNotificationClick}
-            onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
           />
         );
     }
@@ -1215,9 +1205,8 @@ const StudentDashboard = () => {
                         notifications.map((notification) => (
                           <div
                             key={notification.id}
-                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                              notification.read ? "opacity-70" : ""
-                            }`}
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${notification.read ? "opacity-70" : ""
+                              }`}
                             onClick={() => handleNotificationClick(notification)}
                           >
                             <div className="flex items-start space-x-3">
@@ -1343,7 +1332,11 @@ const StudentDashboard = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">{renderContent()}</main>
+        <main className="flex-1 overflow-y-auto p-6">
+          <div key={activeTab} className="tab-fade-in">
+            {renderContent()}
+          </div>
+        </main>
       </div>
 
       {/* Sidebar Overlay */}

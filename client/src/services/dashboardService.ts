@@ -111,7 +111,24 @@ export const dashboardService = {
   async getStudentEvaluations(): Promise<Evaluation[]> {
     try {
       const response = await api.get('/evaluations');
-      return response.data.evaluations || response.data || [];
+      const evaluations = response.data.evaluations || response.data || [];
+
+      // Map backend format to frontend format
+      const mappedEvaluations = evaluations.map((evaluation: any) => ({
+        id: evaluation.id,
+        evaluator: evaluation.evaluatorName || evaluation.evaluator || 'Unknown',
+        rating: evaluation.overallRating || evaluation.rating || 0, // Map overallRating to rating
+        type: evaluation.type || 'Mid-term',
+        date: evaluation.date,
+        comments: evaluation.comments
+      }));
+
+      console.log('📊 Evaluations received:', evaluations);
+      console.log('📊 First evaluation:', evaluations[0]);
+      console.log('📊 Mapped evaluations:', mappedEvaluations);
+      console.log('📊 First mapped evaluation:', mappedEvaluations[0]);
+
+      return mappedEvaluations;
     } catch (error) {
       console.error('Error fetching evaluations:', error);
       return [];

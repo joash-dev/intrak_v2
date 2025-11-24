@@ -170,12 +170,18 @@ const InstructorApplications: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600 mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading applications...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Filters Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Applications List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          ))}
         </div>
       </div>
     );

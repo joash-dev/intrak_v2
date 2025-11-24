@@ -296,12 +296,28 @@ const SupervisorAttendance = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px]">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading attendance logs...
-          </p>
+      <div className="space-y-4 sm:space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg sm:rounded-xl"></div>
+          ))}
+        </div>
+
+        {/* Search Bar Skeleton */}
+        <div className="flex gap-4">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl flex-1"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-32"></div>
+        </div>
+
+        {/* Logs List Skeleton */}
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          ))}
         </div>
       </div>
     );
@@ -333,19 +349,19 @@ const SupervisorAttendance = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
-                Pending Review
-              </p>
+              Pending Review
+            </p>
             <div className="p-1.5 sm:p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex-shrink-0">
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
-                {stats.pending}
-              </p>
+            {stats.pending}
+          </p>
           <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400 font-medium">
             {stats.pending} pending
           </span>
-            </div>
+        </div>
 
         {/* Approved */}
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
@@ -353,15 +369,15 @@ const SupervisorAttendance = () => {
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Approved</p>
             <div className="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
               <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+            </div>
           </div>
-        </div>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
-                {stats.approved}
-              </p>
+            {stats.approved}
+          </p>
           <span className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium">
             Approved logs
           </span>
-            </div>
+        </div>
 
         {/* Rejected */}
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
@@ -369,11 +385,11 @@ const SupervisorAttendance = () => {
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Rejected</p>
             <div className="p-1.5 sm:p-2 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
               <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
+            </div>
           </div>
-        </div>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
-                {stats.rejected}
-              </p>
+            {stats.rejected}
+          </p>
           <span className="text-[10px] sm:text-xs text-red-600 dark:text-red-400 font-medium">
             Rejected logs
           </span>
@@ -383,29 +399,28 @@ const SupervisorAttendance = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
-                Hours Today
-              </p>
+              Hours Today
+            </p>
             <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
               <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
-        </div>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2">
             {stats.totalHoursToday}
           </p>
           <span className="text-[10px] sm:text-xs text-blue-600 dark:text-blue-400 font-medium">
             Total hours
           </span>
-                </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-1.5 sm:p-2 shadow-sm flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={() => setActiveTab("logs")}
-          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${
-            activeTab === "logs"
-              ? "bg-purple-600 text-white shadow"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
+          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${activeTab === "logs"
+            ? "bg-purple-600 text-white shadow"
+            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
         >
           <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>Attendance Logs</span>
@@ -415,11 +430,10 @@ const SupervisorAttendance = () => {
             setActiveTab("scanner");
             restartScanner();
           }}
-          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${
-            activeTab === "scanner"
-              ? "bg-purple-600 text-white shadow"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
+          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${activeTab === "scanner"
+            ? "bg-purple-600 text-white shadow"
+            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
         >
           <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>QR Scanner</span>
@@ -552,181 +566,181 @@ const SupervisorAttendance = () => {
       )}
       {activeTab === "logs" && (
         <>
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Search by name or student ID..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                <button
-            onClick={fetchAttendanceLogs}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-            <Download className="w-4 h-4 inline mr-2" />
-            Refresh
-                </button>
+          {/* Filters */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search by name or student ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                />
               </div>
-      </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+              <button
+                onClick={fetchAttendanceLogs}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <Download className="w-4 h-4 inline mr-2" />
+                Refresh
+              </button>
+            </div>
+          </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Showing {filteredLogs.length} of {logs.length} logs
-      </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {filteredLogs.length} of {logs.length} logs
+          </p>
 
-              {/* Logs Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Student
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Time In/Out
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Hours
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Method
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredLogs.map((log) => (
-                      <tr
-                        key={log.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                        {log.studentName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .substring(0, 2)}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {log.studentName}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                          {log.studentNumber}
-                              </p>
-                            </div>
+          {/* Logs Table */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Student
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Time In/Out
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Hours
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Method
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredLogs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                            {log.studentName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .substring(0, 2)}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {log.studentName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {log.studentNumber}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
                           <p className="text-sm text-gray-900 dark:text-white">
-                        {formatDate(log.date)}
+                            {formatDate(log.date)}
                           </p>
-                    </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm text-gray-900 dark:text-white">
-                      {formatTime(log.timeIn)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {formatTime(log.timeOut)}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {(log.durationMinutes / 60).toFixed(2)}h
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900 dark:text-white">
-                              {log.method}
-                            </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                              log.status
-                            )}`}
-                          >
-                            {log.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {log.status === "pending" ? (
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleApprove(log)}
-                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                title="Approve"
-                              >
-                                <CheckCircle className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => handleReject(log)}
-                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Reject"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                              <button
-                                onClick={() => setSelectedLog(log)}
-                                className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                                title="View Details"
-                              >
-                                <Eye className="w-5 h-5" />
-                              </button>
-                            </div>
-                          ) : (
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {formatTime(log.timeIn)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {formatTime(log.timeOut)}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {(log.durationMinutes / 60).toFixed(2)}h
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900 dark:text-white">
+                          {log.method}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
+                            log.status
+                          )}`}
+                        >
+                          {log.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {log.status === "pending" ? (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleApprove(log)}
+                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              title="Approve"
+                            >
+                              <CheckCircle className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleReject(log)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Reject"
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
                             <button
                               onClick={() => setSelectedLog(log)}
-                              className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                              title="View Details"
                             >
                               <Eye className="w-5 h-5" />
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredLogs.length === 0 && (
-                <div className="text-center py-12">
-                  <Clock className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">
-                    No attendance logs found
-                  </p>
-                </div>
-              )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedLog(log)}
+                            className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+
+            {filteredLogs.length === 0 && (
+              <div className="text-center py-12">
+                <Clock className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  No attendance logs found
+                </p>
+              </div>
+            )}
+          </div>
         </>
       )}
 
@@ -809,31 +823,31 @@ const SupervisorAttendance = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Method</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {selectedLog.method}
-                    </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedLog.method}
+                  </p>
                 </div>
               </div>
 
               {selectedLog.location && (
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Location</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {selectedLog.location}
-                </p>
-                {selectedLog.coordinates && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    📍 {selectedLog.coordinates}
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Location</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {selectedLog.location}
                   </p>
-                )}
-              </div>
+                  {selectedLog.coordinates && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      📍 {selectedLog.coordinates}
+                    </p>
+                  )}
+                </div>
               )}
 
               {selectedLog.remarks && (
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Remarks</p>
-                <p className="text-sm text-gray-900 dark:text-white">
-                  {selectedLog.remarks}
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Remarks</p>
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {selectedLog.remarks}
                   </p>
                 </div>
               )}

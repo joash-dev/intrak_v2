@@ -1,0 +1,19 @@
+# Render.com Environment Variables
+# Copy these to Render Dashboard → Your Service → Environment
+
+USE_NAS=true
+NAS_PATH=/mnt/nas/intrak
+NAS_HOST=100.121.34.91
+NAS_USERNAME=don
+NAS_PASSWORD=brandongani725
+NAS_SHARE_NAME=Serber
+TAILSCALE_AUTH_KEY=tskey-auth-khnGPGtJt211CNTRL-TAvCTQnv4FYp5AREYwjsFYCfea4c68VK
+
+# Additional variables you may need:
+# NODE_ENV=production
+# PORT=5000
+# DATABASE_URL=your_render_postgres_url
+# JWT_SECRET=your_jwt_secret
+# JWT_REFRESH_SECRET=your_refresh_secret
+# CORS_ORIGIN=https://your-client-render-url.onrender.com
+

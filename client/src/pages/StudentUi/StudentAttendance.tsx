@@ -19,6 +19,7 @@ import {
 } from "../../services/attendanceService";
 import { roundToOfficialTime } from "../../utils/attendanceCalculations";
 import toast from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 const StudentAttendanceTab: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -315,13 +316,19 @@ const StudentAttendanceTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading attendance data...
-          </p>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <Skeleton className="h-24 w-full rounded-xl" />
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
         </div>
+
+        {/* Calendar/List Skeleton */}
+        <Skeleton className="h-96 w-full rounded-xl" />
       </div>
     );
   }

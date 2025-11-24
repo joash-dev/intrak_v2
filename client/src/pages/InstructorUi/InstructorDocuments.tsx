@@ -281,12 +281,12 @@ const InstructorDocumentsTab = () => {
       filterStatus === "pending"
         ? bucket === "pending"
         : filterStatus === "approved"
-        ? bucket === "approved"
-        : filterStatus === "rejected"
-        ? bucket === "rejected"
-        : filterStatus === "resubmission"
-        ? bucket === "resubmission"
-        : bucket === filterStatus;
+          ? bucket === "approved"
+          : filterStatus === "rejected"
+            ? bucket === "rejected"
+            : filterStatus === "resubmission"
+              ? bucket === "resubmission"
+              : bucket === filterStatus;
     const matchesType = !filterType || doc.documentType === filterType;
     const matchesPriority =
       !filterPriority ||
@@ -342,14 +342,28 @@ const InstructorDocumentsTab = () => {
   })();
 
   // Show loading state
+  // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading documents...
-          </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+          ))}
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+
+        {/* Documents List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+          ))}
         </div>
       </div>
     );
@@ -554,183 +568,182 @@ const InstructorDocumentsTab = () => {
         {visibleDocuments.map((doc) => {
           const formattedStudentId = formatStudentNumber(doc.studentId);
           return (
-          <div
-            key={doc.id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
-          >
-            <div className="p-4 sm:p-6">
-              {/* Header - Mobile Optimized */}
-              <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
-                    {doc.studentAvatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
-                          {doc.studentName}
-                        </h3>
-                        {formattedStudentId && (
-                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            ({formattedStudentId})
-                          </p>
+            <div
+              key={doc.id}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
+            >
+              <div className="p-4 sm:p-6">
+                {/* Header - Mobile Optimized */}
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                      {doc.studentAvatar}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1 sm:mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
+                            {doc.studentName}
+                          </h3>
+                          {formattedStudentId && (
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                              ({formattedStudentId})
+                            </p>
+                          )}
+                        </div>
+                        {(() => {
+                          const uiStatus = getUiStatus(doc.status);
+                          const visualStatus =
+                            doc.status === "RESUBMISSION_REQUESTED"
+                              ? "RESUBMISSION_REQUESTED"
+                              : uiStatus;
+                          const label =
+                            doc.status === "RESUBMISSION_REQUESTED"
+                              ? "RESUBMISSION"
+                              : uiStatus.toUpperCase();
+                          return (
+                            <span
+                              className={`inline-flex items-center space-x-1 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-full font-medium flex-shrink-0 ${getStatusColor(
+                                visualStatus as any
+                              )}`}
+                            >
+                              {getStatusIcon(visualStatus as any)}
+                              <span>{label}</span>
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                        <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span className="truncate">{doc.company}</span>
+                        {doc.dueDate && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="hidden sm:flex items-center space-x-1">
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span>
+                                Due: {new Date(doc.dueDate).toLocaleDateString()}
+                              </span>
+                            </span>
+                          </>
                         )}
                       </div>
-                      {(() => {
-                        const uiStatus = getUiStatus(doc.status);
-                        const visualStatus =
-                          doc.status === "RESUBMISSION_REQUESTED"
-                            ? "RESUBMISSION_REQUESTED"
-                            : uiStatus;
-                        const label =
-                          doc.status === "RESUBMISSION_REQUESTED"
-                            ? "RESUBMISSION"
-                            : uiStatus.toUpperCase();
-                        return (
+                    </div>
+                  </div>
+                </div>
+
+                {/* Document Info - Mobile Optimized */}
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
+                    <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                          <p className="font-semibold sm:font-medium text-gray-900 dark:text-white text-xs sm:text-sm uppercase sm:normal-case truncate">
+                            {doc.documentType}
+                          </p>
                           <span
-                            className={`inline-flex items-center space-x-1 text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-md sm:rounded-full font-medium flex-shrink-0 ${getStatusColor(
-                              visualStatus as any
+                            className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium w-fit ${getPriorityColor(
+                              getPriorityFromType(doc.documentType)
                             )}`}
                           >
-                            {getStatusIcon(visualStatus as any)}
-                            <span>{label}</span>
+                            {getPriorityFromType(doc.documentType).toUpperCase()}
                           </span>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                      <Building2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                      <span className="truncate">{doc.company}</span>
-                      {doc.dueDate && (
-                        <>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
+                          <span className="truncate">{doc.fileName}</span>
                           <span className="hidden sm:inline">•</span>
-                          <span className="hidden sm:flex items-center space-x-1">
-                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>
-                              Due: {new Date(doc.dueDate).toLocaleDateString()}
-                            </span>
-                          </span>
-                        </>
-                      )}
+                          <span>{doc.fileSize}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <p className="text-[10px] sm:text-xs text-gray-500">Submitted</p>
+                      <p className="text-[10px] sm:text-xs font-medium text-gray-900 dark:text-white">
+                        {doc.submittedDate}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Document Info - Mobile Optimized */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
-                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                        <p className="font-semibold sm:font-medium text-gray-900 dark:text-white text-xs sm:text-sm uppercase sm:normal-case truncate">
-                          {doc.documentType}
-                        </p>
-                        <span
-                          className={`text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium w-fit ${getPriorityColor(
-                            getPriorityFromType(doc.documentType)
-                          )}`}
-                        >
-                          {getPriorityFromType(doc.documentType).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
-                        <span className="truncate">{doc.fileName}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>{doc.fileSize}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-left sm:text-right flex-shrink-0">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Submitted</p>
-                    <p className="text-[10px] sm:text-xs font-medium text-gray-900 dark:text-white">
-                      {doc.submittedDate}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Review Info (if reviewed) */}
-              {(getUiStatus(doc.status) === "APPROVED" || getUiStatus(doc.status) === "REJECTED") &&
-                doc.remarks && (
-                  <div
-                    className={`rounded-lg p-4 mb-4 ${
-                      getUiStatus(doc.status) === "APPROVED"
-                        ? "bg-green-50 dark:bg-green-900/20"
-                        : "bg-red-50 dark:bg-red-900/20"
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      {getUiStatus(doc.status) === "APPROVED" ? (
-                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                          Your Feedback
-                        </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {doc.remarks}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Reviewed on {doc.reviewedDate}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              {/* Action Buttons - Mobile Optimized */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-2">
-                  <button
-                    onClick={() => handlePreview(doc.id, doc.fileName)}
-                    className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span>Preview</span>
-                  </button>
-                  <button
-                    onClick={() => handleDownload(doc.id, doc.fileName)}
-                    className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span>Download</span>
-                  </button>
-                  <button
-                    onClick={() => openFeedbackModal(doc)}
-                    className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span>Feedback</span>
-                  </button>
-                </div>
-
-                {doc.status === "PENDING" && (
-                  <div className="flex items-center space-x-2 sm:space-x-2">
-                    <button
-                      onClick={() => handleReview(doc, "reject")}
-                      className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 rounded-lg transition-colors font-medium"
+                {/* Review Info (if reviewed) */}
+                {(getUiStatus(doc.status) === "APPROVED" || getUiStatus(doc.status) === "REJECTED") &&
+                  doc.remarks && (
+                    <div
+                      className={`rounded-lg p-4 mb-4 ${getUiStatus(doc.status) === "APPROVED"
+                          ? "bg-green-50 dark:bg-green-900/20"
+                          : "bg-red-50 dark:bg-red-900/20"
+                        }`}
                     >
-                      <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>Reject</span>
+                      <div className="flex items-start space-x-3">
+                        {getUiStatus(doc.status) === "APPROVED" ? (
+                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                            Your Feedback
+                          </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {doc.remarks}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Reviewed on {doc.reviewedDate}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Action Buttons - Mobile Optimized */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between sm:justify-start space-x-2 sm:space-x-2">
+                    <button
+                      onClick={() => handlePreview(doc.id, doc.fileName)}
+                      className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    >
+                      <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Preview</span>
                     </button>
                     <button
-                      onClick={() => handleReview(doc, "approve")}
-                      className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium"
+                      onClick={() => handleDownload(doc.id, doc.fileName)}
+                      className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
                     >
-                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>Approve</span>
+                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Download</span>
+                    </button>
+                    <button
+                      onClick={() => openFeedbackModal(doc)}
+                      className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span>Feedback</span>
                     </button>
                   </div>
-                )}
+
+                  {doc.status === "PENDING" && (
+                    <div className="flex items-center space-x-2 sm:space-x-2">
+                      <button
+                        onClick={() => handleReview(doc, "reject")}
+                        className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 rounded-lg transition-colors font-medium"
+                      >
+                        <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Reject</span>
+                      </button>
+                      <button
+                        onClick={() => handleReview(doc, "approve")}
+                        className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Approve</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
+          );
         })}
       </div>
 
@@ -748,7 +761,7 @@ const InstructorDocumentsTab = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
-         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div>
@@ -779,11 +792,11 @@ const InstructorDocumentsTab = () => {
                     <p className="font-semibold text-gray-900 dark:text-white">
                       {selectedDoc.studentName}
                     </p>
-                  {formatStudentNumber(selectedDoc.studentId) && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      ID: {formatStudentNumber(selectedDoc.studentId)}
-                    </p>
-                  )}
+                    {formatStudentNumber(selectedDoc.studentId) && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        ID: {formatStudentNumber(selectedDoc.studentId)}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {selectedDoc.company}
                     </p>
@@ -865,11 +878,10 @@ const InstructorDocumentsTab = () => {
                   disabled={
                     (reviewAction === "reject" && !feedback.trim()) || submitting
                   }
-                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                    reviewAction === "approve"
+                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${reviewAction === "approve"
                       ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
                       : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                  } disabled:cursor-not-allowed`}
+                    } disabled:cursor-not-allowed`}
                 >
                   {submitting ? (
                     <>
