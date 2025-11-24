@@ -188,7 +188,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         filepath: finalPath,
         mimeType: req.file.mimetype,
         uploadedById: req.user!.id,
-        status: 'PENDING'
+        status: 'PENDING',
+        fileSize: req.file.size
       }
     });
 
@@ -314,7 +315,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     // Format documents
     const formattedDocuments = documents.map(doc => ({
       ...doc,
-      fileSizeMB: null // File size not stored in database
+      fileSize: doc.fileSize
     }));
 
     res.json({
@@ -389,7 +390,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       uploadedAt: doc.uploadedAt?.toISOString().split('T')[0] || null,
       reviewedAt: doc.reviewedAt?.toISOString().split('T')[0] || null,
       remarks: doc.remarks,
-      fileSize: null // File size not stored in database
+      fileSize: doc.fileSize
     }));
 
     res.json({ documents: formattedDocuments });

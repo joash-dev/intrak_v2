@@ -8,8 +8,8 @@ export interface Document {
   uploadedAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;
-  fileSize?: string;
-  fileSizeMB?: string;
+  fileSize?: number; // Raw bytes from server
+  fileSizeMB?: string; // Legacy/Computed
   mimeType?: string;
 }
 

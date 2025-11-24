@@ -271,6 +271,7 @@ model Document {
   uploadedById String
   uploadedAt   DateTime       @default(now())
   reviewedAt   DateTime?
+  fileSize     Int?           // File size in bytes
 
   // E-signature fields (future feature - disabled)
   requiresSignature Boolean   @default(false)

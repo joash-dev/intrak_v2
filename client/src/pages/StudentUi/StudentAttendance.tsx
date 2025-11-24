@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Clock,
   Calendar,
@@ -48,6 +48,14 @@ const StudentAttendanceTab: React.FC = () => {
   const [manualTimeIn, setManualTimeIn] = useState("");
   const [manualTimeOut, setManualTimeOut] = useState("");
   const [manualRemarks, setManualRemarks] = useState("");
+
+  const qrGeneratedAtRef = useRef<number>(0);
+  const showQRModalRef = useRef(false);
+
+  // Keep ref in sync with state for polling closure
+  useEffect(() => {
+    showQRModalRef.current = showQRModal;
+  }, [showQRModal]);
 
   const CalendarIcon = Calendar;
 
@@ -228,6 +236,7 @@ const StudentAttendanceTab: React.FC = () => {
       const qrData = await attendanceService.generateQRCode();
       setQrCode(qrData.qrCode);
       setQrExpiresAt(qrData.expiresAt);
+      qrGeneratedAtRef.current = Date.now();
       setShowQRModal(true);
       toast.success("QR code generated successfully");
       // Start polling to detect supervisor verification shortly after scan
@@ -252,7 +261,15 @@ const StudentAttendanceTab: React.FC = () => {
         const todays = logs.filter(
           (l) => new Date(l.date).toISOString().split("T")[0] === today
         );
-        const anyVerified = todays.some((l) => l.verified && l.timeIn);
+
+        // Check for any log that is verified AND was updated AFTER the QR code was generated
+        const anyVerified = todays.some((l) => {
+          const logUpdatedAt = new Date(l.updatedAt).getTime();
+          // Allow a small buffer (e.g. 1 sec) or just strict inequality
+          // If updated time is greater than generation time, it's a new verification
+          return l.verified && l.timeIn && logUpdatedAt > qrGeneratedAtRef.current;
+        });
+
         if (anyVerified) {
           setShowScanSuccessModal(true);
           setPolling(false);
@@ -261,7 +278,7 @@ const StudentAttendanceTab: React.FC = () => {
       } catch (e) {
         // ignore polling errors
       }
-      if (Date.now() - startTime < timeoutMs && showQRModal) {
+      if (Date.now() - startTime < timeoutMs && showQRModalRef.current) {
         setTimeout(poll, 3000);
       } else {
         setPolling(false);
@@ -572,12 +589,12 @@ const StudentAttendanceTab: React.FC = () => {
                 <div
                   key={index}
                   className={`aspect-square p-1 sm:p-2 rounded-lg text-center relative ${day
-                      ? log
-                        ? log.verified
-                          ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
-                          : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
-                        : "bg-gray-50 dark:bg-gray-700"
-                      : ""
+                    ? log
+                      ? log.verified
+                        ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
+                        : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
+                      : "bg-gray-50 dark:bg-gray-700"
+                    : ""
                     }`}
                   onClick={() => {
                     if (!day || !log) return;

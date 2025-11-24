@@ -191,18 +191,31 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
     loadDocuments();
   }, []);
 
+  // Get list of approved document types
+  const approvedTypes = useMemo(() => {
+    return documents
+      .filter((doc) => doc.status === "APPROVED")
+      .map((doc) => doc.type);
+  }, [documents]);
+
   // Ensure document type is valid for selected category
   useEffect(() => {
     const categoryTypes = documentTypes.filter(
       (type) => type.category === selectedCategory
     );
+
+    // Filter out approved types unless we are re-uploading
+    const availableTypes = reuploadingDoc
+      ? categoryTypes
+      : categoryTypes.filter((type) => !approvedTypes.includes(type.value));
+
     if (
-      categoryTypes.length > 0 &&
-      !categoryTypes.some((type) => type.value === selectedType)
+      availableTypes.length > 0 &&
+      !availableTypes.some((type) => type.value === selectedType)
     ) {
-      setSelectedType(categoryTypes[0].value);
+      setSelectedType(availableTypes[0].value);
     }
-  }, [selectedCategory, selectedType]);
+  }, [selectedCategory, selectedType, approvedTypes, reuploadingDoc]);
 
   // Refresh documents when tab becomes active (optional)
   useEffect(() => {
@@ -699,18 +712,18 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 <div className="flex items-center space-x-3">
                   <div
                     className={`p-2 rounded-lg ${category === "PRE_DEPLOYMENT"
-                        ? "bg-blue-100 dark:bg-blue-900/20"
-                        : category === "UPON_APPROVAL"
-                          ? "bg-yellow-100 dark:bg-yellow-900/20"
-                          : "bg-green-100 dark:bg-green-900/20"
+                      ? "bg-blue-100 dark:bg-blue-900/20"
+                      : category === "UPON_APPROVAL"
+                        ? "bg-yellow-100 dark:bg-yellow-900/20"
+                        : "bg-green-100 dark:bg-green-900/20"
                       }`}
                   >
                     <FileText
                       className={`w-5 h-5 ${category === "PRE_DEPLOYMENT"
-                          ? "text-blue-600 dark:text-blue-400"
-                          : category === "UPON_APPROVAL"
-                            ? "text-yellow-600 dark:text-yellow-400"
-                            : "text-green-600 dark:text-green-400"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : category === "UPON_APPROVAL"
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-green-600 dark:text-green-400"
                         }`}
                     />
                   </div>
@@ -795,7 +808,9 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                             : "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {doc.fileSize || "-"}
+                          {doc.fileSize
+                            ? documentService.formatFileSize(doc.fileSize)
+                            : "-"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
@@ -915,6 +930,10 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                   ).length > 0 ? (
                     documentTypes
                       .filter((type) => type.category === selectedCategory)
+                      .filter(
+                        (type) =>
+                          reuploadingDoc || !approvedTypes.includes(type.value)
+                      )
                       .map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label} {type.required && "*"}
@@ -934,8 +953,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                    ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                    : "border-gray-300 dark:border-gray-600"
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                  : "border-gray-300 dark:border-gray-600"
                   }`}
               >
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
