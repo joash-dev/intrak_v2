@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: intrak-server
+    env: node
+    buildCommand: cd server && npm ci && npm run build
+    startCommand: cd server && npm start
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    envVars:
+      - key: USE_NAS
+        value: true
+      - key: NODE_ENV
+        value: production
+

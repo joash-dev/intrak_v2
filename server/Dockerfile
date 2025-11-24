@@ -26,6 +26,9 @@ RUN chmod +x /app/scripts/render-start.sh
 # Expose port
 EXPOSE 5000
 
+# Run as root to allow mounting (container is isolated, so this is safe)
+USER root
+
 # Use startup script
 CMD ["bash", "scripts/render-start.sh"]
 
