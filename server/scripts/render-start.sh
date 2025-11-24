@@ -32,12 +32,44 @@ fi
 
 # Start Tailscale if auth key is provided
 if [ -n "$TAILSCALE_AUTH_KEY" ]; then
-    echo "🔗 Connecting to Tailscale..."
-    tailscale up --authkey="$TAILSCALE_AUTH_KEY" --accept-routes || {
+    echo "🔗 Starting Tailscale daemon..."
+    
+    # Create necessary directories for tailscaled
+    mkdir -p /var/lib/tailscale
+    mkdir -p /var/run/tailscale
+    
+    # Start tailscaled in the background (as root, which we are)
+    tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock 2>&1 &
+    TAILSCALED_PID=$!
+    
+    # Wait for tailscaled to start
+    echo "⏳ Waiting for tailscaled to initialize..."
+    for i in {1..10}; do
+        if [ -S /var/run/tailscale/tailscaled.sock ]; then
+            echo "✅ tailscaled socket ready"
+            break
+        fi
+        sleep 1
+    done
+    
+    echo "🔗 Connecting to Tailscale network..."
+    tailscale up --authkey="$TAILSCALE_AUTH_KEY" --accept-routes --advertise-exit-node=false 2>&1 || {
         echo "⚠️  Tailscale connection failed"
         export USE_NAS=false
     }
+    
+    # Wait a bit for connection to establish
     sleep 5
+    
+    # Check if Tailscale is connected
+    if tailscale status &>/dev/null; then
+        echo "✅ Tailscale connected successfully"
+        echo "📍 Tailscale status:"
+        tailscale status | head -5
+    else
+        echo "⚠️  Tailscale status check failed - continuing without NAS"
+        export USE_NAS=false
+    fi
 fi
 
 # Create mount point (try in user-writable location first)
