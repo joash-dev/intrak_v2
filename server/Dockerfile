@@ -10,7 +10,8 @@ RUN apt-get update && \
     curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list >/dev/null && \
     apt-get update && \
     apt-get install -y tailscale || echo "⚠️ Tailscale installation failed - will continue without it" && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    chown -R node:node /app
 
 # Switch to node user for npm operations
 USER node
