@@ -4,10 +4,12 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y curl cifs-utils ca-certificates && \
-    curl -fsSL -o /tmp/tailscale.deb https://pkgs.tailscale.com/stable/tailscale_latest_amd64.deb && \
-    dpkg -i /tmp/tailscale.deb || apt-get install -f -y && \
-    rm -rf /var/lib/apt/lists/* /tmp/tailscale.deb
+    apt-get install -y curl cifs-utils ca-certificates gnupg && \
+    curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
+    curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list >/dev/null && \
+    apt-get update && \
+    apt-get install -y tailscale || echo "⚠️ Tailscale installation failed - will continue without it" && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -15,15 +17,20 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code and fix ownership
+COPY --chown=node:node . .
+
+# Ensure we're running as node user for build
+USER node
 
 # Build TypeScript
 RUN npm run build
 
-# Copy startup script
+# Copy startup script (switch back to root temporarily)
+USER root
 COPY scripts/render-start.sh /app/scripts/
-RUN chmod +x /app/scripts/render-start.sh
+RUN chmod +x /app/scripts/render-start.sh && \
+    chown -R node:node /app
 
 # Expose port
 EXPOSE 5000
