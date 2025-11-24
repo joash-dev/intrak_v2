@@ -14,8 +14,10 @@ RUN apt-get update && \
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (as root, then fix ownership and permissions)
+RUN npm install && \
+    chown -R node:node /app && \
+    chmod -R +x node_modules/.bin || true
 
 # Copy source code and fix ownership
 COPY --chown=node:node . .
