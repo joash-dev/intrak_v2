@@ -230,7 +230,7 @@ Regulatory research examined data privacy requirements under Philippine law, doc
 
 The ideation phase generated three alternative architectural approaches for consideration:
 
-*Design 1 (Hybrid Cloud with NAS Architecture)*: Internet-accessible web application hosted on **Northflank** (Managed PaaS) integrated with on-premise Network-Attached Storage (NAS) for secure document retention.
+*Design 1 (Hybrid Cloud with NAS Architecture)*: Internet-accessible web application hosted on a **Hostinger Virtual Private Server (VPS)** integrated with on-premise Network-Attached Storage (NAS) for secure document retention.
 
 *Design 2 (Cloud-Based Architecture)*: Web application with cloud storage services (e.g., AWS S3, Google Cloud Storage) for document repository, enabling external accessibility.
 

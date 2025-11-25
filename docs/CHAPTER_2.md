@@ -16,7 +16,7 @@ Each design alternative presented distinct trade-offs that required careful anal
 
 Design 1 implements a **Hybrid Cloud Architecture** that strategically combines cloud-based application hosting with on-premise document storage. This approach leverages the scalability and reliability of modern Platform-as-a-Service (PaaS) providers for the application logic and database, while maintaining institutional control over sensitive document data through a cost-effective Network-Attached Storage (NAS) solution.
 
-In this architecture, the client tier (web browsers) connects to the application hosted on **Northflank** (Managed PaaS). When a student uploads a document, the backend API receives the file stream and securely transmits it to the on-premise **Raspberry Pi 4 NAS** located within the campus network via a **Tailscale VPN** tunnel. Metadata is stored in a managed PostgreSQL database on Northflank. This split architecture ensures that while the application is globally accessible and scalable, the bulk storage of binary files remains cost-effective and under local control.
+In this architecture, the client tier (web browsers) connects to the application hosted on a **Virtual Private Server (VPS)** provided by **Hostinger**. When a student uploads a document, the backend API receives the file stream and securely transmits it to the on-premise **Raspberry Pi 4 NAS** located within the campus network via a **Tailscale VPN** tunnel. Metadata is stored in a Dockerized PostgreSQL database on the same VPS. This split architecture ensures that while the application is globally accessible and scalable, the bulk storage of binary files remains cost-effective and under local control.
 
 ### 2.2.2 Hardware/Network Design
 
@@ -26,10 +26,10 @@ In this architecture, the client tier (web browsers) connects to the application
 - Connect via Internet (HTTPS) to the Cloud Application
 
 **Application Layer (Cloud-Hosted):**
-- **Platform:** Northflank (Managed PaaS)
-- **Frontend:** React Application (Static/Node)
-- **Backend:** Node.js Service
-- **Database:** Managed PostgreSQL (Northflank Add-on)
+- **Platform:** Hostinger VPS (Ubuntu Linux)
+- **Frontend:** React Application (Dockerized)
+- **Backend:** Node.js Service (Dockerized)
+- **Database:** PostgreSQL (Dockerized)
 - **Architecture:** Microservices / Decoupled Frontend-Backend
 
 **Network-Attached Storage Layer (On-Premise):**
@@ -39,36 +39,6 @@ In this architecture, the client tier (web browsers) connects to the application
 
 ### 2.3.1 Design Description
 
-Design 2 represents a fully cloud-native approach where all system components, including document storage, are hosted by third-party cloud providers (e.g., AWS S3, Google Cloud Storage). In this model, the application server would run on a cloud compute instance, and documents would be stored in an object storage service.
-
-This design was **rejected** because it violates the project's strict delimitation requiring a "local repository" for data sovereignty. While scalable, it introduces recurring monthly costs and places sensitive student data entirely under third-party control.
-
-### 2.3.2 Hardware/Network Design
-
-**Infrastructure:**
-- **Compute:** Cloud Virtual Machines (EC2/Droplets)
-- **Storage:** Object Storage Buckets (S3/Blob)
-- **Database:** Managed Cloud Database (RDS/Cloud SQL)
-
-### 2.3.3 Schematic Design
-
-```
-[Client] <---> [Cloud Load Balancer] <---> [App Server Cluster]
-                                                |
-                                     +----------+----------+
-                                     |                     |
-                             [Cloud Database]       [Object Storage]
-```
-
-### 2.3.4 Illustrative Design
-
-**Document Upload Flow:**
-1. Student uploads file through web interface
-2. API validates file and generates unique object key
-3. Application invokes cloud storage API (e.g., S3 PutObject)
-4. File content transmitted to cloud storage over HTTPS
-5. Cloud service confirms successful storage and returns object URL
-6. Application creates database record linking document metadata to cloud object
 7. Client receives confirmation
 
 **Document Retrieval Flow:**
@@ -217,8 +187,8 @@ Reporting capabilities extract data from the PostgreSQL database and format it f
 - Prisma Schema: Database modeling and migrations
 
 **Infrastructure (Cloud-Native):**
-- **Hosting Platform:** Northflank (Managed PaaS)
-- **Database:** Managed PostgreSQL (Northflank)
+- **Hosting Platform:** Hostinger VPS (KVM)
+- **Database:** PostgreSQL (Self-Hosted Docker)
 - **NAS OS:** Raspberry Pi OS (Debian-based)
 - **Version Control:** Git (GitHub)
 
