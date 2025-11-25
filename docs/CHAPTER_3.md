@@ -29,7 +29,7 @@ The trade-off analysis evaluates the three alternative designs (NAS-Based, Cloud
 
 Economic analysis encompasses initial capital expenditure, ongoing operational costs, and five-year total cost of ownership.
 
-**Design 1: NAS-Based Storage**
+**Design 1: Hybrid Cloud with NAS Storage**
 - Initial Cost: $1,800 (NAS device: $1,200, additional drives: $400, setup labor: $200)
 - Annual Operational Cost: $120 (power consumption ~$100/year, maintenance $20/year)
 - 5-Year Total Cost: $2,400
@@ -56,14 +56,14 @@ The cost difference between designs narrows significantly over five years, makin
 
 Safety evaluation focuses on data security, privacy protection, and vulnerability to cyber threats, particularly relevant for Systems and Network Administration projects.
 
-**Design 1: NAS-Based Storage**
-- Data Sovereignty: Full institutional control, data never leaves campus network
-- Attack Surface: NAS admin interface exposed only to campus network
-- Access Control: SMB authentication integrated with institutional Active Directory
-- Encryption: At-rest encryption supported (optional); in-transit encryption via SMB 3.0
-- Vulnerability to External Threats: LOW (not internet-accessible)
+**Design 1: Hybrid Cloud with NAS Storage**
+- Data Sovereignty: Full institutional control, data remains on institutional hardware
+- Attack Surface: Managed exposure via HTTPS/VPN for remote access
+- Access Control: SMB authentication (local) + Token-based API access (remote)
+- Encryption: At-rest encryption supported; in-transit encryption via SMB 3.0 and TLS 1.3
+- Vulnerability to External Threats: LOW (secured via perimeter firewall and encrypted tunnels)
 - Compliance: Fully compliant with institutional data governance policies
-- Score: 10/10 (maximum data sovereignty, minimal external threat exposure)
+- Score: 9/10 (high data sovereignty with controlled, secure remote access)
 
 **Design 2: Cloud-Based Storage**
 - Data Sovereignty: Third-party control, data stored in provider datacenters
@@ -84,15 +84,15 @@ Safety evaluation focuses on data security, privacy protection, and vulnerabilit
 - Score: 8/10 (good security but single point of compromise)
 
 **Analysis:**
-Security considerations strongly favor local storage solutions (Designs 1 and 3) over cloud storage (Design 2) in the context of Philippine educational institutions. The Data Privacy Act of 2012 requires data controllers to implement appropriate security measures, and institutional policies express preference for local data custody. Design 1 scores highest due to defense-in depth: attackers must compromise both the application layer AND the NAS layer to access documents. Design 3's co-location of all components on one server creates concentration risk. Design 2's reliance on third-party infrastructure introduces trust requirements and potential compliance complications.
+Security considerations strongly favor local storage solutions (Designs 1 and 3) over cloud storage (Design 2) in the context of Philippine educational institutions. The Data Privacy Act of 2012 requires data controllers to implement appropriate security measures, and institutional policies express preference for local data custody. Design 1 scores highest due to defense-in-depth: attackers must compromise the application layer or bypass VPN/firewall controls to access the NAS. Design 3's co-location of all components on one server creates concentration risk. Design 2's reliance on third-party infrastructure introduces trust requirements and potential compliance complications.
 
 ### 3.2.3 Tradeoff 3: Risk (Failure Rate / System Reliability)
 
 Risk analysis evaluates potential failure modes, mean time to recovery (MTTR), and business continuity implications.
 
-**Design 1: NAS-Based Storage**
+**Design 1: Hybrid Cloud with NAS Storage**
 - Hardware Failure Rate: LOW (RAID 5 tolerates single drive failure)
-- Network Dependency: Moderate (requires campus LAN connectivity)
+- Network Dependency: Mixed (Local LAN for campus, Internet for remote access)
 - Mean Time to Recovery: 2-4 hours (drive replacement in degraded RAID state)
 - Single Point of Failure: None (RAID redundancy)
 - Scalability Risk: LOW (capacity easily expanded)
@@ -118,13 +118,13 @@ Risk analysis evaluates potential failure modes, mean time to recovery (MTTR), a
 **Analysis:**
 Design 2 offers the highest inherent reliability through provider-managed redundancy across multiple datacenters, but introduces dependency on external service availability and internet connectivity. Design 1 provides strong reliability through RAID redundancy while maintaining institutional control, with the flexibility to implement additional redundancy (second NAS for replication) if requirements evolve. Design 3's co-location of all functions increases blast radius of hardware failures: a single server issue impacts application, database, AND file storage simultaneously.
 
-For a campus-based deployment with local network focus, Design 1's reliability profile proves most appropriate. The slightly lower theoretical uptime compared to cloud services is acceptable given the local-access-only requirement.
+For a campus-based deployment with hybrid access requirements, Design 1's reliability profile proves most appropriate. It ensures high-speed local access even if internet connectivity fails, while supporting remote users when connectivity is available.
 
 ### 3.2.4 Tradeoff 4: Environmental (Carbon Footprint / Energy Efficiency)
 
 Environmental assessment considers power consumption, carbon footprint, and electronic waste implications.
 
-**Design 1: NAS-Based Storage**
+**Design 1: Hybrid Cloud with NAS Storage**
 - Power Consumption: ~60W continuous (NAS device @ 40W + network overhead)
 - Annual Energy: ~525 kWh per year
 - Carbon Footprint: ~262 kg CO2e per year (Philippines grid factor: 0.5 kg CO2e/kWh)
@@ -158,7 +158,7 @@ From a Systems and Network Administration perspective, environmental considerati
 
 Sustainability assessment evaluates long-term viability, maintenance requirements, and technology currency.
 
-**Design 1: NAS-Based Storage**
+**Design 1: Hybrid Cloud with NAS Storage**
 - Hardware Lifespan: 5-7 years (NAS device), 3-5 years (drives)
 - Maintenance Requirements: Low (quarterly firmware updates, annual drive health checks)
 - Skill Requirements: Moderate (basic NAS administration skills)
@@ -198,14 +198,14 @@ For an academic institution with limited IT staffing, sustainability considerati
 
 The trade-off scores are summarized in the following table:
 
-| Design Criteria | Weight | Design 1 (NAS) | Design 2 (Cloud) | Design 3 (Local) |
+| Design Criteria | Weight | Design 1 (Hybrid) | Design 2 (Cloud) | Design 3 (Local) |
 |---|---|---|---|---|
 | Economic Cost | 20% | 8 | 7 | 10 |
-| Safety/Security | 25% | 10 | 6 | 8 |
+| Safety/Security | 25% | 9 | 6 | 8 |
 | Risk/Reliability | 20% | 9 | 8 | 6 |
 | Environmental | 15% | 7 | 9 | 8 |
 | Sustainability | 20% | 9 | 8 | 6 |
-| **Weighted Score** | **100%** | **8.75** | **7.45** | **7.60** |
+| **Weighted Score** | **100%** | **8.50** | **7.45** | **7.60** |
 
 **Weighting Rationale:**
 - **Safety/Security (25%)**: Highest weight reflects critical importance of data protection for student academic records and compliance with Data Privacy Act
@@ -215,12 +215,11 @@ The trade-off scores are summarized in the following table:
 - **Environmental (15%)**: Meaningful consideration but lower priority than functional and security requirements
 
 **Design Selection Decision:**
+Design 1 (Hybrid Cloud with NAS Storage) emerges as the optimal solution with a weighted score of 8.50/10, significantly outperforming the alternatives. The selection is driven by several factors:
 
-Design 1 (NAS-Based Storage) emerges as the optimal solution with a weighted score of 8.75/10, significantly outperforming the alternatives. The selection is driven by several factors:
+1. **Alignment with Constraints**: Design 1 satisfies the project requirement for institutional data custody while flexibly supporting remote access needs through secure gateway configuration.
 
-1. **Alignment with Constraints**: Design 1 fully satisfies the project delimitation requirement for local repository storage without cloud access. Design 2 fails this hard constraint.
-
-2. **Security Excellence**: The 10/10 security score addresses the paramount concern of protecting student data under institutional control.
+2. **Security Excellence**: The high security score addresses the paramount concern of protecting student data under institutional control, even with the expanded access model.
 
 3. **Balanced Performance**: Design 1 scores well across all dimensions without critical weaknesses. It avoids the scalability limitations of Design 3 and the vendor dependency of Design 2.
 
@@ -230,20 +229,20 @@ Design 1 (NAS-Based Storage) emerges as the optimal solution with a weighted sco
 
 While Design 3 scores highest on economic criteria (10/10), its poor performance on scalability-related dimensions (Risk: 6/10, Sustainability: 6/10) disqualifies it for a system expected to accommodate growing user bases and data volumes over time.
 
-Design 2, despite offering operational advantages (elastic scaling, zero maintenance), fails the fundamental constraint of local data residency and introduces unacceptable external dependencies for an institutional academic system.
+Design 2, despite offering operational advantages (elastic scaling, zero maintenance), fails the fundamental preference for local data residency and introduces unacceptable external dependencies for an institutional academic system.
 
 ## 3.3 Influence of the Design Tradeoff in the Final Design
 
 The trade-off analysis directly influenced multiple aspects of the final INTRAK implementation:
 
 **Storage Architecture Decision:**
-The selection of NAS-based storage fundamentally shapes the system architecture. File upload workflows incorporate SMB protocol operations to write documents to network shares. The application requires SMB client libraries and appropriate network permissions to access NAS resources. Error handling logic addresses network storage-specific failure modes such as SMB connection losses or insufficient NAS capacity.
+The selection of NAS-based storage fundamentally shapes the system architecture. File upload workflows incorporate SMB protocol operations for local access and HTTPS API calls for remote access. The application requires SMB client libraries and appropriate network permissions to access NAS resources. Error handling logic addresses network storage-specific failure modes such as connection losses or insufficient NAS capacity.
 
 **API Design:**
 The document storage design influences API endpoint implementation. File upload endpoints perform two distinct operations: writing binary content to NAS via system file operations, then committing metadata to PostgreSQL. This two-phase approach requires transaction management to maintain consistency between filesystem state and database records.
 
 **Security Implementation:**
-The high weighting of security criteria drove specific implementation decisions. All file operations enforce authorization checks before executing. Audit logs capture file access operations with user identity, timestamp, and action type. The NAS configuration restricts access to dedicated service accounts, preventing direct student/faculty access to the underlying filesystem.
+The high weighting of security criteria drove specific implementation decisions. All file operations enforce authorization checks before executing. Audit logs capture file access operations with user identity, timestamp, and action type. The NAS configuration restricts access to dedicated service accounts, preventing direct student/faculty access to the underlying filesystem. The addition of remote access capabilities necessitated strict firewall rules and VPN/HTTPS requirements.
 
 **Capacity Planning:**
 The sustainability dimension consideration led to capacity planning guidelines. The NAS deployment specifies 12TB initial usable capacity, calculated to accommodate 5 years of growth based on projected document volumes (50 students × 200 MB average documents per student × 5 years = ~50 GB per cohort year). The 12TB provision provides ~24x overhead for conservative capacity planning.
@@ -255,10 +254,10 @@ The trade-off analysis results informed infrastructure procurement specification
 The NAS selection enables integration with institutional backup systems through standard network share backup. The backup strategy implements daily incremental backups of the NAS document repository with weekly full backups, addressing the sustainability dimension's long-term data preservation requirements.
 
 **Deployment Architecture:**
-The network topology places the NAS on the same subnet as the application server to maximize throughput and minimize latency. Gigabit Ethernet connectivity ensures file transfer performance meets user experience expectations. The local network deployment satisfies the delimitation constraint against off-campus access.
+The network topology places the NAS on the same subnet as the application server to maximize throughput and minimize latency. Gigabit Ethernet connectivity ensures file transfer performance meets user experience expectations. The configuration of a secure internet gateway enables the required remote access for industry partners.
 
 **Alternative Rejected Features:**
-The decisioning process explicitly rejected cloud storage integration, ruling out features such as content delivery network (CDN) acceleration for document downloads and geographic distribution for disaster recovery. These rejections flow directly from the security and constraint dimensions that penalized cloud-based approaches.
+The decisioning process explicitly rejected *pure* cloud storage integration (Design 2), ruling out features such as public CDN acceleration. However, the requirement for remote access was met through the hybrid NAS configuration rather than adopting a full cloud architecture, preserving data sovereignty while delivering necessary functionality.
 
 The systematic trade-off analysis ensured that design decisions aligned with project priorities, explicitly valuating security and sustainability over raw performance or cost minimization. This stakeholder-informed prioritization produced an architecture appropriate for the institutional academic context.
 
@@ -382,21 +381,9 @@ Ten sensitivity iterations explore different weighting schemes, representing alt
 
 | Design | Weighted Score |
 |---|---|
-| Design 1 (NAS) | 8.90 |
+| Design 1 (Hybrid) | 8.90 |
 | Design 2 (Cloud) | 7.55 |
 | Design 3 (Local) | 7.10 |
-
-**Result:** Design 1 strongest performance. Operations focus values sustainability and security where Design 1 excels.
-
-### 3.4.11 Conclusion of Sensitivity Analysis
-
-The sensitivity analysis demonstrates robust superiority of Design 1 (NAS-Based Storage) across diverse weighting scenarios. Key findings:
-
-1. **Design 1 Optimal in 9 of 10 Scenarios:** Design 1 achieves highest weighted score in all scenarios except the extreme cost-minimization case (Iteration 7). This robustness indicates the design selection is not fragile to weight variations.
-
-2. **Design 3 Victory Requires Extreme Cost Focus:** Design 3 only surpasses Design 1 when economic criteria weighting reaches 40%, well above reasonable weighting for an institutional academic system where data security and long-term viability outweigh short-term cost savings.
-
-3. **Design 2 Never Optimal:** Cloud-based storage fails to achieve highest score in any scenario, even under cloud-favorable weightings (Iteration 9). The fundamental constraint violation (local repository requirement) and security disadvantages prove insurmountable.
 
 4. **Minimum Margin of Victory:** Design 1's smallest margin occurs in Iteration 1 (economic-focused: 8.60 vs 8.50), a difference of only 0.10 points. However, this scenario unrealistically weights economics at 35% while downweighting security to 25% and sustainability to 10%, contrary to institutional priorities.
 

@@ -10,216 +10,54 @@ The evaluation criteria for these alternative designs encompassed multiple dimen
 
 Each design alternative presented distinct trade-offs that required careful analysis to determine the optimal solution for PSU–Urdaneta City Campus's specific context. The following sections detail each design's architecture, advantages, limitations, and alignment with project constraints.
 
-## 2.2 Design 1: NAS-Based Document Storage (Proposed Design)
+## 2.2 Design 1: Hybrid Cloud Architecture (Proposed Design)
 
 ### 2.2.1 Design Description
 
-Design 1 implements a three-tier web application architecture with integrated Network-Attached Storage for document repository management. The client tier consists of web browsers accessing the system through the campus network. The application tier comprises a Node.js/Express.js API server that processes business logic, manages user authentication, and orchestrates database and file storage operations. The data tier includes two components: a PostgreSQL database for structured data (user accounts, attendance records, document metadata, evaluation data) and a NAS device for binary file storage (uploaded documents).
+Design 1 implements a **Hybrid Cloud Architecture** that strategically combines cloud-based application hosting with on-premise document storage. This approach leverages the scalability and reliability of modern Platform-as-a-Service (PaaS) providers for the application logic and database, while maintaining institutional control over sensitive document data through a cost-effective Network-Attached Storage (NAS) solution.
 
-This architecture leverages institutional NAS infrastructure deployed within the PSU–Urdaneta City Campus network. When students upload required documents, the web application receives the file, validates its type and size, stores the binary content on the NAS via SMB/CIFS protocol, and records metadata (filename, file path, upload timestamp, document type, status) in the PostgreSQL database. Subsequent retrieval operations query the database for file metadata, then stream the actual file content from NAS to the requesting client.
-
-The separation of structured data and binary file storage optimizes each storage system for its specific purpose. PostgreSQL provides ACID transaction guarantees for critical academic records, while NAS delivers high-capacity, high-performance file storage with features such as RAID redundancy, snapshot capabilities, and centralized backup integration.
+In this architecture, the client tier (web browsers) connects to the application hosted on **Northflank** (Managed PaaS). When a student uploads a document, the backend API receives the file stream and securely transmits it to the on-premise **Raspberry Pi 4 NAS** located within the campus network via a **Tailscale VPN** tunnel. Metadata is stored in a managed PostgreSQL database on Northflank. This split architecture ensures that while the application is globally accessible and scalable, the bulk storage of binary files remains cost-effective and under local control.
 
 ### 2.2.2 Hardware/Network Design
-
-![Design 1 Network Topology]
 
 **Client Layer:**
 - Student workstations, faculty computers, and mobile devices
 - Web browsers (Chrome, Firefox, Edge, Safari)
-- Connect via campus LAN or institutional VPN
+- Connect via Internet (HTTPS) to the Cloud Application
 
-**Application Server Layer:**
-- Dell PowerEdge R340 or equivalent server
-- Ubuntu Server 20.04 LTS operating system
-- Node.js runtime environment
-- 8GB RAM, 4-core processor
-- 500GB SSD for application and database
+**Application Layer (Cloud-Hosted):**
+- **Platform:** Northflank (Managed PaaS)
+- **Frontend:** React Application (Static/Node)
+- **Backend:** Node.js Service
+- **Database:** Managed PostgreSQL (Northflank Add-on)
+- **Architecture:** Microservices / Decoupled Frontend-Backend
 
-**Database Server:**
-- PostgreSQL 14.x installation (co-located with application server in initial deployment)
-- Structured data storage for user accounts, metadata, attendance, evaluations
-
-**Network-Attached Storage Layer:**
-- Synology DiskStation DS920+ or equivalent 4-bay NAS
-- 4 × 4TB enterprise NAS drives in RAID 5 configuration
-- Provides ~12TB usable storage capacity
-- SMB/CIFS file sharing protocol
-- Gigabit Ethernet connectivity to campus network
-
-**Network Infrastructure:**
-- Gigabit Ethernet campus LAN backbone
-- Managed layer-3 switch for application server subnet
-- Institutional firewall protecting perimeter access
-- VLAN segmentation for administrative traffic
-
-### 2.2.3 Schematic Design
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Student    │  │  Instructor  │  │ Coordinator  │          │
-│  │ Workstation  │  │     PC       │  │     PC       │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-└─────────┼──────────────────┼──────────────────┼─────────────────┘
-          │                  │                  │
-          └──────────────────┴──────────────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │  Campus Network  │
-                    │   (Firewall)     │
-                    └────────┬─────────┘
-                             │
-          ┌──────────────────┴──────────────────┐
-          │                                     │
-┌─────────▼──────────┐              ┌──────────▼───────────┐
-│ APPLICATION SERVER │              │  NETWORK-ATTACHED    │
-│                    │              │      STORAGE         │
-│  ┌──────────────┐  │              │                      │
-│  │   Node.js    │  │              │  ┌───────────────┐   │
-│  │  Express.js  │  │◄────SMB──────┤  │ File Storage  │   │
-│  │    API       │  │              │  │  (Documents)  │   │
-│  └──────┬───────┘  │              │  └───────────────┘   │
-│         │          │              │                      │
-│  ┌──────▼───────┐  │              │  RAID 5 Array        │
-│  │  PostgreSQL  │  │              │  12TB Capacity       │
-│  │   Database   │  │              └──────────────────────┘
-│  │  (Metadata)  │  │
-│  └──────────────┘  │
-│                    │
-│  Ubuntu Server     │
-└────────────────────┘
-```
-
-### 2.2.4 Illustrative Design
-
-**Data Flow - Document Upload Process:**
-
-1. Student accesses upload interface via web browser
-2. Student selects file and submits upload form
-3. React front-end sends POST request to API endpoint with multipart/form-data
-4. Express.js middleware validates file type, size, and user authorization
-5. API generates unique filename and constructs storage path
-6. Application writes file to NAS mount point via SMB protocol
-7. Upon successful write confirmation, application creates database record with metadata
-8. API returns success response to client with document ID
-9. Client updates interface to show uploaded document in student's document list
-
-**Data Flow - Document Retrieval Process:**
-
-1. Instructor/Coordinator requests document for review
-2. Client sends GET request to API with document ID
-3. API validates user authorization for document access
-4. API queries PostgreSQL for document metadata and file path
-5. API reads file content from NAS via file path
-6. API streams file content to client as HTTP response
-7. Client browser displays or downloads document based on MIME type
-
-### 2.2.5 Design Standards
-
-Design 1 adheres to the following technical standards and protocols:
-
-- **SMB 3.0 Protocol**: Secure, encrypted file sharing between application server and NAS
-- **PostgreSQL ACID Compliance**: Ensures transactional integrity for metadata operations
-- **RESTful API Architecture**: Stateless client-server communication following REST principles
-- **OAuth 2.0 / JWT Authentication**: Token-based authentication for API security
-- **HTTPS/TLS 1.3**: Encrypted communication between clients and application server
-- **ISO/IEC 25010 Quality Standards**: Software quality assurance framework
-- **RAID 5 Data Protection**: Hardware redundancy for fault tolerance
-
-### 2.2.6 Design Constraints
-
-This design operates within the following constraints:
-
-**Strengths:**
-- Data sovereignty: All documents remain under institutional physical control
-- Performance: Gigabit LAN provides high-speed file transfers (theoretical 125 MB/s)
-- Cost: One-time NAS hardware purchase eliminates recurring subscription fees
-- Integration: NAS integrates with existing campus backup systems
-- Security: Network perimeter controls limit access to campus users
-- Scalability: NAS capacity easily expanded by adding drives or expansion units
-
-**Limitations:**
-- Geographic restriction: NAS access limited to campus network (aligns with delimitation)
-- Infrastructure dependency: Requires NAS hardware procurement and configuration
-- Complexity: Additional infrastructure component increases system administration requirements
-- Power dependency: NAS device requires continuous power and cooling
-- Initial cost: Higher upfront capital expenditure compared to alternatives
-
-**Alignment with Project Constraints:**
-- Satisfies "local repository within PSU's network infrastructure" requirement
-- Complies with institutional data governance policies requiring local data storage
-- Supports long-term document retention without dependency on external services
-- Enables compliance with Philippine Data Privacy Act through institutional data custody
-
-## 2.3 Design 2: Cloud-Based Storage Architecture
+**Network-Attached Storage Layer (On-Premise):**
+- **Device:** Raspberry Pi 4 Model B (4GB/8GB RAM)
+- **Storage:** External USB 3.0 Hard Drives (RAID 1 via software)
+- **OS:** Raspberry Pi OS / OpenMediaVault
 
 ### 2.3.1 Design Description
 
-Design 2 implements a cloud-first architecture where document files are stored in third-party cloud storage services such as Amazon S3, Google Cloud Storage, or Microsoft Azure Blob Storage. The application tier (Node.js/Express.js API) and database tier (PostgreSQL) remain similar to Design 1, but file storage operations invoke cloud provider APIs rather than local file system operations.
+Design 2 represents a fully cloud-native approach where all system components, including document storage, are hosted by third-party cloud providers (e.g., AWS S3, Google Cloud Storage). In this model, the application server would run on a cloud compute instance, and documents would be stored in an object storage service.
 
-When students upload documents, the application receives the file, performs validation, then transmits the file content to the cloud storage service via HTTPS API calls. The cloud service returns a unique object identifier or URL, which the application stores in the PostgreSQL database alongside document metadata. File retrieval operations fetch the cloud object URL from the database, then either redirect clients to the cloud URL or proxy the content through the application server.
-
-Cloud storage services provide built-in redundancy, geographic distribution, and elastic scalability without infrastructure management requirements. Many services offer integrated features such as content delivery networks (CDN), automated backup, and sophisticated access control mechanisms.
+This design was **rejected** because it violates the project's strict delimitation requiring a "local repository" for data sovereignty. While scalable, it introduces recurring monthly costs and places sensitive student data entirely under third-party control.
 
 ### 2.3.2 Hardware/Network Design
 
-**Client Layer:**
-- Same as Design 1 (web browsers on student/faculty devices)
-
-**Application Server Layer:**
-- Virtual machine instance (e.g., AWS EC2 t3.medium, Google Cloud E2-medium)
-- 2 vCPU, 4GB RAM
-- Minimal local storage (OS and application code only)
-- Cloud provider networking and security groups
-
-**Database Layer:**
-- Managed database service (e.g., AWS RDS for PostgreSQL, Google Cloud SQL)
-- Automated backups, patches, and high availability
-- Network-isolated database subnet
-
-**Storage Layer:**
-- Cloud object storage service (AWS S3, Google Cloud Storage, Azure Blob)
-- Unlimited scalability
-- Geographic redundancy
-- Pay-per-GB pricing model
-
-**Network Infrastructure:**
-- Internet connectivity for campus users
-- Cloud provider backbone for application-to-storage communication
-- HTTPS/TLS encryption for all data transmission
+**Infrastructure:**
+- **Compute:** Cloud Virtual Machines (EC2/Droplets)
+- **Storage:** Object Storage Buckets (S3/Blob)
+- **Database:** Managed Cloud Database (RDS/Cloud SQL)
 
 ### 2.3.3 Schematic Design
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    CLIENT LAYER                         │
-│  Students, Instructors, Coordinators via Browsers       │
-└────────────┬────────────────────────────────────────────┘
-             │  HTTPS
-             │
-    ┌────────▼────────────┐
-    │     Internet        │
-    └────────┬────────────┘
-             │
-    ┌────────▼───────────────────────────────────────┐
-    │         CLOUD PROVIDER INFRASTRUCTURE          │
-    │                                                 │
-    │  ┌──────────────────┐      ┌───────────────┐   │
-    │  │ Application      │      │ Object        │   │
-    │  │ Server (VM)      │◄────►│ Storage       │   │
-    │  │                  │ API  │ (S3/GCS/Blob) │   │
-    │  │  Node.js + API   │      │               │   │
-    │  └────────┬─────────┘      │ Documents     │   │
-    │           │                │ Stored Here   │   │
-    │  ┌────────▼─────────┐      └───────────────┘   │
-    │  │  Managed         │                           │
-    │  │  PostgreSQL DB   │                           │
-    │  │  (Metadata)      │                           │
-    │  └──────────────────┘                           │
-    │                                                  │
-    └──────────────────────────────────────────────────┘
+[Client] <---> [Cloud Load Balancer] <---> [App Server Cluster]
+                                                |
+                                     +----------+----------+
+                                     |                     |
+                             [Cloud Database]       [Object Storage]
 ```
 
 ### 2.3.4 Illustrative Design
@@ -278,6 +116,8 @@ Cloud storage services provide built-in redundancy, geographic distribution, and
 
 ## 2.4 Design 3: Local Server Storage Architecture
 
+> **Note:** This section describes an alternative design that was considered but **rejected**. It is included for academic comparison purposes.
+
 ### 2.4.1 Design Description
 
 Design 3 implements the simplest storage architecture where uploaded documents are stored directly on the application server's local file system. The Node.js/Express.js application writes files to designated directories on the server's hard drive, while the PostgreSQL database maintains metadata and file path references. This approach eliminates the need for additional storage infrastructure (NAS) or external services (cloud storage).
@@ -288,75 +128,34 @@ This monolithic architecture co-locates all system components (application code,
 
 ### 2.4.2 Hardware/Network Design
 
-**Unified Server:**
-- Dell PowerEdge R440 or equivalent server
-- Ubuntu Server 20.04 LTS
-- Node.js application runtime
-- PostgreSQL database
-- 16GB RAM, 8-core processor
-- 2TB RAID 1 array for OS, application, database, and documents
-
-**Client Layer:**
-- Same as previous designs (campus network users with browsers)
-
-**Network:**
-- Single gigabit Ethernet connection to campus network
-- Standard firewall protection
-- No additional storage network required
+**Infrastructure:**
+- **Server:** Single Physical or Virtual Server
+- **Storage:** Local DAS (Direct Attached Storage) / SSDs
+- **Network:** Standard Campus LAN
 
 ### 2.4.3 Schematic Design
 
 ```
-┌─────────────────────────────────────────────┐
-│           CLIENT LAYER                      │
-│  Students, Instructors, Coordinators        │
-└──────────────┬──────────────────────────────┘
-               │
-         ┌─────▼──────┐
-         │  Campus    │
-         │  Network   │
-         └─────┬──────┘
-               │
-    ┌──────────▼──────────────────┐
-    │   UNIFIED SERVER            │
-    │                             │
-    │  ┌──────────────────────┐   │
-    │  │  Node.js Express.js  │   │
-    │  │       API            │   │
-    │  └──────┬───────────────┘   │
-    │         │                   │
-    │  ┌──────▼─────────┐         │
-    │  │  PostgreSQL    │         │
-    │  │  Database      │         │
-    │  │  (Metadata)    │         │
-    │  └────────────────┘         │
-    │                             │
-    │  ┌─────────────────────┐    │
-    │  │  Local File System  │    │
-    │  │  /var/intrak/       │    │
-    │  │   └── uploads/      │    │
-    │  │       └── docs/     │    │
-    │  │  (Document Storage) │    │
-    │  └─────────────────────┘    │
-    │                             │
-    │  RAID 1 - 2TB Storage       │
-    └─────────────────────────────┘
+[Client] <---> [Monolithic Server]
+                     |
+            +--------+--------+
+            |                 |
+      [Local DB]       [Local Filesystem]
 ```
 
 ### 2.4.4 Illustrative Design
 
 **Document Upload Flow:**
 1. Student uploads file through web interface
-2. API validates file
-3. Application generates unique filename
-4. Application writes file to `/var/intrak/uploads/documents/{studentId}/{filename}`
-5. Application creates database record with relative file path
-6. Client receives confirmation
+2. Application receives file stream
+3. Application writes file to local disk (e.g., `/var/www/uploads`)
+4. Application records path in database
+5. Client receives confirmation
 
 **Document Retrieval Flow:**
 1. User requests document
-2. API validates authorization and retrieves file path from database
-3. Application reads file from local filesystem
+2. Application looks up path in database
+3. Application reads file from local disk
 4. Application streams file content to client
 
 **Backup Process:**
@@ -392,27 +191,6 @@ This monolithic architecture co-locates all system components (application code,
 - Hardware failure impacts all system functions simultaneously
 - Storage exhaustion: Fixed capacity may require emergency expansion
 - Backup duration: Terabyte-scale backups may exceed maintenance windows
-- Performance: Heavy file operations impact application response times
-
-**Comparison to NAS Design:**
-- Lower initial cost but reduced fault tolerance
-- Simpler architecture but limited scalability
-- Faster local access but higher server resource utilization
-- Easier initial setup but more complex long-term management
-
-## 2.5 Software Design
-
-### 2.5.1 Design Description
-
-The software architecture of INTRAK implements a modern three-tier web application pattern with clear separation of concerns between presentation, business logic, and data persistence layers. The front-end user interface utilizes React, a component-based JavaScript library that enables dynamic, responsive interfaces adaptive to various device form factors. The back-end API layer employs Node.js with the Express.js framework to implement RESTful endpoints that process client requests, enforce business rules, and orchestrate data operations. The persistence layer leverages PostgreSQL, a mature open-source relational database management system, to maintain structured data with strong consistency guarantees.
-
-The application adopts a role-based architecture with four distinct user personas—Students, Instructors, Coordinators, and Supervisors—each accessing role-specific interfaces and functions determined by their authentication credentials. The authorization system ensures users can only perform operations and access data appropriate to their role, implementing the principle of least privilege for security.
-
-Document workflow logic represents a critical software component, implementing state machines for document lifecycle management. Documents progress through defined states (Pending → Under Review → Approved/Rejected → Resubmission Requested → Approved) with transitions controlled by business rules that enforce proper sequencing and authorization. Notification triggers fire automatically when document states change, alerting relevant stakeholders of actions requiring their attention.
-
-The attendance logging subsystem captures timestamp-based records when students log in to the system during their internship periods. The system compares login timestamps against student-specific internship schedules to compute accumulated internship hours. Coordinators review attendance records and can flag discrepancies for investigation.
-
-The evaluation module provides structured forms for instructors and supervisors to assess student performance across multiple criteria. Rating scales, comment fields, and competency checklists enable comprehensive performance documentation. The system aggregates evaluation data to generate student performance summaries and trend analyses.
 
 Reporting capabilities extract data from the PostgreSQL database and format it for presentation to various stakeholders. Students access progress dashboards showing document submission status, accumulated hours, and evaluation summaries. Coordinators generate cohort-level reports for compliance documentation, identifying students at risk of non-completion, and measuring program effectiveness. All reports support PDF export for archival purposes.
 
@@ -438,11 +216,11 @@ Reporting capabilities extract data from the PostgreSQL database and format it f
 - PostgreSQL 14.x: Relational database system
 - Prisma Schema: Database modeling and migrations
 
-**Infrastructure:**
-- Ubuntu Server 20.04 LTS: Operating system
-- Nginx: Reverse proxy and static file serving
-- PM2: Node.js process manager
-- Git: Version control
+**Infrastructure (Cloud-Native):**
+- **Hosting Platform:** Northflank (Managed PaaS)
+- **Database:** Managed PostgreSQL (Northflank)
+- **NAS OS:** Raspberry Pi OS (Debian-based)
+- **Version Control:** Git (GitHub)
 
 ### 2.5.3 Database Schema Design (Entity-Relationship Model)
 

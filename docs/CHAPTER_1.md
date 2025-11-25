@@ -111,26 +111,8 @@ The project focuses on the development of INTRAK: A Centralized Internship Track
 The study is limited to the following parameters:
 
 1. The system will not initially support ISO-compliant e-signatures; physical signatures may still be required for official documents.
+2. The system employs a Hybrid Cloud Architecture, making the application accessible via the internet for remote users (students, industry partners) while retaining physical document storage on a local NAS within the campus network.
 
-2. The study is limited to Computer Engineering students and coordinators only; other departments are excluded.
-
-3. Hard copy submission of certain documents may still be required as backup, depending on university policy.
-
-4. The system will be web-based only; no mobile application will be developed within this study.
-
-5. Security features will be limited to student–coordinator transactions and will not extend to integration with external HR or partner company systems.
-
-6. The NAS will function as a local repository within PSU's network infrastructure and will not include external cloud or off-campus access.
-
-## 1.6 Design Constraints
-
-The development and implementation of INTRAK operate within several technical, operational, economic, and environmental constraints that shape design decisions and system architecture.
-
-### 1.6.1 Technical Constraints
-
-The system must integrate with existing campus network infrastructure at PSU–Urdaneta City Campus, operating within the constraints of available bandwidth, network topology, and security protocols. The NAS integration requirement mandates compatibility with institutional storage systems, requiring adherence to file system protocols and access permissions structures established by university IT administration.
-
-Local network access constraints limit system availability to users connected to the campus network or authorized through institutional VPN services. This constraint, established in the project delimitation, ensures data security and compliance with university data governance policies but restricts off-campus access to the document repository.
 
 Browser compatibility requirements necessitate responsive design implementation to support various devices (desktop computers, tablets) and multiple browser platforms (Chrome, Firefox, Edge, Safari). While a dedicated mobile application falls outside project scope, the web interface must provide usable experiences on mobile browsers for basic functions.
 
@@ -248,7 +230,7 @@ Regulatory research examined data privacy requirements under Philippine law, doc
 
 The ideation phase generated three alternative architectural approaches for consideration:
 
-*Design 1 (NAS-Based Architecture)*: Web application with PostgreSQL database and NAS file storage integration, deployed within campus network infrastructure.
+*Design 1 (Hybrid Cloud with NAS Architecture)*: Internet-accessible web application hosted on **Northflank** (Managed PaaS) integrated with on-premise Network-Attached Storage (NAS) for secure document retention.
 
 *Design 2 (Cloud-Based Architecture)*: Web application with cloud storage services (e.g., AWS S3, Google Cloud Storage) for document repository, enabling external accessibility.
 

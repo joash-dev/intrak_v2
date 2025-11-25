@@ -1,0 +1,52 @@
+# Fly.io configuration for INTRAK Server
+# https://fly.io/docs/reference/configuration/
+
+app = "intrak-server"
+primary_region = "sin" # Singapore (closest to your NAS)
+
+[build]
+  dockerfile = "Dockerfile"
+  dockerignore = ".dockerignore"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "5000"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 5000
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+[vm]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+
+# Fly.io provides TUN device access by default in Docker containers
+# No special configuration needed for Tailscale
+[experimental]
+  auto_rollback = true
+

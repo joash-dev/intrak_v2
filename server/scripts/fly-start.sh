@@ -1,26 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting INTRAK Server with NAS support..."
+echo "🚀 Starting INTRAK Server with NAS support on Fly.io..."
 
-# Check if packages are installed (they should be from Dockerfile)
+# Check if packages are installed
 NAS_AVAILABLE=true
 if ! command -v mount.cifs &> /dev/null; then
-    echo "⚠️  cifs-utils not found. Dockerfile may not be in use."
-    echo "⚠️  Render is using native Node.js build instead of Docker."
+    echo "⚠️  cifs-utils not found"
     NAS_AVAILABLE=false
 fi
 
 if ! command -v tailscale &> /dev/null; then
-    echo "⚠️  tailscale not found."
+    echo "⚠️  tailscale not found"
     NAS_AVAILABLE=false
 fi
 
 if [ "$NAS_AVAILABLE" = "false" ]; then
     echo "❌ NAS packages not available. Disabling NAS support."
-    echo "💡 To enable NAS: Configure Render to use Dockerfile (see instructions)"
     export USE_NAS=false
-    # Create local uploads directory instead
     mkdir -p ./uploads/documents/temp
     mkdir -p ./uploads/profile-photos
     mkdir -p ./uploads/templates
@@ -38,22 +35,20 @@ if [ -n "$TAILSCALE_AUTH_KEY" ]; then
     mkdir -p /var/lib/tailscale
     mkdir -p /var/run/tailscale
     
-    # Check if /dev/net/tun exists (required for TUN mode)
+    # Check if /dev/net/tun exists (Fly.io should provide this)
     if [ ! -e /dev/net/tun ]; then
-        echo "⚠️  /dev/net/tun not available"
-        echo "💡 Attempting to create TUN device..."
-        # Try to create /dev/net/tun (requires mknod capability)
+        echo "⚠️  /dev/net/tun not available - attempting to create..."
         mkdir -p /dev/net
         if mknod /dev/net/tun c 10 200 2>/dev/null; then
             echo "✅ Created /dev/net/tun"
             chmod 666 /dev/net/tun
         else
-            echo "❌ Cannot create /dev/net/tun - TUN device access required"
-            echo "💡 Render.com Docker containers need TUN device access for Tailscale"
-            echo "💡 Contact Render support to enable: --cap-add=NET_ADMIN --device=/dev/net/tun"
-            echo "⚠️  Continuing without Tailscale/NAS - using local storage"
+            echo "❌ Cannot create /dev/net/tun"
+            echo "💡 Fly.io should provide TUN device access with privileged mode"
             export USE_NAS=false
         fi
+    else
+        echo "✅ /dev/net/tun available"
     fi
     
     if [ "$USE_NAS" != "false" ]; then
@@ -72,7 +67,6 @@ if [ -n "$TAILSCALE_AUTH_KEY" ]; then
             fi
             if [ $i -eq 15 ]; then
                 echo "⚠️  tailscaled failed to start after 15 seconds"
-                echo "💡 This usually means TUN device access is not available"
                 export USE_NAS=false
                 break
             fi
@@ -89,7 +83,7 @@ if [ -n "$TAILSCALE_AUTH_KEY" ]; then
                 export USE_NAS=false
             }
             
-            # Wait a bit for connection to establish
+            # Wait for connection to establish
             sleep 5
             
             # Check if Tailscale is connected
@@ -105,14 +99,9 @@ if [ -n "$TAILSCALE_AUTH_KEY" ]; then
     fi
 fi
 
-# Create mount point (try in user-writable location first)
+# Create mount point
 echo "📁 Setting up NAS mount..."
 MOUNT_POINT="/mnt/nas/intrak"
-if [ ! -w "/mnt" ]; then
-    # Try alternative location if /mnt is not writable
-    MOUNT_POINT="/tmp/nas/intrak"
-    echo "⚠️  /mnt not writable, using $MOUNT_POINT instead"
-fi
 mkdir -p "$MOUNT_POINT"
 
 # Create credentials file
@@ -125,7 +114,6 @@ chmod 600 "$CREDS_FILE"
 # Mount NAS share
 if [ "$USE_NAS" = "true" ] && [ "$NAS_AVAILABLE" = "true" ]; then
     echo "🔌 Mounting NAS share..."
-    # Try to mount (requires root/sudo permissions)
     if mount -t cifs "//$NAS_HOST/$NAS_SHARE_NAME" "$MOUNT_POINT" \
         -o credentials="$CREDS_FILE",uid=1000,gid=1000,iocharset=utf8,file_mode=0777,dir_mode=0777,vers=3.0 2>/dev/null; then
         # Create directory structure
@@ -133,16 +121,11 @@ if [ "$USE_NAS" = "true" ] && [ "$NAS_AVAILABLE" = "true" ]; then
         mkdir -p "$MOUNT_POINT/profile-photos"
         mkdir -p "$MOUNT_POINT/templates"
         echo "✅ NAS mounted successfully at $MOUNT_POINT"
-        # Update NAS_PATH if using alternative location
-        if [ "$MOUNT_POINT" != "/mnt/nas/intrak" ]; then
-            export NAS_PATH="$MOUNT_POINT"
-        fi
+        export NAS_PATH="$MOUNT_POINT"
     else
-        echo "⚠️  NAS mount failed (permission denied or connection issue)"
+        echo "⚠️  NAS mount failed"
         echo "⚠️  Continuing with local storage..."
-        echo "💡 Tip: Configure Render to use Dockerfile for proper permissions"
         export USE_NAS=false
-        # Create local uploads directory
         mkdir -p ./uploads/documents/temp
         mkdir -p ./uploads/profile-photos
         mkdir -p ./uploads/templates
@@ -158,4 +141,5 @@ fi
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
 exec node dist/index.js
+
 

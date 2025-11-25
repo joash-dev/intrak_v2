@@ -31,10 +31,10 @@ RUN npx prisma generate
 # Build TypeScript (using build config that allows implicit any for deployment)
 RUN npx tsc -p tsconfig.build.json
 
-# Copy startup script (switch to root for mounting, but keep app owned by node)
+# Copy startup scripts (switch to root for mounting, but keep app owned by node)
 USER root
-COPY scripts/render-start.sh /app/scripts/
-RUN chmod +x /app/scripts/render-start.sh
+COPY scripts/*.sh /app/scripts/
+RUN chmod +x /app/scripts/*.sh
 
 # Expose port
 EXPOSE 5000
@@ -42,6 +42,6 @@ EXPOSE 5000
 # Run as root to allow mounting (container is isolated, so this is safe)
 USER root
 
-# Use startup script
-CMD ["bash", "scripts/render-start.sh"]
+# Use startup script (Fly.io version)
+CMD ["bash", "scripts/fly-start.sh"]
 
