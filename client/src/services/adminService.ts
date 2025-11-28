@@ -233,11 +233,6 @@ class AdminService {
       console.error('❌ AdminService: Error response status:', error.response?.status);
       console.error('❌ AdminService: Error response headers:', error.response?.headers);
       
-      // Check if this is a token expiration issue
-      if (error.response?.status === 401) {
-        console.log('🔍 AdminService: 401 error detected - this might be token expiration');
-        console.log('🔍 AdminService: Error message:', error.response?.data?.message);
-      }
       
       // Extract the specific error message from the API response
       const errorMessage = error.response?.data?.message || 
@@ -716,8 +711,6 @@ class AdminService {
   // Get announcements for admin (all announcements)
   async getAnnouncements(): Promise<Announcement[]> {
     try {
-      console.log('Fetching announcements for admin...');
-      
       const response = await announcementService.getAnnouncements();
       const allAnnouncements = response.announcements;
       
@@ -726,7 +719,6 @@ class AdminService {
         announcementService.transformAnnouncement(announcement)
       );
       
-      console.log(`Found ${transformedAnnouncements.length} announcements for admin`);
       return transformedAnnouncements;
     } catch (error) {
       console.error('Error fetching announcements for admin:', error);

@@ -69,14 +69,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Add debug logging
-    console.log('🔍 API Interceptor - Error Response:', {
-      status: error.response?.status,
-      url: originalRequest.url,
-      method: originalRequest.method,
-      message: error.response?.data?.message,
-      isRetry: originalRequest._retry
-    });
 
     // Only trigger token refresh for specific 401 errors (token expiration, not authentication failures)
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -89,7 +81,6 @@ api.interceptors.response.use(
         errorMessage.includes('Access denied') ||
         errorMessage.includes('Forbidden')
       )) {
-        console.log('🚫 Skipping token refresh for authentication error:', errorMessage);
         return Promise.reject(error);
       }
       

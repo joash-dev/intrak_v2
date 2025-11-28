@@ -83,11 +83,8 @@ class InstructorService {
   // Get students assigned to the current instructor
   async getAssignedStudents(): Promise<InstructorStudent[]> {
     try {
-      console.log('Fetching assigned students for current instructor...');
-      
       // Fetch only students assigned to the current instructor
       const response = await api.get('/students/my-assigned');
-      console.log('Assigned students API response:', response.data);
       
       const students = response.data.students || [];
       
@@ -189,7 +186,6 @@ class InstructorService {
   // Get recent activities for instructor's students
   async getRecentActivities(): Promise<InstructorActivity[]> {
     try {
-      console.log('Fetching recent activities for instructor...');
       
       const activities: InstructorActivity[] = [];
       
@@ -311,7 +307,6 @@ class InstructorService {
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       
       // Return only the 10 most recent activities
-      console.log(`Found ${activities.length} recent activities`);
       return activities.slice(0, 10);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
@@ -338,8 +333,6 @@ class InstructorService {
   // Get announcements for instructor
   async getAnnouncements(): Promise<Announcement[]> {
     try {
-      console.log('Fetching announcements for instructor...');
-      
       // Get announcements targeted at instructors or all users
       const response = await announcementService.getAnnouncements();
       const allAnnouncements = response.announcements;
@@ -356,7 +349,6 @@ class InstructorService {
         announcementService.transformAnnouncement(announcement)
       );
       
-      console.log(`Found ${transformedAnnouncements.length} announcements for instructor`);
       return transformedAnnouncements;
     } catch (error) {
       console.error('Error fetching announcements for instructor:', error);
@@ -606,20 +598,16 @@ class InstructorService {
   // Get documents for review from assigned students only
   async getDocumentsForReview(): Promise<InstructorDocument[]> {
     try {
-      console.log('Fetching documents for instructor review from assigned students...');
-      
       // First get assigned students
       const assignedStudents = await this.getAssignedStudents();
       const assignedStudentIds = assignedStudents.map(s => s.id);
       
       if (assignedStudentIds.length === 0) {
-        console.log('No assigned students found, returning empty documents list');
         return [];
       }
       
       // Fetch documents (backend will automatically filter by instructor's assigned students)
       const response = await api.get('/documents');
-      console.log('Documents for assigned students API response:', response.data);
       
       const documents = response.data.documents || [];
       
@@ -651,9 +639,7 @@ class InstructorService {
   // Approve a document
   async approveDocument(documentId: string, remarks?: string): Promise<boolean> {
     try {
-      console.log('Approving document:', documentId);
       const response = await api.put(`/documents/${documentId}/approve`, { remarks });
-      console.log('Document approved successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error approving document:', error);
@@ -664,9 +650,7 @@ class InstructorService {
   // Reject a document
   async rejectDocument(documentId: string, remarks?: string): Promise<boolean> {
     try {
-      console.log('Rejecting document:', documentId);
       const response = await api.put(`/documents/${documentId}/reject`, { remarks });
-      console.log('Document rejected successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error rejecting document:', error);
@@ -677,7 +661,6 @@ class InstructorService {
   // Download a document
   async downloadDocument(documentId: string): Promise<Blob | null> {
     try {
-      console.log('Downloading document:', documentId);
       const response = await api.get(`/documents/${documentId}/download`, {
         responseType: 'blob',
       });

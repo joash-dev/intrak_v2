@@ -768,10 +768,40 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const filepath = path.resolve(document.filepath);
+    // Resolve filepath - handle both absolute and relative paths
+    // Normalize the path first (handles ./ and ../)
+    const normalizedPath = path.normalize(document.filepath);
+    let filepath: string;
+    
+    if (path.isAbsolute(normalizedPath)) {
+      filepath = normalizedPath;
+    } else {
+      // If relative, resolve from process.cwd() or try multiple locations
+      const possiblePaths = [
+        path.resolve(process.cwd(), normalizedPath),
+        path.resolve(process.cwd(), 'server', normalizedPath),
+        path.resolve(__dirname, '../../', normalizedPath),
+        path.resolve(process.cwd(), 'uploads', 'documents', path.basename(normalizedPath)), // Try just filename in uploads/documents
+        normalizedPath // Try as-is if it's already correct
+      ];
+      
+      filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    }
     
     if (!fs.existsSync(filepath)) {
-      return res.status(404).json({ message: 'File not found' });
+      console.error('Document file not found. Document ID:', id);
+      console.error('Stored filepath:', document.filepath);
+      console.error('Resolved filepath:', filepath);
+      console.error('process.cwd():', process.cwd());
+      console.error('__dirname:', __dirname);
+      return res.status(404).json({ 
+        message: 'File not found',
+        details: process.env.NODE_ENV === 'development' ? { 
+          storedPath: document.filepath, 
+          resolvedPath: filepath,
+          cwd: process.cwd()
+        } : undefined
+      });
     }
 
     res.download(filepath, document.filename);

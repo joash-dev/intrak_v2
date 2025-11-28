@@ -73,10 +73,8 @@ const InstructorDocumentsTab = () => {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      console.log("Loading documents for instructor review...");
       const documentsData = await instructorService.getDocumentsForReview();
       setDocuments(documentsData);
-      console.log("Documents loaded:", documentsData.length);
     } catch (error) {
       console.error("Error loading documents:", error);
       toast.error("Failed to load documents");
