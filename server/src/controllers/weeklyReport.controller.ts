@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { resolveTemplatePath } from '../utils/template.utils';
 import path from 'path';
 import fs from 'fs';
 import PizZip from 'pizzip';
@@ -10,11 +11,7 @@ const prisma = new PrismaClient();
 
 // Resolve template path
 const templateName = '16 PRACTICUM WEEKLY REPORT_2024.docx';
-const srcTemplatePath = path.resolve(process.cwd(), 'server', 'src', 'templates', templateName);
-const distTemplatePath = path.resolve(__dirname, '../templates', templateName);
-const WEEKLY_REPORT_TEMPLATE_FILE = fs.existsSync(srcTemplatePath)
-  ? srcTemplatePath
-  : distTemplatePath;
+const WEEKLY_REPORT_TEMPLATE_FILE = resolveTemplatePath(templateName);
 
 interface WeekData {
   weekNumber: number;

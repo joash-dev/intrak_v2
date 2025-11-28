@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { resolveTemplatePath } from '../utils/template.utils';
 import fs from 'fs';
 import path from 'path';
 import PizZip from 'pizzip';
@@ -270,7 +271,7 @@ export const exportAgencySelfEvaluation = async (req: AuthRequest, res: Response
         }
 
         // Load template
-        const templatePath = path.join(__dirname, '../templates', templateName);
+        const templatePath = resolveTemplatePath(templateName);
         if (!fs.existsSync(templatePath)) {
             return res.status(404).json({ message: 'Template file not found' });
         }

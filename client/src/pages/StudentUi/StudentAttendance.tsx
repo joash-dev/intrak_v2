@@ -26,6 +26,7 @@ const StudentAttendanceTab: React.FC = () => {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [showQRModal, setShowQRModal] = useState(false);
   const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
+  const [qrAction, setQrAction] = useState<'login' | 'logout' | null>(null);
   const [polling, setPolling] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
@@ -264,14 +265,17 @@ const StudentAttendanceTab: React.FC = () => {
         );
 
         // Check for any log that is verified AND was updated AFTER the QR code was generated
-        const anyVerified = todays.some((l) => {
+        const verifiedLog = todays.find((l) => {
           const logUpdatedAt = new Date(l.updatedAt).getTime();
           // Allow a small buffer (e.g. 1 sec) or just strict inequality
           // If updated time is greater than generation time, it's a new verification
           return l.verified && l.timeIn && logUpdatedAt > qrGeneratedAtRef.current;
         });
 
-        if (anyVerified) {
+        if (verifiedLog) {
+          // Determine if it was a login (no timeOut) or logout (has timeOut)
+          const action = verifiedLog.timeOut ? 'logout' : 'login';
+          setQrAction(action);
           setShowScanSuccessModal(true);
           setPolling(false);
           return;
@@ -864,7 +868,10 @@ const StudentAttendanceTab: React.FC = () => {
       {showScanSuccessModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
-          onClick={() => setShowScanSuccessModal(false)}
+          onClick={() => {
+            setShowScanSuccessModal(false);
+            setQrAction(null);
+          }}
         >
           <div
             className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 text-center"
@@ -874,7 +881,9 @@ const StudentAttendanceTab: React.FC = () => {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Logged in successfully
+              {qrAction === 'logout' 
+                ? 'Logged out successfully' 
+                : 'Logged in successfully'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
               Your attendance was verified via QR scan.
@@ -883,6 +892,7 @@ const StudentAttendanceTab: React.FC = () => {
               className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               onClick={() => {
                 setShowScanSuccessModal(false);
+                setQrAction(null);
                 window.location.reload();
               }}
             >

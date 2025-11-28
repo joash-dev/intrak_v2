@@ -31,6 +31,9 @@ RUN npx prisma generate
 # Build TypeScript (using build config that allows implicit any for deployment)
 RUN npx tsc -p tsconfig.build.json
 
+# Copy templates to dist folder (templates are needed at runtime)
+RUN mkdir -p dist/templates && cp -r src/templates/* dist/templates/
+
 # Copy startup scripts (switch to root for mounting, but keep app owned by node)
 USER root
 COPY scripts/*.sh /app/scripts/

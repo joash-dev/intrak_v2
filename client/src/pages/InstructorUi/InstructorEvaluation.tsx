@@ -13,6 +13,9 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -528,9 +531,36 @@ const InstructorEvaluationsTab = () => {
 
               {/* Areas for Improvement */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Areas for Improvement (Optional)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Areas for Improvement (Optional)
+                  </label>
+                  {selectedStudent && Object.keys(criteriaLabels).every((key) => Number(evaluation[key as keyof typeof evaluation]) > 0) && (
+                    <AIGenerateButton
+                      onGenerate={async () => {
+                        const ratings: Record<string, number> = {};
+                        Object.keys(criteriaLabels).forEach((key) => {
+                          ratings[key] = Number(evaluation[key as keyof typeof evaluation]) || 0;
+                        });
+                        return aiService.generateImprovementSuggestions({
+                          studentId: selectedStudent.id,
+                          currentPerformance: evaluation.strengths || '',
+                          ratings,
+                        });
+                      }}
+                      onSuccess={(generatedText) => {
+                        setEvaluation({
+                          ...evaluation,
+                          improvements: generatedText,
+                        });
+                        toast.success('Improvement suggestions generated successfully');
+                      }}
+                      disabled={!selectedStudent || !Object.keys(criteriaLabels).every((key) => Number(evaluation[key as keyof typeof evaluation]) > 0)}
+                      size="sm"
+                      variant="outline"
+                    />
+                  )}
+                </div>
                 <textarea
                   value={evaluation.improvements}
                   onChange={(e) =>
@@ -547,9 +577,37 @@ const InstructorEvaluationsTab = () => {
 
               {/* Overall Comments */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Overall Comments <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Overall Comments <span className="text-red-500">*</span>
+                  </label>
+                  {selectedStudent && Object.keys(criteriaLabels).every((key) => Number(evaluation[key as keyof typeof evaluation]) > 0) && (
+                    <AIGenerateButton
+                      onGenerate={async () => {
+                        const ratings: Record<string, number> = {};
+                        Object.keys(criteriaLabels).forEach((key) => {
+                          ratings[key] = Number(evaluation[key as keyof typeof evaluation]) || 0;
+                        });
+                        const overallRating = parseFloat(calculateOverallRating());
+                        return aiService.generateInstructorEvaluationComments({
+                          studentId: selectedStudent.id,
+                          ratings,
+                          overallRating,
+                        });
+                      }}
+                      onSuccess={(generatedText) => {
+                        setEvaluation({
+                          ...evaluation,
+                          comments: generatedText,
+                        });
+                        toast.success('Overall comments generated successfully');
+                      }}
+                      disabled={!selectedStudent || !Object.keys(criteriaLabels).every((key) => Number(evaluation[key as keyof typeof evaluation]) > 0)}
+                      size="sm"
+                      variant="outline"
+                    />
+                  )}
+                </div>
                 <textarea
                   value={evaluation.comments}
                   onChange={(e) =>

@@ -20,6 +20,8 @@ import {
 } from "../../services/instructorService";
 import toast from "react-hot-toast";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
 const InstructorDocumentsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -847,11 +849,29 @@ const InstructorDocumentsTab = () => {
 
               {/* Feedback Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {reviewAction === "approve"
-                    ? "Feedback (Optional)"
-                    : "Rejection Reason (Required)"}
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {reviewAction === "approve"
+                      ? "Feedback (Optional)"
+                      : "Rejection Reason (Required)"}
+                  </label>
+                  {selectedDoc && reviewAction && (
+                    <AIGenerateButton
+                      onGenerate={async () => {
+                        return aiService.generateDocumentFeedback({
+                          documentId: selectedDoc.id,
+                          action: reviewAction,
+                        });
+                      }}
+                      onSuccess={(generatedText) => {
+                        setFeedback(generatedText);
+                        toast.success('Feedback generated successfully');
+                      }}
+                      size="sm"
+                      variant="outline"
+                    />
+                  )}
+                </div>
                 <textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}

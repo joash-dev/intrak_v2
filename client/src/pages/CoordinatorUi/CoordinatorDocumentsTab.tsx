@@ -18,6 +18,9 @@ import {
 import { documentService } from "../../services/documentService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import { formatDate, formatDateTime } from "../../services/localeService";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
+import toast from "react-hot-toast";
 
 interface Document {
   id: string;
@@ -827,11 +830,29 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
             {/* Remarks Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {reviewAction === "approve"
-                  ? "Approval Comments (Optional)"
-                  : "Rejection Reason (Required)"}
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {reviewAction === "approve"
+                    ? "Approval Comments (Optional)"
+                    : "Rejection Reason (Required)"}
+                </label>
+                {selectedDoc && reviewAction && (
+                  <AIGenerateButton
+                    onGenerate={async () => {
+                      return aiService.generateDocumentFeedback({
+                        documentId: selectedDoc.id,
+                        action: reviewAction,
+                      });
+                    }}
+                    onSuccess={(generatedText) => {
+                      setRemarks(generatedText);
+                      toast.success('Feedback generated successfully');
+                    }}
+                    size="sm"
+                    variant="outline"
+                  />
+                )}
+              </div>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}

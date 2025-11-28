@@ -116,18 +116,13 @@ const OverviewTab = ({
       : 0,
   };
 
-  console.log('📊 Dashboard evaluations:', data.evaluations);
-
   const avgRating =
     Array.isArray(data.evaluations) && data.evaluations.length > 0
       ? (() => {
-        console.log('📊 Calculating average from evaluations:', data.evaluations);
         const validEvaluations = data.evaluations.filter(e => e.rating != null && !isNaN(e.rating));
-        console.log('📊 Valid evaluations with ratings:', validEvaluations);
         if (validEvaluations.length === 0) return "N/A";
         const sum = validEvaluations.reduce((sum, e) => sum + e.rating, 0);
         const average = (sum / validEvaluations.length).toFixed(1);
-        console.log('📊 Average rating:', average);
         return average;
       })()
       : "N/A";
@@ -860,17 +855,12 @@ const StudentDashboard = () => {
     // Load saved profile photo from server
     const loadProfilePhoto = async () => {
       try {
-        console.log("Initial load - Loading profile photo from server...");
         const serverPhoto = await settingsService.getProfilePhoto();
-        console.log("Initial load - Server photo response:", serverPhoto);
         if (serverPhoto) {
           setProfilePhoto(serverPhoto);
-          console.log("Initial load - Profile photo set to:", serverPhoto);
-        } else {
-          console.log("Initial load - No profile photo found");
         }
       } catch (error) {
-        console.error("Initial load - Error loading profile photo:", error);
+        // Silently handle profile photo loading errors
       }
     };
     loadProfilePhoto();

@@ -16,6 +16,8 @@ import { supervisorService } from "../../services/supervisorService";
 import type { AttendanceLog } from "../../services/supervisorService";
 import toast from "react-hot-toast";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
 const SupervisorAttendance = () => {
   const [activeTab, setActiveTab] = useState("logs");
@@ -24,6 +26,9 @@ const SupervisorAttendance = () => {
   const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyAction, setVerifyAction] = useState<"approve" | "reject" | null>(null);
+  const [remarks, setRemarks] = useState("");
   const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLoading(true);
@@ -78,42 +83,49 @@ const SupervisorAttendance = () => {
   });
 
   const handleApprove = async (log: AttendanceLog) => {
-    if (
-      window.confirm(
-        `Approve attendance for ${log.studentName} on ${new Date(
-          log.date
-        ).toLocaleDateString()}?`
-      )
-    ) {
-      try {
-        await supervisorService.approveAttendance(log.id);
-        toast.success(`Attendance approved for ${log.studentName}`);
-        await fetchAttendanceLogs();
-      } catch (error) {
-        console.error("Error approving attendance:", error);
-        toast.error("Failed to approve attendance");
-      }
-    }
+    setSelectedLog(log);
+    setVerifyAction("approve");
+    setRemarks("");
+    setShowVerifyModal(true);
   };
 
   const handleReject = async (log: AttendanceLog) => {
-    const reason = prompt(
-      `Reject attendance for ${log.studentName}?\n\nPlease provide a reason:`
-    );
-    if (reason && reason.trim()) {
-      try {
-        await supervisorService.rejectAttendance(log.id, reason);
-        toast.success(`Attendance rejected for ${log.studentName}`);
-        await fetchAttendanceLogs();
-      } catch (error) {
-        console.error("Error rejecting attendance:", error);
-        toast.error("Failed to reject attendance");
+    setSelectedLog(log);
+    setVerifyAction("reject");
+    setRemarks("");
+    setShowVerifyModal(true);
+  };
+
+  const handleSubmitVerification = async () => {
+    if (!selectedLog || !verifyAction) return;
+
+    if (verifyAction === "reject" && !remarks.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    try {
+      if (verifyAction === "approve") {
+        await supervisorService.approveAttendance(selectedLog.id);
+        toast.success(`Attendance approved for ${selectedLog.studentName}`);
+      } else {
+        await supervisorService.rejectAttendance(selectedLog.id, remarks);
+        toast.success(`Attendance rejected for ${selectedLog.studentName}`);
       }
+      setShowVerifyModal(false);
+      setSelectedLog(null);
+      setVerifyAction(null);
+      setRemarks("");
+      await fetchAttendanceLogs();
+    } catch (error) {
+      console.error(`Error ${verifyAction === "approve" ? "approving" : "rejecting"} attendance:`, error);
+      toast.error(`Failed to ${verifyAction} attendance`);
     }
   };
 
   const [scannerKey, setScannerKey] = useState(0);
   const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
+  const [qrAction, setQrAction] = useState<'login' | 'logout' | null>(null);
   const [scannedToken, setScannedToken] = useState<string | null>(null);
   const [manualToken, setManualToken] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
@@ -184,13 +196,14 @@ const SupervisorAttendance = () => {
 
       try {
         const coords = await requestCoordinates();
-        await supervisorService.verifyAttendanceWithQR({
+        const response = await supervisorService.verifyAttendanceWithQR({
           token,
           latitude: coords?.latitude,
           longitude: coords?.longitude,
         });
         setScannedToken(token);
         setManualToken("");
+        setQrAction(response.action);
         toast.success("Attendance verified via QR code");
         setShowScanSuccessModal(true);
         await fetchAttendanceLogs();
@@ -540,7 +553,10 @@ const SupervisorAttendance = () => {
       {showScanSuccessModal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
-          onClick={() => setShowScanSuccessModal(false)}
+          onClick={() => {
+            setShowScanSuccessModal(false);
+            setQrAction(null);
+          }}
         >
           <div
             className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 text-center"
@@ -550,14 +566,19 @@ const SupervisorAttendance = () => {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Intern logged in successfully
+              {qrAction === 'logout' 
+                ? 'Intern logged out successfully' 
+                : 'Intern logged in successfully'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
               QR verification completed and attendance recorded.
             </p>
             <button
               className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              onClick={() => setShowScanSuccessModal(false)}
+              onClick={() => {
+                setShowScanSuccessModal(false);
+                setQrAction(null);
+              }}
             >
               Close
             </button>
@@ -857,7 +878,6 @@ const SupervisorAttendance = () => {
                   <button
                     onClick={() => {
                       handleApprove(selectedLog);
-                      setSelectedLog(null);
                     }}
                     className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
@@ -867,7 +887,6 @@ const SupervisorAttendance = () => {
                   <button
                     onClick={() => {
                       handleReject(selectedLog);
-                      setSelectedLog(null);
                     }}
                     className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
@@ -876,6 +895,99 @@ const SupervisorAttendance = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {showVerifyModal && selectedLog && verifyAction && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => {
+            setShowVerifyModal(false);
+            setSelectedLog(null);
+            setVerifyAction(null);
+            setRemarks("");
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              {verifyAction === "approve"
+                ? "Verify Attendance"
+                : "Reject Attendance"}
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {selectedLog.studentName}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {new Date(selectedLog.date).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {verifyAction === "approve"
+                    ? "Notes (Optional)"
+                    : "Reason (Required)"}
+                </label>
+                {selectedLog && verifyAction && (
+                  <AIGenerateButton
+                    onGenerate={async () => {
+                      return aiService.generateAttendanceNote({
+                        attendanceLogId: selectedLog.id,
+                        action: verifyAction,
+                      });
+                    }}
+                    onSuccess={(generatedText) => {
+                      setRemarks(generatedText);
+                      toast.success('Note generated successfully');
+                    }}
+                    size="sm"
+                    variant="outline"
+                  />
+                )}
+              </div>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                placeholder={
+                  verifyAction === "approve"
+                    ? "Add verification notes..."
+                    : "Enter reason for rejection..."
+                }
+              />
+            </div>
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowVerifyModal(false);
+                  setSelectedLog(null);
+                  setVerifyAction(null);
+                  setRemarks("");
+                }}
+                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitVerification}
+                disabled={verifyAction === "reject" && !remarks.trim()}
+                className={`px-6 py-2 rounded-lg transition-colors ${
+                  verifyAction === "approve"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {verifyAction === "approve" ? "Approve" : "Reject"}
+              </button>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { resolveTemplatePath } from '../utils/template.utils';
 
 const prisma = new PrismaClient();
 
@@ -41,10 +42,7 @@ type EvaluationExportBody = {
   termination?: TerminationData;
 };
 
-const TEMPLATE_FILE = path.resolve(
-  __dirname,
-  '../templates/11 INTERNSHIP EVALUATION FORM_2024.docx'
-);
+const TEMPLATE_FILE = resolveTemplatePath('11 INTERNSHIP EVALUATION FORM_2024.docx');
 
 const competencyPlaceholderMap: Record<string, string> = {
   abilityToLearn: 'ability_to_learn',

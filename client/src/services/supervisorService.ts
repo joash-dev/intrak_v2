@@ -409,9 +409,10 @@ class SupervisorService {
     token: string;
     latitude?: number;
     longitude?: number;
-  }): Promise<void> {
+  }): Promise<{ action: 'login' | 'logout'; log: any }> {
     try {
-      await api.post('/attendance/qr/verify', payload);
+      const response = await api.post('/attendance/qr/verify', payload);
+      return response.data;
     } catch (error) {
       console.error('Error verifying QR attendance:', error);
       throw error;

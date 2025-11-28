@@ -7,6 +7,7 @@ import { generateQRToken, verifyQRToken } from '../services/qr.service';
 import { auditLog } from '../services/audit.service';
 import { generateDTRPDF } from '../services/dtr.service';
 import { ensureStudentStartDate } from '../utils/student.utils';
+import { resolveTemplatePath } from '../utils/template.utils';
 import path from 'path';
 import fs from 'fs';
 import PizZip from 'pizzip';
@@ -15,17 +16,8 @@ import Docxtemplater from 'docxtemplater';
 const prisma = new PrismaClient();
 
 // Resolve template path - works in both development and production
-// In development: __dirname = src/controllers, so ../templates = src/templates
-// In production: __dirname = dist/controllers, but templates should be in src/templates
 const templateName = '14 INTERNSHIP TIMEFRAME_2024.docx';
-
-// Try src/templates first (most reliable)
-const srcTemplatePath = path.resolve(process.cwd(), 'server', 'src', 'templates', templateName);
-const distTemplatePath = path.resolve(__dirname, '../templates', templateName);
-
-const DTR_TEMPLATE_FILE = fs.existsSync(srcTemplatePath) 
-  ? srcTemplatePath 
-  : distTemplatePath;
+const DTR_TEMPLATE_FILE = resolveTemplatePath(templateName);
 
 const formatDate = (value?: Date | string | null): string => {
   if (!value) return 'N/A';
@@ -333,6 +325,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     });
 
     let log;
+    let action: 'login' | 'logout';
     if (openLog) {
       const now = new Date();
       const durationMinutes = Math.max(
@@ -355,6 +348,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
           }
         }
       });
+      action = 'logout';
     } else {
       log = await prisma.attendanceLog.create({
         data: {
@@ -371,6 +365,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
           }
         }
       });
+      action = 'login';
     }
 
     await prisma.qRToken.update({
@@ -382,7 +377,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       studentId: qrToken.studentId, token
     }, req);
 
-    res.json({ log });
+    res.json({ log, action });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'QR verification failed' });
@@ -552,12 +547,6 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     console.log('Template file exists:', fs.existsSync(DTR_TEMPLATE_FILE));
     console.log('__dirname:', __dirname);
     console.log('process.cwd():', process.cwd());
-    console.log('Checked paths:', {
-      srcPath: srcTemplatePath,
-      srcExists: fs.existsSync(srcTemplatePath),
-      distPath: distTemplatePath,
-      distExists: fs.existsSync(distTemplatePath)
-    });
     
     if (!fs.existsSync(DTR_TEMPLATE_FILE)) {
       console.error('Template file not found at:', DTR_TEMPLATE_FILE);

@@ -186,10 +186,36 @@ export const downloadTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Template is no longer available' });
     }
 
-    const filepath = path.resolve(template.filepath);
+    // Resolve filepath - handle both absolute and relative paths
+    let filepath: string;
+    if (path.isAbsolute(template.filepath)) {
+      filepath = template.filepath;
+    } else {
+      // If relative, resolve from process.cwd() or try multiple locations
+      const possiblePaths = [
+        path.resolve(process.cwd(), template.filepath),
+        path.resolve(process.cwd(), 'server', template.filepath),
+        path.resolve(__dirname, '../../', template.filepath),
+        template.filepath // Try as-is if it's already correct
+      ];
+      
+      filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
+    }
     
     if (!fs.existsSync(filepath)) {
-      return res.status(404).json({ message: 'Template file not found' });
+      console.error('Template file not found. Template ID:', id);
+      console.error('Stored filepath:', template.filepath);
+      console.error('Resolved filepath:', filepath);
+      console.error('process.cwd():', process.cwd());
+      console.error('__dirname:', __dirname);
+      return res.status(404).json({ 
+        message: 'Template file not found',
+        details: process.env.NODE_ENV === 'development' ? { 
+          storedPath: template.filepath, 
+          resolvedPath: filepath,
+          cwd: process.cwd()
+        } : undefined
+      });
     }
 
     // Log template download

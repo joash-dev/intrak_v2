@@ -21,6 +21,9 @@ import {
   announcementService,
   type Announcement,
 } from "../../services/announcementService";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
+import toast from "react-hot-toast";
 
 type AudienceOption =
   | "ALL"
@@ -612,9 +615,32 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Message <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Message <span className="text-red-500">*</span>
+                  </label>
+                  {newAnnouncement.title && newAnnouncement.audience && (
+                    <AIGenerateButton
+                      onGenerate={async () => {
+                        return aiService.generateAnnouncementContent({
+                          title: newAnnouncement.title,
+                          audience: newAnnouncement.audience,
+                          type: newAnnouncement.type,
+                        });
+                      }}
+                      onSuccess={(generatedText) => {
+                        setNewAnnouncement({
+                          ...newAnnouncement,
+                          content: generatedText,
+                        });
+                        toast.success('Announcement content generated successfully');
+                      }}
+                      disabled={!newAnnouncement.title || !newAnnouncement.audience}
+                      size="sm"
+                      variant="outline"
+                    />
+                  )}
+                </div>
                 <textarea
                   value={newAnnouncement.content}
                   onChange={(e) =>

@@ -3,6 +3,8 @@ import { FileText, Save, Download, Loader2, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api";
 import Skeleton from "../../components/Skeleton";
+import { aiService } from "../../services/aiService";
+import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
 interface WeekData {
   weekNumber: number;
@@ -280,10 +282,28 @@ const StudentWeeklyReport: React.FC = () => {
             </div>
 
             {/* Knowledge, Skills, Values Learned */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Knowledge, Skills, Values Learned
-              </label>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Knowledge, Skills, Values Learned
+                </label>
+                {(week.tasksAccomplished || week.knowledgeSkillsValues) && (
+                  <AIGenerateButton
+                    onGenerate={async () => {
+                      return aiService.generateWeeklyReportSummary({
+                        tasksAccomplished: week.tasksAccomplished || '',
+                        knowledgeSkillsValues: week.knowledgeSkillsValues || ''
+                      });
+                    }}
+                    onSuccess={(generatedText) => {
+                      handleWeekChange(week.weekNumber, "knowledgeSkillsValues", generatedText);
+                      toast.success('Summary generated successfully');
+                    }}
+                    size="sm"
+                    variant="outline"
+                  />
+                )}
+              </div>
               <textarea
                 rows={4}
                 placeholder="Enter knowledge, skills, and values learned..."

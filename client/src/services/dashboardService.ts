@@ -123,10 +123,6 @@ export const dashboardService = {
         comments: evaluation.comments
       }));
 
-      console.log('📊 Evaluations received:', evaluations);
-      console.log('📊 First evaluation:', evaluations[0]);
-      console.log('📊 Mapped evaluations:', mappedEvaluations);
-      console.log('📊 First mapped evaluation:', mappedEvaluations[0]);
 
       return mappedEvaluations;
     } catch (error) {
