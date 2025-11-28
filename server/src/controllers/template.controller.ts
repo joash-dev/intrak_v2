@@ -2,10 +2,12 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
+import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 import path from 'path';
 import fs from 'fs';
 
 const prisma = new PrismaClient();
+const uploadPath = getStoragePath();
 
 export const uploadTemplate = async (req: AuthRequest, res: Response) => {
   try {
@@ -40,11 +42,9 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Create templates directory if it doesn't exist
-    const templatesDir = path.join(process.cwd(), 'uploads', 'templates');
-    if (!fs.existsSync(templatesDir)) {
-      fs.mkdirSync(templatesDir, { recursive: true });
-    }
+    // Create templates directory if it doesn't exist (using persistent storage path)
+    const templatesDir = path.join(uploadPath, 'templates');
+    await ensureNASDirectoryExists(templatesDir);
 
     // Generate unique filename to avoid conflicts
     const timestamp = Date.now();
@@ -194,12 +194,14 @@ export const downloadTemplate = async (req: AuthRequest, res: Response) => {
     if (path.isAbsolute(normalizedPath)) {
       filepath = normalizedPath;
     } else {
-      // If relative, resolve from process.cwd() or try multiple locations
+      // If relative, resolve from storage path or try multiple locations
       const possiblePaths = [
+        path.resolve(uploadPath, normalizedPath), // Try from storage path first
+        path.resolve(uploadPath, 'templates', path.basename(normalizedPath)), // Try just filename in storage/templates
         path.resolve(process.cwd(), normalizedPath),
         path.resolve(process.cwd(), 'server', normalizedPath),
         path.resolve(__dirname, '../../', normalizedPath),
-        path.resolve(process.cwd(), 'uploads', 'templates', path.basename(normalizedPath)), // Try just filename in uploads/templates
+        path.resolve(process.cwd(), 'uploads', 'templates', path.basename(normalizedPath)), // Legacy: uploads/templates
         normalizedPath // Try as-is if it's already correct
       ];
       

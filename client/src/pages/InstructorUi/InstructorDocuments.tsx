@@ -85,10 +85,10 @@ const InstructorDocumentsTab = () => {
 
   const stats = {
     pending: documents.filter(
-      (d) => d.status !== "APPROVED" && d.status !== "REJECTED"
+      (d) => d.status === "PENDING"
     ).length,
     approved: documents.filter((d) => d.status === "APPROVED").length,
-    rejected: documents.filter((d) => d.status === "REJECTED").length,
+    rejected: documents.filter((d) => d.status === "REJECTED" || d.status === "RESUBMISSION_REQUESTED").length,
     total: documents.length,
   };
 

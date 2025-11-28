@@ -10,7 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
-import { validateNASConnection } from './config/nas';
+import { validateNASConnection, getStoragePath } from './config/nas';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -101,12 +101,14 @@ app.use('/api/auth', rateLimiter);
 app.use('/api/auth/login', loginRateLimiter);
 
 // Static files (uploaded documents) with CORS headers
+// Use storage path (supports both local and NAS)
+const storagePath = getStoragePath();
 app.use('/uploads', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static(path.join(__dirname, '../uploads')));
+}, express.static(storagePath));
 
 // Serve profile photos with proper headers
 app.use('/api/users/profile-photo', (req, res, next) => {
