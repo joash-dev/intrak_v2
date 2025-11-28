@@ -187,16 +187,20 @@ export const downloadTemplate = async (req: AuthRequest, res: Response) => {
     }
 
     // Resolve filepath - handle both absolute and relative paths
+    // Normalize the path first (handles ./ and ../)
+    const normalizedPath = path.normalize(template.filepath);
     let filepath: string;
-    if (path.isAbsolute(template.filepath)) {
-      filepath = template.filepath;
+    
+    if (path.isAbsolute(normalizedPath)) {
+      filepath = normalizedPath;
     } else {
       // If relative, resolve from process.cwd() or try multiple locations
       const possiblePaths = [
-        path.resolve(process.cwd(), template.filepath),
-        path.resolve(process.cwd(), 'server', template.filepath),
-        path.resolve(__dirname, '../../', template.filepath),
-        template.filepath // Try as-is if it's already correct
+        path.resolve(process.cwd(), normalizedPath),
+        path.resolve(process.cwd(), 'server', normalizedPath),
+        path.resolve(__dirname, '../../', normalizedPath),
+        path.resolve(process.cwd(), 'uploads', 'templates', path.basename(normalizedPath)), // Try just filename in uploads/templates
+        normalizedPath // Try as-is if it's already correct
       ];
       
       filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
