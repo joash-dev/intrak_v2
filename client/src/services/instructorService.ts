@@ -639,7 +639,7 @@ class InstructorService {
   // Approve a document
   async approveDocument(documentId: string, remarks?: string): Promise<boolean> {
     try {
-      const response = await api.put(`/documents/${documentId}/approve`, { remarks });
+      await api.put(`/documents/${documentId}/approve`, { remarks });
       return true;
     } catch (error) {
       console.error('Error approving document:', error);
@@ -650,7 +650,7 @@ class InstructorService {
   // Reject a document
   async rejectDocument(documentId: string, remarks?: string): Promise<boolean> {
     try {
-      const response = await api.put(`/documents/${documentId}/reject`, { remarks });
+      await api.put(`/documents/${documentId}/reject`, { remarks });
       return true;
     } catch (error) {
       console.error('Error rejecting document:', error);
