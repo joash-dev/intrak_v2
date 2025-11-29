@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { aiService } from '../services/aiService';
+import { getAIConfig } from '../config/ai.config';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -523,6 +524,29 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
     console.error('Error generating announcement content:', error);
     res.status(500).json({ 
       message: 'Failed to generate content', 
+      error: error.message 
+    });
+  }
+};
+
+// Get AI configuration status (for frontend to check if AI is enabled)
+export const getAIConfig = async (req: AuthRequest, res: Response) => {
+  try {
+    const config = getAIConfig();
+    
+    // Return only safe config (don't expose API key)
+    res.json({
+      enabled: config.enabled,
+      provider: config.provider,
+      model: config.model,
+      maxTokens: config.maxTokens,
+      temperature: config.temperature,
+      hasApiKey: !!config.apiKey, // Just indicate if key exists, don't expose it
+    });
+  } catch (error: any) {
+    console.error('Error getting AI config:', error);
+    res.status(500).json({ 
+      message: 'Failed to get AI configuration', 
       error: error.message 
     });
   }

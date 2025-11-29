@@ -11,6 +11,7 @@ import {
   generateInstructorEvaluationComments,
   generateImprovementSuggestions,
   generateAnnouncementContent,
+  getAIConfig,
 } from '../controllers/ai.controller';
 import rateLimit from 'express-rate-limit';
 
@@ -25,7 +26,10 @@ const aiRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// All AI routes require authentication and rate limiting
+// Get AI configuration status (public endpoint, no rate limiting)
+router.get('/config', authenticate, getAIConfig);
+
+// All other AI routes require authentication and rate limiting
 router.use(authenticate);
 router.use(aiRateLimiter);
 
