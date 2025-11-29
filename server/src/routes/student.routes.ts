@@ -19,6 +19,7 @@ router.get('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDIN
 router.post('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.sendPartnershipMessage);
 router.get('/partnership-checklist', authorize(['STUDENT']), studentController.getPartnershipChecklist);
 router.put('/partnership-checklist', authorize(['STUDENT']), studentController.updatePartnershipChecklist);
+router.put('/:id/saturday-preference', authorize(['STUDENT']), studentController.updateSaturdayPreference);
 router.post('/apply-company', authorize(['STUDENT']), studentController.applyToCompany);
 router.post('/request-company-partnership', authorize(['STUDENT']), studentController.requestCompanyPartnership);
 // Weekly report routes

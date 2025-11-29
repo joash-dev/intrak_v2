@@ -122,6 +122,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
     longitude: "",
     radiusMeters: 100,
     maxSlots: "0",
+    companyType: "PUBLIC" as "PUBLIC" | "PRIVATE",
+    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as string[],
   });
   const [companyForm, setCompanyForm] = useState(createEmptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
@@ -156,6 +158,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
           : "",
       radiusMeters: company.radiusMeters ?? 100,
       maxSlots: (company.maxSlots ?? 0).toString(),
+      companyType: (company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE",
+      workingDays: company.workingDays || (company.companyType === "PRIVATE" 
+        ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
     });
     setShowAddCompany(true);
   };
@@ -366,6 +372,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
           : undefined,
         radiusMeters: parseInt(companyForm.radiusMeters.toString()),
         maxSlots: Number.isNaN(maxSlotsValue) ? 0 : maxSlotsValue,
+        companyType: companyForm.companyType,
+        workingDays: companyForm.workingDays,
       };
 
       if (isEditingCompany && editingCompanyId) {
@@ -1206,7 +1214,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Add New Company
+                    {isEditingCompany ? "Edit Company" : "Add New Company"}
                   </h3>
                   <button
                     onClick={() => {
@@ -1320,6 +1328,107 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           placeholder="Enter contact number"
                         />
+                      </div>
+                    </div>
+
+                    {/* Company Type Field */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Company Type *
+                        </label>
+                        <div className="flex space-x-4">
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="companyType"
+                              value="PUBLIC"
+                              checked={companyForm.companyType === "PUBLIC"}
+                              onChange={(e) => {
+                                const newType = e.target.value as "PUBLIC" | "PRIVATE";
+                                setCompanyForm((prev) => ({
+                                  ...prev,
+                                  companyType: newType,
+                                  workingDays: newType === "PRIVATE"
+                                    ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                                    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                                }));
+                              }}
+                              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Public</span>
+                          </label>
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="companyType"
+                              value="PRIVATE"
+                              checked={companyForm.companyType === "PRIVATE"}
+                              onChange={(e) => {
+                                const newType = e.target.value as "PUBLIC" | "PRIVATE";
+                                setCompanyForm((prev) => ({
+                                  ...prev,
+                                  companyType: newType,
+                                  workingDays: newType === "PRIVATE"
+                                    ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                                    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                                }));
+                              }}
+                              className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Private</span>
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Private companies may include Saturday in working days.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Working Days Field */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Working Days *
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                            <label
+                              key={day}
+                              className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                                companyForm.workingDays.includes(day)
+                                  ? "bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700"
+                                  : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
+                              } ${
+                                companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={companyForm.workingDays.includes(day)}
+                                onChange={(e) => {
+                                  if (companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")) {
+                                    return; // Disable weekends for public companies
+                                  }
+                                  setCompanyForm((prev) => ({
+                                    ...prev,
+                                    workingDays: e.target.checked
+                                      ? [...prev.workingDays, day]
+                                      : prev.workingDays.filter((d) => d !== day),
+                                  }));
+                                }}
+                                disabled={companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")}
+                                className="w-4 h-4 text-purple-600 focus:ring-purple-500 rounded"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{day}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {companyForm.workingDays.length === 0 && (
+                          <p className="text-xs text-red-500 mt-1">At least one working day must be selected</p>
+                        )}
                       </div>
                     </div>
 

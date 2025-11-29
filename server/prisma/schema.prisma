@@ -16,6 +16,11 @@ enum Role {
   INDUSTRY_PARTNER
 }
 
+enum CompanyType {
+  PUBLIC
+  PRIVATE
+}
+
 enum DocumentType {
   APPLICATION_LETTER
   MOA
@@ -188,6 +193,7 @@ model Student {
   completedHours   Int       @default(0)
   weeklyReportData Json? // Store weekly report data as JSON
   jobDescription   String? // Job description for the internship
+  worksOnSaturday  Boolean   @default(false) // Saturday work preference (for private companies)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -213,7 +219,7 @@ enum ApplicationStatus {
 }
 
 model Company {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String
   address       String
   contactPerson String
@@ -221,13 +227,15 @@ model Company {
   contactNumber String
   latitude      Float?
   longitude     Float?
-  radiusMeters  Int      @default(100)
-  maxSlots      Int      @default(10)
+  radiusMeters  Int         @default(100)
+  maxSlots      Int         @default(10)
   description   String?
   industry      String?
   supervisorId  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  companyType   CompanyType @default(PUBLIC)
+  workingDays   String[]    @default(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   // Relations
   students     Student[]

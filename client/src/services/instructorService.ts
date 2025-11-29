@@ -41,6 +41,8 @@ export interface InstructorStudent {
   attendanceAlerts?: number;
   attendanceGapDays?: number;
   lastAttendanceDate?: string | null;
+  worksOnSaturday?: boolean;
+  companyType?: 'PUBLIC' | 'PRIVATE';
 }
 
 export interface InstructorActivity {

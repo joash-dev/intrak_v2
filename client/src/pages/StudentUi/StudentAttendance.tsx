@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Loader2,
   Download,
+  X,
 } from "lucide-react";
 import {
   attendanceService,
@@ -18,6 +19,7 @@ import {
   type AttendanceStats,
 } from "../../services/attendanceService";
 import { roundToOfficialTime } from "../../utils/attendanceCalculations";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 
@@ -51,6 +53,11 @@ const StudentAttendanceTab: React.FC = () => {
   const [manualTimeIn, setManualTimeIn] = useState("");
   const [manualTimeOut, setManualTimeOut] = useState("");
   const [manualRemarks, setManualRemarks] = useState("");
+  const [companyType, setCompanyType] = useState<'PUBLIC' | 'PRIVATE' | null>(null);
+  const [worksOnSaturday, setWorksOnSaturday] = useState<boolean>(false);
+  const [workingDays, setWorkingDays] = useState<string[]>([]);
+  const [showSaturdayPreferenceModal, setShowSaturdayPreferenceModal] = useState(false);
+  const [saturdayPreferenceLoading, setSaturdayPreferenceLoading] = useState(false);
 
   const qrGeneratedAtRef = useRef<number>(0);
   const showQRModalRef = useRef(false);
@@ -63,9 +70,10 @@ const StudentAttendanceTab: React.FC = () => {
 
   const CalendarIcon = Calendar;
 
-  // Fetch attendance data on component mount
+  // Fetch attendance data and student/company info on component mount
   useEffect(() => {
     fetchAttendanceData();
+    fetchStudentAndCompanyInfo();
   }, []);
 
   // Check time-in status when manual modal opens
@@ -102,6 +110,54 @@ const StudentAttendanceTab: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStudentAndCompanyInfo = async () => {
+    try {
+      // Fetch student profile to get company info and Saturday preference
+      const studentProfile = await api.get('/students/profile');
+      const profile = studentProfile.data;
+      
+      if (profile.companyType !== undefined) {
+        setCompanyType(profile.companyType);
+      }
+      if (profile.workingDays) {
+        setWorkingDays(profile.workingDays);
+      } else if (profile.companyType === 'PRIVATE') {
+        // Default for private companies
+        setWorkingDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']);
+      } else {
+        // Default for public companies
+        setWorkingDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+      }
+      if (profile.worksOnSaturday !== undefined) {
+        setWorksOnSaturday(profile.worksOnSaturday);
+      } else if (profile.companyType === 'PRIVATE' && profile.company) {
+        // Show Saturday preference modal if student is in private company and hasn't set preference
+        setShowSaturdayPreferenceModal(true);
+      }
+    } catch (error) {
+      console.error("Error fetching student/company info:", error);
+    }
+  };
+
+  const handleSaveSaturdayPreference = async (preference: boolean) => {
+    try {
+      setSaturdayPreferenceLoading(true);
+      // Get student ID from profile
+      const studentProfile = await api.get('/students/profile');
+      const studentId = studentProfile.data.id;
+      
+      await attendanceService.updateSaturdayPreference(studentId, preference);
+      setWorksOnSaturday(preference);
+      setShowSaturdayPreferenceModal(false);
+      toast.success("Saturday work preference saved successfully");
+    } catch (error: any) {
+      console.error("Error saving Saturday preference:", error);
+      toast.error(error.message || "Failed to save Saturday preference");
+    } finally {
+      setSaturdayPreferenceLoading(false);
     }
   };
 
@@ -184,6 +240,49 @@ const StudentAttendanceTab: React.FC = () => {
   const [showDayModal, setShowDayModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedDayLogs, setSelectedDayLogs] = useState<any[]>([]);
+
+  // Helper function to check if a day is an expected working day
+  const isExpectedWorkingDay = (day: number): boolean => {
+    if (!workingDays || workingDays.length === 0) {
+      // Default to Mon-Fri if no working days set
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dayOfWeek = date.getDay();
+      return dayOfWeek >= 1 && dayOfWeek <= 5;
+    }
+
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dayOfWeek = date.getDay();
+    
+    // Map day numbers to day names
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[dayOfWeek];
+    
+    // For private companies, check Saturday preference
+    if (companyType === 'PRIVATE' && dayName === 'Saturday') {
+      return worksOnSaturday;
+    }
+    
+    return workingDays.includes(dayName);
+  };
+
+  // Helper function to check if a day is absent (expected but no log)
+  const isAbsentDay = (day: number): boolean => {
+    if (!isExpectedWorkingDay(day)) return false;
+    
+    const dateStr = `${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    
+    // Check if there's any attendance log for this day
+    if (!Array.isArray(attendanceLogs)) return true;
+    
+    const hasLog = attendanceLogs.some((log) => {
+      const logDate = new Date(log.date).toISOString().split("T")[0];
+      return logDate === dateStr;
+    });
+    
+    return !hasLog;
+  };
 
   const getLogForDay = (day: number) => {
     const dateStr = `${currentDate.getFullYear()}-${String(
@@ -611,26 +710,52 @@ const StudentAttendanceTab: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-7 gap-1 sm:gap-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div
-                key={day}
-                className="text-center text-[10px] sm:text-sm font-medium text-gray-600 dark:text-gray-400 py-1 sm:py-2"
-              >
-                {day}
-              </div>
-            ))}
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => {
+              // Hide Saturday if company is public or private company but student doesn't work Saturday
+              const hideSaturday = day === "Sat" && (companyType === 'PUBLIC' || (companyType === 'PRIVATE' && !worksOnSaturday));
+              if (hideSaturday) {
+                return <div key={day} className="hidden"></div>;
+              }
+              return (
+                <div
+                  key={day}
+                  className="text-center text-[10px] sm:text-sm font-medium text-gray-600 dark:text-gray-400 py-1 sm:py-2"
+                >
+                  {day}
+                </div>
+              );
+            })}
 
             {days.map((day, index) => {
               const log = day ? getLogForDay(day) : null;
+              const isAbsent = day ? isAbsentDay(day) : false;
+              const isExpected = day ? isExpectedWorkingDay(day) : false;
+              
+              // Hide Saturday if company is public or private company but student doesn't work Saturday
+              let hideSaturday = false;
+              if (day) {
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const dayOfWeek = date.getDay();
+                hideSaturday = dayOfWeek === 6 && (companyType === 'PUBLIC' || (companyType === 'PRIVATE' && !worksOnSaturday));
+              }
+              
+              if (hideSaturday) {
+                return <div key={index} className="hidden"></div>;
+              }
+              
               return (
                 <div
                   key={index}
                   className={`aspect-square p-1 sm:p-2 rounded-lg text-center relative ${day
-                    ? log
-                      ? log.verified
-                        ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
-                        : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
-                      : "bg-gray-50 dark:bg-gray-700"
+                    ? isAbsent
+                      ? "bg-red-100 dark:bg-red-900 cursor-pointer hover:shadow-md"
+                      : log
+                        ? log.verified
+                          ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
+                          : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
+                        : isExpected
+                          ? "bg-gray-50 dark:bg-gray-700"
+                          : "bg-gray-50 dark:bg-gray-700 opacity-50"
                     : ""
                     }`}
                   onClick={() => {
@@ -645,6 +770,13 @@ const StudentAttendanceTab: React.FC = () => {
                       <div className="font-medium text-xs sm:text-base text-gray-900 dark:text-white">
                         {day}
                       </div>
+                      {isAbsent && (
+                        <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
+                          <div className="text-[10px] sm:text-xs font-semibold text-red-600 dark:text-red-400">
+                            Absent
+                          </div>
+                        </div>
+                      )}
                       {log && (
                         <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
                           <div className="font-semibold text-gray-700 dark:text-gray-300 hidden sm:block">
@@ -686,6 +818,10 @@ const StudentAttendanceTab: React.FC = () => {
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-100 dark:bg-yellow-900 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">Pending</span>
+            </div>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 dark:bg-red-900 rounded"></div>
+              <span className="text-gray-600 dark:text-gray-400">Absent</span>
             </div>
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 dark:bg-gray-700 rounded"></div>
@@ -1052,6 +1188,93 @@ const StudentAttendanceTab: React.FC = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saturday Work Preference Modal */}
+      {showSaturdayPreferenceModal && companyType === 'PRIVATE' && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => setShowSaturdayPreferenceModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Saturday Work Preference
+              </h3>
+              <button
+                onClick={() => setShowSaturdayPreferenceModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Your company operates on Saturdays. Do you work on Saturdays?
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <label className="flex items-center space-x-3 p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <input
+                  type="radio"
+                  name="saturdayPreference"
+                  value="yes"
+                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                  onChange={() => {}}
+                />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Yes, I work on Saturdays</span>
+              </label>
+              <label className="flex items-center space-x-3 p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <input
+                  type="radio"
+                  name="saturdayPreference"
+                  value="no"
+                  className="w-4 h-4 text-purple-600 focus:ring-purple-500"
+                  onChange={() => {}}
+                />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">No, I don't work on Saturdays</span>
+              </label>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowSaturdayPreferenceModal(false)}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const selected = (document.querySelector('input[name="saturdayPreference"]:checked') as HTMLInputElement)?.value;
+                  if (selected === 'yes') {
+                    handleSaveSaturdayPreference(true);
+                  } else if (selected === 'no') {
+                    handleSaveSaturdayPreference(false);
+                  } else {
+                    toast.error("Please select an option");
+                  }
+                }}
+                disabled={saturdayPreferenceLoading}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {saturdayPreferenceLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Preference</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

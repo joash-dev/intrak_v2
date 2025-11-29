@@ -17,6 +17,8 @@ export type Company = {
   description?: string;
   website?: string;
   supervisorId?: string | null;
+  companyType?: 'PUBLIC' | 'PRIVATE';
+  workingDays?: string[];
   supervisor?: {
     id: string;
     name: string;

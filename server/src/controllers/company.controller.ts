@@ -235,7 +235,9 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
       latitude,
       longitude,
       radiusMeters,
-      maxSlots
+      maxSlots,
+      companyType,
+      workingDays
     } = req.body;
 
     // Validate required fields
@@ -254,6 +256,28 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Company with this email already exists' });
     }
 
+    // Set default working days based on company type
+    let defaultWorkingDays: string[];
+    if (companyType === 'PRIVATE') {
+      defaultWorkingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    } else {
+      defaultWorkingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    }
+
+    // Use provided workingDays or default based on company type
+    const finalWorkingDays = workingDays && Array.isArray(workingDays) && workingDays.length > 0
+      ? workingDays
+      : defaultWorkingDays;
+
+    // Validate working days
+    const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const invalidDays = finalWorkingDays.filter(day => !validDays.includes(day));
+    if (invalidDays.length > 0) {
+      return res.status(400).json({ 
+        message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}` 
+      });
+    }
+
     const company = await prisma.company.create({
       data: {
         name,
@@ -265,6 +289,8 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
         longitude: longitude ? parseFloat(longitude) : null,
         radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
         maxSlots: maxSlots ? parseInt(maxSlots) : undefined,
+        companyType: companyType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
+        workingDays: finalWorkingDays,
       },
       include: {
         students: true,
@@ -310,7 +336,9 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
       latitude,
       longitude,
       radiusMeters,
-      maxSlots
+      maxSlots,
+      companyType,
+      workingDays
     } = req.body;
 
     // Check if company exists
@@ -336,19 +364,45 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Prepare update data
+    const updateData: any = {
+      name,
+      address,
+      contactPerson,
+      contactEmail,
+      contactNumber,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
+      radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
+      maxSlots: typeof maxSlots === 'number' ? maxSlots : maxSlots ? parseInt(maxSlots) : existingCompany.maxSlots,
+    };
+
+    // Update company type if provided
+    if (companyType !== undefined) {
+      updateData.companyType = companyType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC';
+    }
+
+    // Update working days if provided
+    if (workingDays !== undefined && Array.isArray(workingDays)) {
+      // Validate working days
+      const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const invalidDays = workingDays.filter(day => !validDays.includes(day));
+      if (invalidDays.length > 0) {
+        return res.status(400).json({ 
+          message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}` 
+        });
+      }
+      if (workingDays.length === 0) {
+        return res.status(400).json({ 
+          message: 'At least one working day must be selected' 
+        });
+      }
+      updateData.workingDays = workingDays;
+    }
+
     const company = await prisma.company.update({
       where: { id },
-      data: {
-        name,
-        address,
-        contactPerson,
-        contactEmail,
-        contactNumber,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
-        radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
-        maxSlots: typeof maxSlots === 'number' ? maxSlots : maxSlots ? parseInt(maxSlots) : existingCompany.maxSlots,
-      },
+      data: updateData,
       include: {
         students: true,
         supervisor: {

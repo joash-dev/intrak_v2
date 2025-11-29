@@ -58,6 +58,8 @@ const AdminCompanyManagement = () => {
     status: "ACTIVE",
     moaStatus: "PENDING",
     moaExpiry: "",
+    companyType: "PUBLIC" as "PUBLIC" | "PRIVATE",
+    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as string[],
   });
 
   const stats = {
@@ -95,6 +97,8 @@ const AdminCompanyManagement = () => {
       status: "ACTIVE",
       moaStatus: "PENDING",
       moaExpiry: "",
+      companyType: "PUBLIC" as "PUBLIC" | "PRIVATE",
+      workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as string[],
     });
   };
 
@@ -109,6 +113,8 @@ const AdminCompanyManagement = () => {
         latitude: undefined,
         longitude: undefined,
         radiusMeters: undefined,
+        companyType: formData.companyType,
+        workingDays: formData.workingDays,
       });
       toast.success("Company created successfully");
       setShowAddModal(false);
@@ -134,6 +140,8 @@ const AdminCompanyManagement = () => {
         status: formData.status,
         moaStatus: formData.moaStatus,
         moaExpiry: formData.moaExpiry,
+        companyType: formData.companyType,
+        workingDays: formData.workingDays,
       });
       toast.success("Company updated successfully");
       setShowEditModal(false);
@@ -172,6 +180,10 @@ const AdminCompanyManagement = () => {
       status: "ACTIVE", // Would need to be determined based on students
       moaStatus: "PENDING", // Mock data for now
       moaExpiry: "", // Mock data for now
+      companyType: (company as any).companyType || "PUBLIC",
+      workingDays: (company as any).workingDays || (company.companyType === "PRIVATE" 
+        ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
     });
     setShowEditModal(true);
   };
@@ -511,6 +523,101 @@ const AdminCompanyManagement = () => {
                 }
                 className="w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
+              
+              {/* Company Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company Type *
+                </label>
+                <div className="flex space-x-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="companyType"
+                      value="PUBLIC"
+                      checked={formData.companyType === "PUBLIC"}
+                      onChange={(e) => {
+                        const newType = e.target.value as "PUBLIC" | "PRIVATE";
+                        setFormData({
+                          ...formData,
+                          companyType: newType,
+                          workingDays: newType === "PRIVATE"
+                            ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                            : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                        });
+                      }}
+                      className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Public</span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="companyType"
+                      value="PRIVATE"
+                      checked={formData.companyType === "PRIVATE"}
+                      onChange={(e) => {
+                        const newType = e.target.value as "PUBLIC" | "PRIVATE";
+                        setFormData({
+                          ...formData,
+                          companyType: newType,
+                          workingDays: newType === "PRIVATE"
+                            ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                            : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                        });
+                      }}
+                      className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Private</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Working Days */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Working Days *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                    <label
+                      key={day}
+                      className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                        formData.workingDays.includes(day)
+                          ? "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700"
+                          : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      } ${
+                        formData.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.workingDays.includes(day)}
+                        onChange={(e) => {
+                          if (formData.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")) {
+                            return;
+                          }
+                          setFormData({
+                            ...formData,
+                            workingDays: e.target.checked
+                              ? [...formData.workingDays, day]
+                              : formData.workingDays.filter((d) => d !== day),
+                          });
+                        }}
+                        disabled={formData.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")}
+                        className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 rounded"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{day}</span>
+                    </label>
+                  ))}
+                </div>
+                {formData.workingDays.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">At least one working day must be selected</p>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <select
                   value={formData.status}

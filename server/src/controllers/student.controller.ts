@@ -3,6 +3,7 @@ import { PrismaClient, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
+import { calculateExpectedWorkingDays } from '../utils/attendanceUtils';
 
 const prisma = new PrismaClient();
 
@@ -127,7 +128,9 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
           select: { 
             id: true,
             name: true,
-            address: true
+            address: true,
+            companyType: true,
+            workingDays: true
           } 
         }
       }
@@ -173,7 +176,10 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       totalHours: student.totalHours,
       completedHours: completedHours,
       startDate: student.startDate,
-      endDate: student.endDate
+      endDate: student.endDate,
+      worksOnSaturday: student.worksOnSaturday || false,
+      companyType: student.company?.companyType || null,
+      workingDays: student.company?.workingDays || null
     });
   } catch (error) {
     console.error('Error fetching student profile:', error);
@@ -673,8 +679,16 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
       // Calculate attendance rate based on expected working days vs actual attendance
       let attendanceRate = 0;
       
+      // Get company information for working schedule
+      let company = null;
+      if (student.companyId) {
+        company = await prisma.company.findUnique({
+          where: { id: student.companyId },
+          select: { companyType: true, workingDays: true }
+        });
+      }
+      
       if (student.startDate && student.endDate) {
-        // Calculate expected working days (excluding weekends)
         const startDate = new Date(student.startDate);
         const endDate = new Date(student.endDate);
         const now = new Date();
@@ -683,18 +697,31 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         const effectiveEndDate = endDate > now ? now : endDate;
         
         let expectedWorkingDays = 0;
-        let currentDate = new Date(startDate);
         
-        while (currentDate <= effectiveEndDate) {
-          // Count only weekdays (Monday = 1, Sunday = 0)
-          const dayOfWeek = currentDate.getDay();
-          if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-            expectedWorkingDays++;
+          // Use company-specific working schedule if available
+        if (company && company.workingDays && company.workingDays.length > 0) {
+          // For private companies, use student's Saturday preference
+          const worksOnSaturday = company.companyType === 'PRIVATE' ? student.worksOnSaturday : undefined;
+          
+          expectedWorkingDays = calculateExpectedWorkingDays(
+            startDate,
+            effectiveEndDate,
+            company.workingDays,
+            worksOnSaturday
+          );
+        } else {
+          // Fallback to old logic (Mon-Fri only)
+          let currentDate = new Date(startDate);
+          while (currentDate <= effectiveEndDate) {
+            const dayOfWeek = currentDate.getDay();
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+              expectedWorkingDays++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
           }
-          currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        // Get actual attendance days
+        // Get actual attendance days (only on expected working days)
         const presentDays = await prisma.attendanceLog.count({
           where: { 
             studentId: student.id, 
@@ -1285,5 +1312,71 @@ export const updatePartnershipChecklist = async (req: AuthRequest, res: Response
   } catch (error) {
     console.error('Error updating partnership checklist:', error);
     res.status(500).json({ message: 'Failed to update checklist', error });
+  }
+};
+
+// Update student's Saturday work preference
+export const updateSaturdayPreference = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { worksOnSaturday } = req.body;
+
+    // Validate input
+    if (typeof worksOnSaturday !== 'boolean') {
+      return res.status(400).json({ message: 'worksOnSaturday must be a boolean value' });
+    }
+
+    // Get student with company information
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        company: {
+          select: { id: true, companyType: true }
+        }
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Check if student is assigned to a company
+    if (!student.companyId || !student.company) {
+      return res.status(400).json({ message: 'Student must be assigned to a company to set Saturday preference' });
+    }
+
+    // Only allow Saturday preference for private companies
+    if (student.company.companyType !== 'PRIVATE') {
+      return res.status(400).json({ message: 'Saturday work preference is only available for students in private companies' });
+    }
+
+    // Update student's Saturday preference
+    const updatedStudent = await prisma.student.update({
+      where: { id },
+      data: {
+        worksOnSaturday
+      },
+      include: {
+        company: {
+          select: { name: true, companyType: true }
+        }
+      }
+    });
+
+    await auditLog(req.user!.id, 'UPDATE_SATURDAY_PREFERENCE', {
+      studentId: id,
+      worksOnSaturday
+    }, req);
+
+    res.json({ 
+      message: 'Saturday work preference updated successfully',
+      student: {
+        id: updatedStudent.id,
+        worksOnSaturday: updatedStudent.worksOnSaturday
+      }
+    });
+  } catch (error: any) {
+    console.error('Error updating Saturday preference:', error);
+    res.status(500).json({ message: 'Failed to update Saturday preference', error: error.message });
   }
 };

@@ -266,6 +266,16 @@ class AttendanceService {
       throw new Error(errorMessage);
     }
   }
+
+  // Update student's Saturday work preference
+  async updateSaturdayPreference(studentId: string, worksOnSaturday: boolean): Promise<void> {
+    try {
+      await api.put(`/students/${studentId}/saturday-preference`, { worksOnSaturday });
+    } catch (error: any) {
+      console.error('Error updating Saturday preference:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update Saturday preference');
+    }
+  }
 }
 
 export const attendanceService = new AttendanceService();
