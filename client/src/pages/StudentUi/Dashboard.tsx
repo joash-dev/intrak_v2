@@ -33,6 +33,7 @@ import StudentCompanyPartnershipAssistance from "./StudentCompanyPartnershipAssi
 import Setting from "./Settings";
 import { dashboardService } from "../../services/dashboardService";
 import type { DashboardData } from "../../services/dashboardService";
+import { formatDuration } from "../../utils/attendanceCalculations";
 import { documentService } from "../../services/documentService";
 import { settingsService } from "../../services/settingsService";
 import {
@@ -476,7 +477,7 @@ const OverviewTab = ({
                         : "In Progress"}
                     </span>
                     <span className="font-medium text-purple-600">
-                      {Math.round(log.durationMinutes / 60)}h
+                      {formatDuration(log.durationMinutes)}
                     </span>
                     {log.verified ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />

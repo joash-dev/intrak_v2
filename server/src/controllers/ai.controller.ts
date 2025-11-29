@@ -73,7 +73,7 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
     const approved = student.documents.filter(d => d.status === 'APPROVED').length;
     const rejected = student.documents.filter(d => d.status === 'REJECTED').length;
 
-    console.log('🤖 Calling AI service...');
+    console.log(' Calling AI service...');
     const remarks = await aiService.generateEvaluationRemarks({
       competencyId,
       competencyTitle: competencyTitle || 'Competency',
@@ -93,7 +93,7 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
       },
     });
 
-    console.log('✅ AI remarks generated successfully, length:', remarks.length);
+    console.log(' AI remarks generated successfully, length:', remarks.length);
     res.json({ remarks });
   } catch (error: any) {
     console.error('Error generating evaluation remarks:', error);

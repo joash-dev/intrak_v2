@@ -33,8 +33,13 @@ export interface AttendanceStats {
  * - Examples: 25 mins → 30 mins, 36 mins → 30 mins, 85 mins (1h 25m) → 90 mins (1h 30m)
  */
 export function roundToOfficialTime(minutes: number): number {
-  // Round to nearest 30-minute interval
-  return Math.round(minutes / 30) * 30;
+  // Round DOWN to nearest 30-minute interval
+  // Anything less than 30 minutes rounds to 0
+  if (minutes < 30) {
+    return 0;
+  }
+  // Round down to nearest 30-minute interval (30, 60, 90, 120, etc.)
+  return Math.floor(minutes / 30) * 30;
 }
 
 /**

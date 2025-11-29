@@ -145,8 +145,13 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
 
     // Round to official time (30-minute increments)
     const roundToOfficialTime = (minutes: number): number => {
-      // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
-      return Math.round(minutes / 30) * 30;
+      // Round DOWN to nearest 30-minute interval
+      // Anything less than 30 minutes rounds to 0
+      if (minutes < 30) {
+        return 0;
+      }
+      // Round down to nearest 30-minute interval (30, 60, 90, 120, etc.)
+      return Math.floor(minutes / 30) * 30;
     };
 
     const totalMinutes = attendanceLogs.reduce((sum, log) => {
@@ -733,8 +738,13 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
 
       // Round to official time (30-minute increments)
       const roundToOfficialTime = (minutes: number): number => {
-        // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
-        return Math.round(minutes / 30) * 30;
+        // Round DOWN to nearest 30-minute interval
+        // Anything less than 30 minutes rounds to 0
+        if (minutes < 30) {
+          return 0;
+        }
+        // Round down to nearest 30-minute interval (30, 60, 90, 120, etc.)
+        return Math.floor(minutes / 30) * 30;
       };
 
       const totalMinutes = attendanceLogs.reduce((sum, log) => {
