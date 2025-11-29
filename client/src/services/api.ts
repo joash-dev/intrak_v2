@@ -97,20 +97,17 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      console.log('🔄 Token refresh triggered for:', originalRequest.url);
       originalRequest._retry = true;
 
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
-          console.log('❌ No refresh token available');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
           return Promise.reject(error);
         }
 
-        console.log('🔄 Attempting token refresh...');
         const response = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           { refreshToken }
@@ -122,10 +119,8 @@ api.interceptors.response.use(
         localStorage.setItem('refreshToken', newRefreshToken);
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        console.log('✅ Token refreshed, retrying request:', originalRequest.url);
         return api(originalRequest);
       } catch (refreshError) {
-        console.log('❌ Token refresh failed:', refreshError);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';

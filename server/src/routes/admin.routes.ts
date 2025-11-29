@@ -7,7 +7,13 @@ import * as userController from '../controllers/user.controller';
 
 const router = Router();
 
-// Apply authentication middleware to all routes
+// Public maintenance status check route (must be before authentication)
+router.get('/maintenance-status', adminController.checkMaintenanceStatus);
+
+// Emergency disable maintenance mode (public route for emergencies)
+router.post('/emergency-disable-maintenance', adminController.emergencyDisableMaintenance);
+
+// Apply authentication middleware to all routes below
 router.use(authenticate);
 
 // Admin profile routes
@@ -32,12 +38,6 @@ router.get('/system-info', adminController.getSystemInfo);
 router.post('/system/backup', adminController.createSystemBackup);
 router.post('/system/cache/clear', adminController.clearSystemCache);
 router.post('/system/restart', adminController.restartSystem);
-
-// Public maintenance status check route
-router.get('/maintenance-status', adminController.checkMaintenanceStatus);
-
-// Emergency disable maintenance mode (public route for emergencies)
-router.post('/emergency-disable-maintenance', adminController.emergencyDisableMaintenance);
 
 // Profile photo routes (reuse from user controller)
 router.get('/profile-photo', userController.getCurrentUserProfilePhoto);
