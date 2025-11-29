@@ -225,10 +225,8 @@ export async function generateDTRPDF(options: DTROptions): Promise<Buffer> {
     
     // Round to official time (30-minute increments)
     const roundToOfficialTime = (minutes: number): number => {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      const roundedMinutes = mins >= 30 ? 30 : 0;
-      return hours * 60 + roundedMinutes;
+      // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
+      return Math.round(minutes / 30) * 30;
     };
 
     const totalMinutes = logs.reduce((sum, log) => {

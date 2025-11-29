@@ -203,7 +203,8 @@ const SupervisorAttendance = () => {
         });
         setScannedToken(token);
         setManualToken("");
-        setQrAction(response.action);
+        // Ensure qrAction is properly set from backend response
+        setQrAction(response.action || 'login');
         toast.success("Attendance verified via QR code");
         setShowScanSuccessModal(true);
         await fetchAttendanceLogs();
@@ -228,6 +229,8 @@ const SupervisorAttendance = () => {
     setScannedToken(null);
     setScanError(null);
     setManualToken("");
+    setQrAction(null); // Reset action when restarting scanner
+    setShowScanSuccessModal(false); // Ensure modal is closed
     setScannerKey((prev) => prev + 1);
     isProcessingRef.current = false;
   }, [stopScanner]);
@@ -578,6 +581,8 @@ const SupervisorAttendance = () => {
               onClick={() => {
                 setShowScanSuccessModal(false);
                 setQrAction(null);
+                setScannedToken(null); // Clear scanned token when closing
+                restartScanner(); // Restart scanner for next scan
               }}
             >
               Close

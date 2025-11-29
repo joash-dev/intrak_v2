@@ -30,6 +30,7 @@ const StudentAttendanceTab: React.FC = () => {
   const [polling, setPolling] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [qrCode, setQrCode] = useState("");
+  const [qrToken, setQrToken] = useState<string>("");
   const [qrExpiresAt, setQrExpiresAt] = useState<string>("");
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceLog[]>([]);
   const [stats, setStats] = useState<AttendanceStats>({
@@ -53,6 +54,7 @@ const StudentAttendanceTab: React.FC = () => {
 
   const qrGeneratedAtRef = useRef<number>(0);
   const showQRModalRef = useRef(false);
+  const hadOpenLogRef = useRef<boolean>(false); // Track if there was an open log before QR generation
 
   // Keep ref in sync with state for polling closure
   useEffect(() => {
@@ -235,8 +237,26 @@ const StudentAttendanceTab: React.FC = () => {
   const handleGenerateQR = async () => {
     try {
       setQrLoading(true);
+      
+      // Check if there's an open log (timeIn without timeOut) before generating QR
+      try {
+        const logs = await attendanceService.getAttendanceLogs();
+        const today = new Date().toISOString().split("T")[0];
+        const todayLogs = logs.filter(
+          (l) => new Date(l.date).toISOString().split("T")[0] === today
+        );
+        // Check if there's an open log (has timeIn but no timeOut)
+        hadOpenLogRef.current = todayLogs.some(
+          (l) => l.timeIn && !l.timeOut
+        );
+      } catch (e) {
+        // If we can't check, assume no open log
+        hadOpenLogRef.current = false;
+      }
+      
       const qrData = await attendanceService.generateQRCode();
       setQrCode(qrData.qrCode);
+      setQrToken(qrData.token); // Store the token for manual entry
       setQrExpiresAt(qrData.expiresAt);
       qrGeneratedAtRef.current = Date.now();
       setShowQRModal(true);
@@ -273,11 +293,17 @@ const StudentAttendanceTab: React.FC = () => {
         });
 
         if (verifiedLog) {
-          // Determine if it was a login (no timeOut) or logout (has timeOut)
-          const action = verifiedLog.timeOut ? 'logout' : 'login';
+          // Determine if it was a login or logout
+          // If there was an open log (timeIn without timeOut) before QR generation,
+          // and the verified log now has a timeOut, it means they logged out
+          // Otherwise, if there was no open log and now there's a timeIn, it's a login
+          const action = hadOpenLogRef.current && verifiedLog.timeOut 
+            ? 'logout' 
+            : 'login';
           setQrAction(action);
           setShowScanSuccessModal(true);
           setPolling(false);
+          hadOpenLogRef.current = false; // Reset for next QR generation
           return;
         }
       } catch (e) {
@@ -627,7 +653,16 @@ const StudentAttendanceTab: React.FC = () => {
                             )}
                           </div>
                           <div className="text-[10px] sm:hidden font-medium text-gray-700 dark:text-gray-300">
-                            {Math.floor(log.durationMinutes / 60)}h
+                            {(() => {
+                              // Apply official time rounding for mobile view too
+                              const roundedMinutes = roundToOfficialTime(log.durationMinutes || 0);
+                              const hours = Math.floor(roundedMinutes / 60);
+                              const mins = roundedMinutes % 60;
+                              if (hours > 0) {
+                                return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+                              }
+                              return mins > 0 ? `${mins}m` : '0m';
+                            })()}
                           </div>
                           {log.verified ? (
                             <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-600 mx-auto mt-0.5 sm:mt-1" />
@@ -853,6 +888,17 @@ const StudentAttendanceTab: React.FC = () => {
                   ? new Date(qrExpiresAt).toLocaleTimeString()
                   : "N/A"}
               </p>
+              {/* Display token for manual entry */}
+              {qrToken && (
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    Token for manual entry:
+                  </p>
+                  <p className="text-xs font-mono text-gray-900 dark:text-white break-all select-all">
+                    {qrToken}
+                  </p>
+                </div>
+              )}
             </div>
             <button
               onClick={() => setShowQRModal(false)}

@@ -42,13 +42,9 @@ const getDayOfWeek = (value: Date | string): string => {
  * - If minutes < 30, round to 0 minutes (don't count)
  */
 const roundToOfficialTime = (minutes: number): number => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  
-  // If minutes >= 30, count as 30 minutes; otherwise, don't count (0 minutes)
-  const roundedMinutes = mins >= 30 ? 30 : 0;
-  
-  return hours * 60 + roundedMinutes;
+  // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
+  // Examples: 25 mins → 30 mins, 36 mins → 30 mins, 85 mins (1h 25m) → 90 mins (1h 30m)
+  return Math.round(minutes / 30) * 30;
 };
 
 const formatHours = (hoursDecimal: number): string => {

@@ -29,17 +29,12 @@ export interface AttendanceStats {
 
 /**
  * Round minutes to the nearest 30-minute increment (official time standard)
- * - If minutes >= 30, round to 30 minutes
- * - If minutes < 30, round to 0 minutes (don't count)
+ * - Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
+ * - Examples: 25 mins → 30 mins, 36 mins → 30 mins, 85 mins (1h 25m) → 90 mins (1h 30m)
  */
 export function roundToOfficialTime(minutes: number): number {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  
-  // If minutes >= 30, count as 30 minutes; otherwise, don't count (0 minutes)
-  const roundedMinutes = mins >= 30 ? 30 : 0;
-  
-  return hours * 60 + roundedMinutes;
+  // Round to nearest 30-minute interval
+  return Math.round(minutes / 30) * 30;
 }
 
 /**
@@ -71,6 +66,7 @@ export function calculateAttendanceStats(
     const roundedMinutes = roundToOfficialTime(log.durationMinutes || 0);
     return sum + roundedMinutes;
   }, 0);
+  // Keep as decimal to show accurate hours (e.g., 30 mins = 0.5 hours, not 1.0)
   const completedHours = completedMinutes / 60;
   
   // Calculate attendance metrics
@@ -92,7 +88,8 @@ export function calculateAttendanceStats(
     absentDays,
     attendanceRate,
     totalHours: requiredHours,
-    completedHours: Math.round(completedHours),
+    // Keep decimal precision (e.g., 0.5 for 30 minutes, 1.5 for 1 hour 30 minutes)
+    completedHours: Math.round(completedHours * 10) / 10, // Round to 1 decimal place
     verifiedDays,
     pendingDays,
     avgHoursPerDay: Math.round(avgHoursPerDay * 10) / 10,

@@ -145,16 +145,15 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
 
     // Round to official time (30-minute increments)
     const roundToOfficialTime = (minutes: number): number => {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      const roundedMinutes = mins >= 30 ? 30 : 0;
-      return hours * 60 + roundedMinutes;
+      // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
+      return Math.round(minutes / 30) * 30;
     };
 
     const totalMinutes = attendanceLogs.reduce((sum, log) => {
       return sum + roundToOfficialTime(log.durationMinutes);
     }, 0);
-    const completedHours = Math.round(totalMinutes / 60);
+    // Keep decimal precision (e.g., 30 mins = 0.5 hours, not 1.0)
+    const completedHours = Math.round((totalMinutes / 60) * 10) / 10;
 
     res.json({
       id: student.id,
@@ -734,16 +733,15 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
 
       // Round to official time (30-minute increments)
       const roundToOfficialTime = (minutes: number): number => {
-        const hours = Math.floor(minutes / 60);
-        const mins = minutes % 60;
-        const roundedMinutes = mins >= 30 ? 30 : 0;
-        return hours * 60 + roundedMinutes;
+        // Round to nearest 30-minute interval (0, 30, 60, 90, etc.)
+        return Math.round(minutes / 30) * 30;
       };
 
       const totalMinutes = attendanceLogs.reduce((sum, log) => {
         return sum + roundToOfficialTime(log.durationMinutes);
       }, 0);
-      const completedHours = Math.round(totalMinutes / 60);
+      // Keep decimal precision (e.g., 30 mins = 0.5 hours, not 1.0)
+      const completedHours = Math.round((totalMinutes / 60) * 10) / 10;
 
       const lastAttendanceDate = student.attendanceLogs[0]?.date
         ? new Date(student.attendanceLogs[0].date)
