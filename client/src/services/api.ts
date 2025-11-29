@@ -36,27 +36,19 @@ const resolveBaseURL = (): string => {
     const hostname = window.location.hostname;
     const origin = window.location.origin;
     
-    console.log('[api.ts] Detected hostname:', hostname, 'origin:', origin);
-    
     // Production domains - map to correct API server
     if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
-      const apiUrl = 'https://intrak.onrender.com/api';
-      console.log('[api.ts] Using production API URL:', apiUrl);
-      return apiUrl;
+      return 'https://intrak.onrender.com/api';
     }
     
     if (hostname === 'intrak-v2.onrender.com') {
-      const apiUrl = 'https://intrak-backend.onrender.com/api';
-      console.log('[api.ts] Using production API URL:', apiUrl);
-      return apiUrl;
+      return 'https://intrak-backend.onrender.com/api';
     }
     
     // If we're on a production-like domain but not localhost, try to infer API URL
     if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168')) {
       // Try to use same origin with /api
-      const inferredUrl = `${origin}/api`;
-      console.log('[api.ts] Inferred API URL from origin:', inferredUrl);
-      return inferredUrl;
+      return `${origin}/api`;
     }
   }
 
