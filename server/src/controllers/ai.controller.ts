@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { aiService } from '../services/aiService';
-import { getAIConfig } from '../config/ai.config';
+import { getAIConfig as getAIConfigFromConfig } from '../config/ai.config';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -532,7 +532,7 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
 // Get AI configuration status (for frontend to check if AI is enabled)
 export const getAIConfig = async (req: AuthRequest, res: Response) => {
   try {
-    const config = getAIConfig();
+    const config = getAIConfigFromConfig();
     
     // Return only safe config (don't expose API key)
     res.json({
