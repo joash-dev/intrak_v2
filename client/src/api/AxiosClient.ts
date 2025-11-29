@@ -1,6 +1,37 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Resolve API base URL based on environment
+const resolveBaseURL = (): string => {
+  // Check environment variable first
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Check for runtime API URL (for production builds)
+  if (typeof window !== 'undefined') {
+    const runtimeURL = (window as any).__INTRAK_API_URL || (window as any).__APP_API_URL;
+    if (runtimeURL) {
+      return runtimeURL.endsWith('/api') ? runtimeURL : `${runtimeURL}/api`;
+    }
+    
+    // Auto-detect based on hostname
+    const hostname = window.location.hostname;
+    
+    // Production domains
+    if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
+      return 'https://intrak.onrender.com/api';
+    }
+    
+    if (hostname === 'intrak-v2.onrender.com') {
+      return 'https://intrak-backend.onrender.com/api';
+    }
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = resolveBaseURL();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

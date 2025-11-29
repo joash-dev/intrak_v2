@@ -34,6 +34,12 @@ const resolveBaseURL = (): string => {
     }
 
     const hostname = window.location.hostname;
+    
+    // Production domains - map to correct API server
+    if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
+      return 'https://intrak.onrender.com/api';
+    }
+    
     if (hostname === 'intrak-v2.onrender.com') {
       return 'https://intrak-backend.onrender.com/api';
     }
