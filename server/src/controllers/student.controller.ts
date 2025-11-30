@@ -143,10 +143,17 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     }
 
     // Calculate completed hours from attendance logs with official time rounding
-    const attendanceLogs = await prisma.attendanceLog.findMany({
-      where: { studentId: student.id, verified: true },
-      select: { durationMinutes: true }
-    });
+    let attendanceLogs = [];
+    try {
+      attendanceLogs = await prisma.attendanceLog.findMany({
+        where: { studentId: student.id, verified: true },
+        select: { durationMinutes: true }
+      });
+    } catch (attendanceError) {
+      console.error('Error fetching attendance logs:', attendanceError);
+      // Continue with empty array if attendance logs fail
+      attendanceLogs = [];
+    }
 
     // Round to official time (30-minute increments)
     const roundToOfficialTime = (minutes: number): number => {
@@ -165,23 +172,28 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     // Keep decimal precision (e.g., 30 mins = 0.5 hours, not 1.0)
     const completedHours = Math.round((totalMinutes / 60) * 10) / 10;
 
+    // Safely access company properties
+    const company = student.company || null;
+    const companyType = company && (company as any).companyType ? (company as any).companyType : null;
+    const workingDays = company && (company as any).workingDays ? (company as any).workingDays : null;
+
     res.json({
       id: student.id,
-      name: student.user?.name || user.name,
-      email: student.user?.email || user.email,
-      studentNumber: student.studentNumber,
-      program: student.program,
-      year: student.year,
-      section: student.section,
-      company: student.company?.name || '',
+      name: student.user?.name || user.name || '',
+      email: student.user?.email || user.email || '',
+      studentNumber: student.studentNumber || '',
+      program: student.program || '',
+      year: student.year || null,
+      section: student.section || '',
+      company: company?.name || '',
       supervisor: student.supervisorName || '',
       totalHours: student.totalHours || 0,
       completedHours: completedHours,
-      startDate: student.startDate,
-      endDate: student.endDate,
+      startDate: student.startDate ? student.startDate.toISOString() : null,
+      endDate: student.endDate ? student.endDate.toISOString() : null,
       worksOnSaturday: (student as any).worksOnSaturday || false,
-      companyType: (student.company as any)?.companyType || null,
-      workingDays: (student.company as any)?.workingDays || null
+      companyType: companyType,
+      workingDays: workingDays
     });
   } catch (error: any) {
     console.error('Error fetching student profile:', error);
@@ -189,7 +201,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     const errorStack = process.env.NODE_ENV === 'development' ? error?.stack : undefined;
     res.status(500).json({ 
       message: 'Failed to fetch student profile', 
-      error: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? errorMessage : 'Internal server error',
       ...(errorStack && { stack: errorStack })
     });
   }

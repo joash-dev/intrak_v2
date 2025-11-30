@@ -57,39 +57,87 @@ export const getAllApplications = async (req: AuthRequest, res: Response) => {
 // Get student's applications
 export const getMyApplications = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const userId = req.user.id;
 
     // Get student record
-    const student = await prisma.student.findUnique({
-      where: { userId }
-    });
+    let student;
+    try {
+      student = await prisma.student.findUnique({
+        where: { userId }
+      });
+    } catch (dbError: any) {
+      console.error('Database error fetching student:', dbError);
+      return res.status(500).json({ 
+        message: 'Failed to fetch student record',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
 
     if (!student) {
       return res.status(404).json({ message: 'Student record not found' });
     }
 
-    const applications = await prisma.companyApplication.findMany({
-      where: {
-        studentId: student.id
-      },
-      include: {
-        company: true,
-        reviewer: {
-          select: {
-            name: true,
-            email: true
+    let applications = [];
+    try {
+      applications = await prisma.companyApplication.findMany({
+        where: {
+          studentId: student.id
+        },
+        include: {
+          company: true,
+          reviewer: {
+            select: {
+              name: true,
+              email: true
+            }
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+      });
+    } catch (appError: any) {
+      console.error('Error fetching applications:', appError);
+      // Return empty array instead of error if applications query fails
+      applications = [];
+    }
 
-    res.json({ applications });
+    // Format applications with null safety
+    const formattedApplications = applications.map(app => ({
+      id: app.id || '',
+      studentId: app.studentId || '',
+      companyId: app.companyId || '',
+      status: app.status || 'PENDING',
+      message: app.message || null,
+      rejectionReason: app.rejectionReason || null,
+      appliedAt: app.appliedAt ? app.appliedAt.toISOString() : null,
+      reviewedAt: app.reviewedAt ? app.reviewedAt.toISOString() : null,
+      reviewedBy: app.reviewedBy || null,
+      company: app.company ? {
+        id: app.company.id || '',
+        name: app.company.name || '',
+        address: app.company.address || null,
+        contactPerson: app.company.contactPerson || null,
+        email: app.company.email || null,
+        phone: app.company.phone || null
+      } : null,
+      reviewer: app.reviewer ? {
+        name: app.reviewer.name || '',
+        email: app.reviewer.email || ''
+      } : null
+    }));
+
+    res.json({ applications: formattedApplications });
   } catch (error: any) {
     console.error('Error fetching my applications:', error);
-    res.status(500).json({ message: 'Failed to fetch applications', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to fetch applications', 
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
+    });
   }
 };
 

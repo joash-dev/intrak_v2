@@ -353,12 +353,21 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
     }
     
     // Get current student
-    const student = await prisma.student.findUnique({
-      where: { userId: req.user.id },
-      include: {
-        user: { select: { name: true } }
-      }
-    });
+    let student;
+    try {
+      student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+        include: {
+          user: { select: { name: true } }
+        }
+      });
+    } catch (dbError: any) {
+      console.error('Database error fetching student:', dbError);
+      return res.status(500).json({ 
+        message: 'Failed to fetch student record',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
 
     console.log(`📄 Student found:`, student ? 'Yes' : 'No');
 
@@ -366,39 +375,46 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       console.log(`📄 Student record not found for user: ${req.user.id}`);
       return res.status(404).json({ 
         message: 'Student record not found',
-        debug: {
+        debug: process.env.NODE_ENV === 'development' ? {
           userId: req.user.id,
           userRole: req.user.role,
           userEmail: req.user.email
-        }
+        } : undefined
       });
     }
 
-    const documents = await prisma.document.findMany({
-      where: { studentId: student.id },
-      orderBy: { uploadedAt: 'desc' }
-    });
+    let documents = [];
+    try {
+      documents = await prisma.document.findMany({
+        where: { studentId: student.id },
+        orderBy: { uploadedAt: 'desc' }
+      });
+    } catch (docError: any) {
+      console.error('Error fetching documents:', docError);
+      // Return empty array instead of error if documents query fails
+      documents = [];
+    }
 
     console.log(`📄 Found ${documents.length} documents for student ${student.id}`);
 
-    // Format documents for client
+    // Format documents for client with null safety
     const formattedDocuments = documents.map(doc => ({
-      id: doc.id,
-      type: doc.type,
-      filename: doc.filename,
-      status: doc.status,
-      uploadedAt: doc.uploadedAt?.toISOString().split('T')[0] || null,
-      reviewedAt: doc.reviewedAt?.toISOString().split('T')[0] || null,
-      remarks: doc.remarks,
-      fileSize: doc.fileSize
+      id: doc.id || '',
+      type: doc.type || '',
+      filename: doc.filename || '',
+      status: doc.status || 'PENDING',
+      uploadedAt: doc.uploadedAt ? doc.uploadedAt.toISOString().split('T')[0] : null,
+      reviewedAt: doc.reviewedAt ? doc.reviewedAt.toISOString().split('T')[0] : null,
+      remarks: doc.remarks || null,
+      fileSize: doc.fileSize || 0
     }));
 
     res.json({ documents: formattedDocuments });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get student documents error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch documents', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
     });
   }
 };
