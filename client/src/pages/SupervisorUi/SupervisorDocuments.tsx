@@ -105,22 +105,22 @@ const SupervisorDocuments = () => {
     return (
       <div className="space-y-6 animate-pulse">
         {/* Header Skeleton */}
-        <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-2xl w-full"></div>
+        <div className="h-40 bg-gray-200 dark:bg-[#212124] rounded-2xl w-full"></div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div key={i} className="h-28 bg-gray-200 dark:bg-[#212124] rounded-xl"></div>
           ))}
         </div>
 
         {/* Filters Skeleton */}
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="h-16 bg-gray-200 dark:bg-[#212124] rounded-xl w-full"></div>
 
         {/* Documents Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div key={i} className="h-48 bg-gray-200 dark:bg-[#212124] rounded-xl"></div>
           ))}
         </div>
       </div>
@@ -138,7 +138,7 @@ const SupervisorDocuments = () => {
   return (
     <div className="space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-500 rounded-2xl p-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold mb-2">Student Documents</h1>
         <p className="text-blue-100 text-lg mb-1">Company: {companyName}</p>
         <p className="text-blue-100">
@@ -149,7 +149,7 @@ const SupervisorDocuments = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Documents */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs text-gray-600 dark:text-gray-400">
               Documents
@@ -167,7 +167,7 @@ const SupervisorDocuments = () => {
         </div>
 
         {/* Pending Review */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs text-gray-600 dark:text-gray-400">
               Pending Review
@@ -185,7 +185,7 @@ const SupervisorDocuments = () => {
         </div>
 
         {/* Approved */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs text-gray-600 dark:text-gray-400">Approved</p>
             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -201,7 +201,7 @@ const SupervisorDocuments = () => {
         </div>
 
         {/* Rejected */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs text-gray-600 dark:text-gray-400">Rejected</p>
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
@@ -218,7 +218,7 @@ const SupervisorDocuments = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -227,13 +227,13 @@ const SupervisorDocuments = () => {
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Types</option>
             {documentTypes.map((type) => (
@@ -245,7 +245,7 @@ const SupervisorDocuments = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Status</option>
             <option value="PENDING">Pending</option>
@@ -264,11 +264,11 @@ const SupervisorDocuments = () => {
         {filteredDocuments.map((doc) => (
           <div
             key={doc.id}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-start space-x-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   {getStatusIcon(doc.status)}
                 </div>
                 <div className="flex-1">
@@ -305,7 +305,7 @@ const SupervisorDocuments = () => {
             </div>
 
             {doc.remarks && (
-              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-[#212124] rounded-lg">
                 <p className="text-xs text-gray-500 mb-1">Remarks</p>
                 <p className="text-sm text-gray-900 dark:text-white">
                   {doc.remarks}
@@ -316,14 +316,14 @@ const SupervisorDocuments = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setSelectedDocument(doc)}
-                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               >
                 <Eye className="w-4 h-4" />
                 <span className="text-sm">View Details</span>
               </button>
               <button
                 onClick={() => handleDownload(doc)}
-                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 rounded-lg transition-colors"
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
                 <span className="text-sm">Download</span>
@@ -334,7 +334,7 @@ const SupervisorDocuments = () => {
       </div>
 
       {filteredDocuments.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+        <div className="text-center py-12 bg-white dark:bg-[#212124] rounded-xl">
           <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">No documents found</p>
         </div>
@@ -343,12 +343,12 @@ const SupervisorDocuments = () => {
       {/* Document Detail Modal */}
       {selectedDocument && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
           onClick={() => setSelectedDocument(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -365,7 +365,7 @@ const SupervisorDocuments = () => {
 
             <div className="space-y-4">
               <div className="flex items-center space-x-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center text-white font-semibold text-lg">
                   {selectedDocument.studentName
                     .split(" ")
                     .map((n) => n[0])
@@ -418,7 +418,7 @@ const SupervisorDocuments = () => {
               </div>
 
               {selectedDocument.remarks && (
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div className="p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                   <p className="text-sm text-gray-500 mb-2">Remarks</p>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {selectedDocument.remarks}
@@ -429,7 +429,7 @@ const SupervisorDocuments = () => {
               <div className="flex space-x-3 pt-4">
                 <button
                   onClick={() => handleDownload(selectedDocument)}
-                  className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Download className="w-5 h-5" />
                   <span>Download</span>

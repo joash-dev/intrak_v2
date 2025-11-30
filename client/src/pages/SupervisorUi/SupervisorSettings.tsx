@@ -283,7 +283,7 @@ const SupervisorSettings = () => {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">
             Loading settings...
           </p>
@@ -298,12 +298,12 @@ const SupervisorSettings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
             <nav className="space-y-1.5 sm:space-y-2">
               <button
                 onClick={() => setActiveTab("profile")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "profile"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -313,7 +313,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("password")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "password"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -323,7 +323,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("appearance")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "appearance"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -333,7 +333,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("notifications")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "notifications"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -343,7 +343,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("preferences")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "preferences"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -353,7 +353,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("supervisor")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "supervisor"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -363,7 +363,7 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("help")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "help"
-                    ? "bg-purple-600 text-white"
+                    ? "bg-blue-600 text-white"
                     : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
@@ -376,7 +376,7 @@ const SupervisorSettings = () => {
 
         {/* Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm">
             {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="space-y-4 sm:space-y-6">
@@ -387,7 +387,7 @@ const SupervisorSettings = () => {
                 {/* Profile Photo */}
                 <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
                   <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center">
                       {profilePhoto ? (
                         <img
                           src={profilePhoto}
@@ -415,7 +415,7 @@ const SupervisorSettings = () => {
                       Profile Photo
                     </h3>
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <label className="px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 cursor-pointer transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start">
+                      <label className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 cursor-pointer transition-colors text-xs sm:text-sm flex items-center justify-center sm:justify-start">
                         <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1.5 sm:mr-2" />
                         Upload Photo
                         <input
@@ -456,7 +456,7 @@ const SupervisorSettings = () => {
                             name: e.target.value,
                           })
                         }
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -476,7 +476,7 @@ const SupervisorSettings = () => {
                             email: e.target.value,
                           })
                         }
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -496,7 +496,7 @@ const SupervisorSettings = () => {
                             phone: e.target.value,
                           })
                         }
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -516,7 +516,7 @@ const SupervisorSettings = () => {
                             company: e.target.value,
                           })
                         }
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         disabled
                       />
                     </div>
@@ -538,7 +538,7 @@ const SupervisorSettings = () => {
                         })
                       }
                       rows={3}
-                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -547,7 +547,7 @@ const SupervisorSettings = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="flex items-center space-x-1.5 sm:space-x-2 px-4 sm:px-6 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 font-medium w-full sm:w-auto justify-center sm:justify-start"
+                    className="flex items-center space-x-1.5 sm:space-x-2 px-4 sm:px-6 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 font-medium w-full sm:w-auto justify-center sm:justify-start"
                   >
                     {saving ? (
                       <>
@@ -614,7 +614,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Enter your current password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -648,7 +648,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Enter your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -703,7 +703,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Confirm your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -752,7 +752,7 @@ const SupervisorSettings = () => {
                         passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
-                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-xl hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                     >
                       {saving ? (
                         <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
@@ -777,7 +777,7 @@ const SupervisorSettings = () => {
                   {Object.entries(notifications).map(([key, value]) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg"
                     >
                       <div>
                         <h3 className="font-medium text-gray-900 dark:text-white">
@@ -801,7 +801,7 @@ const SupervisorSettings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                       </label>
                     </div>
                   ))}
@@ -811,7 +811,7 @@ const SupervisorSettings = () => {
                   <button
                     onClick={handleSaveNotifications}
                     disabled={saving}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
                     {saving ? (
                       <>
@@ -856,7 +856,7 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -871,7 +871,7 @@ const SupervisorSettings = () => {
                       </div>
                       {theme === "light" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -880,7 +880,7 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -895,7 +895,7 @@ const SupervisorSettings = () => {
                       </div>
                       {theme === "dark" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -904,12 +904,12 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-500 rounded-xl flex items-center justify-center">
                           <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
@@ -919,7 +919,7 @@ const SupervisorSettings = () => {
                       </div>
                       {theme === "system" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -950,7 +950,7 @@ const SupervisorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, language: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="en">English</option>
                     </select>
@@ -965,7 +965,7 @@ const SupervisorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, dateFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -982,7 +982,7 @@ const SupervisorSettings = () => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, timeFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="12hr">12 Hour</option>
                       <option value="24hr">24 Hour</option>
@@ -996,7 +996,7 @@ const SupervisorSettings = () => {
                       localStorage.setItem("preferences", JSON.stringify(preferences));
                       toast.success("Preferences saved");
                     }}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Save className="w-5 h-5" />
                     <span>Save Preferences</span>
@@ -1018,7 +1018,7 @@ const SupervisorSettings = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Auto Approve Documents
@@ -1039,11 +1039,11 @@ const SupervisorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Require Manual Review
@@ -1064,11 +1064,11 @@ const SupervisorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Default Evaluation Reminder
@@ -1089,7 +1089,7 @@ const SupervisorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1099,7 +1099,7 @@ const SupervisorSettings = () => {
                     onClick={() => {
                       toast.success("Supervisor settings saved");
                     }}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Save className="w-5 h-5" />
                     <span>Save Settings</span>
@@ -1125,11 +1125,11 @@ const SupervisorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-4 sm:p-5"
+                    className="text-left w-full rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-600/30 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       </div>
                       <div>
                         <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
@@ -1218,10 +1218,10 @@ const SupervisorSettings = () => {
             {/* Help Modal */}
             {helpModal && (
               <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
+                className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
                 style={{ marginTop: 0 }}
               >
-                <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+                <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-[#212124] max-h-[90vh] overflow-y-auto">
                   <button
                     type="button"
                     onClick={() => setHelpModal(null)}

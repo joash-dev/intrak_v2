@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FileText, Download, Search, AlertCircle } from "lucide-react";
+import Skeleton from "../../components/Skeleton";
 import { templateService } from "../../services/templateService";
 import type { DocumentTemplate } from "../../services/templateService";
 import { toast } from "react-hot-toast";
@@ -94,8 +95,63 @@ const StudentTemplates: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="space-y-6 font-outfit">
+        {/* Header Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="w-12 h-12 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-64" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-10 flex-1 rounded-lg" />
+            <Skeleton className="h-10 w-40 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Templates Table Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto scrollbar-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-[#212124]">
+                <tr>
+                  {["Template Name", "Category", "Type", "Actions"].map((header) => (
+                    <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="w-5 h-5 rounded" />
+                        <Skeleton className="h-4 w-48" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-4 w-32" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-9 w-28 rounded-lg" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   }
@@ -103,9 +159,9 @@ const StudentTemplates: React.FC = () => {
   return (
     <div className="space-y-6 font-outfit">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
         <div className="flex items-center space-x-4">
-          <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
             <FileText className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -120,7 +176,7 @@ const StudentTemplates: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -130,7 +186,7 @@ const StudentTemplates: React.FC = () => {
                 placeholder="Search templates..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -138,7 +194,7 @@ const StudentTemplates: React.FC = () => {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
             >
               <option value="all">All Categories</option>
               {categoryOptions.map((option) => (
@@ -154,7 +210,7 @@ const StudentTemplates: React.FC = () => {
       {/* Templates by Category */}
       {Object.keys(groupedTemplates).length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -172,7 +228,7 @@ const StudentTemplates: React.FC = () => {
             ([category, categoryTemplates]) => (
               <div
                 key={category}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden"
+                className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden"
               >
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-gray-700">
                   <div className="flex items-center space-x-3">
@@ -209,7 +265,7 @@ const StudentTemplates: React.FC = () => {
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
+                    <thead className="bg-gray-50 dark:bg-[#212124]">
                       <tr>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                           Template Name
@@ -252,7 +308,7 @@ const StudentTemplates: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                               {templateService.getDocumentTypeDisplay(
                                 template.type
                               )}
@@ -267,7 +323,7 @@ const StudentTemplates: React.FC = () => {
                           <td className="px-6 py-4">
                             <button
                               onClick={() => handleDownload(template)}
-                              className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 text-sm font-medium"
+                              className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-sm font-medium"
                             >
                               <Download className="w-4 h-4" />
                               <span>Download</span>
@@ -285,7 +341,7 @@ const StudentTemplates: React.FC = () => {
       )}
 
       {/* Help Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
+      <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-700">
         <div className="flex items-start space-x-4">
           <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
             <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />

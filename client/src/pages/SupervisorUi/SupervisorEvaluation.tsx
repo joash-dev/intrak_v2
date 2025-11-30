@@ -738,22 +738,22 @@ const SupervisorEvaluation = () => {
     return (
       <div className="space-y-4 sm:space-y-6 animate-pulse">
         {/* Header Skeleton */}
-        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+        <div className="h-32 bg-gray-200 dark:bg-[#212124] rounded-xl sm:rounded-2xl w-full"></div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg sm:rounded-xl"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-[#212124] rounded-lg sm:rounded-xl"></div>
           ))}
         </div>
 
         {/* Tabs/Filter Skeleton */}
-        <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="h-12 bg-gray-200 dark:bg-[#212124] rounded-xl w-full"></div>
 
         {/* Interns List Skeleton */}
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-[#212124] rounded-xl w-full"></div>
           ))}
         </div>
       </div>
@@ -763,7 +763,7 @@ const SupervisorEvaluation = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5 sm:mb-2">Intern Evaluations</h1>
         <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1">Company: {companyName}</p>
         <p className="text-blue-100 text-xs sm:text-sm lg:text-base">
@@ -775,7 +775,7 @@ const SupervisorEvaluation = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         {/* Total Interns */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -785,12 +785,12 @@ const SupervisorEvaluation = () => {
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-0.5">
                 {stats.totalInterns}
               </p>
-              <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
                 Total interns
               </span>
             </div>
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
-              <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+              <Award className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
           {/* Desktop Layout */}
@@ -799,21 +799,21 @@ const SupervisorEvaluation = () => {
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 Total Interns
               </p>
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
-                <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+                <Award className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {stats.totalInterns}
             </p>
-            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
               Total interns
             </span>
           </div>
         </div>
 
         {/* Pending Evaluation */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -851,7 +851,7 @@ const SupervisorEvaluation = () => {
         </div>
 
         {/* Avg Rating */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700">
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
             <div className="flex-1 min-w-0">
@@ -890,13 +890,13 @@ const SupervisorEvaluation = () => {
       </div>
 
       {/* Evaluation Form Tabs */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="flex space-x-1 p-1" aria-label="Tabs">
             <button
               onClick={() => setActiveTab("form11")}
               className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form11"
-                ? "bg-purple-600 text-white"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
             >
@@ -905,7 +905,7 @@ const SupervisorEvaluation = () => {
             <button
               onClick={() => setActiveTab("form18")}
               className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form18"
-                ? "bg-purple-600 text-white"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
             >
@@ -914,7 +914,7 @@ const SupervisorEvaluation = () => {
             <button
               onClick={() => setActiveTab("form19b")}
               className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === "form19b"
-                ? "bg-purple-600 text-white"
+                ? "bg-blue-600 text-white"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
             >
@@ -928,7 +928,7 @@ const SupervisorEvaluation = () => {
       {activeTab === "form11" && (
         <div className="space-y-4 sm:space-y-6">
           {/* Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+          <div className="bg-white dark:bg-[#19191c] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
             <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -937,13 +937,13 @@ const SupervisorEvaluation = () => {
                   placeholder="Search interns..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -961,11 +961,11 @@ const SupervisorEvaluation = () => {
             {filteredInterns.map((intern) => (
               <div
                 key={intern.id}
-                className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+                className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
               >
                 <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                       {intern.name
                         .split(" ")
                         .map((n) => n[0])
@@ -988,7 +988,7 @@ const SupervisorEvaluation = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                  <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
                     <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
                       Hours
                     </p>
@@ -996,7 +996,7 @@ const SupervisorEvaluation = () => {
                       {intern.completedHours}/{intern.totalHours}
                     </p>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-md sm:rounded-lg p-2 sm:p-3">
+                  <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
                     <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
                       Attendance
                     </p>
@@ -1007,7 +1007,7 @@ const SupervisorEvaluation = () => {
                 </div>
 
                 {intern.lastEvaluation && (
-                  <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md sm:rounded-lg">
+                  <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md sm:rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
@@ -1031,7 +1031,7 @@ const SupervisorEvaluation = () => {
 
                 <button
                   onClick={() => handleStartEvaluation(intern)}
-                  className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>
@@ -1043,7 +1043,7 @@ const SupervisorEvaluation = () => {
           </div>
 
           {filteredInterns.length === 0 && (
-            <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
+            <div className="text-center py-8 sm:py-12 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl">
               <Award className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
               <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No interns found</p>
             </div>
@@ -1052,12 +1052,12 @@ const SupervisorEvaluation = () => {
           {/* Evaluation Form Modal */}
           {showEvaluationForm && selectedIntern && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+              className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4 overflow-y-auto"
               style={{ marginTop: "0px" }}
               onClick={() => !submitting && setShowEvaluationForm(false)}
             >
               <div
-                className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 my-4"
+                className="bg-white dark:bg-[#212124] rounded-xl max-w-3xl w-full p-6 my-4"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1100,7 +1100,7 @@ const SupervisorEvaluation = () => {
                                 {competency.title}
                               </h5>
                             </div>
-                            <span className="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-200">
+                            <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-200">
                               Rate 1 (lowest) - 5 (highest)
                             </span>
                           </div>
@@ -1145,8 +1145,8 @@ const SupervisorEvaluation = () => {
                                         }))
                                       }
                                       className={`w-12 h-12 rounded-lg border-2 transition-all ${state.rating === rating
-                                        ? "border-purple-600 bg-purple-600 text-white"
-                                        : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                        ? "border-blue-600 bg-blue-600 text-white"
+                                        : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                         }`}
                                     >
                                       {rating}
@@ -1202,7 +1202,7 @@ const SupervisorEvaluation = () => {
                                     }))
                                   }
                                   rows={3}
-                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                                   placeholder="Enter remarks for this competency..."
                                 />
                               </div>
@@ -1272,7 +1272,7 @@ const SupervisorEvaluation = () => {
                         value={overallComments}
                         onChange={(e) => setOverallComments(e.target.value)}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter overall evaluation comments..."
                       />
                     </div>
@@ -1299,7 +1299,7 @@ const SupervisorEvaluation = () => {
                               lackOfWork: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           due "only" for lack of work
@@ -1316,7 +1316,7 @@ const SupervisorEvaluation = () => {
                               absencesTardiness: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           too much absences and tardiness
@@ -1333,7 +1333,7 @@ const SupervisorEvaluation = () => {
                               violationRules: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           violation of Company Rules
@@ -1350,7 +1350,7 @@ const SupervisorEvaluation = () => {
                               disrespectful: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           disrespectful to co-trainee or personnel
@@ -1367,7 +1367,7 @@ const SupervisorEvaluation = () => {
                               unfavorableHabits: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           unfavorable work habits and practices
@@ -1384,7 +1384,7 @@ const SupervisorEvaluation = () => {
                               noInterest: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           does not demonstrate interest and desire to learn
@@ -1401,7 +1401,7 @@ const SupervisorEvaluation = () => {
                               altercation: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           altercation on the job
@@ -1419,7 +1419,7 @@ const SupervisorEvaluation = () => {
                                 other: e.target.checked,
                               }))
                             }
-                            className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                            className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                           />
                           <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                             other(s), please specify
@@ -1436,7 +1436,7 @@ const SupervisorEvaluation = () => {
                               }))
                             }
                             placeholder="Specify other reason..."
-                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-purple-500"
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
                           />
                         )}
                       </div>
@@ -1454,7 +1454,7 @@ const SupervisorEvaluation = () => {
                               futureEmployment: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           We would be pleased to employ this <em>Student-Trainee</em> in the future
@@ -1471,7 +1471,7 @@ const SupervisorEvaluation = () => {
                               needsImprovement: e.target.checked,
                             }))
                           }
-                          className="w-3.5 h-3.5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 flex-shrink-0"
+                          className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 dark:text-gray-300 leading-tight">
                           He/She needs to improve his/her performance.
@@ -1485,7 +1485,7 @@ const SupervisorEvaluation = () => {
                 <div className="flex flex-col md:flex-row gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => setShowEvaluationForm(false)}
-                    className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
+                    className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm md:text-base"
                     disabled={submitting}
                   >
                     Cancel
@@ -1493,7 +1493,7 @@ const SupervisorEvaluation = () => {
                   <button
                     onClick={handleExportOfficialForm}
                     disabled={!allCompetenciesRated || exporting}
-                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-blue-600 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                   >
                     {exporting ? (
                       <>
@@ -1510,7 +1510,7 @@ const SupervisorEvaluation = () => {
                   <button
                     onClick={handleSubmitEvaluation}
                     disabled={!allCompetenciesRated || submitting}
-                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                   >
                     {submitting ? (
                       <>
@@ -1530,10 +1530,10 @@ const SupervisorEvaluation = () => {
           )}
           {showSuccessModal && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
               style={{ margin: "0" }}
             >
-              <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 space-y-4 text-center">
+              <div className="bg-white dark:bg-[#212124] rounded-xl w-full max-w-md p-6 space-y-4 text-center">
                 <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
@@ -1544,7 +1544,7 @@ const SupervisorEvaluation = () => {
                   The evaluation has been submitted and marked as finished.
                 </p>
                 <button
-                  className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   onClick={() => setShowSuccessModal(false)}
                 >
                   Close
@@ -1561,7 +1561,7 @@ const SupervisorEvaluation = () => {
           {!selectedIntern ? (
             <>
               {/* Filters */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+              <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
                 <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -1570,7 +1570,7 @@ const SupervisorEvaluation = () => {
                       placeholder="Search interns..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -1585,11 +1585,11 @@ const SupervisorEvaluation = () => {
                 {filteredInterns.map((intern) => (
                   <div
                     key={intern.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+                    className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
                   >
                     <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                           {intern.name
                             .split(" ")
                             .map((n) => n[0])
@@ -1618,7 +1618,7 @@ const SupervisorEvaluation = () => {
 
                     <button
                       onClick={() => handleLoadForm18Feedback(intern)}
-                      className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
                       <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span>Provide Feedback</span>
@@ -1628,7 +1628,7 @@ const SupervisorEvaluation = () => {
               </div>
 
               {filteredInterns.length === 0 && (
-                <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl">
+                <div className="text-center py-8 sm:py-12 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl">
                   <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-3 sm:mb-4" />
                   <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
                     No interns found
@@ -1638,7 +1638,7 @@ const SupervisorEvaluation = () => {
             </>
           ) : (
             /* Feedback Form */
-            <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
@@ -1658,7 +1658,7 @@ const SupervisorEvaluation = () => {
 
               {form18Loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1696,8 +1696,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form18Ratings[criterion.key as keyof typeof form18Ratings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -1740,7 +1740,7 @@ const SupervisorEvaluation = () => {
                       value={form18Comments}
                       onChange={(e) => setForm18Comments(e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
                       placeholder="Enter any additional comments or suggestions..."
                     />
                   </div>
@@ -1749,7 +1749,7 @@ const SupervisorEvaluation = () => {
                   <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => setSelectedIntern(null)}
-                      className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="w-full md:flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                       disabled={form18Submitting || form18Exporting}
                     >
                       Cancel
@@ -1757,7 +1757,7 @@ const SupervisorEvaluation = () => {
                     <button
                       onClick={handleExportForm18}
                       disabled={form18Exporting || Object.values(form18Ratings).some((r) => r === 0)}
-                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-blue-600 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {form18Exporting ? (
                         <>
@@ -1774,7 +1774,7 @@ const SupervisorEvaluation = () => {
                     <button
                       onClick={handleSubmitForm18}
                       disabled={form18Submitting || Object.values(form18Ratings).some((r) => r === 0)}
-                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {form18Submitting ? (
                         <>
@@ -1813,10 +1813,10 @@ const SupervisorEvaluation = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-6 sm:p-8 shadow-sm border border-gray-200 dark:border-gray-700">
             {form19bLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
               </div>
             ) : (
               <div className="space-y-6">
@@ -1843,7 +1843,7 @@ const SupervisorEvaluation = () => {
                         type="text"
                         value={form19bInfo.unitDivision}
                         onChange={(e) => setForm19bInfo((prev) => ({ ...prev, unitDivision: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter unit/division"
                       />
                     </div>
@@ -1855,7 +1855,7 @@ const SupervisorEvaluation = () => {
                         type="number"
                         value={form19bInfo.age}
                         onChange={(e) => setForm19bInfo((prev) => ({ ...prev, age: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter age"
                         min="1"
                         max="120"
@@ -1868,7 +1868,7 @@ const SupervisorEvaluation = () => {
                       <select
                         value={form19bInfo.sex}
                         onChange={(e) => setForm19bInfo((prev) => ({ ...prev, sex: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select sex</option>
                         <option value="Male">Male</option>
@@ -1920,8 +1920,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -1965,8 +1965,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -2010,8 +2010,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -2055,8 +2055,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -2100,8 +2100,8 @@ const SupervisorEvaluation = () => {
                                 }))
                               }
                               className={`w-12 h-12 rounded-lg border-2 transition-all ${form19bRatings[criterion.key as keyof typeof form19bRatings] === rating
-                                ? "border-purple-600 bg-purple-600 text-white"
-                                : "border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-purple-400"
+                                ? "border-blue-600 bg-blue-600 text-white"
+                                : "border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-blue-400"
                                 }`}
                             >
                               {rating}
@@ -2122,7 +2122,7 @@ const SupervisorEvaluation = () => {
                   <button
                     onClick={handleExportForm19b}
                     disabled={form19bExporting || Object.values(form19bRatings).some((r) => r === 0)}
-                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-purple-600 text-purple-600 dark:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 border border-blue-600 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {form19bExporting ? (
                       <>
@@ -2139,7 +2139,7 @@ const SupervisorEvaluation = () => {
                   <button
                     onClick={handleSubmitForm19b}
                     disabled={form19bSubmitting || Object.values(form19bRatings).some((r) => r === 0)}
-                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full md:flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {form19bSubmitting ? (
                       <>
@@ -2162,8 +2162,8 @@ const SupervisorEvaluation = () => {
 
       {/* Form 18 Success Modal */}
       {form18SuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -2176,7 +2176,7 @@ const SupervisorEvaluation = () => {
               </p>
               <button
                 onClick={() => setForm18SuccessModal(false)}
-                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
                 Continue
               </button>
@@ -2187,8 +2187,8 @@ const SupervisorEvaluation = () => {
 
       {/* Form 19b Success Modal */}
       {form19bSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -2201,7 +2201,7 @@ const SupervisorEvaluation = () => {
               </p>
               <button
                 onClick={() => setForm19bSuccessModal(false)}
-                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
                 Continue
               </button>

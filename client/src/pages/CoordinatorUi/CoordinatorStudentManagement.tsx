@@ -24,6 +24,7 @@ import { documentService } from "../../services/documentService";
 import type { Document } from "../../services/documentService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -337,20 +338,74 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
   // Early return if data is not ready
   if (!students && !instructors && combinedLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+        </div>
 
         {/* Filters Skeleton */}
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        </div>
 
         {/* Table Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-          <div className="h-12 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"></div>
-          <div className="space-y-4 p-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div>
-            ))}
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-[#212124] border-b border-gray-200 dark:border-gray-600">
+                <tr>
+                  {["Student", "Company", "Instructor", "Status", "Actions"].map((header) => (
+                    <th key={header} className="px-6 py-3 text-left">
+                      <Skeleton className="h-4 w-20" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-4 w-28" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="w-8 h-8 rounded-lg" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -362,7 +417,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden">
+      <div className="group relative bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 sm:space-y-4 md:space-y-0">
@@ -409,7 +464,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
       </div>
 
       {/* Filters */}
-      <div className="group relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-400/10 transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden">
+      <div className="group relative bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-400/10 transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-blue-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
@@ -420,14 +475,14 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                 placeholder="Search students, companies, or student ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
+              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -439,7 +494,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
             <select
               value={instructorFilter}
               onChange={(e) => setInstructorFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
+              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
             >
               <option value="all">All Assignments</option>
               <option value="assigned">Assigned</option>
@@ -485,8 +540,8 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
       {/* Student Details Modal */}
       {showStudentDetailsModal && detailStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -529,7 +584,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                   value={detailCompanyId}
                   onChange={(e) => setDetailCompanyId(e.target.value)}
                   disabled={companiesLoading}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">No Company (Unassigned)</option>
                   {companies.map((company: Company) => (
@@ -553,7 +608,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
               {/* Partnership Communication */}
               {detailStudent && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                   <PartnershipMessageThread
                     studentId={detailStudent.id}
                     studentName={detailStudent.name}
@@ -615,10 +670,10 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
         </div>
       )}
       {/* Desktop Table View - Hidden on Mobile */}
-      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-gray-50 dark:bg-[#212124]">
               <tr>
                 {bulkOperationsEnabled && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -653,7 +708,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-[#212124] divide-y divide-gray-200 dark:divide-gray-700">
               {combinedLoading ? (
                 <tr>
                   <td colSpan={columnCount} className="px-6 py-12 text-center">
@@ -691,7 +746,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                     )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
                           {student.name
                             .split(" ")
                             .map((n) => n[0])
@@ -794,14 +849,14 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
       {/* Mobile Card View - Hidden on Desktop */}
       <div className="lg:hidden space-y-3">
         {combinedLoading ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-12 text-center shadow-sm border border-gray-100 dark:border-gray-700">
             <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
             <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
               Loading students...
             </p>
           </div>
         ) : filteredStudents.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-12 text-center shadow-sm border border-gray-100 dark:border-gray-700">
             <Users className="w-12 h-12 mx-auto text-gray-400" />
             <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
               No students found
@@ -811,11 +866,11 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
           filteredStudents.map((student: Student) => (
             <div
               key={student.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
+              className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
             >
               {/* Student Header */}
               <div className="flex items-start space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                   {student.name
                     .split(" ")
                     .map((n) => n[0])
@@ -910,8 +965,8 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
       {/* Assignment Modal */}
       {showAssignModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
               <UserCheck className="w-6 h-6 text-green-600" />
             </div>
@@ -931,7 +986,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               <select
                 value={selectedInstructor}
                 onChange={(e) => setSelectedInstructor(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="">Choose an instructor...</option>
                 {(instructors || []).map((instructor: Instructor) => (
@@ -971,8 +1026,8 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
       {/* Mass Assign Modal */}
       {bulkOperationsEnabled && showMassAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4">
               <UserCheck className="w-6 h-6 text-blue-600" />
             </div>
@@ -994,7 +1049,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               <select
                 value={selectedInstructor}
                 onChange={(e) => setSelectedInstructor(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Choose an instructor...</option>
                 {(instructors || []).map((instructor: Instructor) => (
@@ -1009,7 +1064,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Selected Students:
               </h4>
-              <div className="max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+              <div className="max-h-32 overflow-y-auto bg-gray-50 dark:bg-[#212124] rounded-lg p-3">
                 {selectedStudents.map((studentId) => {
                   const student = filteredStudents.find(
                     (s: Student) => s.id === studentId
@@ -1055,8 +1110,8 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
       {/* Unassign Confirmation Modal */}
       {showUnassignModal && selectedStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <UserX className="w-6 h-6 text-red-600" />
             </div>
@@ -1211,7 +1266,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1316,7 +1371,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
           setReviewAction(null);
           setRemarks("");
         }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {reviewAction === "approve" ? "Approve" : "Reject"} Document
             </h3>
@@ -1327,7 +1382,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder={reviewAction === "approve" ? "Optional remarks..." : "Reason for rejection (required)"}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-4"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white mb-4"
               rows={4}
             />
             <div className="flex items-center space-x-3">
@@ -1357,14 +1412,14 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
 
       {/* Preview Modal */}
       {selectedDoc && previewUrl && !reviewAction && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" onClick={() => {
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" onClick={() => {
           setSelectedDoc(null);
           if (previewUrl) {
             window.URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
           }
         }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-3">
                 <FileText className="w-6 h-6 text-indigo-600" />

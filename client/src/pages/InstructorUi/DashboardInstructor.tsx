@@ -15,7 +15,6 @@ import {
   Menu,
   X,
   LogOut,
-  Settings,
   Home,
   FileCheck,
   Calendar,
@@ -163,7 +162,7 @@ const InstructorDashboard = ({
       case "attendance":
         return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
       case "task":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
+        return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
       case "evaluation":
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
       default:
@@ -244,7 +243,7 @@ const InstructorDashboard = ({
   return (
     <div className="space-y-8">
       {/* Header Section - Responsive Dynamic Design */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 text-white shadow-2xl">
         {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-64 md:w-96 h-64 md:h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
@@ -272,7 +271,7 @@ const InstructorDashboard = ({
                   Dashboard Overview
                 </h1>
               </div>
-              <p className="text-purple-100 text-sm font-medium max-w-xl">
+              <p className="text-blue-100 text-sm font-medium max-w-xl">
                 Monitor and evaluate BS Computer Engineering students
               </p>
             </div>
@@ -285,7 +284,7 @@ const InstructorDashboard = ({
                   <p className="text-white text-3xl font-bold leading-none mb-1">
                     {stats.totalStudents}
                   </p>
-                  <p className="text-purple-100 text-xs font-medium whitespace-nowrap">
+                  <p className="text-blue-100 text-xs font-medium whitespace-nowrap">
                     Total Students
                   </p>
                 </div>
@@ -307,7 +306,7 @@ const InstructorDashboard = ({
                   Dashboard
                 </h1>
               </div>
-              <p className="text-purple-100 text-xs font-medium">
+              <p className="text-blue-100 text-xs font-medium">
                 Monitor and evaluate students
               </p>
             </div>
@@ -319,7 +318,7 @@ const InstructorDashboard = ({
                 <p className="text-white text-lg font-bold leading-none mb-0.5">
                   {stats.totalStudents}
                 </p>
-                <p className="text-purple-100 text-[9px] font-medium whitespace-nowrap">
+                <p className="text-blue-100 text-[9px] font-medium whitespace-nowrap">
                   Total Students
                 </p>
               </div>
@@ -331,10 +330,10 @@ const InstructorDashboard = ({
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
       </div>
 
-      {/* Stats Cards - Desktop Grid View */}
+        {/* Stats Cards - Desktop Grid View */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Active Students Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">
@@ -347,14 +346,14 @@ const InstructorDashboard = ({
                 Currently Active
               </p>
             </div>
-            <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
               <Users className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
         {/* Average Attendance Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">
@@ -374,7 +373,7 @@ const InstructorDashboard = ({
         </div>
 
         {/* Average Rating Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">
@@ -394,7 +393,7 @@ const InstructorDashboard = ({
         </div>
 
         {/* At Risk Students Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">
@@ -417,10 +416,10 @@ const InstructorDashboard = ({
       {/* Stats Cards - Mobile Stacked View */}
       <div className="md:hidden space-y-3">
         {/* Active Students Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -439,7 +438,7 @@ const InstructorDashboard = ({
         </div>
 
         {/* Average Attendance Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -461,7 +460,7 @@ const InstructorDashboard = ({
         </div>
 
         {/* Average Rating Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1">
               <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -483,7 +482,7 @@ const InstructorDashboard = ({
         </div>
 
         {/* At Risk Students Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1">
               <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -508,7 +507,7 @@ const InstructorDashboard = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Students List */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 sm:space-y-4 md:space-y-0 mb-4 sm:mb-6">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
@@ -526,13 +525,13 @@ const InstructorDashboard = ({
                     placeholder="Search by name or student ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                    className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                   />
                 </div>
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 w-full md:w-auto md:min-w-[140px]"
+                  className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full md:w-auto md:min-w-[140px]"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -548,13 +547,13 @@ const InstructorDashboard = ({
                 filteredStudents.slice(0, 3).map((student) => (
                   <div
                     key={student.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800"
+                    className="border border-gray-200 dark:border-gray-700 rounded-xl p-3 sm:p-4 hover:shadow-md transition-all duration-200 bg-white dark:bg-[#212124]"
                   >
                     {/* Student Header - Mobile Optimized */}
                     <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
                         <div className="relative flex-shrink-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                             {student.avatar}
                           </div>
                           <div className="absolute -bottom-0.5 -left-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-yellow-500 rounded-full border-2 border-white dark:border-gray-800"></div>
@@ -683,8 +682,8 @@ const InstructorDashboard = ({
                 ))
               ) : (
                 <div className="text-center py-16">
-                  <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <Users className="w-12 h-12 text-purple-600 dark:text-purple-400" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/20 dark:to-blue-800/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <Users className="w-12 h-12 text-blue-600 dark:text-blue-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                     No Students Assigned
@@ -694,7 +693,7 @@ const InstructorDashboard = ({
                   </p>
                   <button
                     onClick={() => setActiveTab("students")}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
                   >
                     <Users className="w-5 h-5 mr-2" />
                     Manage Students
@@ -706,7 +705,7 @@ const InstructorDashboard = ({
             <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
               <button
                 onClick={() => setActiveTab("students")}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
               >
                 {filteredStudents.length > 3
                   ? "View More Students"
@@ -722,7 +721,7 @@ const InstructorDashboard = ({
         {/* Right Sidebar */}
         <div className="space-y-6">
           {/* Announcements */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
                 <span className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -780,10 +779,10 @@ const InstructorDashboard = ({
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <h3 className="text-xl font-bold mb-6 flex items-center text-gray-900 dark:text-white">
-              <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-3">
-                <Award className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                <Award className="w-5 h-5 text-blue-600 dark:text-blue-300" />
               </div>
               Quick Actions
             </h3>
@@ -822,16 +821,16 @@ const InstructorDashboard = ({
               </button>
               <button
                 onClick={() => setActiveTab("templates")}
-                className="w-full flex items-center space-x-4 px-4 py-3 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-xl transition-all duration-200 border border-purple-200 dark:border-purple-700 group"
+                className="w-full flex items-center space-x-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-all duration-200 border border-blue-200 dark:border-blue-700 group"
               >
-                <div className="p-2 bg-purple-500 rounded-lg group-hover:bg-purple-600 transition-colors">
+                <div className="p-2 bg-blue-500 rounded-lg group-hover:bg-blue-600 transition-colors">
                   <Upload className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-semibold block text-purple-900 dark:text-purple-100">
+                  <span className="text-sm font-semibold block text-blue-900 dark:text-blue-100">
                     Document Templates
                   </span>
-                  <span className="text-xs text-purple-600 dark:text-purple-300">
+                  <span className="text-xs text-blue-600 dark:text-blue-300">
                     Manage templates
                   </span>
                 </div>
@@ -893,17 +892,17 @@ const InstructorDashboard = ({
           </div>
 
           {/* Recent Activities (Compact) */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center space-x-2">
-                <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                <span className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <Activity className="w-4 h-4 text-white" />
                 </span>
                 <span>Recent Activities</span>
               </h3>
               <button
                 onClick={() => setActiveTab("monitoring")}
-                className="text-sm font-medium text-purple-600 dark:text-purple-300 hover:text-purple-700"
+                className="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700"
               >
                 View all
               </button>
@@ -951,7 +950,7 @@ const InstructorDashboard = ({
       {/* Student Details Modal */}
       {showStudentModal && selectedStudent && (
         <div
-          className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4"
           onClick={() => setShowStudentModal(false)}
           style={{
             position: "fixed",
@@ -965,7 +964,7 @@ const InstructorDashboard = ({
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in zoom-in-95 duration-200 flex flex-col"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in zoom-in-95 duration-200 flex flex-col"
             onClick={(e) => e.stopPropagation()}
             style={{
               maxHeight: "90vh",
@@ -990,7 +989,7 @@ const InstructorDashboard = ({
               {/* Student Header */}
               <div className="flex items-start space-x-4">
                 <div className="relative">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                     {selectedStudent.avatar}
                   </div>
                   <div
@@ -1088,42 +1087,11 @@ const InstructorDashboard = ({
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
-                  <div className="flex items-center justify-between mb-3">
-                    <h5 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                      Tasks Completed
-                    </h5>
-                    <Award className="w-5 h-5 text-purple-500" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                        {selectedStudent.tasksCompleted}
-                      </span>
-                      <span className="text-sm text-purple-600 dark:text-purple-400">
-                        / {selectedStudent.totalTasks}
-                      </span>
-                    </div>
-                    <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500"
-                        style={{
-                          width: `${Math.min(
-                            (selectedStudent.tasksCompleted /
-                              selectedStudent.totalTasks) *
-                            100,
-                            100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Detailed Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                <div className="bg-gray-50 dark:bg-[#212124] rounded-xl p-6">
                   <h6 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Academic Information
                   </h6>
@@ -1155,7 +1123,7 @@ const InstructorDashboard = ({
                   </div>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                <div className="bg-gray-50 dark:bg-[#212124] rounded-xl p-6">
                   <h6 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Internship Details
                   </h6>
@@ -1197,7 +1165,7 @@ const InstructorDashboard = ({
               </div>
 
               {/* Performance Metrics */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+              <div className="bg-gray-50 dark:bg-[#212124] rounded-xl p-6">
                 <h6 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Performance Metrics
                 </h6>
@@ -1219,7 +1187,7 @@ const InstructorDashboard = ({
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                       {selectedStudent.lastActivity}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -1261,11 +1229,22 @@ const InstructorDashboard = ({
 // =============================================
 const InstructorPortal = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    // Open by default on desktop (lg breakpoint is 1024px)
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    // Expanded by default on desktop
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const {
@@ -1309,26 +1288,26 @@ const InstructorPortal = () => {
 
   // Handle responsive behavior
   useEffect(() => {
-    const checkScreenSize = () => {
+    const handleResize = () => {
       const mobile = window.innerWidth < 1024; // lg breakpoint
-      setIsMobile(mobile);
 
-      // On desktop, keep sidebar open by default
+      // On desktop, keep sidebar open and expanded by default
       if (!mobile) {
         setSidebarOpen(true);
+        setSidebarExpanded(true);
       } else {
         setSidebarOpen(false);
       }
     };
 
     // Check on mount
-    checkScreenSize();
+    handleResize();
 
     // Add resize listener
-    window.addEventListener("resize", checkScreenSize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", checkScreenSize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -1420,14 +1399,10 @@ const InstructorPortal = () => {
     };
   }, [currentUser]);
 
-  // Close user menu and notifications when clicking outside
+  // Close notifications when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-
-      if (showUserMenu && !target.closest(".user-menu-dropdown")) {
-        setShowUserMenu(false);
-      }
 
       if (showNotifications && !target.closest(".notifications-dropdown")) {
         setShowNotifications(false);
@@ -1438,7 +1413,7 @@ const InstructorPortal = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showUserMenu, showNotifications]);
+  }, [showNotifications]);
 
   useEffect(() => {
     if (notificationsData) {
@@ -1477,12 +1452,20 @@ const InstructorPortal = () => {
     return null;
   }
 
+  const unreadNotificationCount = localNotifications.filter((n) => !n.read).length;
+
   const navItems = [
     {
-      id: "overview",
+      id: "dashboard",
       icon: Home,
       label: "Dashboard",
       description: "Overview of your assigned students"
+    },
+    {
+      id: "notifications",
+      icon: Bell,
+      label: "Notifications",
+      description: "View all notifications"
     },
     {
       id: "documents",
@@ -1521,6 +1504,77 @@ const InstructorPortal = () => {
     },
   ];
 
+  const handleNotificationClick = async (notification: NotificationItem) => {
+    if (!notification.read) {
+      try {
+        await notificationService.markAsRead(notification.id);
+        setLocalNotifications((prev) =>
+          prev.map((item) =>
+            item.id === notification.id ? { ...item, read: true } : item
+          )
+        );
+        refreshNotifications();
+      } catch (error) {
+        console.error('Failed to mark notification as read', error);
+      }
+    }
+
+    // Handle message notifications - navigate to student messages
+    if (notification.title === "New Message from Student" && notification.link) {
+      const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
+      const studentId = urlParams.get('studentId');
+      if (studentId) {
+        sessionStorage.setItem('openStudentId', studentId);
+        setActiveTab('students');
+        return;
+      }
+    }
+
+    if (notification.link) {
+      if (/^https?:\/\//i.test(notification.link)) {
+        window.open(notification.link, '_blank');
+      } else {
+        const link = notification.link;
+        if (link.includes('/instructor/students')) {
+          const urlParams = new URLSearchParams(link.split('?')[1] || '');
+          const studentId = urlParams.get('studentId');
+          if (studentId) {
+            sessionStorage.setItem('openStudentId', studentId);
+            setActiveTab('students');
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setLocalNotifications((prev) =>
+        prev.map((item) => ({ ...item, read: true }))
+      );
+      refreshNotifications();
+    } catch (error) {
+      console.error('Failed to mark notifications as read', error);
+    }
+  };
+
+  const formatDropdownTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
@@ -1530,6 +1584,112 @@ const InstructorPortal = () => {
             notifications={localNotifications}
             notificationsLoading={notificationsLoading}
           />
+        );
+      case "notifications":
+        return (
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-white dark:bg-[#212124] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Notifications
+                  </h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">
+                    View and manage all your notifications
+                  </p>
+                </div>
+                {unreadNotificationCount > 0 && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+                    {unreadNotificationCount} unread
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Notifications List */}
+            <div className="bg-white dark:bg-[#212124] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              {notificationsLoading ? (
+                <div className="p-12 flex items-center justify-center">
+                  <div className="text-gray-500 dark:text-gray-400">
+                    Loading notifications...
+                  </div>
+                </div>
+              ) : localNotifications.length > 0 ? (
+                <>
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      All Notifications
+                    </h2>
+                    {unreadNotificationCount > 0 && (
+                      <button
+                        onClick={handleMarkAllNotificationsRead}
+                        className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {localNotifications
+                      .filter((notification) =>
+                        [
+                          "DOCUMENT",
+                          "ATTENDANCE",
+                          "ALERT",
+                          "SYSTEM",
+                          "OTHER",
+                        ].includes(notification.type ?? "OTHER")
+                      )
+                      .map((notification) => (
+                        <button
+                          key={notification.id}
+                          onClick={() => handleNotificationClick(notification)}
+                          className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                            !notification.read
+                              ? "bg-blue-50/50 dark:bg-blue-900/10"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-base font-semibold text-gray-900 dark:text-white">
+                                  {notification.title}
+                                </p>
+                                {!notification.read && (
+                                  <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                {notification.message}
+                              </p>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatDropdownTimestamp(notification.createdAt)}
+                                </span>
+                                {notification.type && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
+                                    {notification.type.replace(/_/g, " ")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </>
+              ) : (
+                <div className="p-12 text-center">
+                  <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 dark:text-gray-300">
+                    No notifications
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         );
       case "applications":
         return <InstructorApplications />;
@@ -1557,335 +1717,325 @@ const InstructorPortal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-outfit text-sm md:text-base">
-      {/* Top Navigation Bar */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left: Hamburger + Logo */}
-            <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#19191c] font-outfit text-sm md:text-base">
+      {/* Floating Top Bar - Mobile Only */}
+      <header className={`fixed top-4 left-4 right-4 lg:hidden bg-white dark:bg-[#212124] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 ${sidebarOpen ? "z-30" : "z-50"}`}>
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left: Hamburger + Logo */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <img
+              src="/just_logo.png"
+              alt="INTRAK Logo"
+              className="w-10 h-10 rounded-lg object-cover"
+            />
+          </div>
+
+          {/* Right: Notifications + Profile */}
+          <div className="flex items-center space-x-2">
+            {/* Notifications */}
+            <div className="relative notifications-dropdown">
               <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => setShowNotifications((prev) => !prev)}
+                className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                <Menu className="w-6 h-6" />
+                <Bell className="w-5 h-5" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
+                )}
               </button>
-              <div className="flex items-center space-x-3">
-                <img
-                  src="/just_logo.png"
-                  alt="INTRAK Logo"
-                  className="w-10 h-10 rounded-lg object-cover"
-                />
-                <div className="hidden sm:block">
-                  <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
-                    INTRAK
-                  </h2>
-                  <p className="text-xs text-gray-500">Instructor Portal</p>
-                </div>
-              </div>
-            </div>
 
-            {/* Right: Notifications + User */}
-            <div className="flex items-center space-x-4">
-              <div className="relative notifications-dropdown">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <Bell className="w-5 h-5" />
-                  {localNotifications.some((n) => !n.read) && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </button>
-
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#212124] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 flex flex-col max-h-96 sm:max-h-[28rem]">
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
                         Notifications
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {localNotifications.filter((n) => !n.read).length} new notifications
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                        View all notifications
                       </p>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {localNotifications.length > 0 ? (
-                        localNotifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${notification.read ? "opacity-70" : ""
-                              }`}
-                            onClick={async () => {
-                              if (!notification.read) {
-                                try {
-                                  await notificationService.markAsRead(notification.id);
-                                  setLocalNotifications((prev) =>
-                                    prev.map((item) =>
-                                      item.id === notification.id
-                                        ? { ...item, read: true }
-                                        : item
-                                    )
-                                  );
-                                  refreshNotifications();
-                                } catch (error) {
-                                  console.error('Failed to mark notification as read', error);
-                                }
-                              }
-
-                              // Handle message notifications - navigate to student messages
-                              if (notification.title === "New Message from Student" && notification.link) {
-                                // Extract studentId from link like /instructor/students?studentId=xxx
-                                const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
-                                const studentId = urlParams.get('studentId');
-                                if (studentId) {
-                                  // Store studentId in sessionStorage to be picked up by InstructorStudentManagement
-                                  sessionStorage.setItem('openStudentId', studentId);
-                                  setActiveTab('students');
-                                  setShowNotifications(false);
-                                  return;
-                                }
-                              }
-
-                              if (notification.link) {
-                                // Check if it's an external link
-                                if (/^https?:\/\//i.test(notification.link)) {
-                                  window.open(notification.link, '_blank');
-                                } else {
-                                  // Internal link - try to handle it
-                                  const link = notification.link;
-                                  if (link.includes('/instructor/students')) {
-                                    const urlParams = new URLSearchParams(link.split('?')[1] || '');
-                                    const studentId = urlParams.get('studentId');
-                                    if (studentId) {
-                                      sessionStorage.setItem('openStudentId', studentId);
-                                      setActiveTab('students');
-                                      setShowNotifications(false);
-                                      return;
-                                    }
-                                  }
-                                }
-                              }
-                            }}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0 mt-1">
-                                <Activity className="w-4 h-4 text-purple-500" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                  {new Date(notification.createdAt).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-8 text-center">
-                          <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            No notifications
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                      <button
-                        onClick={async () => {
-                          try {
-                            await notificationService.markAllAsRead();
-                            setLocalNotifications((prev) =>
-                              prev.map((item) => ({ ...item, read: true }))
-                            );
-                            refreshNotifications();
-                          } catch (error) {
-                            console.error('Failed to mark notifications as read', error);
-                          }
-                        }}
-                        className="text-sm text-purple-600 dark:text-purple-300 hover:text-purple-700"
-                      >
-                        Mark all as read
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('monitoring')}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700"
-                      >
-                        View activity log
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* User Avatar Dropdown */}
-              <div className="relative user-menu-dropdown">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-3 pl-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
-                >
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                    {profilePhoto ? (
-                      <img
-                        src={profilePhoto}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold text-sm">
-                        {currentUser?.initials || "IN"}
+                    {unreadNotificationCount > 0 && (
+                      <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 ml-2 flex-shrink-0">
+                        {unreadNotificationCount} new
                       </span>
                     )}
                   </div>
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {currentUser?.name || "Instructor"}
-                    </p>
-                    <p className="text-xs text-gray-500">Instructor</p>
-                  </div>
-                </button>
 
-                {/* Dropdown Menu */}
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                          {profilePhoto ? (
-                            <img
-                              src={profilePhoto}
-                              alt="Profile"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-white font-semibold">
-                              {currentUser?.initials || "IN"}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {currentUser?.name || "Instructor"}
-                          </p>
-                          <p className="text-sm text-gray-500">Instructor</p>
-                          <p className="text-xs text-gray-400">
-                            {currentUser?.email || "instructor@university.edu"}
-                          </p>
-                        </div>
+                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
+                    {notificationsLoading ? (
+                      <div className="px-4 sm:px-5 py-8 flex items-center justify-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                        Loading notifications...
                       </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-2">
-                      <button
-                        onClick={() => {
-                          setActiveTab("settings");
-                          setShowUserMenu(false);
-                        }}
-                        className="w-full flex items-center space-x-3 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Settings</span>
-                      </button>
-                      <button
-                        onClick={() => setShowLogoutModal(true)}
-                        className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
+                    ) : localNotifications.length > 0 ? (
+                      localNotifications
+                        .filter((notification) =>
+                          [
+                            "DOCUMENT",
+                            "ATTENDANCE",
+                            "ALERT",
+                            "SYSTEM",
+                            "OTHER",
+                          ].includes(notification.type ?? "OTHER")
+                        )
+                        .map((notification) => (
+                          <button
+                            key={notification.id}
+                            onClick={() => {
+                              handleNotificationClick(notification);
+                              setShowNotifications(false);
+                            }}
+                            className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${notification.read
+                              ? "bg-white dark:bg-[#212124] hover:bg-gray-50 dark:hover:bg-gray-700"
+                              : "bg-blue-50/70 dark:bg-blue-900/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30"
+                              }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 sm:gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                  {notification.title}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 mt-0.5 sm:mt-1">
+                                  {formatDropdownTimestamp(notification.createdAt)}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
+                              {notification.message}
+                            </p>
+                            {notification.type && (
+                              <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
+                                {notification.type.replace(/_/g, " ")}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                    ) : (
+                      <div className="px-4 sm:px-5 py-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                        No notifications
+                      </div>
+                    )}
                   </div>
+
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={async () => {
+                        await handleMarkAllNotificationsRead();
+                        setShowNotifications(false);
+                      }}
+                      disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
+                      className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#212124] dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Mark all as read
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("notifications");
+                        setShowNotifications(false);
+                      }}
+                      className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-colors"
+                    >
+                      View all
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Profile */}
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                setSidebarOpen(false);
+              }}
+              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">
+                    {currentUser?.initials || "IN"}
+                  </span>
                 )}
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Sidebar Overlay - Only show on mobile */}
-      {sidebarOpen && isMobile && (
+      {/* Sidebar Overlay - Show when sidebar is open on mobile */}
+      {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[50] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Menu */}
+      {/* Floating Sidebar Menu */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${sidebarOpen
-          ? "translate-x-0"
-          : isMobile
-            ? "-translate-x-full"
-            : "translate-x-0"
-          }`}
+        className={`fixed inset-y-0 left-0 lg:top-4 lg:bottom-4 lg:left-4 z-[60] bg-white dark:bg-[#212124] lg:rounded-2xl lg:shadow-2xl border-r lg:border border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} w-72 ${sidebarExpanded ? "lg:w-72" : "lg:w-20"}`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center space-x-3">
+          {/* Sidebar Header with Logo and Hamburger */}
+          <div className={`flex items-center ${sidebarExpanded ? "justify-between" : "justify-center"} p-4 ${sidebarExpanded ? "" : "lg:px-2"} border-b border-gray-200 dark:border-gray-700`}>
+            {/* Expanded view - always on mobile, conditional on desktop */}
+            <div className={`flex items-center space-x-3 ${sidebarExpanded ? "" : "lg:hidden"}`}>
+              {/* Hamburger Icon */}
+              <button
+                onClick={() => {
+                  if (window.innerWidth >= 1024) {
+                    // On desktop, toggle expanded/collapsed
+                    setSidebarExpanded(!sidebarExpanded);
+                  } else {
+                    // On mobile, toggle open/closed
+                    setSidebarOpen(!sidebarOpen);
+                  }
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Toggle menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              {/* Logo */}
               <img
                 src="/just_logo.png"
                 alt="INTRAK Logo"
-                className="w-14 h-14 rounded-lg object-cover"
+                className="w-12 h-12 rounded-lg object-cover"
               />
+              {/* Branding Text */}
               <div>
-                <h2 className="text-xl font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
+                <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">
                   INTRAK
                 </h2>
                 <p className="text-xs text-gray-500">Instructor Portal</p>
               </div>
             </div>
-            {/* Only show close button on mobile */}
-            {isMobile && (
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <X className="w-6 h-6" />
-              </button>
+            {/* Collapsed view - only on desktop when collapsed */}
+            {!sidebarExpanded && (
+              <div className="hidden lg:flex flex-col items-center space-y-2">
+                {/* Hamburger Icon */}
+                <button
+                  onClick={() => setSidebarExpanded(!sidebarExpanded)}
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                {/* Logo */}
+                <img
+                  src="/just_logo.png"
+                  alt="INTRAK Logo"
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              </div>
             )}
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
+          <nav className={`flex-1 space-y-2 overflow-y-auto p-4 ${sidebarExpanded ? "lg:p-4" : "lg:p-2"} scrollbar-hidden`}>
             {navItems.map((item) => {
               const Icon = item.icon;
+              const isNotifications = item.id === "notifications";
               return (
                 <button
                   key={item.id}
                   onClick={() => {
                     setActiveTab(item.id);
-                    // Only close sidebar on mobile
-                    if (isMobile) {
+                    // Close sidebar on mobile only
+                    if (window.innerWidth < 1024) {
                       setSidebarOpen(false);
                     }
                   }}
-                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${activeTab === item.id
-                    ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
+                  className={`relative w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${activeTab === item.id
+                    ? "bg-gradient-to-r from-blue-100 to-blue-50 text-blue-600 dark:from-blue-900/50 dark:to-blue-800/30 dark:text-blue-300 rounded-lg"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                     }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium text-left">{item.label}</span>
+                  <span className={`font-medium text-sm text-left ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
+                  {/* Unread notification badge */}
+                  {isNotifications && unreadNotificationCount > 0 && (
+                    <>
+                      {sidebarExpanded && (
+                        <span className="ml-auto w-2 h-2 bg-blue-500 rounded-full"></span>
+                      )}
+                      {!sidebarExpanded && (
+                        <span className="absolute top-1 right-1 lg:block hidden w-2 h-2 bg-blue-500 rounded-full"></span>
+                      )}
+                    </>
+                  )}
                 </button>
               );
             })}
           </nav>
+
+          {/* User Profile Section */}
+          <div className={`border-t border-gray-200 dark:border-gray-700 p-4 ${sidebarExpanded ? "lg:p-4" : "lg:p-2"}`}>
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                // Close sidebar on mobile only
+                if (window.innerWidth < 1024) {
+                  setSidebarOpen(false);
+                }
+              }}
+              className={`w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${activeTab === "settings"
+                ? "bg-gradient-to-r from-blue-100 to-blue-50 text-blue-600 dark:from-blue-900/50 dark:to-blue-800/30 dark:text-blue-300 rounded-lg"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                }`}
+            >
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">
+                    {currentUser?.initials || "IN"}
+                  </span>
+                )}
+              </div>
+              <div className={`flex-1 text-left min-w-0 ${sidebarExpanded ? "" : "lg:hidden"}`}>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {currentUser?.name || "Instructor"}
+                </p>
+                <p className="text-xs text-gray-500 truncate">Instructor</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Logout Button at Bottom */}
+          <div className={`border-t border-gray-200 dark:border-gray-700 p-4 ${sidebarExpanded ? "lg:p-4" : "lg:p-2"}`}>
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className={`w-full flex items-center rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"}`}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className={`font-medium text-sm text-left ${sidebarExpanded ? "" : "lg:hidden"}`}>Logout</span>
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Content Area */}
-      <main
-        className={`p-6 transition-all duration-300 ${sidebarOpen && !isMobile ? "ml-72" : "ml-0"
-          }`}
-      >
+      <main className={`p-6 pt-24 lg:pt-6 transition-all duration-300 relative ${sidebarOpen ? "z-10 lg:z-auto" : "z-auto"} ${sidebarOpen ? (sidebarExpanded ? "lg:ml-80" : "lg:ml-28") : "lg:ml-4"}`}>
         <div key={activeTab} className="tab-fade-in">
           {renderContent()}
         </div>
@@ -1893,8 +2043,8 @@ const InstructorPortal = () => {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <LogOut className="w-6 h-6 text-red-600" />
             </div>

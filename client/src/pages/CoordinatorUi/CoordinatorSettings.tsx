@@ -422,7 +422,7 @@ const CoordinatorSettingsTab = ({
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">{t("settings.loading")}</p>
         </div>
       </div>
@@ -433,7 +433,7 @@ const CoordinatorSettingsTab = ({
     <div className="space-y-6">
       {/* Success Message */}
       {saveSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="relative w-full max-w-sm rounded-3xl border border-emerald-200 bg-white p-6 text-center shadow-2xl dark:border-emerald-800/60 dark:bg-gray-900">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
               <CheckCircle className="h-6 w-6" />
@@ -476,7 +476,7 @@ const CoordinatorSettingsTab = ({
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
             <nav className="space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -485,7 +485,7 @@ const CoordinatorSettingsTab = ({
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-left ${activeSection === section.id
-                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                   >
@@ -500,7 +500,7 @@ const CoordinatorSettingsTab = ({
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             {/* Profile Information - Same as Student */}
             {activeSection === "profile" && (
               <div className="space-y-6">
@@ -516,7 +516,7 @@ const CoordinatorSettingsTab = ({
                 {/* Profile Picture */}
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-24 h-24 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center overflow-hidden">
                       {profilePhotoPreview ? (
                         <img
                           src={profilePhotoPreview}
@@ -524,10 +524,10 @@ const CoordinatorSettingsTab = ({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <User className="w-12 h-12 text-purple-600 dark:text-purple-300" />
+                        <User className="w-12 h-12 text-blue-600 dark:text-blue-300" />
                       )}
                     </div>
-                    <label className="absolute bottom-0 right-0 p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg cursor-pointer transition-colors">
+                    <label className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg cursor-pointer transition-colors">
                       <Camera className="w-4 h-4" />
                       <input
                         type="file"
@@ -539,7 +539,7 @@ const CoordinatorSettingsTab = ({
                     </label>
                   </div>
                   <div>
-                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
+                    <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
                       {uploadingPhoto ? (
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -584,7 +584,7 @@ const CoordinatorSettingsTab = ({
                           name: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.name
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.name
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -608,7 +608,7 @@ const CoordinatorSettingsTab = ({
                           email: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.email
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.email
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -634,7 +634,7 @@ const CoordinatorSettingsTab = ({
                           phone: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.phone
+                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.phone
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -666,7 +666,7 @@ const CoordinatorSettingsTab = ({
                             emergencyName: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder={t("general.optional")}
                       />
                     </div>
@@ -684,7 +684,7 @@ const CoordinatorSettingsTab = ({
                             emergencyContact: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder={t("general.optional")}
                       />
                     </div>
@@ -695,7 +695,7 @@ const CoordinatorSettingsTab = ({
                   <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save className="w-4 h-4" />
                     <span>{t("settings.profile.saveProfile")}</span>
@@ -731,7 +731,7 @@ const CoordinatorSettingsTab = ({
                             currentPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         onClick={() =>
@@ -762,7 +762,7 @@ const CoordinatorSettingsTab = ({
                             newPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         onClick={() => setShowNewPassword(!showNewPassword)}
@@ -794,30 +794,8 @@ const CoordinatorSettingsTab = ({
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    {t("settings.security.twoFactorTitle")}
-                  </h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <div className="flex items-center space-x-3">
-                      <Shield className="w-5 h-5 text-purple-600" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {t("settings.security.enable2FA")}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t("settings.security.twoFactorDescription")}
-                        </p>
-                      </div>
-                    </div>
-                    <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
-                      {t("settings.security.enableButton")}
-                    </button>
                   </div>
                 </div>
 
@@ -825,7 +803,7 @@ const CoordinatorSettingsTab = ({
                   <button
                     onClick={handleChangePassword}
                     disabled={saving}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (
                       <>
@@ -856,7 +834,7 @@ const CoordinatorSettingsTab = ({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {t("settings.notifications.documentApprovals")}
@@ -877,11 +855,11 @@ const CoordinatorSettingsTab = ({
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {t("settings.notifications.attendanceAlerts")}
@@ -902,11 +880,11 @@ const CoordinatorSettingsTab = ({
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {t("settings.notifications.systemAnnouncements")}
@@ -927,11 +905,11 @@ const CoordinatorSettingsTab = ({
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {t("settings.notifications.pushNotifications")}
@@ -952,7 +930,7 @@ const CoordinatorSettingsTab = ({
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 </div>
@@ -960,7 +938,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveNotifications}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Preferences</span>
@@ -997,7 +975,7 @@ const CoordinatorSettingsTab = ({
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1016,7 +994,7 @@ const CoordinatorSettingsTab = ({
                       </div>
                       {theme === "light" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1025,7 +1003,7 @@ const CoordinatorSettingsTab = ({
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1044,7 +1022,7 @@ const CoordinatorSettingsTab = ({
                       </div>
                       {theme === "dark" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1053,12 +1031,12 @@ const CoordinatorSettingsTab = ({
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                           <Monitor className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -1072,7 +1050,7 @@ const CoordinatorSettingsTab = ({
                       </div>
                       {theme === "system" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1082,7 +1060,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSavePreferences}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Changes</span>
@@ -1118,7 +1096,7 @@ const CoordinatorSettingsTab = ({
                             language: e.target.value as any,
                           }))
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="en">{t("language.english")}</option>
                         <option value="fil">{t("language.filipino")}</option>
@@ -1141,7 +1119,7 @@ const CoordinatorSettingsTab = ({
                             dateFormat: e.target.value,
                           }))
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="MM/DD/YYYY">{t("dateFormats.mmddyyyy")}</option>
                         <option value="DD/MM/YYYY">{t("dateFormats.ddmmyyyy")}</option>
@@ -1164,7 +1142,7 @@ const CoordinatorSettingsTab = ({
                             timeFormat: e.target.value,
                           }))
                         }
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="12hr">{t("timeFormats.hour12")}</option>
                         <option value="24hr">{t("timeFormats.hour24")}</option>
@@ -1176,7 +1154,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSavePreferences}
-                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
                   >
                     <Save className="w-4 h-4" />
                     <span>{t("settings.preferences.save")}</span>
@@ -1201,12 +1179,12 @@ const CoordinatorSettingsTab = ({
                   {/* Document Management */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <FileText className="w-5 h-5 mr-2 text-purple-600" />
+                      <FileText className="w-5 h-5 mr-2 text-blue-600" />
                       {t("settings.coordinator.document.title")}
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {t("settings.coordinator.document.autoApprove")}
@@ -1230,11 +1208,11 @@ const CoordinatorSettingsTab = ({
                             }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {t("settings.coordinator.document.requireReview")}
@@ -1258,7 +1236,7 @@ const CoordinatorSettingsTab = ({
                             }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
                     </div>
@@ -1284,7 +1262,7 @@ const CoordinatorSettingsTab = ({
                               defaultAnnouncementAudience: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="ALL">
                             {t("settings.coordinator.announcement.allUsers")}
@@ -1314,7 +1292,7 @@ const CoordinatorSettingsTab = ({
                     </h3>
 
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {t("settings.coordinator.system.bulkOperations")}
@@ -1335,11 +1313,11 @@ const CoordinatorSettingsTab = ({
                             }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-xl">
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {t("settings.coordinator.system.advancedMetrics")}
@@ -1360,7 +1338,7 @@ const CoordinatorSettingsTab = ({
                             }
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                         </label>
                       </div>
 
@@ -1376,7 +1354,7 @@ const CoordinatorSettingsTab = ({
                               notificationFrequency: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="immediate">
                             {t("settings.coordinator.system.frequencyImmediate")}
@@ -1414,7 +1392,7 @@ const CoordinatorSettingsTab = ({
                                 attendanceReminderTime: e.target.value,
                               })
                             }
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                           />
                           <Clock className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         </div>
@@ -1429,7 +1407,7 @@ const CoordinatorSettingsTab = ({
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveCoordinatorSettings}
-                    className="inline-flex items-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
                   >
                     <Save className="w-4 h-4" />
                     <span>{t("settings.coordinator.save")}</span>
@@ -1508,14 +1486,6 @@ const CoordinatorSettingsTab = ({
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      App Information
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     App Information
                   </h3>
@@ -1558,7 +1528,7 @@ const HelpModalContent: React.FC<{
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 py-6"
       style={{ marginTop: 0 }}
     >
       <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
@@ -1655,7 +1625,7 @@ const HelpModalContent: React.FC<{
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               Close
             </button>

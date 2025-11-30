@@ -13,6 +13,7 @@ import {
 import { templateService } from "../../services/templateService";
 import type { DocumentTemplate } from "../../services/templateService";
 import { toast } from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 const InstructorTemplateManagement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -332,16 +333,142 @@ const InstructorTemplateManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      <div className="space-y-6 min-h-screen dark:bg-[#19191c]">
+        {/* Header Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              {category && <Skeleton className="w-9 h-9 rounded-lg" />}
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 sm:h-8 w-48 sm:w-64" />
+                <Skeleton className="h-4 sm:h-5 w-64 sm:w-80" />
+              </div>
+            </div>
+            <Skeleton className="h-12 w-full sm:w-auto sm:min-w-[180px] rounded-xl" />
+          </div>
+        </div>
+
+        {/* Category Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border-2 border-gray-200 dark:border-gray-700 flex flex-col"
+            >
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-4 flex-grow">
+                <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex-shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-5 w-32 sm:w-40" />
+                  <Skeleton className="h-4 w-24 sm:w-28" />
+                </div>
+              </div>
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* Template List Skeleton (if category is selected) */}
+        {category && (
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            {/* Category Header Skeleton */}
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-5 w-40 sm:w-48" />
+                  <Skeleton className="h-4 w-24 sm:w-32" />
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Table View Skeleton */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <th key={i} className="px-6 py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                  {[1, 2, 3].map((i) => (
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-3">
+                          <Skeleton className="w-9 h-9 rounded-lg" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-48" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center space-x-2">
+                          <Skeleton className="w-8 h-8 rounded-lg" />
+                          <Skeleton className="w-8 h-8 rounded-lg" />
+                          <Skeleton className="w-8 h-8 rounded-lg" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View Skeleton */}
+            <div className="lg:hidden space-y-3 p-3">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 border border-gray-200 dark:border-gray-600"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Skeleton className="w-10 h-10 rounded-lg" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <div className="space-y-1">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="w-8 h-8 rounded-lg" />
+                      <Skeleton className="w-8 h-8 rounded-lg" />
+                      <Skeleton className="w-8 h-8 rounded-lg" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen dark:bg-[#19191c]">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             {category && (
@@ -398,7 +525,7 @@ const InstructorTemplateManagement: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* View All Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${!category
+          className={`bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${!category
               ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-purple-300"
             }`}
@@ -424,7 +551,7 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Pre-deployment Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "PRE_DEPLOYMENT"
+          className={`bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "PRE_DEPLOYMENT"
               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-blue-300"
             }`}
@@ -471,7 +598,7 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Upon Approval Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "UPON_APPROVAL"
+          className={`bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "UPON_APPROVAL"
               ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-yellow-300"
             }`}
@@ -515,7 +642,7 @@ const InstructorTemplateManagement: React.FC = () => {
 
         {/* Post-OJT Card */}
         <div
-          className={`bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "POST_OJT"
+          className={`bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border-2 cursor-pointer transition-all duration-200 hover:shadow-md flex flex-col ${category === "POST_OJT"
               ? "border-green-500 bg-green-50 dark:bg-green-900/20"
               : "border-gray-200 dark:border-gray-700 hover:border-green-300"
             }`}
@@ -560,7 +687,7 @@ const InstructorTemplateManagement: React.FC = () => {
       {/* Templates List */}
       <div className="space-y-6">
         {filteredTemplates.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
             <div className="text-center py-12 sm:py-16 px-4">
               <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
                 <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 dark:text-blue-400" />
@@ -591,7 +718,7 @@ const InstructorTemplateManagement: React.FC = () => {
             ([category, categoryTemplates]) => (
               <div
                 key={category}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700"
+                className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700"
               >
                 {/* Category Header */}
                 <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
@@ -792,8 +919,8 @@ const InstructorTemplateManagement: React.FC = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
             <div className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Upload Document Template
@@ -885,7 +1012,7 @@ const InstructorTemplateManagement: React.FC = () => {
                     return (
                       <div
                         key={entry.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900/40 space-y-4"
+                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-[#212124]/40 space-y-4"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -962,7 +1089,7 @@ const InstructorTemplateManagement: React.FC = () => {
               )}
             </div>
 
-            <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+            <div className="flex justify-end space-x-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#212124]/40">
               <button
                 onClick={() => {
                   setShowUploadModal(false);
@@ -996,8 +1123,8 @@ const InstructorTemplateManagement: React.FC = () => {
 
       {/* Edit Modal */}
       {showEditModal && selectedTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
               Edit Template
             </h3>

@@ -43,6 +43,9 @@ const InstructorDocumentsTab = () => {
     null
   );
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>("");
 
   const formatStudentNumber = (value?: string | null) => {
     if (!value) return "";
@@ -69,6 +72,15 @@ const InstructorDocumentsTab = () => {
   useEffect(() => {
     loadDocuments();
   }, []);
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        window.URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const loadDocuments = async () => {
     try {
@@ -237,8 +249,10 @@ const InstructorDocumentsTab = () => {
 
         // Check if it's a PDF file
         if (fileName.toLowerCase().endsWith(".pdf")) {
-          // Open PDF in new tab
-          window.open(url, "_blank");
+          // Show PDF in modal
+          setPreviewUrl(url);
+          setPreviewFileName(fileName);
+          setShowPreviewModal(true);
         } else {
           // For other file types, download them
           toast.success(
@@ -250,10 +264,8 @@ const InstructorDocumentsTab = () => {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
         }
-
-        // Clean up URL after a delay
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       } else {
         toast.error("Failed to preview document");
       }
@@ -261,6 +273,15 @@ const InstructorDocumentsTab = () => {
       console.error("Error previewing document:", error);
       toast.error("Failed to preview document");
     }
+  };
+
+  const closePreviewModal = () => {
+    if (previewUrl) {
+      window.URL.revokeObjectURL(previewUrl);
+    }
+    setShowPreviewModal(false);
+    setPreviewUrl(null);
+    setPreviewFileName("");
   };
 
   const filteredDocuments = documents.filter((doc) => {
@@ -370,9 +391,9 @@ const InstructorDocumentsTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen dark:bg-[#19191c]">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
@@ -393,7 +414,7 @@ const InstructorDocumentsTab = () => {
       {/* Stats Cards - Desktop Grid View */}
       <div className="hidden md:grid md:grid-cols-4 gap-6">
         {/* Pending Review Card (dashboard-style) */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Pending Review</h3>
@@ -407,7 +428,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Approved Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Approved</h3>
@@ -421,7 +442,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Rejected Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Rejected</h3>
@@ -435,7 +456,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Total Documents Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-2">Total Documents</h3>
@@ -452,7 +473,7 @@ const InstructorDocumentsTab = () => {
       {/* Stats Cards - Mobile Stacked View */}
       <div className="md:hidden space-y-3">
         {/* Pending Review Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">Pending Review</h3>
@@ -466,7 +487,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Approved Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">Approved</h3>
@@ -480,7 +501,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Rejected Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">Rejected</h3>
@@ -494,7 +515,7 @@ const InstructorDocumentsTab = () => {
         </div>
 
         {/* Total Documents Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h3 className="text-gray-900 dark:text-white text-sm font-medium mb-1">Total Documents</h3>
@@ -509,7 +530,7 @@ const InstructorDocumentsTab = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -570,7 +591,7 @@ const InstructorDocumentsTab = () => {
           return (
             <div
               key={doc.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
+              className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
             >
               <div className="p-4 sm:p-6">
                 {/* Header - Mobile Optimized */}
@@ -748,7 +769,7 @@ const InstructorDocumentsTab = () => {
       </div>
 
       {filteredDocuments.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-12 text-center">
           <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 mb-2">
             No documents found
@@ -761,8 +782,8 @@ const InstructorDocumentsTab = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -783,7 +804,7 @@ const InstructorDocumentsTab = () => {
             </div>
             <div className="px-6 pb-6 space-y-5">
               {/* Document Summary */}
-              <div className="bg-white dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg p-4">
+              <div className="bg-white dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg p-4">
                 <div className="flex items-start space-x-3 mb-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                     {selectedDoc.studentAvatar}
@@ -822,7 +843,7 @@ const InstructorDocumentsTab = () => {
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
                   <span className="font-medium text-gray-800 dark:text-white">Status:</span>
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(
@@ -833,12 +854,12 @@ const InstructorDocumentsTab = () => {
                     <span>{selectedDoc.status.replace(/_/g, " ").toLowerCase()}</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
                   <span className="font-medium text-gray-800 dark:text-white">Submitted:</span>
                   <span>{selectedDoc.submittedDate}</span>
                 </div>
                 {selectedDoc.reviewedDate && (
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
                     <span className="font-medium text-gray-800 dark:text-white">Last Reviewed:</span>
                     <span>{selectedDoc.reviewedDate}</span>
                   </div>
@@ -924,9 +945,79 @@ const InstructorDocumentsTab = () => {
         </div>
       )}
 
+      {/* Preview Modal */}
+      {showPreviewModal && previewUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3 sm:p-4" 
+          onClick={closePreviewModal}
+          style={{ margin: "0" }}
+        >
+          <div 
+            className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 dark:text-white truncate">
+                    Document Preview
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                    {previewFileName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={closePreviewModal}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
+                title="Close Preview"
+              >
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            </div>
+
+            {/* PDF Preview */}
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+              <iframe
+                src={previewUrl}
+                className="w-full h-full border-0"
+                title={`Preview of ${previewFileName}`}
+                style={{ minHeight: "500px" }}
+              />
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-end space-x-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <button
+                onClick={closePreviewModal}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = previewUrl;
+                  link.download = previewFileName;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium flex items-center space-x-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showFeedbackModal && feedbackDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <div className="flex items-center gap-3">

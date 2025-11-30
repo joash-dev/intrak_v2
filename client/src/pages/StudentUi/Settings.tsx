@@ -374,7 +374,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation Skeleton */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
             <div className="space-y-1">
               {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                 <div key={i} className="flex items-center space-x-3 px-4 py-3">
@@ -388,7 +388,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
         {/* Settings Content Skeleton */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
             {/* Header Skeleton */}
             <div className="space-y-2">
               <Skeleton className="h-6 w-48" />
@@ -461,7 +461,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
             <nav className="space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -470,7 +470,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     key={section.id}
                     onClick={() => setActiveSection(section.id as typeof activeSection)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${activeSection === section.id
-                      ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                   >
@@ -485,7 +485,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             {/* Profile Information */}
             {activeSection === "profile" && (
               <div className="space-y-6">
@@ -501,7 +501,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 {/* Profile Picture */}
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-24 h-24 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center overflow-hidden">
+                    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center overflow-hidden">
                       {profilePhotoPreview ? (
                         <img
                           src={profilePhotoPreview}
@@ -509,10 +509,10 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <User className="w-12 h-12 text-purple-600 dark:text-purple-300" />
+                        <User className="w-12 h-12 text-blue-600 dark:text-blue-300" />
                       )}
                     </div>
-                    <label className="absolute bottom-0 right-0 p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg cursor-pointer transition-colors">
+                    <label className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg cursor-pointer transition-colors">
                       <Camera className="w-4 h-4" />
                       <input
                         type="file"
@@ -524,7 +524,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     </label>
                   </div>
                   <div>
-                    <label className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
+                    <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer transition-colors inline-block">
                       {uploadingPhoto ? (
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -569,7 +569,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           name: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.name
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.name
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -593,7 +593,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           email: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.email
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.email
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -619,7 +619,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           phone: e.target.value,
                         })
                       }
-                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.phone
+                      className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.phone
                         ? "border-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
@@ -651,7 +651,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                             emergencyName: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder="Optional"
                       />
                     </div>
@@ -669,7 +669,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                             emergencyContact: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         placeholder="Optional"
                       />
                     </div>
@@ -679,7 +679,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveProfile}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Changes</span>
@@ -737,7 +737,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           })
                         }
                         placeholder="Enter your current password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -771,7 +771,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           })
                         }
                         placeholder="Enter your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -826,7 +826,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                           })
                         }
                         placeholder="Confirm your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
@@ -875,7 +875,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
-                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                     >
                       {saving ? (
                         <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
@@ -903,7 +903,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Document Approvals
@@ -924,11 +924,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Attendance Reminders
@@ -949,11 +949,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Announcements
@@ -974,11 +974,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         Push Notifications
@@ -999,11 +999,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         SMS Alerts
@@ -1024,7 +1024,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1032,7 +1032,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 <div className="flex justify-end">
                   <button
                     onClick={handleSaveNotifications}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Preferences</span>
@@ -1068,7 +1068,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1083,7 +1083,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       </div>
                       {theme === "light" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1092,7 +1092,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1107,7 +1107,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       </div>
                       {theme === "dark" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1116,12 +1116,12 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                        ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                         : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                           <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
@@ -1131,7 +1131,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       </div>
                       {theme === "system" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-5 h-5 text-purple-600" />
+                          <CheckCircle className="w-5 h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1162,7 +1162,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, language: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="en">English</option>
                     </select>
@@ -1177,7 +1177,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, dateFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
@@ -1194,7 +1194,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                       onChange={(e) =>
                         setPreferences({ ...preferences, timeFormat: e.target.value })
                       }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                     >
                       <option value="12hr">12 Hour</option>
                       <option value="24hr">24 Hour</option>
@@ -1207,7 +1207,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     onClick={() => {
                       handleSavePreferences();
                     }}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Save className="w-5 h-5" />
                     <span>Save Preferences</span>
@@ -1229,7 +1229,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Auto Submit Attendance
@@ -1250,11 +1250,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Require Confirmation
@@ -1275,11 +1275,11 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-[#212124] rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900 dark:text-white">
                         Weekly Report Reminder
@@ -1300,7 +1300,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1310,7 +1310,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                     onClick={() => {
                       toast.success("Student settings saved");
                     }}
-                    className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Save className="w-5 h-5" />
                     <span>Save Settings</span>
@@ -1336,9 +1336,9 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="p-6 text-left bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
+                    className="p-6 text-left bg-blue-50 dark:bg-blue-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <HelpCircle className="w-8 h-8 text-purple-600 mb-3" />
+                    <HelpCircle className="w-8 h-8 text-blue-600 mb-3" />
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                       FAQ
                     </h3>
@@ -1415,7 +1415,7 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
             {/* Help Modal */}
             {helpModal && (
               <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
+                className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
                 style={{ marginTop: 0 }}
               >
                 <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">

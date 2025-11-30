@@ -9,12 +9,12 @@ import {
   AlertCircle,
   CheckSquare,
   User,
-  Loader2,
   ClipboardList,
   X,
 } from "lucide-react";
 import { instructorService, type InstructorDocument } from "../../services/instructorService";
 import toast from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 interface DocumentStatus {
   id: string;
@@ -317,7 +317,7 @@ const DocumentChecklistTab = () => {
       case "rejected":
         return "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
+        return "bg-gray-100 text-gray-700 dark:bg-[#212124] dark:text-gray-300";
     }
   };
 
@@ -375,38 +375,157 @@ const DocumentChecklistTab = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen font-outfit">
-        <div className="flex flex-col items-center space-y-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Loader2 className="w-8 h-8 animate-spin text-white" />
+      <div className="space-y-8 font-outfit min-h-screen dark:bg-[#19191c]">
+        {/* Header Section Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 sm:h-8 w-48 sm:w-64" />
+                <Skeleton className="h-4 sm:h-5 w-64 sm:w-80" />
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              Loading document checklists...
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Please wait while we fetch student data
-            </p>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+                <Skeleton className="w-12 h-12 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Search and Filters Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+            <div className="relative flex-1">
+              <Skeleton className="h-10 w-full rounded-lg sm:rounded-xl" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <Skeleton className="h-10 w-full sm:w-auto sm:min-w-[160px] rounded-lg sm:rounded-xl" />
+              <Skeleton className="h-10 w-full sm:w-auto sm:min-w-[160px] rounded-lg sm:rounded-xl" />
+            </div>
           </div>
+        </div>
+
+        {/* Desktop Table View Skeleton */}
+        <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {/* Table Header Skeleton */}
+          <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3.5 border-b border-gray-200 dark:border-gray-600">
+            <div className="grid grid-cols-12 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className={i === 1 ? "col-span-4" : "col-span-2"}>
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Table Rows Skeleton */}
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="px-6 py-4 hover:bg-gray-50/50 dark:hover:bg-gray-700/30"
+              >
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  {/* Student Info */}
+                  <div className="col-span-4 flex items-center space-x-3">
+                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <div className="space-y-1.5 flex-1">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  {/* Progress */}
+                  <div className="col-span-2 space-y-1.5">
+                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-1.5 w-full rounded-full" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  {/* Status */}
+                  <div className="col-span-2">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </div>
+                  {/* Company */}
+                  <div className="col-span-2">
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  {/* Actions */}
+                  <div className="col-span-2 flex items-center space-x-1.5">
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile Card View Skeleton */}
+        <div className="lg:hidden space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                  <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-full" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-48 sm:w-64" />
+                    <Skeleton className="h-4 w-32 sm:w-40" />
+                  </div>
+                </div>
+                <Skeleton className="h-6 w-20 sm:w-24 rounded-full" />
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-1.5 w-full rounded-full" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="flex items-center space-x-2">
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 font-outfit">
+    <div className="space-y-8 font-outfit min-h-screen dark:bg-[#19191c]">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg border border-blue-100 dark:border-gray-600">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <ClipboardList className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl">
+              <ClipboardList className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Document Checklist
-              </h1>
-              <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Track document submission status for each student
               </p>
             </div>
@@ -416,7 +535,7 @@ const DocumentChecklistTab = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -432,7 +551,7 @@ const DocumentChecklistTab = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -448,7 +567,7 @@ const DocumentChecklistTab = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -464,7 +583,7 @@ const DocumentChecklistTab = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -482,7 +601,7 @@ const DocumentChecklistTab = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -521,7 +640,7 @@ const DocumentChecklistTab = () => {
       </div>
 
       {/* Desktop Table View - Hidden on Mobile */}
-      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Table Header */}
         <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3.5 border-b border-gray-200 dark:border-gray-600">
           <div className="grid grid-cols-12 gap-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
@@ -645,7 +764,7 @@ const DocumentChecklistTab = () => {
         {filteredChecklists.map((checklist) => (
           <div
             key={checklist.studentId}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-4"
+            className="bg-white dark:bg-[#212124] rounded-xl shadow-md border border-gray-200 dark:border-gray-700 p-4"
           >
             {/* Student Header */}
             <div className="flex items-center justify-between mb-3">
@@ -753,11 +872,11 @@ const DocumentChecklistTab = () => {
       {/* Expanded Student Details Modal */}
       {expandedStudent && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-3 sm:p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-3 sm:p-4"
           style={{ margin: "0" }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 flex-shrink-0">
+          <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-[#212124] flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                   Document Checklist Details
@@ -780,7 +899,7 @@ const DocumentChecklistTab = () => {
                 return (
                   <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                     {/* Pre-Deployment Documents */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
                       <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
                         <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-blue-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                           <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
@@ -793,7 +912,7 @@ const DocumentChecklistTab = () => {
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
                               <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                                 <div className="flex-shrink-0">
@@ -829,7 +948,7 @@ const DocumentChecklistTab = () => {
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
                               <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                                 <div className="flex-shrink-0">
@@ -865,7 +984,7 @@ const DocumentChecklistTab = () => {
                           .map((doc) => (
                             <div
                               key={doc.id}
-                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
+                              className="flex items-center justify-between p-3 sm:p-4 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow"
                             >
                               <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                                 <div className="flex-shrink-0">
@@ -895,7 +1014,7 @@ const DocumentChecklistTab = () => {
       )}
 
       {filteredChecklists.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 sm:p-12 text-center shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 sm:p-12 text-center shadow-lg border border-gray-100 dark:border-gray-700">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
             <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
           </div>

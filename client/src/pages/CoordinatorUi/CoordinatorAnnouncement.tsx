@@ -24,6 +24,7 @@ import {
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 type AudienceOption =
   | "ALL"
@@ -224,24 +225,67 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
   // Loading state
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32 rounded-xl" />
+          </div>
+        </div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl p-5 border border-gray-200 dark:border-gray-700">
+              <div className="space-y-3">
+                <Skeleton className="w-8 h-8 rounded" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Search/Filter Skeleton */}
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <Skeleton className="h-10 flex-1 rounded-lg" />
+            <Skeleton className="h-10 w-40 rounded-lg" />
+          </div>
+        </div>
 
         {/* Announcements List Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Skeleton className="w-10 h-10 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-48" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <div className="flex space-x-2">
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -269,7 +313,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 gap-3 sm:gap-0">
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 gap-3 sm:gap-0">
         <div className="flex-1">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
             Announcements
@@ -295,7 +339,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-900 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-purple-100 dark:border-purple-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <MessageSquare className="w-8 h-8 text-purple-500" />
             <div>
@@ -309,7 +353,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-900 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-blue-100 dark:border-blue-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <Pin className="w-8 h-8 text-blue-500" />
             <div>
@@ -323,7 +367,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-green-100 dark:border-green-900 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-green-100 dark:border-green-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <Calendar className="w-8 h-8 text-green-500" />
             <div>
@@ -337,7 +381,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-orange-100 dark:border-orange-900 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-orange-100 dark:border-orange-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <Eye className="w-8 h-8 text-orange-500" />
             <div>
@@ -353,7 +397,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -362,13 +406,13 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
               placeholder="Search announcements..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Types</option>
             <option value="info">Info</option>
@@ -390,7 +434,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
             {pinnedAnnouncements.map((announcement) => (
               <div
                 key={announcement.id}
-                className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
+                className={`bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
                   announcement.type || "info"
                 )}`}
               >
@@ -486,7 +530,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
           {regularAnnouncements.map((announcement) => (
             <div
               key={announcement.id}
-              className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
+              className={`bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
                 announcement.type || "info"
               )}`}
             >
@@ -571,7 +615,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
       </div>
 
       {filteredAnnouncements.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
           <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">
             No announcements found
@@ -581,8 +625,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Create Announcement
@@ -610,7 +654,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                     })
                   }
                   placeholder="Enter announcement title"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
@@ -651,7 +695,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                   }
                   placeholder="Enter announcement message"
                   rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
                 />
               </div>
 
@@ -668,7 +712,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         type: e.target.value as any,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="info">Info</option>
                     <option value="warning">Warning</option>
@@ -689,7 +733,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         audience: e.target.value as any,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="ALL">All Users</option>
                     <option value="STUDENTS">Students Only</option>
@@ -748,8 +792,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
       {/* Edit Modal Placeholder */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 border border-gray-100 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Edit Announcement

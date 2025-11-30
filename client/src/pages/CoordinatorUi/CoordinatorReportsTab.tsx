@@ -142,7 +142,7 @@ const CoordinatorReportsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-[#212124] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
               <Users className="w-6 h-6 text-blue-600 dark:text-blue-300" />
@@ -158,7 +158,7 @@ const CoordinatorReportsTab: React.FC = () => {
             Students in report
               </p>
             </div>
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-[#212124] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
               <Building2 className="w-6 h-6 text-purple-600 dark:text-purple-300" />
@@ -174,7 +174,7 @@ const CoordinatorReportsTab: React.FC = () => {
             Average completion rate
               </p>
             </div>
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-[#212124] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
               <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-300" />
@@ -190,7 +190,7 @@ const CoordinatorReportsTab: React.FC = () => {
             Approved documents
               </p>
             </div>
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="bg-white dark:bg-[#212124] p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-amber-100 dark:bg-amber-900 rounded-lg">
               <Building2 className="w-6 h-6 text-amber-600 dark:text-amber-300" />
@@ -208,7 +208,7 @@ const CoordinatorReportsTab: React.FC = () => {
           </div>
         </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -238,7 +238,7 @@ const CoordinatorReportsTab: React.FC = () => {
               value={selectedCompanyId}
               onChange={(e) => setSelectedCompanyId(e.target.value)}
               disabled={companyLoading}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">All Companies</option>
               {companies.map((company) => (
@@ -259,7 +259,7 @@ const CoordinatorReportsTab: React.FC = () => {
                 placeholder="Search by name, student number, company..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
           </div>
@@ -279,7 +279,7 @@ const CoordinatorReportsTab: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -332,7 +332,7 @@ const CoordinatorReportsTab: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-[#212124] divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredItems.length === 0 && (
                   <tr>
                     <td

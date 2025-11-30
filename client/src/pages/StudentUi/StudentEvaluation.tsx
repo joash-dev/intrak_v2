@@ -4,8 +4,6 @@ import {
   FileText,
   Download,
   Eye,
-  CheckCircle,
-  Clock,
   X,
   Loader2,
   FileCheck,
@@ -390,24 +388,9 @@ const StudentEvaluationsTab: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (form: EvaluationForm) => {
-    if (form.id === "form-11" || (form.id === "form-18" && form.evaluation) || (form.id === "form-19b" && form.evaluation)) {
-      return <FileText className="w-5 h-5 text-blue-500" />;
-    }
-
-    if (!form.document) {
-      return <Clock className="w-5 h-5 text-gray-400" />;
-    }
-    switch (form.document.status) {
-      case "APPROVED":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case "PENDING":
-        return <Clock className="w-5 h-5 text-yellow-500" />;
-      case "REJECTED":
-        return <X className="w-5 h-5 text-red-500" />;
-      default:
-        return <FileText className="w-5 h-5 text-gray-400" />;
-    }
+  const getStatusIcon = (_form: EvaluationForm) => {
+    // Always show white document icon for status
+    return <FileText className="w-5 h-5 text-white" />;
   };
 
   const getStatusText = (form: EvaluationForm) => {
@@ -441,30 +424,30 @@ const StudentEvaluationsTab: React.FC = () => {
   const getStatusColor = (form: EvaluationForm) => {
     if (form.id === "form-11") {
       if (form.document) {
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-green-500 text-white";
       }
-      return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+      return "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-400";
     }
 
     if (form.id === "form-18" || form.id === "form-19b") {
       if (form.evaluation) {
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-green-500 text-white";
       }
-      return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+      return "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-400";
     }
 
     if (!form.document) {
-      return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+      return "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-400";
     }
     switch (form.document.status) {
       case "APPROVED":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        return "bg-green-500 text-white";
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        return "bg-yellow-100 text-yellow-800 dark:bg-[#212124] dark:text-yellow-200";
       case "REJECTED":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       default:
-        return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+        return "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-400";
     }
   };
 
@@ -480,10 +463,10 @@ const StudentEvaluationsTab: React.FC = () => {
   return (
     <div className="space-y-6 font-outfit">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <Star className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -498,192 +481,261 @@ const StudentEvaluationsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Evaluation Forms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
-            <>
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex space-x-3">
-                      <Skeleton className="w-10 h-10 rounded-lg" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-32" />
+      {/* Evaluation Forms Table */}
+      <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+        {loading ? (
+          <div className="overflow-x-auto scrollbar-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-[#212124] border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Form
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Type
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {[1, 2, 3].map((i) => (
+                  <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="w-10 h-10 rounded-lg" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-48" />
+                          <Skeleton className="h-3 w-64" />
+                        </div>
                       </div>
-                    </div>
-                    <Skeleton className="w-5 h-5 rounded-full" />
-                  </div>
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <div className="flex space-x-2 pt-4 mt-auto">
-                    <Skeleton className="h-10 flex-1 rounded-lg" />
-                    <Skeleton className="h-10 w-10 rounded-lg" />
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            evaluationForms.map((form) => (
-              <div
-                key={form.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow flex flex-col"
-              >
-                {/* Form Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                      <FileCheck className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {form.formNumber}
-                      </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {form.formName}
-                      </p>
-                    </div>
-                  </div>
-                  {getStatusIcon(form)}
-                </div>
-
-                {/* Description */}
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {form.description}
-                </p>
-
-                {/* Status Badge */}
-                <div className="mb-4">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      form
-                    )}`}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-6 w-32 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <Skeleton className="w-5 h-5 rounded" />
+                        <Skeleton className="h-6 w-28 rounded-full" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <Skeleton className="h-9 w-24 rounded-lg" />
+                        <Skeleton className="h-9 w-28 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-[#212124] border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Form
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Type
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {evaluationForms.map((form) => (
+                  <tr
+                    key={form.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
-                    {getStatusText(form)}
-                  </span>
-                </div>
+                    {/* Form Name & Description */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileCheck className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {form.formNumber}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300">
+                            {form.formName}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {form.description}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
 
-                {/* Document Info for Form 19b only (Form 18 doesn't have documents) */}
-                {form.id === "form-19b" && form.document && (
-                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      Uploaded:{" "}
-                      {new Date(form.document.uploadedAt || "").toLocaleDateString()}
-                    </p>
-                    {form.document.reviewedAt && (
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Reviewed:{" "}
-                        {new Date(form.document.reviewedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                )}
+                    {/* Type Badge */}
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">
+                        {form.formName}
+                      </span>
+                    </td>
 
-                {/* Actions */}
-                <div className="flex items-center space-x-2 mt-auto">
-                  {form.id === "form-11" ? (
-                    form.evaluation ? (
-                      <>
-                        <button
-                          onClick={() => handlePreview(form)}
-                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
+                    {/* Status */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(form)}
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            form
+                          )}`}
                         >
-                          <Eye className="w-4 h-4" />
-                          <span>View Details</span>
-                        </button>
-                        {form.document && (
-                          <button
-                            onClick={() => handleDownload(form)}
-                            className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                            title="Export"
-                          >
-                            <Download className="w-6 h-6" />
-                          </button>
+                          {getStatusText(form)}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-6 py-4">
+                      {form.id === "form-19b" && form.document ? (
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          <div>Uploaded: {new Date(form.document.uploadedAt || "").toLocaleDateString()}</div>
+                          {form.document.reviewedAt && (
+                            <div className="text-sm text-gray-900 dark:text-white mt-1">
+                              Reviewed: {new Date(form.document.reviewedAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ) : form.evaluation ? (
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {new Date(form.evaluation.date).toLocaleDateString()}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        {form.id === "form-11" ? (
+                          form.evaluation ? (
+                            <>
+                              <button
+                                onClick={() => handlePreview(form)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                              >
+                                <Eye className="w-4 h-4" />
+                                <span>View</span>
+                              </button>
+                              {form.document && (
+                                <button
+                                  onClick={() => handleDownload(form)}
+                                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all text-sm font-medium"
+                                  title="Export"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  <span>Download</span>
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Not submitted yet</span>
+                          )
+                        ) : form.id === "form-18" ? (
+                          form.evaluation ? (
+                            <>
+                              <button
+                                onClick={() => handlePreview(form)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                              >
+                                <Eye className="w-4 h-4" />
+                                <span>View</span>
+                              </button>
+                              <button
+                                onClick={() => handleDownload(form)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                title="Export"
+                              >
+                                <Download className="w-4 h-4" />
+                                <span>Download</span>
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Not filled yet</span>
+                          )
+                        ) : form.id === "form-19b" ? (
+                          form.evaluation ? (
+                            <>
+                              <button
+                                onClick={() => handlePreview(form)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                              >
+                                <Eye className="w-4 h-4" />
+                                <span>View</span>
+                              </button>
+                              <button
+                                onClick={() => handleDownload(form)}
+                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                title="Export"
+                              >
+                                <Download className="w-4 h-4" />
+                                <span>Download</span>
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Not filled yet</span>
+                          )
+                        ) : form.document ? (
+                          <>
+                            <button
+                              onClick={() => handlePreview(form)}
+                              disabled={previewLoading}
+                              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span>Preview</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownload(form)}
+                              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download</span>
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-500 dark:text-gray-400">Not filled yet</span>
                         )}
-                      </>
-                    ) : (
-                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                        Evaluation not submitted yet
                       </div>
-                    )
-                  ) : form.id === "form-18" ? (
-                    form.evaluation ? (
-                      <>
-                        <button
-                          onClick={() => handlePreview(form)}
-                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View Details</span>
-                        </button>
-                        <button
-                          onClick={() => handleDownload(form)}
-                          className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                          title="Export"
-                        >
-                          <Download className="w-6 h-6" />
-                        </button>
-                      </>
-                    ) : (
-                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                        Not yet filled by supervisor
-                      </div>
-                    )
-                  ) : form.id === "form-19b" ? (
-                    form.evaluation ? (
-                      <>
-                        <button
-                          onClick={() => handlePreview(form)}
-                          className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors min-w-[140px]"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>View Details</span>
-                        </button>
-                        <button
-                          onClick={() => handleDownload(form)}
-                          className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                          title="Export"
-                        >
-                          <Download className="w-6 h-6" />
-                        </button>
-                      </>
-                    ) : (
-                      <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                        Not yet filled by supervisor
-                      </div>
-                    )
-                  ) : form.document ? (
-                    <>
-                      <button
-                        onClick={() => handlePreview(form)}
-                        disabled={previewLoading}
-                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>Preview</span>
-                      </button>
-                      <button
-                        onClick={() => handleDownload(form)}
-                        className="flex items-center justify-center px-4 py-2.5 h-10 w-10 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors"
-                      >
-                        <Download className="w-6 h-6" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="w-full text-center py-2 text-sm text-gray-500 dark:text-gray-400">
-                      Not yet filled by supervisor
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Evaluation Details Modal (Form 11) */}
       {showEvaluationDetails && selectedForm && selectedForm.evaluation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ marginTop: 0 }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4" style={{ marginTop: 0 }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
@@ -858,7 +910,7 @@ const StudentEvaluationsTab: React.FC = () => {
                                   {section}
                                 </h4>
                               )}
-                              <div className="bg-white dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                              <div className="bg-white dark:bg-[#212124]/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1 mr-4">
                                     <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
@@ -914,7 +966,7 @@ const StudentEvaluationsTab: React.FC = () => {
                           return (
                             <div
                               key={key}
-                              className="bg-white dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+                              className="bg-white dark:bg-[#212124]/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1 mr-4">
@@ -975,7 +1027,7 @@ const StudentEvaluationsTab: React.FC = () => {
                         return (
                           <div
                             key={key}
-                            className="bg-white dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+                            className="bg-white dark:bg-[#212124]/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <h4 className="font-medium text-gray-900 dark:text-white">
@@ -1012,7 +1064,7 @@ const StudentEvaluationsTab: React.FC = () => {
 
                 {/* Overall Comments */}
                 {selectedForm.evaluation.comments && (
-                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                  <div className="bg-gray-50 dark:bg-[#212124]/50 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                       Overall Comments
                     </h3>
@@ -1040,7 +1092,7 @@ const StudentEvaluationsTab: React.FC = () => {
                   onClick={() => {
                     handleDownload(selectedForm);
                   }}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Download className="w-6 h-6" />
                   <span>Export</span>
@@ -1053,8 +1105,8 @@ const StudentEvaluationsTab: React.FC = () => {
 
       {/* Document Preview Modal (Form 18 and Form 19b) */}
       {selectedForm && previewUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ marginTop: 0 }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4" style={{ marginTop: 0 }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
@@ -1111,7 +1163,7 @@ const StudentEvaluationsTab: React.FC = () => {
               {selectedForm.document && (
                 <button
                   onClick={() => handleDownload(selectedForm)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                 >
                   <Download className="w-6 h-6" />
                   <span>Download</span>

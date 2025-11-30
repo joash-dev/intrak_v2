@@ -18,6 +18,7 @@ import {
 import { companyService, type Company } from "../../services/companyService";
 import { dashboardService } from "../../services/dashboardService";
 import api from "../../services/api";
+import Skeleton from "../../components/Skeleton";
 import toast from "react-hot-toast";
 
 interface StudentCompanySelectionProps {
@@ -187,17 +188,44 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="bg-gray-200 dark:bg-gray-700 rounded-xl h-32 w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="w-12 h-12 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-64" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+          </div>
+        </div>
 
         {/* Search Skeleton */}
-        <div className="bg-gray-200 dark:bg-gray-700 rounded-xl h-16 w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
 
         {/* Companies Grid Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl h-64"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -212,7 +240,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
           <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Retry
           </button>
@@ -240,7 +268,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
     return (
       <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-green-600" />
@@ -254,9 +282,9 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
           </p>
 
           {/* Company Card */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800 mb-6">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800 mb-6">
             <div className="flex items-start space-x-4 mb-4">
-              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
@@ -264,7 +292,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                   {currentStudent.company}
                 </h4>
                 {companyDetails?.industry && (
-                  <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md mb-2">
+                  <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md mb-2">
                     {companyDetails.industry}
                   </span>
                 )}
@@ -274,7 +302,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
             {/* Company Details */}
             {loadingCompanyDetails ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
+                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
               </div>
             ) : (
               <div className="space-y-3 mt-4">
@@ -302,7 +330,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                       <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                       <a
                         href={`mailto:${companyDetails.contactEmail}`}
-                        className="text-purple-600 dark:text-purple-400 hover:underline"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
                       >
                         {companyDetails.contactEmail}
                       </a>
@@ -314,7 +342,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                       <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
                       <a
                         href={`tel:${companyDetails.contactNumber}`}
-                        className="text-purple-600 dark:text-purple-400 hover:underline"
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
                       >
                         {companyDetails.contactNumber}
                       </a>
@@ -323,7 +351,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                 </div>
 
                 {companyDetails?.description && (
-                  <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       {companyDetails.description}
                     </p>
@@ -335,7 +363,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
           {/* Supervisor Information */}
           {currentStudent.supervisor && (
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-[#212124]/50 rounded-xl p-4 mb-6">
               <div className="flex items-center space-x-3">
                 <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <div>
@@ -352,7 +380,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
           {/* Internship Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <div className="bg-gray-50 dark:bg-[#212124]/50 rounded-xl p-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 Start Date
               </p>
@@ -360,7 +388,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                 {formatDate(currentStudent.startDate)}
               </p>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <div className="bg-gray-50 dark:bg-[#212124]/50 rounded-xl p-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                 End Date
               </p>
@@ -372,7 +400,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
           {/* Hours Progress */}
           {currentStudent.totalHours && (
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-[#212124]/50 rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   Hours Progress
@@ -381,9 +409,9 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                   {currentStudent.completedHours || 0} / {currentStudent.totalHours} hours
                 </p>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+              <div className="w-full bg-gray-200 dark:bg-[#212124] rounded-full h-3">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(hoursProgress, 100)}%` }}
                 />
               </div>
@@ -409,7 +437,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Company Applications
         </h2>
@@ -420,7 +448,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
       {/* My Applications Section */}
       {myApplications.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             My Applications
           </h3>
@@ -497,7 +525,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
       )}
 
       {/* Search */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -505,7 +533,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
             placeholder="Search companies by name, location, or industry..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -529,11 +557,11 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
             return (
               <div
                 key={company.id}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+                className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -611,8 +639,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                     onClick={() => handleApply(company)}
                     disabled={!canApply}
                     className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${canApply
-                        ? "bg-purple-600 text-white hover:bg-purple-700"
-                        : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-300 dark:bg-[#212124] text-gray-500 dark:text-gray-400 cursor-not-allowed"
                       }`}
                   >
                     {availableSlots > 0 ? "Apply Now" : "No Slots"}
@@ -626,8 +654,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
       {/* Application Modal */}
       {showApplicationModal && selectedCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Apply to {selectedCompany.name}
@@ -659,7 +687,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                 onChange={(e) => setApplicationMessage(e.target.value)}
                 placeholder="Why do you want to intern at this company? (Optional)"
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -674,7 +702,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
               <button
                 onClick={handleSubmitApplication}
                 disabled={applying}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center"
               >
                 {applying ? (
                   <>

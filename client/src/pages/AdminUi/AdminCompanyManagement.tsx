@@ -181,7 +181,7 @@ const AdminCompanyManagement = () => {
       moaStatus: "PENDING", // Mock data for now
       moaExpiry: "", // Mock data for now
       companyType: (company as any).companyType || "PUBLIC",
-      workingDays: (company as any).workingDays || (company.companyType === "PRIVATE" 
+      workingDays: (company as any).workingDays || ((company as any).companyType === "PRIVATE" 
         ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
     });

@@ -445,19 +445,63 @@ const StudentAttendanceTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 font-outfit">
         {/* Header Skeleton */}
-        <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-64" />
+                <Skeleton className="h-4 w-80" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Calendar/List Skeleton */}
-        <Skeleton className="h-96 w-full rounded-xl" />
+        {/* Progress Bar Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex justify-between items-center mb-4">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-full rounded-full" />
+        </div>
+
+        {/* Calendar/List View Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-32" />
+              <div className="flex space-x-2">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                <Skeleton className="h-10 w-10 rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-96 w-full rounded-lg" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -465,7 +509,7 @@ const StudentAttendanceTab: React.FC = () => {
   return (
     <div className="space-y-6 font-outfit">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
@@ -485,7 +529,7 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -503,7 +547,7 @@ const StudentAttendanceTab: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -521,7 +565,7 @@ const StudentAttendanceTab: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -539,7 +583,7 @@ const StudentAttendanceTab: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -558,7 +602,7 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -576,9 +620,9 @@ const StudentAttendanceTab: React.FC = () => {
             </span>
           </div>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+        <div className="w-full bg-gray-200 dark:bg-[#212124] rounded-full h-4">
           <div
-            className="bg-gradient-to-r from-purple-500 to-blue-500 h-4 rounded-full transition-all duration-500"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -589,7 +633,7 @@ const StudentAttendanceTab: React.FC = () => {
         <button
           onClick={handleGenerateQR}
           disabled={qrLoading}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
+          className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
         >
           <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             {qrLoading ? (
@@ -608,7 +652,7 @@ const StudentAttendanceTab: React.FC = () => {
 
         <button
           onClick={handleOpenManualModal}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
+          className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
         >
           <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Clock className="w-6 h-6 text-white" />
@@ -624,7 +668,7 @@ const StudentAttendanceTab: React.FC = () => {
         <button
           onClick={handleExportDTR}
           disabled={exportLoading}
-          className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
+          className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group disabled:opacity-50 disabled:cursor-not-allowed border border-gray-100 dark:border-gray-700"
         >
           <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             {exportLoading ? (
@@ -646,7 +690,7 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Attendance Records Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -666,7 +710,7 @@ const StudentAttendanceTab: React.FC = () => {
               onClick={() => setViewMode("calendar")}
               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-1.5 sm:space-x-2 transition-colors text-sm ${viewMode === "calendar"
                 ? "bg-purple-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200 dark:bg-[#212124] text-gray-700 dark:text-gray-300"
                 }`}
             >
               <CalendarIcon className="w-4 h-4" />
@@ -676,7 +720,7 @@ const StudentAttendanceTab: React.FC = () => {
               onClick={() => setViewMode("list")}
               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center space-x-1.5 sm:space-x-2 transition-colors text-sm ${viewMode === "list"
                 ? "bg-purple-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                : "bg-gray-200 dark:bg-[#212124] text-gray-700 dark:text-gray-300"
                 }`}
             >
               <FileText className="w-4 h-4" />
@@ -688,7 +732,7 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* Calendar View */}
       {viewMode === "calendar" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
               {monthYear}
@@ -754,8 +798,8 @@ const StudentAttendanceTab: React.FC = () => {
                           ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
                           : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
                         : isExpected
-                          ? "bg-gray-50 dark:bg-gray-700"
-                          : "bg-gray-50 dark:bg-gray-700 opacity-50"
+                          ? "bg-gray-50 dark:bg-[#212124]"
+                          : "bg-gray-50 dark:bg-[#212124] opacity-50"
                     : ""
                     }`}
                   onClick={() => {
@@ -824,7 +868,7 @@ const StudentAttendanceTab: React.FC = () => {
               <span className="text-gray-600 dark:text-gray-400">Absent</span>
             </div>
             <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 dark:bg-gray-700 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 dark:bg-[#212124] rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">No entry</span>
             </div>
           </div>
@@ -834,11 +878,11 @@ const StudentAttendanceTab: React.FC = () => {
       {/* Day Details Modal */}
       {showDayModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => setShowDayModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-6"
+            className="bg-white dark:bg-[#212124] rounded-xl w-full max-w-2xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -923,9 +967,9 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* List View */}
       {viewMode === "list" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-gray-50 dark:bg-[#212124]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                   Date
@@ -999,8 +1043,8 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* QR Modal */}
       {showQRModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">
               Your QR Code
             </h2>
@@ -1026,7 +1070,7 @@ const StudentAttendanceTab: React.FC = () => {
               </p>
               {/* Display token for manual entry */}
               {qrToken && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                <div className="mt-4 p-3 bg-gray-50 dark:bg-[#212124]/50 rounded-lg border border-gray-200 dark:border-gray-600">
                   <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                     Token for manual entry:
                   </p>
@@ -1049,14 +1093,14 @@ const StudentAttendanceTab: React.FC = () => {
       {/* QR Scan Success Modal */}
       {showScanSuccessModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => {
             setShowScanSuccessModal(false);
             setQrAction(null);
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 text-center"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
@@ -1086,8 +1130,8 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* Manual Log Modal */}
       {showManualModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Manual Attendance Log
             </h2>
@@ -1101,7 +1145,7 @@ const StudentAttendanceTab: React.FC = () => {
                   type="date"
                   value={manualDate}
                   onChange={(e) => setManualDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                 />
               </div>
 
@@ -1115,7 +1159,7 @@ const StudentAttendanceTab: React.FC = () => {
                     type="time"
                     value={manualTimeIn}
                     onChange={(e) => setManualTimeIn(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                   />
                 </div>
               )}
@@ -1130,7 +1174,7 @@ const StudentAttendanceTab: React.FC = () => {
                     type="time"
                     value={manualTimeOut}
                     onChange={(e) => setManualTimeOut(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                   />
                 </div>
               )}
@@ -1145,7 +1189,7 @@ const StudentAttendanceTab: React.FC = () => {
                   onChange={(e) => setManualRemarks(e.target.value)}
                   placeholder="Add any remarks..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white resize-none"
                 />
               </div>
 
@@ -1201,7 +1245,7 @@ const StudentAttendanceTab: React.FC = () => {
           onClick={() => setShowSaturdayPreferenceModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">

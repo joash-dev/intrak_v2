@@ -314,25 +314,25 @@ const SupervisorAttendance = () => {
     return (
       <div className="space-y-4 sm:space-y-6 animate-pulse">
         {/* Header Skeleton */}
-        <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl sm:rounded-2xl w-full"></div>
+        <div className="h-32 bg-gray-200 dark:bg-[#212124] rounded-xl sm:rounded-2xl w-full"></div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg sm:rounded-xl"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-[#212124] rounded-lg sm:rounded-xl"></div>
           ))}
         </div>
 
         {/* Search Bar Skeleton */}
         <div className="flex gap-4">
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl flex-1"></div>
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-32"></div>
+          <div className="h-10 bg-gray-200 dark:bg-[#212124] rounded-xl flex-1"></div>
+          <div className="h-10 bg-gray-200 dark:bg-[#212124] rounded-xl w-32"></div>
         </div>
 
         {/* Logs List Skeleton */}
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+            <div key={i} className="h-20 bg-gray-200 dark:bg-[#212124] rounded-xl w-full"></div>
           ))}
         </div>
       </div>
@@ -350,7 +350,7 @@ const SupervisorAttendance = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 via-blue-600 to-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1.5 sm:mb-2">Attendance Management</h1>
         <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-0.5 sm:mb-1">Company: {companyName}</p>
         <p className="text-blue-100 text-xs sm:text-sm lg:text-base">
@@ -362,7 +362,7 @@ const SupervisorAttendance = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Pending Review */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
               Pending Review
@@ -380,7 +380,7 @@ const SupervisorAttendance = () => {
         </div>
 
         {/* Approved */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Approved</p>
             <div className="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
@@ -396,7 +396,7 @@ const SupervisorAttendance = () => {
         </div>
 
         {/* Rejected */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">Rejected</p>
             <div className="p-1.5 sm:p-2 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
@@ -412,7 +412,7 @@ const SupervisorAttendance = () => {
         </div>
 
         {/* Hours Today */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
+        <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between mb-2 sm:mb-3">
             <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
               Hours Today
@@ -430,12 +430,12 @@ const SupervisorAttendance = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-1.5 sm:p-2 shadow-sm flex items-center gap-1.5 sm:gap-2">
+      <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-1.5 sm:p-2 shadow-sm flex items-center gap-1.5 sm:gap-2">
         <button
           onClick={() => setActiveTab("logs")}
           className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${activeTab === "logs"
-            ? "bg-purple-600 text-white shadow"
-            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            ? "bg-blue-600 text-white shadow"
+            : "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
         >
           <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -447,8 +447,8 @@ const SupervisorAttendance = () => {
             restartScanner();
           }}
           className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${activeTab === "scanner"
-            ? "bg-purple-600 text-white shadow"
-            : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            ? "bg-blue-600 text-white shadow"
+            : "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
             }`}
         >
           <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -457,7 +457,7 @@ const SupervisorAttendance = () => {
       </div>
 
       {activeTab === "scanner" && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Scan Intern QR Code
@@ -489,7 +489,7 @@ const SupervisorAttendance = () => {
                     <button
                       type="button"
                       onClick={restartScanner}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                     >
                       Scan Another Intern
                     </button>
@@ -509,7 +509,7 @@ const SupervisorAttendance = () => {
                   {scanError}
                 </div>
               )}
-              <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 border border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="bg-gray-50 dark:bg-[#212124]/40 rounded-lg p-4 border border-gray-200 dark:border-gray-700 space-y-3">
                 <h3 className="font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                   <QrCode className="w-4 h-4" />
                   <span>Manual Token Entry</span>
@@ -523,14 +523,14 @@ const SupervisorAttendance = () => {
                     value={manualToken}
                     onChange={(e) => setManualToken(e.target.value)}
                     placeholder="Enter QR token manually"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     disabled={scanLoading}
                   />
                   <div className="flex items-center gap-2">
                     <button
                       type="submit"
                       disabled={scanLoading || !manualToken.trim()}
-                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Verify Token
                     </button>
@@ -555,14 +555,14 @@ const SupervisorAttendance = () => {
       {/* QR Verify Success Modal */}
       {showScanSuccessModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}
           onClick={() => {
             setShowScanSuccessModal(false);
             setQrAction(null);
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 text-center"
+            className="bg-white dark:bg-[#212124] rounded-xl w-full max-w-md p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
@@ -577,7 +577,7 @@ const SupervisorAttendance = () => {
               QR verification completed and attendance recorded.
             </p>
             <button
-              className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               onClick={() => {
                 setShowScanSuccessModal(false);
                 setQrAction(null);
@@ -593,7 +593,7 @@ const SupervisorAttendance = () => {
       {activeTab === "logs" && (
         <>
           {/* Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -602,13 +602,13 @@ const SupervisorAttendance = () => {
                   placeholder="Search by name or student ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -617,7 +617,7 @@ const SupervisorAttendance = () => {
               </select>
               <button
                 onClick={fetchAttendanceLogs}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download className="w-4 h-4 inline mr-2" />
                 Refresh
@@ -630,10 +630,10 @@ const SupervisorAttendance = () => {
           </p>
 
           {/* Logs Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-gray-50 dark:bg-[#212124]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Student
@@ -773,12 +773,12 @@ const SupervisorAttendance = () => {
       {/* Detail Modal */}
       {selectedLog && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
           onClick={() => setSelectedLog(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -908,7 +908,7 @@ const SupervisorAttendance = () => {
       {/* Verification Modal */}
       {showVerifyModal && selectedLog && verifyAction && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
           onClick={() => {
             setShowVerifyModal(false);
@@ -918,7 +918,7 @@ const SupervisorAttendance = () => {
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
@@ -926,7 +926,7 @@ const SupervisorAttendance = () => {
                 ? "Verify Attendance"
                 : "Reject Attendance"}
             </h3>
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-[#212124] rounded-lg p-4 mb-6">
               <p className="font-semibold text-gray-900 dark:text-white">
                 {selectedLog.studentName}
               </p>
@@ -962,7 +962,7 @@ const SupervisorAttendance = () => {
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
                 placeholder={
                   verifyAction === "approve"
                     ? "Add verification notes..."

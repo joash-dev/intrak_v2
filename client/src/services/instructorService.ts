@@ -30,8 +30,6 @@ export interface InstructorStudent {
   attendanceRate: number;
   hoursCompleted: number;
   requiredHours: number;
-  tasksCompleted: number;
-  totalTasks: number;
   lastEvaluation: number;
   status: 'active' | 'warning' | 'at_risk' | 'completed';
   lastActivity: string;
@@ -105,8 +103,6 @@ class InstructorService {
         attendanceRate: student.attendanceRate || 0,
         hoursCompleted: student.completedHours || 0,
         requiredHours: student.totalHours || 240,
-        tasksCompleted: student.tasksCompleted || 0,
-        totalTasks: student.totalTasks || 20,
         lastEvaluation: student.lastEvaluation || 0,
         status: this.mapStudentStatus(student),
         lastActivity: this.formatLastActivity(student.lastActivity),
@@ -433,7 +429,7 @@ class InstructorService {
       ? studentsWithEvaluations.reduce((sum, s) => sum + s.lastEvaluation, 0) / studentsWithEvaluations.length 
       : 0;
     
-    const documentsPending = students.reduce((sum, s) => sum + (s.totalTasks - s.tasksCompleted), 0);
+    const documentsPending = 0; // Task tracking removed
     const evaluationsPending = students.filter(s => s.lastEvaluation === 0).length;
 
     return {

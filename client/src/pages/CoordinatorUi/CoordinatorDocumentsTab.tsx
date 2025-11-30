@@ -21,6 +21,7 @@ import { formatDate, formatDateTime } from "../../services/localeService";
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
+import Skeleton from "../../components/Skeleton";
 
 interface Document {
   id: string;
@@ -349,24 +350,64 @@ const CoordinatorDocumentsTab: React.FC = () => {
   // Show loading state
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+        </div>
 
         {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+              <div className="space-y-3">
+                <Skeleton className="w-8 h-8 rounded" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Filters Skeleton */}
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-10 flex-1 rounded-lg" />
+            <Skeleton className="h-10 w-32 rounded-lg" />
+            <Skeleton className="h-10 w-32 rounded-lg" />
+          </div>
+        </div>
 
         {/* Documents List Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 flex-1">
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="w-8 h-8 rounded-lg" />
+                  <Skeleton className="w-8 h-8 rounded-lg" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -407,7 +448,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
         <div>
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
             Review Documents
@@ -425,7 +466,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
         {/* Desktop View - Hidden on Mobile */}
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-yellow-100 dark:border-yellow-800 shadow-sm">
+        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-yellow-100 dark:border-yellow-800 shadow-sm">
           <div className="relative p-5 space-y-3">
             <Clock className="w-8 h-8 text-yellow-500" />
             <div>
@@ -439,7 +480,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-green-100 dark:border-green-900 shadow-sm">
+        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-green-100 dark:border-green-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <CheckCircle className="w-8 h-8 text-green-500" />
             <div>
@@ -453,7 +494,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-red-100 dark:border-red-900 shadow-sm">
+        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-red-100 dark:border-red-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <XCircle className="w-8 h-8 text-red-500" />
             <div>
@@ -467,7 +508,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
         </div>
 
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-900 shadow-sm">
+        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-purple-100 dark:border-purple-900 shadow-sm">
           <div className="relative p-5 space-y-3">
             <FileCheck className="w-8 h-8 text-purple-500" />
             <div>
@@ -484,7 +525,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
         {/* Mobile View - Hidden on Desktop */}
         <div className="md:hidden space-y-3">
           {/* Pending Review Card */}
-          <div className="rounded-xl bg-white dark:bg-gray-800 border border-yellow-500 dark:border-yellow-600 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-[#212124] border border-yellow-500 dark:border-yellow-600 shadow-sm">
             <div className="p-4 flex items-center space-x-4">
               <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Clock className="w-5 h-5 text-white" />
@@ -501,7 +542,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
 
           {/* Approved Card */}
-          <div className="rounded-xl bg-white dark:bg-gray-800 border border-green-500 dark:border-green-600 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-[#212124] border border-green-500 dark:border-green-600 shadow-sm">
             <div className="p-4 flex items-center space-x-4">
               <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-5 h-5 text-white" />
@@ -518,7 +559,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
 
           {/* Rejected Card */}
-          <div className="rounded-xl bg-white dark:bg-gray-800 border border-red-500 dark:border-red-600 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-[#212124] border border-red-500 dark:border-red-600 shadow-sm">
             <div className="p-4 flex items-center space-x-4">
               <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-5 h-5 text-white" />
@@ -535,7 +576,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           </div>
 
           {/* Total Documents Card */}
-          <div className="rounded-xl bg-white dark:bg-gray-800 border border-purple-500 dark:border-purple-600 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-[#212124] border border-purple-500 dark:border-purple-600 shadow-sm">
             <div className="p-4 flex items-center space-x-4">
               <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <FileCheck className="w-5 h-5 text-white" />
@@ -554,7 +595,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -563,13 +604,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
               placeholder="Search by student name, document type, or filename..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -579,7 +620,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
           >
             <option value="all">All Types</option>
             {documentTypes.map((type) => (
@@ -596,13 +637,13 @@ const CoordinatorDocumentsTab: React.FC = () => {
         {filteredDocuments.map((doc) => (
           <div
             key={doc.id}
-            className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+            className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
           >
             <div className="p-4 sm:p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-3 sm:mb-4">
                 <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
                     {doc.studentAvatar}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -645,7 +686,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
               </div>
 
               {/* Document Info */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+              <div className="bg-gray-50 dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
                   <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
                     <div className="flex-shrink-0 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5">
@@ -765,7 +806,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       </div>
 
       {filteredDocuments.length === 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
           <FileCheck className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400 mb-2">
             No documents found
@@ -778,8 +819,8 @@ const CoordinatorDocumentsTab: React.FC = () => {
 
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {reviewAction === "approve"
@@ -795,9 +836,9 @@ const CoordinatorDocumentsTab: React.FC = () => {
             </div>
 
             {/* Document Summary */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-[#212124] rounded-xl p-4 mb-6">
               <div className="flex items-start space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
                   {selectedDoc.studentAvatar}
                 </div>
                 <div>
@@ -862,7 +903,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                     : "Please provide a reason for rejection..."
                 }
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
               />
             </div>
 
@@ -907,12 +948,12 @@ const CoordinatorDocumentsTab: React.FC = () => {
       )}
 
       {showFeedbackModal && feedbackDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
                     {feedbackDoc.studentAvatar}
                   </div>
                   <div>
@@ -951,18 +992,18 @@ const CoordinatorDocumentsTab: React.FC = () => {
       {/* Preview Modal */}
       {previewDoc && previewUrl && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-3 sm:p-4"
+          className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3 sm:p-4"
           style={{ margin: "0" }}
           onClick={closePreview}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
+            className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
                   {previewDoc.studentAvatar}
                 </div>
                 <div className="flex-1 min-w-0">

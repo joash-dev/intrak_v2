@@ -425,7 +425,7 @@ const InstructorSettings = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           <p className="text-gray-600 dark:text-gray-400">
             Loading settings...
           </p>
@@ -435,16 +435,16 @@ const InstructorSettings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen dark:bg-[#19191c]">
       {/* Success Modal */}
       {saveSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={() => setSaveSuccess(false)}
           />
           <div className="relative z-10 w-full max-w-md">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-green-200 dark:border-green-900/40 overflow-hidden">
+            <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-xl border border-green-200 dark:border-green-900/40 overflow-hidden">
               <div className="p-4 sm:p-6 md:p-8 text-center">
                 <div className="mx-auto mb-3 sm:mb-4 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 sm:w-7 sm:h-7 text-green-600 dark:text-green-400" />
@@ -491,7 +491,7 @@ const InstructorSettings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1.5 sm:p-2">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1.5 sm:p-2">
             <nav className="space-y-0.5 sm:space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -500,7 +500,7 @@ const InstructorSettings = () => {
                     key={section.id}
                     onClick={() => setActiveTab(section.id as any)}
                     className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-left ${activeTab === section.id
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                   >
@@ -515,7 +515,7 @@ const InstructorSettings = () => {
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             {/* Profile Tab */}
             {activeTab === "profile" && (
               <div className="space-y-4 sm:space-y-6">
@@ -532,7 +532,7 @@ const InstructorSettings = () => {
                   {/* Profile Photo - Top Left with side controls */}
                   <div className="w-full flex items-center">
                     <div className="relative mr-3 sm:mr-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                         {profilePhoto ? (
                           <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -541,7 +541,7 @@ const InstructorSettings = () => {
                           </span>
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 bg-purple-600 text-white p-1 sm:p-1.5 rounded-full cursor-pointer hover:bg-purple-700 transition-colors">
+                      <label className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1 sm:p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
                         <Camera className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={saving} />
                       </label>
@@ -560,7 +560,7 @@ const InstructorSettings = () => {
                         type="button"
                         onClick={() => document.getElementById("profile-photo-input")?.click()}
                         disabled={saving}
-                        className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Change Photo
                       </button>
@@ -595,7 +595,7 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, name: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.name
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.name
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                             }`}
@@ -620,7 +620,7 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, email: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.email
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.email
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                             }`}
@@ -645,7 +645,7 @@ const InstructorSettings = () => {
                               setErrors({ ...errors, phone: "" });
                             }
                           }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.phone
+                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.phone
                               ? "border-red-500"
                               : "border-gray-200 dark:border-gray-600"
                             }`}
@@ -670,7 +670,7 @@ const InstructorSettings = () => {
                               department: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
@@ -684,7 +684,7 @@ const InstructorSettings = () => {
                           onChange={(e) =>
                             setProfile({ ...profile, office: e.target.value })
                           }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
 
@@ -712,7 +712,7 @@ const InstructorSettings = () => {
                               emergencyName: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                       <div>
@@ -729,7 +729,7 @@ const InstructorSettings = () => {
                               emergencyContact: e.target.value,
                             })
                           }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                     </div>
@@ -738,7 +738,7 @@ const InstructorSettings = () => {
                       <button
                         onClick={handleProfileUpdate}
                         disabled={saving}
-                        className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                        className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                       >
                         {saving ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -785,10 +785,10 @@ const InstructorSettings = () => {
                 </div>
 
                 {/* Password Form */}
-                <div className="max-w-lg space-y-4 sm:space-y-6">
+                <div className="max-w-2xl space-y-4 sm:space-y-5 md:space-y-6">
                   {/* Current Password */}
                   <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                       Current Password
                     </label>
                     <div className="relative">
@@ -802,14 +802,14 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Enter your current password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2.5 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 sm:right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showCurrentPassword ? (
                           <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -822,7 +822,7 @@ const InstructorSettings = () => {
 
                   {/* New Password */}
                   <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                       New Password
                     </label>
                     <div className="relative">
@@ -836,12 +836,12 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Enter your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2.5 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 sm:right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showNewPassword ? (
                           <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -877,7 +877,7 @@ const InstructorSettings = () => {
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -891,14 +891,14 @@ const InstructorSettings = () => {
                           })
                         }
                         placeholder="Confirm your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2.5 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-3 top-2.5 sm:right-4 sm:top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 sm:right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -940,7 +940,7 @@ const InstructorSettings = () => {
                         passwordData.confirmPassword ||
                         passwordData.newPassword.length < 8
                       }
-                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                     >
                       {saving ? (
                         <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
@@ -982,7 +982,7 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1001,7 +1001,7 @@ const InstructorSettings = () => {
                       </div>
                       {theme === "light" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1010,7 +1010,7 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
@@ -1029,7 +1029,7 @@ const InstructorSettings = () => {
                       </div>
                       {theme === "dark" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1038,12 +1038,12 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                           <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <div>
@@ -1057,7 +1057,7 @@ const InstructorSettings = () => {
                       </div>
                       {theme === "system" && (
                         <div className="absolute top-2 right-2">
-                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                         </div>
                       )}
                     </button>
@@ -1100,7 +1100,7 @@ const InstructorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
@@ -1125,7 +1125,7 @@ const InstructorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
 
@@ -1150,7 +1150,7 @@ const InstructorSettings = () => {
                         }
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1169,7 +1169,7 @@ const InstructorSettings = () => {
                       } catch { }
                       toast.success("Notification preferences saved");
                     }}
-                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Save Preferences
                   </button>
@@ -1190,9 +1190,9 @@ const InstructorSettings = () => {
                 </div>
 
                 {/* Document Management */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700">
                   <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                       Document Management
                     </h3>
@@ -1223,7 +1223,7 @@ const InstructorSettings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600" />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600" />
                       </label>
                     </div>
 
@@ -1252,14 +1252,14 @@ const InstructorSettings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600" />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600" />
                       </label>
                     </div>
                   </div>
                 </div>
 
                 {/* Announcement Settings */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700">
                   <div className="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
                     <Megaphone className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
@@ -1278,7 +1278,7 @@ const InstructorSettings = () => {
                           defaultAnnouncementAudience: e.target.value,
                         }))
                       }
-                      className="w-full md:max-w-md px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
+                      className="w-full md:max-w-md px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
                     >
                       <option>All Users</option>
                       <option>Students Only</option>
@@ -1296,7 +1296,7 @@ const InstructorSettings = () => {
                       );
                       toast.success("Instructor settings saved");
                     }}
-                    className="px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg"
+                    className="px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg"
                   >
                     Save Settings
                   </button>
@@ -1380,7 +1380,7 @@ const InstructorSettings = () => {
                       } catch { }
                       toast.success("Preferences saved");
                     }}
-                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Save Preferences
                   </button>
@@ -1406,11 +1406,11 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="text-left w-full rounded-xl border border-purple-700/40 dark:border-purple-600/40 bg-purple-900/30 hover:bg-purple-900/40 transition-colors p-4 sm:p-5"
+                    className="text-left w-full rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-purple-600/30 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
                       </div>
                       <div>
                         <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
@@ -1527,10 +1527,10 @@ const InstructorHelpModalContent = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-3 sm:px-4 py-4 sm:py-6"
       style={{ marginTop: 0 }}
     >
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-[#212124] max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -1618,7 +1618,7 @@ const InstructorHelpModalContent = ({
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto block rounded-lg bg-purple-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-white hover:bg-purple-700"
+            className="ml-auto block rounded-lg bg-blue-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-white hover:bg-blue-700"
           >
             Close
           </button>

@@ -113,6 +113,16 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const student = await prisma.student.findFirst({
       where: { userId },
       include: {
@@ -124,15 +134,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
             role: true
           } 
         },
-        company: { 
-          select: { 
-            id: true,
-            name: true,
-            address: true,
-            companyType: true,
-            workingDays: true
-          } 
-        }
+        company: true
       }
     });
 
@@ -158,32 +160,38 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     };
 
     const totalMinutes = attendanceLogs.reduce((sum, log) => {
-      return sum + roundToOfficialTime(log.durationMinutes);
+      return sum + roundToOfficialTime(log.durationMinutes || 0);
     }, 0);
     // Keep decimal precision (e.g., 30 mins = 0.5 hours, not 1.0)
     const completedHours = Math.round((totalMinutes / 60) * 10) / 10;
 
     res.json({
       id: student.id,
-      name: student.user.name,
-      email: student.user.email,
+      name: student.user?.name || user.name,
+      email: student.user?.email || user.email,
       studentNumber: student.studentNumber,
       program: student.program,
       year: student.year,
       section: student.section,
       company: student.company?.name || '',
       supervisor: student.supervisorName || '',
-      totalHours: student.totalHours,
+      totalHours: student.totalHours || 0,
       completedHours: completedHours,
       startDate: student.startDate,
       endDate: student.endDate,
-      worksOnSaturday: student.worksOnSaturday || false,
-      companyType: student.company?.companyType || null,
-      workingDays: student.company?.workingDays || null
+      worksOnSaturday: (student as any).worksOnSaturday || false,
+      companyType: (student.company as any)?.companyType || null,
+      workingDays: (student.company as any)?.workingDays || null
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching student profile:', error);
-    res.status(500).json({ message: 'Failed to fetch student profile', error });
+    const errorMessage = error?.message || 'Unknown error occurred';
+    const errorStack = process.env.NODE_ENV === 'development' ? error?.stack : undefined;
+    res.status(500).json({ 
+      message: 'Failed to fetch student profile', 
+      error: errorMessage,
+      ...(errorStack && { stack: errorStack })
+    });
   }
 };
 
@@ -683,8 +691,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
       let company = null;
       if (student.companyId) {
         company = await prisma.company.findUnique({
-          where: { id: student.companyId },
-          select: { companyType: true, workingDays: true }
+          where: { id: student.companyId }
         });
       }
       
@@ -699,14 +706,14 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         let expectedWorkingDays = 0;
         
           // Use company-specific working schedule if available
-        if (company && company.workingDays && company.workingDays.length > 0) {
+        if (company && (company as any).workingDays && (company as any).workingDays.length > 0) {
           // For private companies, use student's Saturday preference
-          const worksOnSaturday = company.companyType === 'PRIVATE' ? student.worksOnSaturday : undefined;
+          const worksOnSaturday = (company as any).companyType === 'PRIVATE' ? (student as any).worksOnSaturday : undefined;
           
           expectedWorkingDays = calculateExpectedWorkingDays(
             startDate,
             effectiveEndDate,
-            company.workingDays,
+            (company as any).workingDays,
             worksOnSaturday
           );
         } else {
@@ -1330,9 +1337,7 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
     const student = await prisma.student.findUnique({
       where: { id },
       include: {
-        company: {
-          select: { id: true, companyType: true }
-        }
+        company: true
       }
     });
 
@@ -1346,7 +1351,7 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
     }
 
     // Only allow Saturday preference for private companies
-    if (student.company.companyType !== 'PRIVATE') {
+    if ((student.company as any).companyType !== 'PRIVATE') {
       return res.status(400).json({ message: 'Saturday work preference is only available for students in private companies' });
     }
 
@@ -1355,11 +1360,9 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
       where: { id },
       data: {
         worksOnSaturday
-      },
+      } as any,
       include: {
-        company: {
-          select: { name: true, companyType: true }
-        }
+        company: true
       }
     });
 
@@ -1372,7 +1375,7 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
       message: 'Saturday work preference updated successfully',
       student: {
         id: updatedStudent.id,
-        worksOnSaturday: updatedStudent.worksOnSaturday
+        worksOnSaturday: (updatedStudent as any).worksOnSaturday
       }
     });
   } catch (error: any) {

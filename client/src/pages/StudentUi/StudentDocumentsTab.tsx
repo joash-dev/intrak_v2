@@ -16,6 +16,7 @@ import {
 import { documentService } from "../../services/documentService";
 import type { Document, DocumentStats } from "../../services/documentService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
+import Skeleton from "../../components/Skeleton";
 
 // Remove duplicate interface since we're importing it from service
 
@@ -477,7 +478,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       case "APPROVED":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        return "bg-yellow-100 text-yellow-800 dark:bg-[#212124] dark:text-yellow-200";
       case "REJECTED":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       case "RESUBMISSION_REQUESTED":
@@ -504,25 +505,105 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
   if (loading && documents.length === 0) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6 font-outfit">
         {/* Header Skeleton */}
-        <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-64" />
+                <Skeleton className="h-4 w-80" />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Filters Skeleton */}
-        <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
+        {/* Search and Filters Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col space-y-3">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-2 flex-1">
+                <Skeleton className="h-10 flex-1 rounded-lg" />
+                <Skeleton className="h-10 flex-1 rounded-lg" />
+              </div>
+              <Skeleton className="h-10 w-full sm:w-40 rounded-lg" />
+            </div>
+          </div>
+        </div>
 
-        {/* Documents Grid Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-          ))}
+        {/* Documents Table Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          {/* Category Header Skeleton */}
+          <div className="bg-gray-50 dark:bg-[#212124] px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+            <div className="flex items-center space-x-3">
+              <Skeleton className="w-9 h-9 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          </div>
+          {/* Table Skeleton */}
+          <div className="overflow-x-auto scrollbar-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-[#212124]">
+                <tr>
+                  {["Document Type", "Filename", "Status", "Uploaded", "Size", "Actions"].map((header) => (
+                    <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {[1, 2, 3].map((i) => (
+                  <tr key={i}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="w-5 h-5 rounded" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton className="h-4 w-48" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Skeleton className="h-6 w-20 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Skeleton className="h-4 w-12" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Skeleton className="w-8 h-8 rounded-lg" />
+                        <Skeleton className="w-8 h-8 rounded-lg" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -546,7 +627,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
   return (
     <div className="space-y-6 font-outfit">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
@@ -566,7 +647,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -581,7 +662,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -596,7 +677,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -611,7 +692,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -629,7 +710,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col space-y-3">
           {/* Search Bar - Full width on mobile */}
           <div className="relative w-full">
@@ -639,7 +720,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
 
@@ -652,7 +733,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 >
                   {documentService.getCategoryOptions().map((option) => (
                     <option key={option.value} value={option.value}>
@@ -664,7 +745,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
               >
                 <option value="ALL">All Status</option>
                 <option value="APPROVED">Approved</option>
@@ -687,9 +768,9 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* Documents by Category */}
       {Object.keys(groupedDocs).length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-[#212124] rounded-2xl flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -718,10 +799,10 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
           {Object.entries(groupedDocs).map(([category, categoryDocs]) => (
             <div
               key={category}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
+              className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
             >
               {/* Category Header */}
-              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="bg-gray-50 dark:bg-[#212124] px-6 py-4 border-b border-gray-200 dark:border-gray-600">
                 <div className="flex items-center space-x-3">
                   <div
                     className={`p-2 rounded-lg ${category === "PRE_DEPLOYMENT"
@@ -753,9 +834,9 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               </div>
 
               {/* Documents Table for this Category */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-hidden">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                  <thead className="bg-gray-50 dark:bg-[#212124]">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Document Type
@@ -877,8 +958,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* Upload Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {reuploadingDoc ? "Re-Upload Document" : "Upload Document"}
@@ -908,7 +989,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                       setSelectedType(categoryTypes[0].value);
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
                 >
                   {documentService
                     .getCategoryOptions()
@@ -931,7 +1012,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
                   disabled={
                     documentTypes.filter(
                       (type) => type.category === selectedCategory
@@ -1017,7 +1098,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                       {uploadProgress}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-gray-200 dark:bg-[#212124] rounded-full h-2">
                     <div
                       className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
@@ -1048,8 +1129,8 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
 
       {/* View Modal */}
       {viewModalOpen && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Document Details
@@ -1133,7 +1214,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                 </div>
               )}
 
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700">
+              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-[#212124]">
                 {previewUrl ? (
                   previewType?.startsWith("image/") ? (
                     <img

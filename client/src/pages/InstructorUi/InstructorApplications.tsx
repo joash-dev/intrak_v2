@@ -188,9 +188,9 @@ const InstructorApplications: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 text-sm md:text-base">
+    <div className="space-y-6 text-sm md:text-base min-h-screen dark:bg-[#19191c]">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
@@ -211,7 +211,7 @@ const InstructorApplications: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -241,7 +241,7 @@ const InstructorApplications: React.FC = () => {
       {/* Applications List */}
       <div className="space-y-4">
         {filteredApplications.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 sm:p-12 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-8 sm:p-12 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
             <FileCheck className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
               No applications found
@@ -257,7 +257,7 @@ const InstructorApplications: React.FC = () => {
                 return (
                   <div
                     key={application.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                    className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
@@ -410,7 +410,7 @@ const InstructorApplications: React.FC = () => {
                           </span>
                         )}
                         {application.status === "WITHDRAWN" && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-[#212124]/20 dark:text-gray-400">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Withdrawn
                           </span>
@@ -430,7 +430,7 @@ const InstructorApplications: React.FC = () => {
                 return (
                   <div
                     key={application.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700"
+                    className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700"
                   >
                     {/* Student Header with Status */}
                     <div className="flex items-start justify-between mb-3">
@@ -480,7 +480,7 @@ const InstructorApplications: React.FC = () => {
                           </span>
                         )}
                         {application.status === "WITHDRAWN" && (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-[#212124]/30 dark:text-gray-300">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Withdrawn
                           </span>
@@ -585,8 +585,8 @@ const InstructorApplications: React.FC = () => {
 
       {/* Approve Modal */}
       {showApproveModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
               <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
@@ -642,8 +642,8 @@ const InstructorApplications: React.FC = () => {
 
       {/* Reject Modal */}
       {showRejectModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <XCircle className="w-6 h-6 text-red-600" />
             </div>

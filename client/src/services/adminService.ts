@@ -98,6 +98,8 @@ export interface AdminCompany {
   website?: string;
   status?: string;
   moaStatus?: string;
+  companyType?: 'PUBLIC' | 'PRIVATE';
+  workingDays?: string[];
   moaExpiry?: string | null;
   studentCount?: number;
   students: Array<{
@@ -537,6 +539,8 @@ class AdminService {
     latitude?: number;
     longitude?: number;
     radiusMeters?: number;
+    companyType?: 'PUBLIC' | 'PRIVATE';
+    workingDays?: string[];
   }): Promise<{ company: AdminCompany }> {
     try {
       const response = await api.post('/companies', companyData);

@@ -388,7 +388,7 @@ const StudentCompanyPartnershipAssistance = () => {
       INSTRUCTOR: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
       COORDINATOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
     };
-    return colors[role] || "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+    return colors[role] || "bg-gray-100 text-gray-700 dark:bg-[#212124] dark:text-gray-300";
   };
 
   if (loading) {
@@ -402,7 +402,7 @@ const StudentCompanyPartnershipAssistance = () => {
   return (
     <div className="space-y-6 font-outfit">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
             <Search className="w-6 h-6 text-white" />
@@ -419,7 +419,7 @@ const StudentCompanyPartnershipAssistance = () => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
         {/* Left Column - Communication */}
         <div className="lg:col-span-3 flex">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col w-full">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col w-full">
             {/* Header Section */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
@@ -443,7 +443,7 @@ const StudentCompanyPartnershipAssistance = () => {
               <div className="relative mb-4" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
                 <div
                   ref={messagesContainerRef}
-                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
+                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-[#212124] rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
                     }`}
                 >
                   {messages.length === 0 ? (
@@ -490,7 +490,7 @@ const StudentCompanyPartnershipAssistance = () => {
                                   <div
                                     className={`rounded-2xl px-4 py-2.5 shadow-sm ${isStudent
                                       ? "bg-indigo-600 text-white rounded-br-sm"
-                                      : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
+                                      : "bg-white dark:bg-[#212124] text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
                                       }`}
                                   >
                                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -524,7 +524,7 @@ const StudentCompanyPartnershipAssistance = () => {
               </div>
 
               {/* Message Input */}
-              <div className="flex space-x-3 items-end bg-gray-50 dark:bg-gray-900/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+              <div className="flex space-x-3 items-end bg-gray-50 dark:bg-[#19191c]/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
                 <input
                   type="text"
                   value={newMessage}
@@ -536,7 +536,7 @@ const StudentCompanyPartnershipAssistance = () => {
                     }
                   }}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
                 />
                 <button
                   onClick={handleSendMessage}
@@ -553,7 +553,7 @@ const StudentCompanyPartnershipAssistance = () => {
         {/* Right Column - Documents Checklist & Steps */}
         <div className="lg:col-span-2 space-y-6 flex flex-col">
           {/* Documents Checklist */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between mb-2">
@@ -565,7 +565,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="flex-1 bg-gray-200 dark:bg-[#212124] rounded-full h-2">
                   <div
                     className="bg-indigo-600 dark:bg-indigo-500 rounded-full h-2 transition-all duration-300"
                     style={{
@@ -600,7 +600,7 @@ const StudentCompanyPartnershipAssistance = () => {
                           ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
                           : isRejected
                             ? "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
-                            : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700"
+                            : "bg-gray-50 dark:bg-[#212124]/50 border-gray-200 dark:border-gray-700"
                         }`}
                     >
                       <div className="flex items-start justify-between mb-2">
@@ -634,7 +634,7 @@ const StudentCompanyPartnershipAssistance = () => {
                       </div>
 
                       {isUploaded ? (
-                        <div className="mt-3 flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <div className="mt-3 flex items-center justify-between p-2 bg-white dark:bg-[#212124] rounded border border-gray-200 dark:border-gray-700">
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
                             <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
@@ -667,7 +667,7 @@ const StudentCompanyPartnershipAssistance = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+                        <div className="mt-3 p-2 bg-white dark:bg-[#212124] rounded border border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
                             Not uploaded yet. Upload in <strong>Documents</strong> tab.
                           </p>
@@ -702,7 +702,7 @@ const StudentCompanyPartnershipAssistance = () => {
       {/* Document Preview Modal */}
       {previewDoc && previewUrl && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4"
           onClick={() => {
             setPreviewDoc(null);
             if (previewUrl) {
@@ -712,7 +712,7 @@ const StudentCompanyPartnershipAssistance = () => {
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
+            className="bg-white dark:bg-[#212124] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -740,7 +740,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
-            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-[#19191c]">
               {previewDoc.mimeType === 'application/pdf' ? (
                 <iframe
                   src={previewUrl}
@@ -778,8 +778,8 @@ const StudentCompanyPartnershipAssistance = () => {
 
       {/* Steps Modal */}
       {showStepsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ marginTop: 0 }} onClick={() => setShowStepsModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4" style={{ marginTop: 0 }} onClick={() => setShowStepsModal(false)}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
@@ -864,7 +864,7 @@ const StudentCompanyPartnershipAssistance = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#19191c]/50">
               <button
                 onClick={() => setShowStepsModal(false)}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"

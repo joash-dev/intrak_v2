@@ -289,9 +289,9 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
         longitude: longitude ? parseFloat(longitude) : null,
         radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
         maxSlots: maxSlots ? parseInt(maxSlots) : undefined,
-        companyType: companyType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
+        companyType: (companyType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC') as any,
         workingDays: finalWorkingDays,
-      },
+      } as any,
       include: {
         students: true,
         supervisor: {

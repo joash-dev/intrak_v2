@@ -146,7 +146,7 @@ const StudentWeeklyReport: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-2 w-full sm:w-1/2">
               <Skeleton className="h-8 w-3/4" />
@@ -162,7 +162,7 @@ const StudentWeeklyReport: React.FC = () => {
         {/* Week Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+            <div key={i} className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-6 w-24" />
                 <Skeleton className="h-8 w-8 rounded-lg" />
@@ -189,7 +189,7 @@ const StudentWeeklyReport: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1">
             <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -204,7 +204,7 @@ const StudentWeeklyReport: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -234,7 +234,7 @@ const StudentWeeklyReport: React.FC = () => {
         {weeks.map((week) => (
           <div
             key={week.weekNumber}
-            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
+            className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -261,7 +261,7 @@ const StudentWeeklyReport: React.FC = () => {
                 onChange={(e) =>
                   handleWeekChange(week.weekNumber, "dateRange", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -277,7 +277,7 @@ const StudentWeeklyReport: React.FC = () => {
                 onChange={(e) =>
                   handleWeekChange(week.weekNumber, "tasksAccomplished", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
               />
             </div>
 
@@ -311,7 +311,7 @@ const StudentWeeklyReport: React.FC = () => {
                 onChange={(e) =>
                   handleWeekChange(week.weekNumber, "knowledgeSkillsValues", e.target.value)
                 }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
               />
             </div>
           </div>
@@ -320,9 +320,9 @@ const StudentWeeklyReport: React.FC = () => {
         {/* Add Week Button */}
         <button
           onClick={handleAddWeek}
-          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all group min-h-[400px]"
+          className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group min-h-[400px]"
         >
-          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors mb-4">
+          <div className="p-4 bg-gray-100 dark:bg-[#212124] rounded-full group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors mb-4">
             <Plus className="w-8 h-8 text-gray-400 group-hover:text-purple-600 dark:text-gray-500 dark:group-hover:text-purple-400" />
           </div>
           <span className="text-lg font-medium text-gray-500 group-hover:text-purple-700 dark:text-gray-400 dark:group-hover:text-purple-300">
@@ -353,8 +353,8 @@ const StudentWeeklyReport: React.FC = () => {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-8 shadow-xl max-w-md w-full mx-4 transform transition-all scale-100">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Save className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -367,7 +367,7 @@ const StudentWeeklyReport: React.FC = () => {
               </p>
               <button
                 onClick={() => setShowSuccessModal(false)}
-                className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
                 Continue Editing
               </button>

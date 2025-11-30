@@ -365,8 +365,8 @@ const InstructorStudentManagement: React.FC = () => {
         <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
 
         {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
           ))}
         </div>
@@ -375,7 +375,7 @@ const InstructorStudentManagement: React.FC = () => {
         <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl w-full"></div>
 
         {/* Table Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden">
           <div className="h-12 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"></div>
           <div className="space-y-4 p-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -388,12 +388,12 @@ const InstructorStudentManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 text-sm md:text-base">
+    <div className="space-y-6 text-sm md:text-base min-h-screen dark:bg-[#19191c]">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
               <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
@@ -408,7 +408,7 @@ const InstructorStudentManagement: React.FC = () => {
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={handleAddStudent}
-              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Add Student</span>
@@ -426,8 +426,8 @@ const InstructorStudentManagement: React.FC = () => {
       </div>
 
       {/* Stats Cards - Desktop Grid View */}
-      <div className="hidden md:grid md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="hidden md:grid md:grid-cols-5 gap-4">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -437,13 +437,13 @@ const InstructorStudentManagement: React.FC = () => {
                 {students.length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
@@ -457,7 +457,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -473,7 +473,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -489,7 +489,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -508,7 +508,7 @@ const InstructorStudentManagement: React.FC = () => {
 
       {/* Stats Cards - Mobile Stacked View */}
       <div className="md:hidden space-y-3">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -518,13 +518,13 @@ const InstructorStudentManagement: React.FC = () => {
                 {students.length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
               <Users className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">Active</p>
@@ -538,7 +538,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -554,7 +554,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -570,7 +570,7 @@ const InstructorStudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -588,7 +588,7 @@ const InstructorStudentManagement: React.FC = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -597,13 +597,13 @@ const InstructorStudentManagement: React.FC = () => {
               placeholder="Search by name or student ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[140px]"
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[140px]"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -615,7 +615,7 @@ const InstructorStudentManagement: React.FC = () => {
           <select
             value={filterCompany}
             onChange={(e) => setFilterCompany(e.target.value)}
-            className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[140px]"
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full sm:w-auto sm:min-w-[140px]"
           >
             <option value="all">All Companies</option>
             {uniqueCompanies.map((company) => (
@@ -628,7 +628,7 @@ const InstructorStudentManagement: React.FC = () => {
       </div>
 
       {/* Desktop Table View - Hidden on Mobile */}
-      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-[900px] w-full">
             <thead className="bg-gray-50 dark:bg-gray-700">
@@ -708,7 +708,7 @@ const InstructorStudentManagement: React.FC = () => {
                     <div className="flex items-center">
                       <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
                         <div
-                          className="bg-purple-500 h-2 rounded-full"
+                          className="bg-blue-500 h-2 rounded-full"
                           style={{
                             width: `${(student.hoursCompleted / student.requiredHours) *
                               100
@@ -771,7 +771,7 @@ const InstructorStudentManagement: React.FC = () => {
               filterCompany === "all" && (
                 <button
                   onClick={handleAddStudent}
-                  className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl"
                 >
                   <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Add Your First Student
@@ -791,7 +791,7 @@ const InstructorStudentManagement: React.FC = () => {
           return (
             <div
               key={student.id}
-              className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-md border border-gray-200 dark:border-gray-700"
             >
               {/* Student Header */}
               <div className="flex items-start justify-between mb-3">
@@ -921,7 +921,7 @@ const InstructorStudentManagement: React.FC = () => {
         })}
 
         {filteredStudents.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-8 text-center shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Users className="w-8 h-8 text-purple-600 dark:text-purple-400" />
             </div>
@@ -940,7 +940,7 @@ const InstructorStudentManagement: React.FC = () => {
               filterCompany === "all" && (
                 <button
                   onClick={handleAddStudent}
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-xs font-medium"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-xs font-medium"
                 >
                   <UserPlus className="w-3 h-3 mr-1" />
                   Add Your First Student
@@ -953,10 +953,10 @@ const InstructorStudentManagement: React.FC = () => {
       {/* Add Student Modal */}
       {showAddModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Add New Student
@@ -994,7 +994,7 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("studentNumber");
                   }}
                   placeholder="22-UR-0592"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.studentNumber
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.studentNumber
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
                     }`}
@@ -1019,7 +1019,7 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("name");
                   }}
                   placeholder="Juan Dela Cruz"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.name
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.name
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
                     }`}
@@ -1044,7 +1044,7 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("email");
                   }}
                   placeholder="juan.delacruz@email.com"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.email
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.email
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
                     }`}
@@ -1069,7 +1069,7 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("phone");
                   }}
                   placeholder="+63 912 345 6789"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.phone
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.phone
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
                     }`}
@@ -1105,7 +1105,7 @@ const InstructorStudentManagement: React.FC = () => {
                     setNewStudent({ ...newStudent, year: e.target.value });
                     clearValidationError("year");
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${fieldErrors.year
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.year
                       ? "border-red-500"
                       : "border-gray-300 dark:border-gray-600"
                     }`}
@@ -1134,7 +1134,7 @@ const InstructorStudentManagement: React.FC = () => {
               <button
                 onClick={handleCreateStudent}
                 disabled={isCreating}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isCreating ? (
                   <>
@@ -1155,8 +1155,8 @@ const InstructorStudentManagement: React.FC = () => {
 
       {/* Success Modal */}
       {createdStudentInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -1183,7 +1183,7 @@ const InstructorStudentManagement: React.FC = () => {
               </div>
               <button
                 onClick={() => setCreatedStudentInfo(null)}
-                className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Continue
               </button>
@@ -1194,8 +1194,8 @@ const InstructorStudentManagement: React.FC = () => {
 
       {/* Bulk Add Modal */}
       {showBulkModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Bulk Add Students</h3>
               <button onClick={() => setShowBulkModal(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
@@ -1248,7 +1248,7 @@ const InstructorStudentManagement: React.FC = () => {
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
               placeholder="Paste your CSV rows here…"
-              className="w-full h-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white scrollbar-slim"
+              className="w-full h-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white scrollbar-slim"
             />
 
             {/* Preview */}
@@ -1318,7 +1318,7 @@ const InstructorStudentManagement: React.FC = () => {
                     }
                   }}
                   disabled={isBulkCreating}
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isBulkCreating ? "Adding..." : "Add Students"}
                 </button>
@@ -1330,8 +1330,8 @@ const InstructorStudentManagement: React.FC = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && studentToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
@@ -1383,7 +1383,7 @@ const InstructorStudentManagement: React.FC = () => {
       {/* Student Details Modal */}
       {showStudentModal && selectedStudent && (
         <div
-          className="fixed inset-0 bg-black/80 z-[99999] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4"
           onClick={() => setShowStudentModal(false)}
           style={{
             position: "fixed",
@@ -1397,7 +1397,7 @@ const InstructorStudentManagement: React.FC = () => {
           }}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in zoom-in-95 duration-200 flex flex-col"
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full shadow-2xl border border-gray-200 dark:border-gray-700 relative animate-in zoom-in-95 duration-200 flex flex-col"
             onClick={(e) => e.stopPropagation()}
             style={{
               maxHeight: "90vh",
@@ -1633,7 +1633,7 @@ const InstructorStudentManagement: React.FC = () => {
 
               {/* Partnership Communication */}
               {selectedStudent && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
                   <PartnershipMessageThread
                     studentId={selectedStudent.id}
                     studentName={selectedStudent.name}
