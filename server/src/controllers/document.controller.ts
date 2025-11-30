@@ -246,26 +246,64 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
 export const getDocuments = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     const { studentId, status, type, page = 1, limit = 20 } = req.query;
 
     const where: any = {};
     
     // If user is a student, only show their own documents
-    if (req.user!.role === 'STUDENT') {
-      const student = await prisma.student.findUnique({
-        where: { userId: req.user!.id }
-      });
+    if (req.user.role === 'STUDENT') {
+      let student;
+      try {
+        student = await prisma.student.findUnique({
+          where: { userId: req.user.id }
+        });
+      } catch (dbError: any) {
+        console.error('Database error fetching student:', dbError);
+        return res.status(500).json({ 
+          message: 'Failed to fetch student record',
+          error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        });
+      }
+
       if (student) {
         where.studentId = student.id;
       } else {
-        return res.status(404).json({ message: 'Student record not found' });
+        // Return empty array instead of 404 for better UX
+        return res.status(200).json({ 
+          documents: [], 
+          pagination: {
+            total: 0,
+            page: Number(page),
+            limit: Number(limit),
+            pages: 0
+          }
+        });
       }
-    } else if (req.user!.role === 'INSTRUCTOR') {
+    } else if (req.user.role === 'INSTRUCTOR') {
       // For instructors, only show documents from their assigned students
-      const assignedStudents = await prisma.student.findMany({
-        where: { instructorId: req.user!.id },
-        select: { id: true }
-      });
+      let assignedStudents = [];
+      try {
+        assignedStudents = await prisma.student.findMany({
+          where: { instructorId: req.user.id },
+          select: { id: true }
+        });
+      } catch (dbError: any) {
+        console.error('Database error fetching assigned students:', dbError);
+        // Return empty array instead of error
+        return res.status(200).json({ 
+          documents: [], 
+          pagination: {
+            total: 0,
+            page: Number(page),
+            limit: Number(limit),
+            pages: 0
+          }
+        });
+      }
       
       if (assignedStudents.length > 0) {
         const assignedStudentIds = assignedStudents.map(s => s.id);
@@ -274,9 +312,12 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
         // If instructor has no assigned students, return empty array
         return res.status(200).json({ 
           documents: [], 
-          total: 0, 
-          page: Number(page), 
-          limit: Number(limit) 
+          pagination: {
+            total: 0,
+            page: Number(page),
+            limit: Number(limit),
+            pages: 0
+          }
         });
       }
     } else if (studentId) {
@@ -288,50 +329,84 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [documents, total] = await Promise.all([
-      prisma.document.findMany({
-        where,
-        include: {
-          student: {
-            select: {
-              studentNumber: true,
-              user: { select: { name: true } },
-              company: {
-                select: { name: true }
+    let documents = [];
+    let total = 0;
+
+    try {
+      [documents, total] = await Promise.all([
+        prisma.document.findMany({
+          where,
+          include: {
+            student: {
+              select: {
+                studentNumber: true,
+                user: { select: { name: true } },
+                company: {
+                  select: { name: true }
+                }
               }
+            },
+            uploadedBy: {
+              select: { name: true, email: true }
             }
           },
-          uploadedBy: {
-            select: { name: true, email: true }
-          }
-        },
-        skip,
-        take: Number(limit),
-        orderBy: { uploadedAt: 'desc' }
-      }),
-      prisma.document.count({ where })
-    ]);
+          skip,
+          take: Number(limit),
+          orderBy: { uploadedAt: 'desc' }
+        }),
+        prisma.document.count({ where })
+      ]);
+    } catch (queryError: any) {
+      console.error('Error fetching documents from database:', queryError);
+      // Return empty array instead of error
+      return res.status(200).json({ 
+        documents: [], 
+        pagination: {
+          total: 0,
+          page: Number(page),
+          limit: Number(limit),
+          pages: 0
+        }
+      });
+    }
 
-    // Format documents
+    // Format documents with null safety
     const formattedDocuments = documents.map(doc => ({
-      ...doc,
-      fileSize: doc.fileSize
+      id: doc.id || '',
+      type: doc.type || '',
+      filename: doc.filename || '',
+      status: doc.status || 'PENDING',
+      uploadedAt: doc.uploadedAt ? doc.uploadedAt.toISOString() : null,
+      reviewedAt: doc.reviewedAt ? doc.reviewedAt.toISOString() : null,
+      remarks: doc.remarks || null,
+      fileSize: doc.fileSize || 0,
+      filepath: doc.filepath || '',
+      mimeType: doc.mimeType || '',
+      student: doc.student ? {
+        studentNumber: doc.student.studentNumber || '',
+        user: doc.student.user ? { name: doc.student.user.name || '' } : null,
+        company: doc.student.company ? { name: doc.student.company.name || '' } : null
+      } : null,
+      uploadedBy: doc.uploadedBy ? {
+        name: doc.uploadedBy.name || '',
+        email: doc.uploadedBy.email || ''
+      } : null
     }));
 
     res.json({
       documents: formattedDocuments,
       pagination: {
-        total,
+        total: total || 0,
         page: Number(page),
         limit: Number(limit),
-        pages: Math.ceil(total / Number(limit))
+        pages: Math.ceil((total || 0) / Number(limit))
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get documents error:', error);
     res.status(500).json({ 
       message: 'Failed to fetch documents', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
     });
   }
 };

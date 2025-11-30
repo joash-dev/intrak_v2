@@ -114,29 +114,47 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true, email: true, role: true }
-    });
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, email: true, role: true }
+      });
+    } catch (dbError: any) {
+      console.error('Database error fetching user:', dbError);
+      return res.status(500).json({ 
+        message: 'Failed to fetch user record',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const student = await prisma.student.findFirst({
-      where: { userId },
-      include: {
-        user: { 
-          select: { 
-            id: true,
-            name: true, 
-            email: true,
-            role: true
-          } 
-        },
-        company: true
-      }
-    });
+    let student;
+    try {
+      student = await prisma.student.findFirst({
+        where: { userId },
+        include: {
+          user: { 
+            select: { 
+              id: true,
+              name: true, 
+              email: true,
+              role: true
+            } 
+          },
+          company: true
+        }
+      });
+    } catch (dbError: any) {
+      console.error('Database error fetching student:', dbError);
+      return res.status(500).json({ 
+        message: 'Failed to fetch student profile',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
 
     if (!student) {
       return res.status(404).json({ message: 'Student profile not found' });
