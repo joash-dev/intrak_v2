@@ -65,4 +65,21 @@ export const notificationService = {
       take: limit,
     });
   },
+
+  async deleteNotification(notificationId: string, userId: string) {
+    return prisma.notification.deleteMany({
+      where: {
+        id: notificationId,
+        userId, // Ensure user can only delete their own notifications
+      },
+    });
+  },
+
+  async deleteAllNotifications(userId: string) {
+    return prisma.notification.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  },
 };

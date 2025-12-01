@@ -22,6 +22,7 @@ import {
   ClipboardList,
   Megaphone,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
@@ -43,6 +44,7 @@ import {
   type NotificationItem,
 } from "../../services/notificationService";
 import { type Announcement } from "../../services/announcementService";
+import toast from "react-hot-toast";
 
 // =============================================
 // INSTRUCTOR DASHBOARD COMPONENT
@@ -1560,6 +1562,21 @@ const InstructorPortal = () => {
     }
   };
 
+  const handleDeleteNotification = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the notification click
+    try {
+      await notificationService.deleteNotification(notificationId);
+      setLocalNotifications((prev) =>
+        prev.filter((item) => item.id !== notificationId)
+      );
+      refreshNotifications();
+      toast.success('Notification deleted');
+    } catch (error) {
+      console.error('Failed to delete notification', error);
+      toast.error('Failed to delete notification');
+    }
+  };
+
   const formatDropdownTimestamp = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -1642,9 +1659,8 @@ const InstructorPortal = () => {
                         ].includes(notification.type ?? "OTHER")
                       )
                       .map((notification) => (
-                        <button
+                        <div
                           key={notification.id}
-                          onClick={() => handleNotificationClick(notification)}
                           className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                             !notification.read
                               ? "bg-blue-50/50 dark:bg-blue-900/10"
@@ -1652,7 +1668,10 @@ const InstructorPortal = () => {
                           }`}
                         >
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
+                            <button
+                              onClick={() => handleNotificationClick(notification)}
+                              className="flex-1 min-w-0 text-left"
+                            >
                               <div className="flex items-center gap-2 mb-1">
                                 <p className="text-base font-semibold text-gray-900 dark:text-white">
                                   {notification.title}
@@ -1674,9 +1693,16 @@ const InstructorPortal = () => {
                                   </span>
                                 )}
                               </div>
-                            </div>
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteNotification(notification.id, e)}
+                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                              title="Delete notification"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        </button>
+                        </div>
                       ))}
                   </div>
                 </>
@@ -1785,39 +1811,56 @@ const InstructorPortal = () => {
                           ].includes(notification.type ?? "OTHER")
                         )
                         .map((notification) => (
-                          <button
+                          <div
                             key={notification.id}
-                            onClick={() => {
-                              handleNotificationClick(notification);
-                              setShowNotifications(false);
-                            }}
                             className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${notification.read
                               ? "bg-white dark:bg-[#212124] hover:bg-gray-50 dark:hover:bg-gray-700"
                               : "bg-blue-50/70 dark:bg-blue-900/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30"
                               }`}
                           >
                             <div className="flex items-start justify-between gap-2 sm:gap-3">
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                  {notification.title}
+                              <button
+                                onClick={() => {
+                                  handleNotificationClick(notification);
+                                  setShowNotifications(false);
+                                }}
+                                className="flex-1 min-w-0 text-left"
+                              >
+                                <div className="flex items-start justify-between gap-2 sm:gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                      {notification.title}
+                                    </p>
+                                    <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 mt-0.5 sm:mt-1">
+                                      {formatDropdownTimestamp(notification.createdAt)}
+                                    </p>
+                                  </div>
+                                  {!notification.read && (
+                                    <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                                  )}
+                                </div>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
+                                  {notification.message}
                                 </p>
-                                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 mt-0.5 sm:mt-1">
-                                  {formatDropdownTimestamp(notification.createdAt)}
-                                </p>
-                              </div>
-                              {!notification.read && (
-                                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></span>
-                              )}
+                                {notification.type && (
+                                  <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
+                                    {notification.type.replace(/_/g, " ")}
+                                  </span>
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNotification(notification.id, e);
+                                  setShowNotifications(false);
+                                }}
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
+                                title="Delete notification"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                              </button>
                             </div>
-                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
-                              {notification.message}
-                            </p>
-                            {notification.type && (
-                              <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
-                                {notification.type.replace(/_/g, " ")}
-                              </span>
-                            )}
-                          </button>
+                          </div>
                         ))
                     ) : (
                       <div className="px-4 sm:px-5 py-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">

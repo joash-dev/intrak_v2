@@ -38,3 +38,29 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Failed to update notifications' });
   }
 };
+
+export const deleteNotification = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await notificationService.deleteNotification(id, req.user!.id);
+
+    if (result.count === 0) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ message: 'Failed to delete notification' });
+  }
+};
+
+export const deleteAllNotifications = async (req: AuthRequest, res: Response) => {
+  try {
+    await notificationService.deleteAllNotifications(req.user!.id);
+    res.json({ message: 'All notifications deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting all notifications:', error);
+    res.status(500).json({ message: 'Failed to delete notifications' });
+  }
+};

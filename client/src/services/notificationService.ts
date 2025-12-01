@@ -32,6 +32,14 @@ class NotificationService {
   async markAllAsRead(): Promise<void> {
     await api.patch("/notifications/mark-all/read");
   }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    await api.delete(`/notifications/${notificationId}`);
+  }
+
+  async deleteAllNotifications(): Promise<void> {
+    await api.delete("/notifications");
+  }
 }
 
 export const notificationService = new NotificationService();
