@@ -202,12 +202,24 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, name: true, email: true, role: true }
+      select: { id: true, name: true, email: true, role: true, profilePhoto: true }
     });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    // Get all documents and templates uploaded by this user to delete files
+    const [userDocuments, userTemplates] = await Promise.all([
+      prisma.document.findMany({
+        where: { uploadedById: id },
+        select: { filepath: true }
+      }),
+      prisma.documentTemplate.findMany({
+        where: { uploadedById: id },
+        select: { filepath: true }
+      })
+    ]);
 
     // Use a transaction to handle related data deletion
     await prisma.$transaction(async (tx) => {
@@ -223,44 +235,123 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
         where: { userId: id }
       });
 
-      // 3. Delete documents uploaded by this user
+      // 3. Delete notifications (cascade delete, but explicit for clarity)
+      await tx.notification.deleteMany({
+        where: { userId: id }
+      });
+
+      // 4. Delete activity logs
+      await tx.activity.deleteMany({
+        where: { userId: id }
+      });
+
+      // 5. Delete supervisor feedbacks given by this user
+      await tx.supervisorFeedback.deleteMany({
+        where: { supervisorId: id }
+      });
+
+      // 6. Delete agency self evaluations by this user
+      await tx.agencySelfEvaluation.deleteMany({
+        where: { supervisorId: id }
+      });
+
+      // 7. Delete document feedback authored by this user (cascade delete, but explicit for clarity)
+      await tx.documentFeedback.deleteMany({
+        where: { authorId: id }
+      });
+
+      // 8. Delete partnership messages sent by this user (cascade delete, but explicit for clarity)
+      await tx.partnershipMessage.deleteMany({
+        where: { senderId: id }
+      });
+
+      // 9. Delete documents uploaded by this user
       await tx.document.deleteMany({
         where: { uploadedById: id }
       });
 
-      // 4. Delete evaluations given by this user
+      // 10. Delete evaluations given by this user
       await tx.evaluation.deleteMany({
         where: { evaluatorId: id }
       });
 
-      // 5. Delete announcements created by this user
+      // 11. Delete announcements created by this user
       await tx.announcement.deleteMany({
         where: { createdById: id }
       });
 
-      // 6. Delete document templates uploaded by this user
+      // 12. Delete document templates uploaded by this user
       await tx.documentTemplate.deleteMany({
         where: { uploadedById: id }
       });
 
-      // 7. Delete admin settings if user is admin
+      // 13. Delete admin settings if user is admin
       await tx.adminSettings.deleteMany({
         where: { userId: id }
       });
 
-      // 8. For students, unassign them from this instructor
-      if (user.role === 'INSTRUCTOR') {
-        await tx.student.updateMany({
-          where: { instructorId: id },
-          data: { instructorId: null }
-        });
-      }
+      // 14. Delete coordinator settings if user is coordinator
+      await tx.coordinatorSettings.deleteMany({
+        where: { userId: id }
+      });
 
-      // 9. Delete the user (this will cascade delete Student record if user is a student)
+      // 15. Null out reviewedBy in company applications
+      await tx.companyApplication.updateMany({
+        where: { reviewedBy: id },
+        data: { reviewedBy: null }
+      });
+
+      // 16. Null out supervisorId in companies
+      await tx.company.updateMany({
+        where: { supervisorId: id },
+        data: { supervisorId: null }
+      });
+
+      // 17. Unassign students from this instructor
+      await tx.student.updateMany({
+        where: { instructorId: id },
+        data: { instructorId: null }
+      });
+
+      // 18. Delete the user (this will cascade delete Student record if user is a student)
       await tx.user.delete({
         where: { id }
       });
     });
+
+    // Delete physical files after database transaction
+    try {
+      // Delete uploaded documents
+      for (const doc of userDocuments) {
+        if (doc.filepath) {
+          const fullPath = path.join(process.cwd(), doc.filepath);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        }
+      }
+
+      // Delete document template files
+      for (const template of userTemplates) {
+        if (template.filepath) {
+          const fullPath = path.join(process.cwd(), template.filepath);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        }
+      }
+
+      // Delete profile photo if exists
+      if (user.profilePhoto) {
+        const photoPath = path.join(process.cwd(), 'uploads', 'profile-photos', user.profilePhoto);
+        if (fs.existsSync(photoPath)) {
+          fs.unlinkSync(photoPath);
+        }
+      }
+    } catch (fileError) {
+      // Log file deletion errors but don't fail the request
+      console.error('Error deleting user files:', fileError);
+    }
 
     // Log the deletion
     await auditLog(req.user!.id, 'USER_DELETED', { 
