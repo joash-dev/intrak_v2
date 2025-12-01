@@ -155,6 +155,12 @@ else
     mkdir -p ./uploads/templates
 fi
 
+# Generate Prisma Client if not already generated (safety check)
+if [ ! -d "node_modules/.prisma/client" ]; then
+    echo "📦 Generating Prisma Client..."
+    npx prisma generate
+fi
+
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
 exec node dist/index.js

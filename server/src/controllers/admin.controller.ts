@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 import { auditLog } from '../services/audit.service';
 import os from 'os';
 import checkDiskSpace from 'check-disk-space';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 // simple in-memory cache reference that can be cleared via admin actions
 const globalCache = globalThis as { __appCache?: Record<string, unknown> };

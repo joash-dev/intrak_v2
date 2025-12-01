@@ -1,7 +1,6 @@
 // ===== src/controllers/attendance.controller.ts =====
 
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { generateQRToken, verifyQRToken } from '../services/qr.service';
 import { auditLog } from '../services/audit.service';
@@ -12,8 +11,7 @@ import path from 'path';
 import fs from 'fs';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 // Resolve template path - works in both development and production
 const templateName = '14 INTERNSHIP TIMEFRAME_2024.docx';

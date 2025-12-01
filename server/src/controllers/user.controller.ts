@@ -1,13 +1,11 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {

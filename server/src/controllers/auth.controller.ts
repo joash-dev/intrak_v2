@@ -1,11 +1,9 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export const register = async (req: Request, res: Response) => {
   try {
