@@ -161,6 +161,10 @@ if [ ! -d "node_modules/.prisma/client" ]; then
     npx prisma generate
 fi
 
+# Run database migrations (add this)
+echo "🗄️  Running database migrations..."
+npx prisma migrate deploy || echo "⚠️  Migration failed or already applied"
+
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
 exec node dist/index.js

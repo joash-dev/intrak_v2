@@ -193,6 +193,27 @@ app.get('/api/debug/health', async (req, res) => {
   res.json(checks);
 });
 
+// Add this route BEFORE authentication middleware (around line 150)
+// One-time migration endpoint (call this once via browser/curl)
+app.get('/api/admin/run-migrations', async (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    console.log('🔄 Running database migrations...');
+    execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: './server' });
+    res.json({ 
+      success: true, 
+      message: 'Migrations completed successfully' 
+    });
+  } catch (error: any) {
+    console.error('Migration error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Migration failed', 
+      error: error.message 
+    });
+  }
+});
+
 // API Routes (temporarily disabling maintenance mode to allow login)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

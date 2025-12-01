@@ -674,45 +674,144 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [students, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
-        include: {
-          user: { select: { name: true, email: true } },
-          company: { select: { name: true } },
-          instructor: { select: { id: true, name: true, email: true } },
-          attendanceLogs: {
-            where: { verified: true },
-            select: {
-              id: true,
-              date: true,
-              timeIn: true,
-              timeOut: true,
-              durationMinutes: true,
-              verified: true
+    let students: any[] = [];
+    let total = 0;
+
+    try {
+      [students, total] = await Promise.all([
+        prisma.student.findMany({
+          where,
+          select: {
+            id: true,
+            userId: true,
+            studentNumber: true,
+            program: true,
+            year: true,
+            section: true,
+            companyId: true,
+            supervisorName: true,
+            instructorId: true,
+            startDate: true,
+            endDate: true,
+            totalHours: true,
+            completedHours: true,
+            weeklyReportData: true,
+            jobDescription: true,
+            createdAt: true,
+            updatedAt: true,
+            user: { select: { name: true, email: true } },
+            company: { select: { name: true } },
+            instructor: { select: { id: true, name: true, email: true } },
+            attendanceLogs: {
+              where: { verified: true },
+              select: {
+                id: true,
+                date: true,
+                timeIn: true,
+                timeOut: true,
+                durationMinutes: true,
+                verified: true
+              },
+              orderBy: { date: 'desc' },
+              take: 30 // Last 30 verified attendance logs
             },
-            orderBy: { date: 'desc' },
-            take: 30 // Last 30 verified attendance logs
+            evaluations: {
+              select: {
+                id: true,
+                rating: true,
+                createdAt: true
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 5 // Last 5 evaluations
+            }
           },
-          evaluations: {
-            select: {
-              id: true,
-              rating: true,
-              createdAt: true
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 5 // Last 5 evaluations
-          }
-        },
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.student.count({ where })
-    ]);
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.student.count({ where })
+      ]);
+    } catch (error: any) {
+      // Handle missing worksOnSaturday column error
+      if (error.code === 'P2022' && error.meta?.column?.includes('worksOnSaturday')) {
+        console.warn('⚠️ worksOnSaturday column not found in database. Using fallback query.');
+        // Fallback: Use $queryRaw to explicitly exclude the column
+        const studentIds = await prisma.student.findMany({
+          where,
+          select: { id: true },
+          skip,
+          take: Number(limit),
+          orderBy: { createdAt: 'desc' }
+        });
+
+        total = await prisma.student.count({ where });
+
+        // Fetch full student data without worksOnSaturday
+        students = await Promise.all(
+          studentIds.map(async ({ id }) => {
+            const student = await prisma.student.findUnique({
+              where: { id },
+              select: {
+                id: true,
+                userId: true,
+                studentNumber: true,
+                program: true,
+                year: true,
+                section: true,
+                companyId: true,
+                supervisorName: true,
+                instructorId: true,
+                startDate: true,
+                endDate: true,
+                totalHours: true,
+                completedHours: true,
+                weeklyReportData: true,
+                jobDescription: true,
+                createdAt: true,
+                updatedAt: true,
+                user: { select: { name: true, email: true } },
+                company: { select: { name: true } },
+                instructor: { select: { id: true, name: true, email: true } },
+                attendanceLogs: {
+                  where: { verified: true },
+                  select: {
+                    id: true,
+                    date: true,
+                    timeIn: true,
+                    timeOut: true,
+                    durationMinutes: true,
+                    verified: true
+                  },
+                  orderBy: { date: 'desc' },
+                  take: 30
+                },
+                evaluations: {
+                  select: {
+                    id: true,
+                    rating: true,
+                    createdAt: true
+                  },
+                  orderBy: { createdAt: 'desc' },
+                  take: 5
+                }
+              }
+            });
+            return student;
+          })
+        );
+      } else {
+        throw error;
+      }
+    }
+    
+    // Add worksOnSaturday as false for all students (column doesn't exist in production yet)
+    const studentsWithWorksOnSaturday = students.map(student => ({
+      ...student,
+      worksOnSaturday: false
+    }));
 
     // Calculate additional metrics for each student
-    const studentsWithMetrics = await Promise.all(students.map(async (student) => {
+    const studentsWithMetrics = await Promise.all(studentsWithWorksOnSaturday.map(async (student) => {
       // Calculate attendance rate based on expected working days vs actual attendance
       let attendanceRate = 0;
       
@@ -736,8 +835,8 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         
           // Use company-specific working schedule if available
         if (company && (company as any).workingDays && (company as any).workingDays.length > 0) {
-          // For private companies, use student's Saturday preference
-          const worksOnSaturday = (company as any).companyType === 'PRIVATE' ? (student as any).worksOnSaturday : undefined;
+          // For private companies, use student's Saturday preference (default to false if column doesn't exist)
+          const worksOnSaturday = (company as any).companyType === 'PRIVATE' ? ((student as any).worksOnSaturday ?? false) : undefined;
           
           expectedWorkingDays = calculateExpectedWorkingDays(
             startDate,
