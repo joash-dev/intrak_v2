@@ -700,7 +700,12 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
             createdAt: true,
             updatedAt: true,
             user: { select: { name: true, email: true } },
-            company: { select: { name: true } },
+            company: { 
+              select: { 
+                name: true,
+                supervisor: { select: { name: true, email: true } }
+              } 
+            },
             instructor: { select: { id: true, name: true, email: true } },
             attendanceLogs: {
               where: { verified: true },
@@ -965,8 +970,15 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         status = 'active';
       }
 
+      // Get supervisor name - fallback to company supervisor if student supervisorName is empty
+      let finalSupervisorName = student.supervisorName;
+      if (!finalSupervisorName && student.company?.supervisor?.name) {
+        finalSupervisorName = student.company.supervisor.name;
+      }
+
       return {
         ...student,
+        supervisorName: finalSupervisorName || null,
         attendanceRate,
         completedHours,
         lastEvaluation,
