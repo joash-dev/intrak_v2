@@ -1,9 +1,7 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { logActivity } from './activity.controller';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 // Get all applications (for instructors/coordinators)
 export const getAllApplications = async (req: AuthRequest, res: Response) => {

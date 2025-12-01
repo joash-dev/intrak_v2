@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { PrismaClient, DocumentFeedbackType, NotificationType } from '@prisma/client';
+import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { validateNASConnection, getStoragePath, ensureNASDirectoryExists } from '../config/nas';
@@ -7,8 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 const uploadPath = getStoragePath();
 
 const getStudentIdForUser = async (userId: string): Promise<string | null> => {

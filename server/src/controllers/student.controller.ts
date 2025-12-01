@@ -1,11 +1,10 @@
 import { Response } from 'express';
-import { PrismaClient, NotificationType } from '@prisma/client';
+import { NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
 import { calculateExpectedWorkingDays } from '../utils/attendanceUtils';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export const getStudents = async (req: AuthRequest, res: Response) => {
   try {

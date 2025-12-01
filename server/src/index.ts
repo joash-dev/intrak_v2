@@ -11,6 +11,7 @@ import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, getStoragePath } from './config/nas';
+import { testDatabaseConnection } from './config/database';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -118,11 +119,6 @@ app.use('/api/users/profile-photo', (req, res, next) => {
   next();
 });
 
-// Health check (no auth required)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 // Favicon handler
 app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
@@ -137,14 +133,27 @@ app.get('/api/test-auth', authenticate, (req: AuthRequest, res) => {
   });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+// Health check endpoint with database connection test
+app.get('/health', async (req, res) => {
+  try {
+    const dbConnected = await testDatabaseConnection();
+    res.json({
+      status: dbConnected ? 'OK' : 'DEGRADED',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: dbConnected ? 'connected' : 'disconnected'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'error',
+      error: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    });
+  }
 });
 
 // API Routes (temporarily disabling maintenance mode to allow login)
@@ -177,6 +186,16 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
+  // Test database connection on startup
+  const initializeDatabase = async () => {
+    console.log('🔌 Testing database connection...');
+    const connected = await testDatabaseConnection();
+    if (!connected) {
+      console.error('❌ Database connection failed. Server will start but may have issues.');
+      console.error('   Please check your DATABASE_URL environment variable.');
+    }
+  };
+
   // Wait for NAS to be ready (if enabled)
   const waitForNAS = async () => {
     if (process.env.USE_NAS === 'true') {
@@ -202,6 +221,7 @@ if (process.env.NODE_ENV !== 'test') {
   };
 
   const startServer = async () => {
+    await initializeDatabase();
     await waitForNAS();
     
     const http = require('http');
