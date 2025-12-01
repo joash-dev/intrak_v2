@@ -18,10 +18,10 @@ router.post('/profile-photo/upload', profilePhotoUpload.single('photo'), userCon
 router.delete('/profile-photo', userController.removeProfilePhoto);
 
 // User CRUD routes
-router.get('/', authorize(['ADMIN', 'COORDINATOR']), userController.getUsers);
+router.get('/', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), userController.getUsers);
 router.get('/:id', userController.getUserById);
 router.put('/:id', userController.updateUser);
-router.delete('/:id', authorize(['ADMIN']), userController.deleteUser);
+router.delete('/:id', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), userController.deleteUser);
 
 // Password change route
 router.put('/password/change', authenticate, userController.changePassword);
