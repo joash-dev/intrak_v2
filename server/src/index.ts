@@ -11,7 +11,7 @@ import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, getStoragePath } from './config/nas';
-import { testDatabaseConnection } from './config/database';
+import { testDatabaseConnection, prisma } from './config/database';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -144,16 +144,53 @@ app.get('/health', async (req, res) => {
       environment: process.env.NODE_ENV || 'development',
       database: dbConnected ? 'connected' : 'disconnected'
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(503).json({
       status: 'ERROR',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development',
       database: 'error',
-      error: process.env.NODE_ENV === 'development' ? String(error) : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      errorCode: process.env.NODE_ENV === 'development' ? error.code : undefined
     });
   }
+});
+
+// Debug endpoint for troubleshooting (only in development or with special header)
+app.get('/api/debug/health', async (req, res) => {
+  // Only allow in development or with debug header
+  if (process.env.NODE_ENV === 'production' && req.headers['x-debug-key'] !== process.env.DEBUG_KEY) {
+    return res.status(404).json({ message: 'Not found' });
+  }
+
+  const checks: any = {
+    database: 'unknown',
+    prisma: 'unknown',
+    timestamp: new Date().toISOString(),
+    env: {
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      JWT_SECRET: !!process.env.JWT_SECRET,
+      NODE_ENV: process.env.NODE_ENV,
+      USE_NAS: process.env.USE_NAS
+    }
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = 'connected';
+    checks.prisma = 'working';
+  } catch (error: any) {
+    checks.database = `error: ${error.message}`;
+    checks.prisma = `error: ${error.code || 'unknown'}`;
+    checks.errorDetails = {
+      code: error.code,
+      message: error.message,
+      meta: error.meta
+    };
+  }
+
+  res.json(checks);
 });
 
 // API Routes (temporarily disabling maintenance mode to allow login)
@@ -189,10 +226,17 @@ if (process.env.NODE_ENV !== 'test') {
   // Test database connection on startup
   const initializeDatabase = async () => {
     console.log('🔌 Testing database connection...');
-    const connected = await testDatabaseConnection();
-    if (!connected) {
-      console.error('❌ Database connection failed. Server will start but may have issues.');
-      console.error('   Please check your DATABASE_URL environment variable.');
+    try {
+      const connected = await testDatabaseConnection();
+      if (!connected) {
+        console.error('❌ Database connection failed. Server will start but may have issues.');
+        console.error('   Please check your DATABASE_URL environment variable.');
+        console.error('   Current DATABASE_URL:', process.env.DATABASE_URL ? 'Set (hidden)' : 'NOT SET');
+      }
+    } catch (error: any) {
+      console.error('❌ Database initialization error:', error.message);
+      console.error('   Error code:', error.code);
+      console.error('   This may cause 500 errors on all database queries.');
     }
   };
 
