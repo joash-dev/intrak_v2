@@ -15,7 +15,7 @@ import {
 import { supervisorService } from "../../services/supervisorService";
 import type { AttendanceLog } from "../../services/supervisorService";
 import toast from "react-hot-toast";
-import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
+import type { IScannerControls, BrowserMultiFormatReader } from "@zxing/browser";
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
@@ -259,10 +259,13 @@ const SupervisorAttendance = () => {
       }
 
       setScanError(null);
-      const codeReader = new BrowserMultiFormatReader();
-      codeReaderRef.current = codeReader;
 
       try {
+        // Dynamically import the QR reader only when needed
+        const { BrowserMultiFormatReader } = await import("@zxing/browser");
+        const codeReader = new BrowserMultiFormatReader();
+        codeReaderRef.current = codeReader;
+
         const controls = await codeReader.decodeFromVideoDevice(
           undefined,
           videoRef.current,
@@ -569,8 +572,8 @@ const SupervisorAttendance = () => {
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {qrAction === 'logout' 
-                ? 'Intern logged out successfully' 
+              {qrAction === 'logout'
+                ? 'Intern logged out successfully'
                 : 'Intern logged in successfully'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
@@ -725,6 +728,7 @@ const SupervisorAttendance = () => {
                               onClick={() => handleApprove(log)}
                               className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                               title="Approve"
+                              aria-label={`Approve attendance for ${log.studentName}`}
                             >
                               <CheckCircle className="w-5 h-5" />
                             </button>
@@ -732,6 +736,7 @@ const SupervisorAttendance = () => {
                               onClick={() => handleReject(log)}
                               className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                               title="Reject"
+                              aria-label={`Reject attendance for ${log.studentName}`}
                             >
                               <X className="w-5 h-5" />
                             </button>
@@ -739,6 +744,7 @@ const SupervisorAttendance = () => {
                               onClick={() => setSelectedLog(log)}
                               className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
                               title="View Details"
+                              aria-label={`View details for ${log.studentName}`}
                             >
                               <Eye className="w-5 h-5" />
                             </button>
@@ -747,6 +753,7 @@ const SupervisorAttendance = () => {
                           <button
                             onClick={() => setSelectedLog(log)}
                             className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            aria-label={`View details for ${log.studentName}`}
                           >
                             <Eye className="w-5 h-5" />
                           </button>
@@ -985,11 +992,10 @@ const SupervisorAttendance = () => {
               <button
                 onClick={handleSubmitVerification}
                 disabled={verifyAction === "reject" && !remarks.trim()}
-                className={`px-6 py-2 rounded-lg transition-colors ${
-                  verifyAction === "approve"
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-red-600 text-white hover:bg-red-700"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`px-6 py-2 rounded-lg transition-colors ${verifyAction === "approve"
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-red-600 text-white hover:bg-red-700"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {verifyAction === "approve" ? "Approve" : "Reject"}
               </button>
