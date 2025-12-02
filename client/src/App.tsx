@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/AuthUi/Login";
-import Dashboard from "./pages/StudentUi/Dashboard";
-import DashboardCoordinator from "./pages/CoordinatorUi/DashboardCoordinator";
-import DashboardInstructor from "./pages/InstructorUi/DashboardInstructor";
-import DashboardIndustryPartner from "./pages/SupervisorUi/SupervisorDashboard";
-import AdminPage from "./pages/AdminUi/AdminPage";
-import MaintenancePage from "./pages/MaintenancePage";
 import { adminService } from "./services/adminService";
 import { settingsService } from "./services/settingsService";
 import { SocketProvider } from "./contexts/SocketContext";
 import i18n from "i18next";
+import PageLoader from "./components/common/PageLoader";
+
+// Lazy load pages
+const Login = React.lazy(() => import("./pages/AuthUi/Login"));
+const Dashboard = React.lazy(() => import("./pages/StudentUi/Dashboard"));
+const DashboardCoordinator = React.lazy(() => import("./pages/CoordinatorUi/DashboardCoordinator"));
+const DashboardInstructor = React.lazy(() => import("./pages/InstructorUi/DashboardInstructor"));
+const DashboardIndustryPartner = React.lazy(() => import("./pages/SupervisorUi/SupervisorDashboard"));
+const AdminPage = React.lazy(() => import("./pages/AdminUi/AdminPage"));
+const MaintenancePage = React.lazy(() => import("./pages/MaintenancePage"));
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -71,20 +74,7 @@ const MaintenanceWrapper: React.FC<{ children: React.ReactNode }> = ({
 
   // Show loading state while checking maintenance
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#212124] flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-24 h-24 mx-auto mb-4">
-            <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
-            <img
-              src="/logo_intrak.png"
-              alt="INTRAK Logo"
-              className="relative w-full h-full object-contain animate-pulse"
-            />
-          </div>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // Show maintenance page if maintenance mode is enabled
@@ -106,67 +96,69 @@ const App: React.FC = () => {
   return (
     <SocketProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route
-            path="/student/dashboard"
-            element={
-              <MaintenanceWrapper>
-                <ProtectedRoute allowedRoles={["student"]}>
-                  <Dashboard />
+            <Route
+              path="/student/dashboard"
+              element={
+                <MaintenanceWrapper>
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                </MaintenanceWrapper>
+              }
+            />
+
+            <Route
+              path="/coordinator/dashboard"
+              element={
+                <MaintenanceWrapper>
+                  <ProtectedRoute allowedRoles={["coordinator"]}>
+                    <DashboardCoordinator />
+                  </ProtectedRoute>
+                </MaintenanceWrapper>
+              }
+            />
+
+            <Route
+              path="/instructor/dashboard"
+              element={
+                <MaintenanceWrapper>
+                  <ProtectedRoute allowedRoles={["instructor"]}>
+                    <DashboardInstructor />
+                  </ProtectedRoute>
+                </MaintenanceWrapper>
+              }
+            />
+
+            <Route
+              path="/industry-partner/dashboard"
+              element={
+                <MaintenanceWrapper>
+                  <ProtectedRoute allowedRoles={["industry_partner"]}>
+                    <DashboardIndustryPartner />
+                  </ProtectedRoute>
+                </MaintenanceWrapper>
+              }
+            />
+
+            {/* Admin routes bypass maintenance mode */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminPage />
                 </ProtectedRoute>
-              </MaintenanceWrapper>
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/coordinator/dashboard"
-            element={
-              <MaintenanceWrapper>
-                <ProtectedRoute allowedRoles={["coordinator"]}>
-                  <DashboardCoordinator />
-                </ProtectedRoute>
-              </MaintenanceWrapper>
-            }
-          />
-
-          <Route
-            path="/instructor/dashboard"
-            element={
-              <MaintenanceWrapper>
-                <ProtectedRoute allowedRoles={["instructor"]}>
-                  <DashboardInstructor />
-                </ProtectedRoute>
-              </MaintenanceWrapper>
-            }
-          />
-
-          <Route
-            path="/industry-partner/dashboard"
-            element={
-              <MaintenanceWrapper>
-                <ProtectedRoute allowedRoles={["industry_partner"]}>
-                  <DashboardIndustryPartner />
-                </ProtectedRoute>
-              </MaintenanceWrapper>
-            }
-          />
-
-          {/* Admin routes bypass maintenance mode */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* default + catch-all */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+            {/* default + catch-all */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </SocketProvider>
   );
