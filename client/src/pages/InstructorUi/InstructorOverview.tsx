@@ -239,12 +239,14 @@ const InstructorOverview: React.FC = () => {
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                        aria-label="Search students"
                                     />
                                 </div>
                                 <select
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
                                     className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-full md:w-auto md:min-w-[140px]"
+                                    aria-label="Filter by status"
                                 >
                                     <option value="all">All Status</option>
                                     <option value="active">Active</option>
@@ -425,7 +427,7 @@ const InstructorOverview: React.FC = () => {
                                 </span>
                                 <span>Recent Activities</span>
                             </h3>
-                            <button onClick={() => navigate("/instructor/monitoring")} className="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700">View all</button>
+                            <button onClick={() => navigate("/instructor/monitoring")} className="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700" aria-label="View all activities">View all</button>
                         </div>
                         <div className="space-y-3">
                             {compactActivityFeed.length > 0 ? (

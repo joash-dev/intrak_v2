@@ -142,19 +142,19 @@ const InstructorLayout = () => {
             <header className={`fixed top-4 left-4 right-4 lg:hidden bg-white dark:bg-[#212124] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 ${sidebarOpen ? "z-30" : "z-50"}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center space-x-3">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Toggle sidebar">
                             <Menu className="w-5 h-5" />
                         </button>
-                        <img src="/just_logo.png" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+                        <img src="/just_logo.png" alt="INTRAK Logo" className="w-10 h-10 rounded-lg object-cover" />
                     </div>
                     <div className="flex items-center space-x-2">
-                        <button onClick={() => navigate("/instructor/notifications")} className="relative p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <button onClick={() => navigate("/instructor/notifications")} className="relative p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="View notifications">
                             <Bell className="w-5 h-5" />
                             {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>}
                         </button>
-                        <button onClick={() => navigate("/instructor/settings")} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <button onClick={() => navigate("/instructor/settings")} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="User profile">
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                {profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
                             </div>
                         </button>
                     </div>
@@ -170,10 +170,10 @@ const InstructorLayout = () => {
                     {/* Sidebar Header */}
                     <div className={`flex items-center ${sidebarExpanded ? "justify-between" : "justify-center"} p-4 border-b border-gray-200 dark:border-gray-700`}>
                         <div className={`flex items-center space-x-3 ${sidebarExpanded ? "" : "lg:hidden"}`}>
-                            <button onClick={() => window.innerWidth >= 1024 ? setSidebarExpanded(!sidebarExpanded) : setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                            <button onClick={() => window.innerWidth >= 1024 ? setSidebarExpanded(!sidebarExpanded) : setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Toggle sidebar">
                                 <Menu className="w-5 h-5" />
                             </button>
-                            <img src="/just_logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+                            <img src="/just_logo.png" alt="INTRAK Logo" className="w-12 h-12 rounded-lg object-cover" />
                             <div>
                                 <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">INTRAK</h2>
                                 <p className="text-xs text-gray-500">Instructor Portal</p>
@@ -181,8 +181,8 @@ const InstructorLayout = () => {
                         </div>
                         {!sidebarExpanded && (
                             <div className="hidden lg:flex flex-col items-center space-y-2">
-                                <button onClick={() => setSidebarExpanded(!sidebarExpanded)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Menu className="w-5 h-5" /></button>
-                                <img src="/just_logo.png" alt="Logo" className="w-12 h-12 rounded-full object-cover" />
+                                <button onClick={() => setSidebarExpanded(!sidebarExpanded)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Expand sidebar"><Menu className="w-5 h-5" /></button>
+                                <img src="/just_logo.png" alt="INTRAK Logo" className="w-12 h-12 rounded-full object-cover" />
                             </div>
                         )}
                     </div>
@@ -197,6 +197,8 @@ const InstructorLayout = () => {
                                     if (window.innerWidth < 1024) setSidebarOpen(false);
                                 }}
                                 className={`relative w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${activeTab === item.id ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-lg" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"}`}
+                                aria-label={item.label}
+                                title={!sidebarExpanded ? item.label : undefined}
                             >
                                 <item.icon className="w-5 h-5 flex-shrink-0" />
                                 <span className={`font-medium text-sm ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
@@ -209,16 +211,16 @@ const InstructorLayout = () => {
 
                     {/* Profile & Logout */}
                     <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                        <button onClick={() => navigate("/instructor/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg`}>
+                        <button onClick={() => navigate("/instructor/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg`} aria-label="User profile" title={!sidebarExpanded ? "User Profile" : undefined}>
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                                {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                {profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
                             </div>
                             <div className={`flex-1 text-left min-w-0 ${sidebarExpanded ? "" : "lg:hidden"}`}>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{currentUser?.name}</p>
                                 <p className="text-xs text-gray-500 truncate">Instructor</p>
                             </div>
                         </button>
-                        <button onClick={() => setShowLogoutModal(true)} className={`w-full flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg mt-2 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"}`}>
+                        <button onClick={() => setShowLogoutModal(true)} className={`w-full flex items-center text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg mt-2 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"}`} aria-label="Logout" title={!sidebarExpanded ? "Logout" : undefined}>
                             <LogOut className="w-5 h-5 flex-shrink-0" />
                             <span className={`font-medium text-sm ${sidebarExpanded ? "" : "lg:hidden"}`}>Logout</span>
                         </button>
