@@ -23,6 +23,7 @@ import {
   Megaphone,
   CalendarDays,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import InstructorDocumentsTab from "./InstructorDocuments";
@@ -32,6 +33,7 @@ import InstructorStudentManagement from "./InstructorStudentManagement";
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import InstructorSettings from "./InstructorSettings";
 import InstructorApplications from "./InstructorApplications";
+import InstructorReportsTab from "./InstructorReportsTab";
 import {
   instructorService,
   type InstructorStudent,
@@ -1504,6 +1506,12 @@ const InstructorPortal = () => {
       label: "Student Management",
       description: "Manage assigned students"
     },
+    {
+      id: "reports",
+      icon: BarChart3,
+      label: "Reports",
+      description: "View and export attendance reports"
+    },
   ];
 
   const handleNotificationClick = async (notification: NotificationItem) => {
@@ -1729,6 +1737,8 @@ const InstructorPortal = () => {
         return <InstructorMonitoringTab />;
       case "students":
         return <InstructorStudentManagement />;
+      case "reports":
+        return <InstructorReportsTab />;
       case "settings":
         return <InstructorSettings />;
       default:

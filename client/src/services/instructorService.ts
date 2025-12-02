@@ -17,6 +17,7 @@ export interface InstructorStats {
 export interface InstructorStudent {
   id: string;
   studentId: string;
+  studentNumber: string;
   name: string;
   email: string;
   phone?: string;
@@ -85,9 +86,9 @@ class InstructorService {
     try {
       // Fetch only students assigned to the current instructor
       const response = await api.get('/students/my-assigned');
-      
+
       const students = response.data.students || [];
-      
+
       // Transform the API response to match InstructorStudent interface
       return students.map((student: any) => ({
         id: student.id,
@@ -122,11 +123,11 @@ class InstructorService {
   async getStudentAttendance(studentId?: string): Promise<any[]> {
     try {
       console.log('Fetching attendance data...');
-      
+
       const params = studentId ? { studentId } : {};
       const response = await api.get('/attendance', { params });
       console.log('Attendance API response:', response.data);
-      
+
       return response.data.logs || response.data.attendance || [];
     } catch (error) {
       console.error('Error fetching attendance data:', error);
@@ -138,10 +139,10 @@ class InstructorService {
   async getStudentAttendanceStats(studentId: string): Promise<any> {
     try {
       console.log('Fetching attendance stats for student:', studentId);
-      
+
       // Get attendance logs for the student
       const logs = await this.getStudentAttendance(studentId);
-      
+
       // Get student profile to get required hours
       let requiredHours = 240; // Default fallback
       try {
@@ -150,7 +151,7 @@ class InstructorService {
       } catch (error) {
         console.warn('Could not fetch student profile, using default 240 hours');
       }
-      
+
       // Use shared calculation logic to ensure consistency
       return calculateAttendanceStats(logs, requiredHours);
     } catch (error) {
@@ -184,19 +185,19 @@ class InstructorService {
   // Get recent activities for instructor's students
   async getRecentActivities(): Promise<InstructorActivity[]> {
     try {
-      
+
       const activities: InstructorActivity[] = [];
-      
+
       // Get assigned students
       const students = await this.getAssignedStudents();
-      
+
       // Fetch recent document submissions (backend will automatically filter by instructor's assigned students)
       try {
         const documentsResponse = await api.get('/documents', {
           params: { limit: 10 }
         });
         const recentDocuments = documentsResponse.data.documents || [];
-        
+
         for (const doc of recentDocuments) {
           const student = students.find(s => s.id === doc.studentId);
           if (student) {
@@ -212,29 +213,29 @@ class InstructorService {
       } catch (docError) {
         console.warn('Could not fetch documents for activities:', docError);
       }
-      
+
       // Fetch recent attendance logs and filter by assigned students
       try {
         const attendanceResponse = await api.get('/attendance', {
           params: { limit: 50 } // Get more to filter by assigned students
         });
         const allAttendance = attendanceResponse.data.logs || [];
-        
+
         // Filter to only include attendance from assigned students
         const assignedStudentIds = students.map(s => s.id);
         const recentAttendance = allAttendance
           .filter((log: any) => assignedStudentIds.includes(log.studentId))
           .slice(0, 10);
-        
+
         for (const log of recentAttendance) {
           const student = students.find(s => s.id === log.studentId);
           if (student) {
-            const action = log.timeIn && log.timeOut 
+            const action = log.timeIn && log.timeOut
               ? 'Completed attendance session'
-              : log.timeIn 
-              ? 'Checked in for attendance'
-              : 'Checked out from attendance';
-              
+              : log.timeIn
+                ? 'Checked in for attendance'
+                : 'Checked out from attendance';
+
             activities.push({
               id: `att-${log.id}`,
               studentName: student.name,
@@ -247,7 +248,7 @@ class InstructorService {
       } catch (attError) {
         console.warn('Could not fetch attendance for activities:', attError);
       }
-      
+
       // Fetch instructor activities from audit logs (evaluations, assignments, etc.)
       try {
         const auditResponse = await api.get('/audit');
@@ -260,7 +261,7 @@ class InstructorService {
           return assignedNames.has(studentName) ||
             ['USER_REGISTERED', 'STUDENT_AUTO_ASSIGNED', 'EVALUATION_SUBMITTED', 'COMPANY_ADDED'].includes(log.action);
         }).slice(0, 20);
-        
+
         for (const log of relevant) {
           if (log.action === 'USER_REGISTERED' && log.meta?.role === 'STUDENT') {
             activities.push({
@@ -300,10 +301,10 @@ class InstructorService {
       } catch (auditError) {
         console.warn('Could not fetch audit logs for instructor activities:', auditError);
       }
-      
+
       // Sort activities by timestamp (most recent first)
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      
+
       // Return only the 10 most recent activities
       return activities.slice(0, 10);
     } catch (error) {
@@ -317,14 +318,14 @@ class InstructorService {
   private getDocumentTypeDisplay(type: string): string {
     const typeMap: Record<string, string> = {
       'weekly_report': 'Weekly Report',
-      'monthly_timesheet': 'Monthly Timesheet', 
+      'monthly_timesheet': 'Monthly Timesheet',
       'accomplishment_report': 'Accomplishment Report',
       'final_report': 'Final Report',
       'timesheet': 'Timesheet',
       'report': 'Report',
       'document': 'Document'
     };
-    
+
     return typeMap[type?.toLowerCase()] || type || 'Document';
   }
 
@@ -334,19 +335,19 @@ class InstructorService {
       // Get announcements targeted at instructors or all users
       const response = await announcementService.getAnnouncements();
       const allAnnouncements = response.announcements;
-      
+
       // Filter announcements that are relevant to instructors
-      const instructorAnnouncements = allAnnouncements.filter(announcement => 
-        announcement.audience === 'ALL' || 
+      const instructorAnnouncements = allAnnouncements.filter(announcement =>
+        announcement.audience === 'ALL' ||
         announcement.audience === 'INSTRUCTORS' ||
         announcement.audience === 'COORDINATORS' // Instructors might also want to see coordinator announcements
       );
-      
+
       // Transform announcements for display
-      const transformedAnnouncements = instructorAnnouncements.map(announcement => 
+      const transformedAnnouncements = instructorAnnouncements.map(announcement =>
         announcementService.transformAnnouncement(announcement)
       );
-      
+
       return transformedAnnouncements;
     } catch (error) {
       console.error('Error fetching announcements for instructor:', error);
@@ -368,13 +369,13 @@ class InstructorService {
   async getAlerts(): Promise<InstructorAlert[]> {
     try {
       console.log('Fetching alerts for instructor...');
-      
+
       // TODO: Implement actual alerts system based on:
       // - Students with low attendance
       // - Pending document reviews
       // - Students at risk
       // - Overdue evaluations
-      
+
       console.log('No alerts endpoint available yet');
       return [];
     } catch (error) {
@@ -419,16 +420,16 @@ class InstructorService {
     const activeStudents = students.filter(s => s.status === 'active').length;
     const atRiskStudents = students.filter(s => s.status === 'at_risk').length;
     const completedStudents = students.filter(s => s.status === 'completed').length;
-    
-    const avgAttendance = totalStudents > 0 
-      ? students.reduce((sum, s) => sum + s.attendanceRate, 0) / totalStudents 
+
+    const avgAttendance = totalStudents > 0
+      ? students.reduce((sum, s) => sum + s.attendanceRate, 0) / totalStudents
       : 0;
-    
+
     const studentsWithEvaluations = students.filter(s => s.lastEvaluation > 0);
-    const avgRating = studentsWithEvaluations.length > 0 
-      ? studentsWithEvaluations.reduce((sum, s) => sum + s.lastEvaluation, 0) / studentsWithEvaluations.length 
+    const avgRating = studentsWithEvaluations.length > 0
+      ? studentsWithEvaluations.reduce((sum, s) => sum + s.lastEvaluation, 0) / studentsWithEvaluations.length
       : 0;
-    
+
     const documentsPending = 0; // Task tracking removed
     const evaluationsPending = students.filter(s => s.lastEvaluation === 0).length;
 
@@ -449,34 +450,34 @@ class InstructorService {
   // Helper method to format last activity
   private formatLastActivity(lastActivity: string | Date | null): string {
     if (!lastActivity) return 'No recent activity';
-    
+
     const date = new Date(lastActivity);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    
+
     return date.toLocaleDateString();
   }
 
   // Helper method to format timestamp
   private formatTimestamp(timestamp: string | Date | null): string {
     if (!timestamp) return 'Unknown';
-    
+
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    
+
     return date.toLocaleDateString();
   }
 
@@ -513,7 +514,7 @@ class InstructorService {
         studentId,
         ...evaluationData
       });
-      
+
       console.log('Evaluation submitted successfully:', response.data);
       return true;
     } catch (error) {
@@ -551,7 +552,7 @@ class InstructorService {
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId
       });
-      
+
       console.log('Student assigned successfully:', response.data);
       return true;
     } catch (error) {
@@ -568,7 +569,7 @@ class InstructorService {
         studentIds,
         instructorId
       });
-      
+
       console.log('Students bulk assigned successfully:', response.data);
       return true;
     } catch (error) {
@@ -584,7 +585,7 @@ class InstructorService {
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId: null
       });
-      
+
       console.log('Student unassigned successfully:', response.data);
       return true;
     } catch (error) {
@@ -599,16 +600,16 @@ class InstructorService {
       // First get assigned students
       const assignedStudents = await this.getAssignedStudents();
       const assignedStudentIds = assignedStudents.map(s => s.id);
-      
+
       if (assignedStudentIds.length === 0) {
         return [];
       }
-      
+
       // Fetch documents (backend will automatically filter by instructor's assigned students)
       const response = await api.get('/documents');
-      
+
       const documents = response.data.documents || [];
-      
+
       // Transform the API response to match InstructorDocument interface
       return documents.map((doc: any) => ({
         id: doc.id,
@@ -675,9 +676,9 @@ class InstructorService {
       console.log('Getting document details:', documentId);
       const response = await api.get(`/documents/${documentId}`);
       const doc = response.data.document;
-      
+
       if (!doc) return null;
-      
+
       return {
         id: doc.id,
         studentId: doc.student?.studentNumber || doc.student?.id || '',
@@ -712,7 +713,7 @@ class InstructorService {
       'report': 'Report',
       'document': 'Document',
     };
-    
+
     return typeMap[type?.toLowerCase()] || type || 'Document';
   }
 
@@ -735,21 +736,21 @@ class InstructorService {
     year: string;
   }): Promise<any> {
     let userId: string | null = null;
-    
+
     try {
       console.log('Creating student with data:', studentData);
-      
+
       // Check for student number conflicts before creating user account
       console.log('Checking for existing student number...');
       const studentExists = await this.checkStudentExists(studentData.studentNumber);
       if (studentExists) {
         throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
       }
-      
+
       // Generate secure password for the student
       const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
       console.log('Generated password for student:', generatedPassword);
-      
+
       // First, create a user account using the register endpoint
       console.log('Creating user account...');
       let userResponse;
@@ -772,7 +773,7 @@ class InstructorService {
 
       // Convert year string to integer
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
-      
+
       // Then create the student record
       console.log('Creating student record...');
       let studentResponse;
@@ -791,14 +792,14 @@ class InstructorService {
         });
       } catch (studentError: any) {
         console.error('Error creating student record:', studentError);
-        
+
         // Clean up the user account that was created
         if (userId) {
           console.log('Cleaning up created user account due to student creation failure...');
           try {
             await api.delete(`/users/${userId}`);
             console.log('User account cleaned up successfully');
-            
+
             // Verify the user was actually deleted
             const userStillExists = await this.checkUserExists(studentData.email);
             if (userStillExists) {
@@ -810,15 +811,15 @@ class InstructorService {
             console.error('Failed to cleanup user account:', cleanupError);
           }
         }
-        
+
         if (studentError.response?.status === 400 && studentError.response?.data?.message?.includes('Student with number')) {
           throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
         }
         throw studentError;
       }
-      
+
       console.log('Student created successfully:', studentResponse.data);
-      
+
       // Send welcome email to student
       let emailSent = false;
       try {
@@ -833,7 +834,7 @@ class InstructorService {
       } catch (emailError) {
         console.warn('Failed to send welcome email:', emailError);
       }
-      
+
       return {
         student: studentResponse.data.student,
         emailSent: emailSent,
@@ -843,7 +844,7 @@ class InstructorService {
       };
     } catch (error: any) {
       console.error('Error creating student:', error);
-      
+
       // Provide more specific error messages with debugging information
       console.error('Student creation error details:', {
         status: error.response?.status,
@@ -854,7 +855,7 @@ class InstructorService {
       if (error.response?.status === 400) {
         const errorMsg = error.response.data?.message || 'Validation error';
         console.error('Backend validation error:', errorMsg);
-        
+
         if (errorMsg.includes('Email already exists')) {
           throw new Error(`A user with email "${studentData.email}" already exists. Please use a different email address.`);
         } else if (errorMsg.includes('Student with number')) {
@@ -871,7 +872,7 @@ class InstructorService {
       } else if (error.response?.status === 500) {
         throw new Error('Server error occurred. Please try again later.');
       }
-      
+
       throw error;
     }
   }

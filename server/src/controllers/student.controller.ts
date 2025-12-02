@@ -63,7 +63,22 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
     const [students, total] = await Promise.all([
       prisma.student.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          userId: true,
+          studentNumber: true,
+          program: true,
+          year: true,
+          section: true,
+          companyId: true,
+          supervisorName: true,
+          instructorId: true,
+          startDate: true,
+          endDate: true,
+          totalHours: true,
+          completedHours: true,
+          createdAt: true,
+          updatedAt: true,
           user: { select: { name: true, email: true } },
           company: { select: { id: true, name: true } },
           instructor: { select: { id: true, name: true, email: true } },
@@ -74,14 +89,14 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
           },
           supervisorFeedbacks: req.user?.role === 'INDUSTRY_PARTNER'
             ? {
-                where: { supervisorId: req.user.id },
-                select: { id: true },
-                take: 1,
-              }
+              where: { supervisorId: req.user.id },
+              select: { id: true },
+              take: 1,
+            }
             : {
-                select: { id: true },
-                take: 1,
-              },
+              select: { id: true },
+              take: 1,
+            },
         },
         skip,
         take: Number(limit),
@@ -99,15 +114,28 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
         pages: Math.ceil(total / Number(limit))
       }
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch students', error });
+  } catch (error: any) {
+    console.error('Error fetching students:', error);
+    const errorMessage = error?.message || 'Failed to fetch students';
+    const errorDetails = process.env.NODE_ENV === 'development'
+      ? {
+        message: errorMessage,
+        code: error?.code,
+        meta: error?.meta,
+      }
+      : { message: errorMessage };
+
+    res.status(500).json({
+      message: 'Failed to fetch students',
+      error: errorDetails
+    });
   }
 };
 
 export const getStudentProfile = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
@@ -121,7 +149,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       });
     } catch (dbError: any) {
       console.error('Database error fetching user:', dbError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Failed to fetch user record',
         error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
       });
@@ -136,20 +164,20 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       student = await prisma.student.findFirst({
         where: { userId },
         include: {
-          user: { 
-            select: { 
+          user: {
+            select: {
               id: true,
-              name: true, 
+              name: true,
               email: true,
               role: true
-            } 
+            }
           },
           company: true
         }
       });
     } catch (dbError: any) {
       console.error('Database error fetching student:', dbError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Failed to fetch student profile',
         error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
       });
@@ -160,7 +188,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     }
 
     // Calculate completed hours from attendance logs with official time rounding
-    let attendanceLogs = [];
+    let attendanceLogs: any[] = [];
     try {
       attendanceLogs = await prisma.attendanceLog.findMany({
         where: { studentId: student.id, verified: true },
@@ -216,8 +244,8 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     console.error('Error fetching student profile:', error);
     const errorMessage = error?.message || 'Unknown error occurred';
     const errorStack = process.env.NODE_ENV === 'development' ? error?.stack : undefined;
-    res.status(500).json({ 
-      message: 'Failed to fetch student profile', 
+    res.status(500).json({
+      message: 'Failed to fetch student profile',
       error: process.env.NODE_ENV === 'development' ? errorMessage : 'Internal server error',
       ...(errorStack && { stack: errorStack })
     });
@@ -252,7 +280,7 @@ export const getStudentById = async (req: AuthRequest, res: Response) => {
 export const createStudent = async (req: AuthRequest, res: Response) => {
   try {
     console.log('Creating student with data:', req.body);
-    
+
     const {
       userId,
       studentNumber,
@@ -269,8 +297,8 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
 
     // Validate student number format
     if (studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) {
-      return res.status(400).json({ 
-        message: 'Student number must be in format: 22-UR-0592' 
+      return res.status(400).json({
+        message: 'Student number must be in format: 22-UR-0592'
       });
     }
 
@@ -280,8 +308,8 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
         where: { studentNumber }
       });
       if (existingStudent) {
-        return res.status(400).json({ 
-          message: `Student with number ${studentNumber} already exists` 
+        return res.status(400).json({
+          message: `Student with number ${studentNumber} already exists`
         });
       }
     }
@@ -291,14 +319,14 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
       where: { userId }
     });
     if (existingStudentByUser) {
-      return res.status(400).json({ 
-        message: 'User already has a student record' 
+      return res.status(400).json({
+        message: 'User already has a student record'
       });
     }
 
     // If no instructor is specified, automatically assign to the instructor creating the student
     let assignedInstructorId = instructorId;
-    
+
     if (!assignedInstructorId) {
       // If the user creating the student is an instructor, assign to them
       if (req.user?.role === 'INSTRUCTOR') {
@@ -363,24 +391,24 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
     res.status(201).json({ student });
   } catch (error: any) {
     console.error('Error creating student:', error);
-    
+
     // Provide more specific error messages
     if (error.code === 'P2002') {
       // Unique constraint violation
       const field = error.meta?.target?.[0] || 'field';
-      res.status(400).json({ 
+      res.status(400).json({
         message: `Student with this ${field} already exists`,
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     } else if (error.code === 'P2003') {
       // Foreign key constraint violation
-      res.status(400).json({ 
+      res.status(400).json({
         message: 'Invalid user ID provided',
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     } else {
-      res.status(500).json({ 
-        message: 'Failed to create student', 
+      res.status(500).json({
+        message: 'Failed to create student',
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
@@ -394,8 +422,8 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
 
     // Validate student number format if provided
     if (updateData.studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(updateData.studentNumber)) {
-      return res.status(400).json({ 
-        message: 'Student number must be in format: 22-UR-0592' 
+      return res.status(400).json({
+        message: 'Student number must be in format: 22-UR-0592'
       });
     }
 
@@ -433,7 +461,7 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
     }
 
     // Delete all related data in the correct order to avoid foreign key constraints
-    
+
     // 1. Delete attendance logs
     const attendanceResult = await prisma.attendanceLog.deleteMany({
       where: { studentId: id }
@@ -468,7 +496,7 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
     console.log(`   • Student record: 1`);
     console.log(`   • User account: 1`);
 
-    res.json({ 
+    res.json({
       message: 'Student and all related data deleted successfully',
       deleted: {
         attendanceLogs: attendanceResult.count,
@@ -494,7 +522,7 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
     // Verify instructor exists and has INSTRUCTOR role
     if (instructorId) {
       const instructor = await prisma.user.findFirst({
-        where: { 
+        where: {
           id: instructorId,
           role: 'INSTRUCTOR',
           active: true
@@ -537,7 +565,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
 
     // Verify instructor exists and has INSTRUCTOR role
     const instructor = await prisma.user.findFirst({
-      where: { 
+      where: {
         id: instructorId,
         role: 'INSTRUCTOR',
         active: true
@@ -550,7 +578,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
 
     // Verify all students exist
     const students = await prisma.student.findMany({
-      where: { 
+      where: {
         id: { in: studentIds }
       },
       include: {
@@ -564,7 +592,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
 
     // Bulk update students
     const updateResult = await prisma.student.updateMany({
-      where: { 
+      where: {
         id: { in: studentIds }
       },
       data: { instructorId }
@@ -572,7 +600,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
 
     // Get updated students with instructor info
     const updatedStudents = await prisma.student.findMany({
-      where: { 
+      where: {
         id: { in: studentIds }
       },
       include: {
@@ -581,7 +609,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    res.json({ 
+    res.json({
       message: `Successfully assigned ${updateResult.count} students to instructor`,
       students: updatedStudents,
       instructor: {
@@ -603,7 +631,7 @@ export const getStudentsByInstructor = async (req: AuthRequest, res: Response) =
     const { search, page = 1, limit = 20 } = req.query;
 
     const where: any = { instructorId };
-    
+
     if (search) {
       where.OR = [
         { studentNumber: { contains: search as string } },
@@ -646,7 +674,7 @@ export const getStudentsByInstructor = async (req: AuthRequest, res: Response) =
 export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
@@ -664,7 +692,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
     const { search, page = 1, limit = 50 } = req.query;
 
     const where: any = { instructorId: userId };
-    
+
     if (search) {
       where.OR = [
         { studentNumber: { contains: search as string } },
@@ -700,11 +728,11 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
             createdAt: true,
             updatedAt: true,
             user: { select: { name: true, email: true } },
-            company: { 
-              select: { 
+            company: {
+              select: {
                 name: true,
                 supervisor: { select: { name: true, email: true } }
-              } 
+              }
             },
             instructor: { select: { id: true, name: true, email: true } },
             attendanceLogs: {
@@ -808,7 +836,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         throw error;
       }
     }
-    
+
     // Add worksOnSaturday as false for all students (column doesn't exist in production yet)
     const studentsWithWorksOnSaturday = students.map(student => ({
       ...student,
@@ -819,7 +847,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
     const studentsWithMetrics = await Promise.all(studentsWithWorksOnSaturday.map(async (student) => {
       // Calculate attendance rate based on expected working days vs actual attendance
       let attendanceRate = 0;
-      
+
       // Get company information for working schedule
       let company = null;
       if (student.companyId) {
@@ -827,22 +855,22 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
           where: { id: student.companyId }
         });
       }
-      
+
       if (student.startDate && student.endDate) {
         const startDate = new Date(student.startDate);
         const endDate = new Date(student.endDate);
         const now = new Date();
-        
+
         // Use current date if internship is still ongoing
         const effectiveEndDate = endDate > now ? now : endDate;
-        
+
         let expectedWorkingDays = 0;
-        
-          // Use company-specific working schedule if available
+
+        // Use company-specific working schedule if available
         if (company && (company as any).workingDays && (company as any).workingDays.length > 0) {
           // For private companies, use student's Saturday preference (default to false if column doesn't exist)
           const worksOnSaturday = (company as any).companyType === 'PRIVATE' ? ((student as any).worksOnSaturday ?? false) : undefined;
-          
+
           expectedWorkingDays = calculateExpectedWorkingDays(
             startDate,
             effectiveEndDate,
@@ -860,11 +888,11 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
             currentDate.setDate(currentDate.getDate() + 1);
           }
         }
-        
+
         // Get actual attendance days (only on expected working days)
         const presentDays = await prisma.attendanceLog.count({
-          where: { 
-            studentId: student.id, 
+          where: {
+            studentId: student.id,
             verified: true,
             timeIn: { not: null },
             date: {
@@ -873,7 +901,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
             }
           }
         });
-        
+
         // Calculate attendance rate
         if (expectedWorkingDays > 0) {
           attendanceRate = Math.round((presentDays / expectedWorkingDays) * 100);
@@ -885,10 +913,10 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         const totalAttendanceLogs = await prisma.attendanceLog.count({
           where: { studentId: student.id, verified: true }
         });
-        
+
         const presentDays = await prisma.attendanceLog.count({
-          where: { 
-            studentId: student.id, 
+          where: {
+            studentId: student.id,
             verified: true,
             timeIn: { not: null }
           }
@@ -1008,11 +1036,11 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
 export const applyToCompany = async (req: AuthRequest, res: Response) => {
   try {
     const { companyId, supervisorName, supervisorEmail, supervisorPhone, startDate, endDate, motivation, skills, expectations } = req.body;
-    
+
     // Validate required fields
     if (!companyId || !supervisorName || !supervisorEmail || !startDate || !endDate || !motivation) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: companyId, supervisorName, supervisorEmail, startDate, endDate, motivation' 
+      return res.status(400).json({
+        message: 'Missing required fields: companyId, supervisorName, supervisorEmail, startDate, endDate, motivation'
       });
     }
 
@@ -1037,8 +1065,8 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
 
     // Check if student already has a company assigned
     if (student.companyId) {
-      return res.status(400).json({ 
-        message: 'Student already has a company assigned. Please contact your instructor to change companies.' 
+      return res.status(400).json({
+        message: 'Student already has a company assigned. Please contact your instructor to change companies.'
       });
     }
 
@@ -1084,7 +1112,7 @@ export const requestCompanyPartnership = async (req: AuthRequest, res: Response)
     // Get the student record
     const student = await prisma.student.findUnique({
       where: { userId: req.user!.id },
-      include: { 
+      include: {
         user: { select: { name: true, email: true } },
         instructor: { select: { id: true, name: true, email: true } }
       }
@@ -1096,14 +1124,14 @@ export const requestCompanyPartnership = async (req: AuthRequest, res: Response)
 
     // Check if student already has a company assigned
     if (student.companyId) {
-      return res.status(400).json({ 
-        message: 'Student already has a company assigned. Please contact your instructor to change companies.' 
+      return res.status(400).json({
+        message: 'Student already has a company assigned. Please contact your instructor to change companies.'
       });
     }
 
     // Get all coordinators
     const coordinators = await prisma.user.findMany({
-      where: { 
+      where: {
         role: 'COORDINATOR',
         active: true
       },
@@ -1138,7 +1166,7 @@ export const requestCompanyPartnership = async (req: AuthRequest, res: Response)
     // Create all notifications
     if (notifications.length > 0) {
       await Promise.all(
-        notifications.map(notification => 
+        notifications.map(notification =>
           notificationService.createNotification(notification)
         )
       );
@@ -1192,7 +1220,7 @@ export const getPartnershipMessages = async (req: AuthRequest, res: Response) =>
       if (!requestedStudentId || typeof requestedStudentId !== 'string') {
         return res.status(400).json({ message: 'Student ID is required' });
       }
-      
+
       // Get student record with instructor info for security check
       const studentRecord = await prisma.student.findUnique({
         where: { id: requestedStudentId },
@@ -1208,13 +1236,13 @@ export const getPartnershipMessages = async (req: AuthRequest, res: Response) =>
 
       // SECURITY CHECK: Verify user has access to this student's messages
       // Only the student, their assigned instructor, or coordinators can access
-      const hasAccess = 
+      const hasAccess =
         req.user!.role === 'COORDINATOR' || // Coordinators can access all students
         (req.user!.role === 'INSTRUCTOR' && studentRecord.instructorId === req.user!.id); // Instructors can only access their assigned students
 
       if (!hasAccess) {
-        return res.status(403).json({ 
-          message: 'Access denied. You do not have permission to view messages for this student.' 
+        return res.status(403).json({
+          message: 'Access denied. You do not have permission to view messages for this student.'
         });
       }
 
@@ -1250,9 +1278,9 @@ export const getPartnershipMessages = async (req: AuthRequest, res: Response) =>
     res.json({ messages: formattedMessages });
   } catch (error: any) {
     console.error('Error fetching partnership messages:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch messages', 
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch messages',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -1273,7 +1301,7 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
     if (req.user!.role === 'STUDENT') {
       const studentRecord = await prisma.student.findUnique({
         where: { userId: req.user!.id },
-        include: { 
+        include: {
           user: { select: { id: true, name: true, role: true } },
           instructor: { select: { id: true, name: true } }
         }
@@ -1291,7 +1319,7 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
       }
       const studentRecord = await prisma.student.findUnique({
         where: { id: targetStudentId },
-        include: { 
+        include: {
           user: { select: { id: true, name: true, role: true } },
           instructor: { select: { id: true, name: true } }
         }
@@ -1303,13 +1331,13 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
 
       // SECURITY CHECK: Verify user has permission to send messages to this student
       // Only the student, their assigned instructor, or coordinators can send messages
-      const hasPermission = 
+      const hasPermission =
         req.user!.role === 'COORDINATOR' || // Coordinators can message any student
         (req.user!.role === 'INSTRUCTOR' && studentRecord.instructorId === req.user!.id); // Instructors can only message their assigned students
 
       if (!hasPermission) {
-        return res.status(403).json({ 
-          message: 'Access denied. You do not have permission to send messages to this student.' 
+        return res.status(403).json({
+          message: 'Access denied. You do not have permission to send messages to this student.'
         });
       }
 
@@ -1377,7 +1405,7 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
 
     if (notifications.length > 0) {
       await Promise.all(
-        notifications.map(notification => 
+        notifications.map(notification =>
           notificationService.createNotification(notification)
         )
       );
@@ -1401,8 +1429,8 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
       code: error.code,
       meta: error.meta
     });
-    res.status(500).json({ 
-      message: 'Failed to send message', 
+    res.status(500).json({
+      message: 'Failed to send message',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
       details: process.env.NODE_ENV === 'development' ? {
         code: error.code,
@@ -1511,7 +1539,7 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
       worksOnSaturday
     }, req);
 
-    res.json({ 
+    res.json({
       message: 'Saturday work preference updated successfully',
       student: {
         id: updatedStudent.id,

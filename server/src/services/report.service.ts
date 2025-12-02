@@ -454,54 +454,73 @@ export interface ComplianceReportData {
 export const getComplianceReportData = async (
   companyId?: string
 ): Promise<ComplianceReportData> => {
-  const students = await prisma.student.findMany({
-    where: companyId ? { companyId } : {},
-    include: {
-      user: { select: { name: true, email: true } },
-      company: { select: { name: true } },
-      documents: true,
-      evaluations: true,
-    },
-  });
+  try {
+    const students = await prisma.student.findMany({
+      where: companyId ? { companyId } : {},
+      select: {
+        id: true,
+        studentNumber: true,
+        completedHours: true,
+        totalHours: true,
+        user: { select: { name: true, email: true } },
+        company: { select: { name: true } },
+        documents: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+        evaluations: {
+          select: {
+            id: true,
+            rating: true,
+          },
+        },
+      },
+    });
 
-  const items: ComplianceReportDataItem[] = students.map((student) => {
-    const approvedDocuments = student.documents.filter(
-      (doc) => doc.status === 'APPROVED'
-    );
-    const rating =
-      student.evaluations.length > 0
-        ? student.evaluations.reduce((sum, e) => sum + (e.rating || 0), 0) /
-          student.evaluations.length
-        : null;
+    const items: ComplianceReportDataItem[] = students.map((student) => {
+      const approvedDocuments = student.documents.filter(
+        (doc) => doc.status === 'APPROVED'
+      );
+      const rating =
+        student.evaluations.length > 0
+          ? student.evaluations.reduce((sum, e) => sum + (e.rating || 0), 0) /
+            student.evaluations.length
+          : null;
+
+      return {
+        studentName: student.user.name,
+        studentNumber: student.studentNumber,
+        email: student.user.email,
+        companyName: student.company?.name || null,
+        completedHours: student.completedHours,
+        totalHours: student.totalHours,
+        progress:
+          student.totalHours > 0
+            ? Number(((student.completedHours / student.totalHours) * 100).toFixed(1))
+            : 0,
+        documentsSubmitted: student.documents.length,
+        documentsApproved: approvedDocuments.length,
+        evaluationsCompleted: student.evaluations.length,
+        averageRating: rating ? Number(rating.toFixed(2)) : null,
+      };
+    });
+
+    const companyFilterName =
+      companyId && students.length > 0
+        ? students[0].company?.name || undefined
+        : undefined;
 
     return {
-      studentName: student.user.name,
-      studentNumber: student.studentNumber,
-      email: student.user.email,
-      companyName: student.company?.name || null,
-      completedHours: student.completedHours,
-      totalHours: student.totalHours,
-      progress:
-        student.totalHours > 0
-          ? Number(((student.completedHours / student.totalHours) * 100).toFixed(1))
-          : 0,
-      documentsSubmitted: student.documents.length,
-      documentsApproved: approvedDocuments.length,
-      evaluationsCompleted: student.evaluations.length,
-      averageRating: rating ? Number(rating.toFixed(2)) : null,
+      generatedAt: new Date(),
+      companyFilter: companyFilterName,
+      items,
     };
-  });
-
-  const companyFilterName =
-    companyId && students.length > 0
-      ? students[0].company?.name || undefined
-      : undefined;
-
-  return {
-    generatedAt: new Date(),
-    companyFilter: companyFilterName,
-    items,
-  };
+  } catch (error: any) {
+    console.error('Error generating compliance report data:', error);
+    throw new Error(error?.message || 'Failed to generate compliance report data');
+  }
 };
 
 export const generateComplianceReportExcel = async (

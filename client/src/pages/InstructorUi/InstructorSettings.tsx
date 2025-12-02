@@ -500,8 +500,8 @@ const InstructorSettings = () => {
                     key={section.id}
                     onClick={() => setActiveTab(section.id as any)}
                     className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-left ${activeTab === section.id
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       }`}
                   >
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
@@ -596,8 +596,8 @@ const InstructorSettings = () => {
                             }
                           }}
                           className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.name
-                              ? "border-red-500"
-                              : "border-gray-200 dark:border-gray-600"
+                            ? "border-red-500"
+                            : "border-gray-200 dark:border-gray-600"
                             }`}
                         />
                         {errors.name && (
@@ -621,8 +621,8 @@ const InstructorSettings = () => {
                             }
                           }}
                           className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.email
-                              ? "border-red-500"
-                              : "border-gray-200 dark:border-gray-600"
+                            ? "border-red-500"
+                            : "border-gray-200 dark:border-gray-600"
                             }`}
                         />
                         {errors.email && (
@@ -646,8 +646,8 @@ const InstructorSettings = () => {
                             }
                           }}
                           className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.phone
-                              ? "border-red-500"
-                              : "border-gray-200 dark:border-gray-600"
+                            ? "border-red-500"
+                            : "border-gray-200 dark:border-gray-600"
                             }`}
                         />
                         {errors.phone && (
@@ -858,10 +858,10 @@ const InstructorSettings = () => {
                             <div
                               key={level}
                               className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
-                                  ? passwordData.newPassword.length >= 8
-                                    ? "bg-green-500"
-                                    : "bg-yellow-500"
-                                  : "bg-gray-200 dark:bg-gray-600"
+                                ? passwordData.newPassword.length >= 8
+                                  ? "bg-green-500"
+                                  : "bg-yellow-500"
+                                : "bg-gray-200 dark:bg-gray-600"
                                 }`}
                             />
                           ))}
@@ -982,8 +982,8 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
@@ -1010,8 +1010,8 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
@@ -1038,8 +1038,8 @@ const InstructorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
@@ -1406,15 +1406,15 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("faq")}
-                    className="text-left w-full rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
+                    className="text-left w-full rounded-xl border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">FAQ</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100">FAQ</h3>
+                        <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
                           Find answers to common questions
                         </p>
                       </div>
@@ -1424,15 +1424,15 @@ const InstructorSettings = () => {
                   {/* Contact Support */}
                   <a
                     href={`mailto:${HELP_LINKS.supportEmail}`}
-                    className="block rounded-xl border border-blue-700/40 dark:border-blue-600/40 bg-blue-900/30 hover:bg-blue-900/40 transition-colors p-4 sm:p-5"
+                    className="block rounded-xl border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600/30 flex items-center justify-center flex-shrink-0">
-                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Contact Support</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-blue-900 dark:text-blue-100">Contact Support</h3>
+                        <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
                           Email: {HELP_LINKS.supportEmail}
                         </p>
                       </div>
@@ -1443,15 +1443,15 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("guide")}
-                    className="text-left w-full rounded-xl border border-emerald-700/40 dark:border-emerald-600/40 bg-emerald-900/30 hover:bg-emerald-900/40 transition-colors p-4 sm:p-5"
+                    className="text-left w-full rounded-xl border border-emerald-100 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/30 flex items-center justify-center flex-shrink-0">
-                        <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
+                        <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Coordinator Guide</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-emerald-900 dark:text-emerald-100">Coordinator Guide</h3>
+                        <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
                           Learn how to use coordinator features
                         </p>
                       </div>
@@ -1462,15 +1462,15 @@ const InstructorSettings = () => {
                   <button
                     type="button"
                     onClick={() => setHelpModal("privacy")}
-                    className="text-left w-full rounded-xl border border-amber-700/40 dark:border-amber-600/40 bg-amber-900/30 hover:bg-amber-900/40 transition-colors p-4 sm:p-5"
+                    className="text-left w-full rounded-xl border border-amber-100 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors p-4 sm:p-5"
                   >
                     <div className="flex items-start space-x-3 sm:space-x-4">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-600/30 flex items-center justify-center flex-shrink-0">
-                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" />
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-white">Privacy Policy</h3>
-                        <p className="text-xs sm:text-sm text-gray-300">
+                        <h3 className="text-base sm:text-lg font-semibold text-amber-900 dark:text-amber-100">Privacy Policy</h3>
+                        <p className="text-xs sm:text-sm text-amber-700 dark:text-amber-300">
                           Read our privacy terms
                         </p>
                       </div>

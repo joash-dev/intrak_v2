@@ -26,7 +26,7 @@ if [ "$NAS_AVAILABLE" = "false" ]; then
     mkdir -p ./uploads/templates
     echo "✅ Using local storage: ./uploads"
     echo "🚀 Starting Node.js server..."
-    exec node dist/index.js
+    exec node dist/src/index.js
     exit 0
 fi
 
@@ -167,5 +167,5 @@ npx prisma migrate deploy || echo "⚠️  Migration failed or already applied"
 
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
-exec node dist/index.js
+exec node dist/src/index.js
 

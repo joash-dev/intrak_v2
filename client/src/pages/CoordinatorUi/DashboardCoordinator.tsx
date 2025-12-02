@@ -28,6 +28,7 @@ import CoordinatorCompanyManagement from "./CoordinatorCompanyManagement";
 import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
 import CoordinatorSettingsTab from "./CoordinatorSettings";
 import CoordinatorStudentManagement from "./CoordinatorStudentManagement";
+import CoordinatorReportsTab from "./CoordinatorReportsTab";
 import { coordinatorService } from "../../services/coordinatorService";
 import { settingsService } from "../../services/settingsService";
 import { formatDateTime } from "../../services/localeService";
@@ -1089,6 +1090,7 @@ const CoordinatorPortal: React.FC = () => {
     { id: "documents", label: t("dashboard.nav.documents"), icon: FileCheck },
     { id: "companies", label: t("dashboard.nav.companies"), icon: Building2 },
     { id: "announcements", label: t("dashboard.nav.announcements"), icon: MessageSquare },
+    { id: "reports", label: "Reports", icon: BarChart3 },
     { id: "notifications", label: "Notifications", icon: Bell },
   ];
 
@@ -1221,6 +1223,8 @@ const CoordinatorPortal: React.FC = () => {
         return <CoordinatorCompanyManagement />;
       case "announcements":
         return <CoordinatorAnnouncementsTab />;
+      case "reports":
+        return <CoordinatorReportsTab />;
       case "notifications":
         return (
           <div className="space-y-6">

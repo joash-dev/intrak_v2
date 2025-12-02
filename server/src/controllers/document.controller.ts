@@ -85,8 +85,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     // Validate NAS connection if enabled
     const nasValid = await validateNASConnection();
     if (!nasValid) {
-      return res.status(503).json({ 
-        message: 'Storage system unavailable. Please try again later.' 
+      return res.status(503).json({
+        message: 'Storage system unavailable. Please try again later.'
       });
     }
 
@@ -98,8 +98,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
     // Validate required fields
     if (!type) {
-      return res.status(400).json({ 
-        message: 'Document type is required' 
+      return res.status(400).json({
+        message: 'Document type is required'
       });
     }
 
@@ -110,15 +110,15 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       const currentStudent = await prisma.student.findUnique({
         where: { userId: req.user!.id }
       });
-      
+
       if (!currentStudent) {
         return res.status(404).json({ message: 'Student record not found' });
       }
-      
+
       targetStudentId = currentStudent.id;
     } else if (!studentId) {
-      return res.status(400).json({ 
-        message: 'Student ID is required for non-student users' 
+      return res.status(400).json({
+        message: 'Student ID is required for non-student users'
       });
     }
 
@@ -151,9 +151,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
     if (normalizedCompanyId && student.companyId !== normalizedCompanyId) {
       return res.status(400).json({
-        message: `Selected student is not assigned to the chosen company${
-          student.company?.name ? ` (${student.company.name})` : ''
-        }.`,
+        message: `Selected student is not assigned to the chosen company${student.company?.name ? ` (${student.company.name})` : ''
+          }.`,
       });
     }
 
@@ -163,10 +162,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     // Move file to student-specific directory
     const studentDir = path.join(uploadPath, 'documents', targetStudentId);
     await ensureNASDirectoryExists(studentDir);
-    
+
     const finalFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
     const finalPath = path.join(studentDir, finalFilename);
-    
+
     // Move file from temp location to final location
     try {
       fs.renameSync(req.file.path, finalPath);
@@ -228,7 +227,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    res.status(201).json({ 
+    res.status(201).json({
       document: {
         ...document,
         fileSizeMB: fileSizeMB + ' MB'
@@ -236,9 +235,9 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).json({ 
-      message: 'Upload failed', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Upload failed',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -252,7 +251,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     const { studentId, status, type, page = 1, limit = 20 } = req.query;
 
     const where: any = {};
-    
+
     // If user is a student, only show their own documents
     if (req.user.role === 'STUDENT') {
       let student;
@@ -262,7 +261,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
         });
       } catch (dbError: any) {
         console.error('Database error fetching student:', dbError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: 'Failed to fetch student record',
           error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
         });
@@ -272,8 +271,8 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
         where.studentId = student.id;
       } else {
         // Return empty array instead of 404 for better UX
-        return res.status(200).json({ 
-          documents: [], 
+        return res.status(200).json({
+          documents: [],
           pagination: {
             total: 0,
             page: Number(page),
@@ -293,8 +292,8 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       } catch (dbError: any) {
         console.error('Database error fetching assigned students:', dbError);
         // Return empty array instead of error
-        return res.status(200).json({ 
-          documents: [], 
+        return res.status(200).json({
+          documents: [],
           pagination: {
             total: 0,
             page: Number(page),
@@ -303,14 +302,14 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
           }
         });
       }
-      
+
       if (assignedStudents.length > 0) {
         const assignedStudentIds = assignedStudents.map(s => s.id);
         where.studentId = { in: assignedStudentIds };
       } else {
         // If instructor has no assigned students, return empty array
-        return res.status(200).json({ 
-          documents: [], 
+        return res.status(200).json({
+          documents: [],
           pagination: {
             total: 0,
             page: Number(page),
@@ -322,7 +321,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     } else if (studentId) {
       where.studentId = studentId;
     }
-    
+
     if (status) where.status = status;
     if (type) where.type = type;
 
@@ -358,8 +357,8 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     } catch (queryError: any) {
       console.error('Error fetching documents from database:', queryError);
       // Return empty array instead of error
-      return res.status(200).json({ 
-        documents: [], 
+      return res.status(200).json({
+        documents: [],
         pagination: {
           total: 0,
           page: Number(page),
@@ -403,9 +402,9 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error('Get documents error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch documents', 
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch documents',
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
     });
   }
 };
@@ -413,19 +412,19 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
 export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
   try {
     console.log(`📄 Getting documents for user: ${req.user?.id}, role: ${req.user?.role}`);
-    
+
     // Check if user is authenticated
     if (!req.user) {
       console.log(`📄 No authenticated user found`);
       return res.status(401).json({ message: 'Authentication required' });
     }
-    
+
     // Check if user is a student
     if (req.user.role !== 'STUDENT') {
       console.log(`📄 User is not a student, role: ${req.user.role}`);
       return res.status(403).json({ message: 'Access denied. Student role required.' });
     }
-    
+
     // Get current student
     let student;
     try {
@@ -437,7 +436,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       });
     } catch (dbError: any) {
       console.error('Database error fetching student:', dbError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Failed to fetch student record',
         error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
       });
@@ -447,7 +446,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
 
     if (!student) {
       console.log(`📄 Student record not found for user: ${req.user.id}`);
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: 'Student record not found',
         debug: process.env.NODE_ENV === 'development' ? {
           userId: req.user.id,
@@ -457,7 +456,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    let documents = [];
+    let documents: any[] = [];
     try {
       documents = await prisma.document.findMany({
         where: { studentId: student.id },
@@ -486,9 +485,9 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
     res.json({ documents: formattedDocuments });
   } catch (error: any) {
     console.error('Get student documents error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch documents', 
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch documents',
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
     });
   }
 };
@@ -862,7 +861,7 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
     // Normalize the path first (handles ./ and ../)
     const normalizedPath = path.normalize(document.filepath);
     let filepath: string;
-    
+
     if (path.isAbsolute(normalizedPath)) {
       filepath = normalizedPath;
     } else {
@@ -874,20 +873,20 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
         path.resolve(process.cwd(), 'uploads', 'documents', path.basename(normalizedPath)), // Try just filename in uploads/documents
         normalizedPath // Try as-is if it's already correct
       ];
-      
+
       filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
     }
-    
+
     if (!fs.existsSync(filepath)) {
       console.error('Document file not found. Document ID:', id);
       console.error('Stored filepath:', document.filepath);
       console.error('Resolved filepath:', filepath);
       console.error('process.cwd():', process.cwd());
       console.error('__dirname:', __dirname);
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: 'File not found',
-        details: process.env.NODE_ENV === 'development' ? { 
-          storedPath: document.filepath, 
+        details: process.env.NODE_ENV === 'development' ? {
+          storedPath: document.filepath,
           resolvedPath: filepath,
           cwd: process.cwd()
         } : undefined

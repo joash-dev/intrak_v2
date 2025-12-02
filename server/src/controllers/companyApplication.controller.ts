@@ -8,7 +8,7 @@ export const getAllApplications = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.query;
     const where: any = {};
-    
+
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -69,7 +69,7 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
       });
     } catch (dbError: any) {
       console.error('Database error fetching student:', dbError);
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Failed to fetch student record',
         error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
       });
@@ -79,7 +79,7 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Student record not found' });
     }
 
-    let applications = [];
+    let applications: any[] = [];
     try {
       applications = await prisma.companyApplication.findMany({
         where: {
@@ -132,9 +132,9 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
     res.json({ applications: formattedApplications });
   } catch (error: any) {
     console.error('Error fetching my applications:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch applications', 
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch applications',
+      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
     });
   }
 };
@@ -164,8 +164,8 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
 
     // Check if student already has a company
     if (student.companyId) {
-      return res.status(400).json({ 
-        message: 'You already have a company assigned. Please contact your instructor to change companies.' 
+      return res.status(400).json({
+        message: 'You already have a company assigned. Please contact your instructor to change companies.'
       });
     }
 
@@ -183,8 +183,8 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
 
     // Check if company has available slots
     if (company.students.length >= company.maxSlots) {
-      return res.status(400).json({ 
-        message: `This company has no available slots. Current: ${company.students.length}/${company.maxSlots}` 
+      return res.status(400).json({
+        message: `This company has no available slots. Current: ${company.students.length}/${company.maxSlots}`
       });
     }
 
@@ -229,9 +229,9 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
           ipAddress: req.ip
         });
 
-        return res.status(201).json({ 
+        return res.status(201).json({
           application,
-          message: 'Application resubmitted successfully' 
+          message: 'Application resubmitted successfully'
         });
       }
     }
@@ -268,9 +268,9 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
-    res.status(201).json({ 
+    res.status(201).json({
       application,
-      message: 'Application submitted successfully' 
+      message: 'Application submitted successfully'
     });
   } catch (error: any) {
     console.error('Error applying to company:', error);
@@ -318,8 +318,8 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
     }
 
     if (company.students.length >= company.maxSlots) {
-      return res.status(400).json({ 
-        message: `Cannot approve. Company has no available slots. Current: ${company.students.length}/${company.maxSlots}` 
+      return res.status(400).json({
+        message: `Cannot approve. Company has no available slots. Current: ${company.students.length}/${company.maxSlots}`
       });
     }
 
@@ -384,9 +384,9 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
-    res.json({ 
+    res.json({
       application: result,
-      message: 'Application approved and student assigned to company successfully' 
+      message: 'Application approved and student assigned to company successfully'
     });
   } catch (error: any) {
     console.error('Error approving application:', error);
@@ -460,9 +460,9 @@ export const rejectApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
-    res.json({ 
+    res.json({
       application: updatedApplication,
-      message: 'Application rejected successfully' 
+      message: 'Application rejected successfully'
     });
   } catch (error: any) {
     console.error('Error rejecting application:', error);
@@ -526,9 +526,9 @@ export const withdrawApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
-    res.json({ 
+    res.json({
       application: updatedApplication,
-      message: 'Application withdrawn successfully' 
+      message: 'Application withdrawn successfully'
     });
   } catch (error: any) {
     console.error('Error withdrawing application:', error);

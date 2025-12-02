@@ -158,31 +158,87 @@ const provisionSupervisorAccount = async (
 // Get all companies
 export const getAllCompanies = async (req: AuthRequest, res: Response) => {
   try {
+    // First, try to get companies with a simpler query to identify the issue
     const companies = await prisma.company.findMany({
-      include: {
-        students: {
-          include: {
-            user: {
-              select: { name: true, email: true },
-            },
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        contactPerson: true,
+        contactEmail: true,
+        contactNumber: true,
+        latitude: true,
+        longitude: true,
+        radiusMeters: true,
+        maxSlots: true,
+        description: true,
+        industry: true,
+        supervisorId: true,
+        companyType: true,
+        workingDays: true,
+        createdAt: true,
+        updatedAt: true,
         supervisor: {
           select: { id: true, name: true, email: true },
-        },
-        _count: {
-          select: {
-            students: true,
-          },
         },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    res.json({ companies });
+    // Get student counts separately to avoid potential issues with _count
+    const companiesWithCounts = await Promise.all(
+      companies.map(async (company) => {
+        try {
+          const studentCount = await prisma.student.count({
+            where: { companyId: company.id },
+          });
+
+          return {
+            ...company,
+            _count: {
+              students: studentCount,
+            },
+          };
+        } catch (countError) {
+          console.error(`Error counting students for company ${company.id}:`, countError);
+          return {
+            ...company,
+            _count: {
+              students: 0,
+            },
+          };
+        }
+      })
+    );
+
+    // Ensure proper serialization of dates and arrays
+    const serializedCompanies = companiesWithCounts.map(company => ({
+      ...company,
+      createdAt: company.createdAt instanceof Date ? company.createdAt.toISOString() : company.createdAt,
+      updatedAt: company.updatedAt instanceof Date ? company.updatedAt.toISOString() : company.updatedAt,
+      workingDays: Array.isArray(company.workingDays) ? company.workingDays : [],
+      supervisor: company.supervisor || null,
+    }));
+
+    res.json({ companies: serializedCompanies });
   } catch (error: any) {
     console.error('Error fetching companies:', error);
-    res.status(500).json({ message: 'Failed to fetch companies', error: error.message });
+    console.error('Error stack:', error?.stack);
+    console.error('Error code:', error?.code);
+    console.error('Error meta:', error?.meta);
+    const errorMessage = error?.message || 'Failed to fetch companies';
+    const errorDetails = process.env.NODE_ENV === 'development' 
+      ? { 
+          message: errorMessage,
+          code: error?.code,
+          meta: error?.meta,
+        }
+      : { message: errorMessage };
+    
+    res.status(500).json({ 
+      message: 'Failed to fetch companies', 
+      error: errorDetails 
+    });
   }
 };
 
