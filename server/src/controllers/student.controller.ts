@@ -685,8 +685,8 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
       select: { role: true }
     });
 
-    if (!user || user.role !== 'INSTRUCTOR') {
-      return res.status(403).json({ message: 'Access denied. Instructor role required.' });
+    if (!user || (user.role !== 'INSTRUCTOR' && user.role !== 'ADMIN')) {
+      return res.status(403).json({ message: 'Access denied. Instructor or Admin role required.' });
     }
 
     const { search, page = 1, limit = 50 } = req.query;

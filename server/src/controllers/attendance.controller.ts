@@ -53,7 +53,7 @@ const formatHours = (hoursDecimal: number): string => {
   const totalMinutes = Math.round(hoursDecimal * 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  
+
   if (minutes === 0) {
     return `${hours} HOURS`;
   } else {
@@ -74,7 +74,7 @@ const getOrdinalSuffix = (num: number): string => {
 export const logAttendance = async (req: AuthRequest, res: Response) => {
   try {
     let { studentId, date, timeIn, timeOut, action } = req.body;
-    
+
     // If studentId is "me", get the student ID from the authenticated user
     if (studentId === 'me' || !studentId) {
       const userId = req.user?.id;
@@ -93,7 +93,7 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
 
       studentId = student.id;
     }
-    
+
     let log;
 
     if (action === 'time-in') {
@@ -180,7 +180,7 @@ export const getAttendance = async (req: AuthRequest, res: Response) => {
     const role = req.user?.role;
     const userId = req.user?.id;
 
-    if (role === 'COORDINATOR' || role === 'INSTRUCTOR') {
+    if (role === 'COORDINATOR' || role === 'INSTRUCTOR' || role === 'ADMIN') {
       if (studentId && studentId !== 'all') {
         where.studentId = studentId as string;
       }
@@ -257,7 +257,7 @@ export const getAttendance = async (req: AuthRequest, res: Response) => {
 export const generateQR = async (req: AuthRequest, res: Response) => {
   try {
     let studentId = req.params.studentId;
-    
+
     // If studentId is "me", get the student ID from the authenticated user
     if (studentId === 'me') {
       const userId = req.user?.id;
@@ -526,7 +526,7 @@ export const exportDTR = async (req: AuthRequest, res: Response) => {
 
   } catch (error) {
     console.error('DTR Export error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to export DTR',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
@@ -540,12 +540,12 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     console.log('Request params:', req.params);
     console.log('Request query:', req.query);
     console.log('User:', req.user?.id, req.user?.role);
-    
+
     console.log('DTR Template file path:', DTR_TEMPLATE_FILE);
     console.log('Template file exists:', fs.existsSync(DTR_TEMPLATE_FILE));
     console.log('__dirname:', __dirname);
     console.log('process.cwd():', process.cwd());
-    
+
     if (!fs.existsSync(DTR_TEMPLATE_FILE)) {
       console.error('Template file not found at:', DTR_TEMPLATE_FILE);
       return res.status(500).json({
@@ -619,7 +619,7 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
       console.error('Student not found:', studentId);
       return res.status(404).json({ message: 'Student not found' });
     }
-    
+
     console.log('Student found:', {
       id: student.id,
       name: student.user?.name,
@@ -642,7 +642,7 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     });
 
     console.log(`Found ${logs.length} attendance logs`);
-    
+
     // Calculate total hours with official time rounding (30-minute increments)
     const totalMinutes = logs.reduce((sum, log) => {
       const roundedMinutes = roundToOfficialTime(log.durationMinutes || 0);
@@ -655,10 +655,10 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     console.log('Loading template file...');
     const templateBuffer = fs.readFileSync(DTR_TEMPLATE_FILE);
     console.log('Template file size:', templateBuffer.length, 'bytes');
-    
+
     console.log('Creating Docxtemplater instance...');
     const zip = new PizZip(templateBuffer);
-    
+
     let doc: Docxtemplater;
     try {
       doc = new Docxtemplater(zip, {
@@ -697,7 +697,7 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
       const yearSuffix = getOrdinalSuffix(student.year || 1);
       const program = student.program || 'N/A';
       const studentName = student.user?.name || 'N/A';
-      
+
       const placeholderValues: Record<string, any> = {
         student_name: studentName.toUpperCase(),
         year_and_course: `${program.toUpperCase()} – ${student.year || 1}${yearSuffix} YEAR`,
@@ -714,12 +714,12 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
         attendance_logs: (() => {
           // Group logs by date and sum hours for same-day entries
           const groupedByDate = new Map<string, { date: Date; totalMinutes: number }>();
-          
+
           logs.forEach(log => {
             try {
               const logDate = log.date instanceof Date ? log.date : new Date(log.date);
               const dateKey = logDate.toISOString().split('T')[0]; // YYYY-MM-DD format for grouping
-              
+
               if (groupedByDate.has(dateKey)) {
                 // Add to existing entry (apply official time rounding)
                 const existing = groupedByDate.get(dateKey)!;
@@ -737,7 +737,7 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
               console.error('Error processing attendance log:', logError, log);
             }
           });
-          
+
           // Convert grouped map to array and format
           return Array.from(groupedByDate.values())
             .sort((a, b) => a.date.getTime() - b.date.getTime()) // Sort by date
@@ -815,10 +815,10 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     console.error('Error message:', error instanceof Error ? error.message : String(error));
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     console.error('Full error object:', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
-    
+
     return res.status(500).json({
       message: 'Unexpected error while exporting DTR',
       details: {
