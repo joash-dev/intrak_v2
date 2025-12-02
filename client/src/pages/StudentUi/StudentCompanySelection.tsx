@@ -15,6 +15,7 @@ import {
   X,
   Info,
 } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
 import { companyService, type Company } from "../../services/companyService";
 import { dashboardService } from "../../services/dashboardService";
 import api from "../../services/api";
@@ -40,9 +41,9 @@ interface CompanyApplication {
   };
 }
 
-const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
-  onCompanyUpdate,
-}) => {
+const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
+  const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
+
   const [companies, setCompanies] = useState<Company[]>([]);
   const [myApplications, setMyApplications] = useState<CompanyApplication[]>(
     []
@@ -138,8 +139,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
 
       // Reload data
       await loadData();
-      if (onCompanyUpdate) {
-        onCompanyUpdate();
+      if (refreshStudentData) {
+        refreshStudentData();
       }
     } catch (error: any) {
       console.error("Error submitting application:", error);
@@ -639,8 +640,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = ({
                     onClick={() => handleApply(company)}
                     disabled={!canApply}
                     className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${canApply
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-gray-300 dark:bg-[#212124] text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-gray-300 dark:bg-[#212124] text-gray-500 dark:text-gray-400 cursor-not-allowed"
                       }`}
                   >
                     {availableSlots > 0 ? "Apply Now" : "No Slots"}

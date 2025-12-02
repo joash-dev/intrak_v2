@@ -13,20 +13,14 @@ import {
   Trash2,
   RefreshCw,
 } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document, DocumentStats } from "../../services/documentService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import Skeleton from "../../components/Skeleton";
 
-// Remove duplicate interface since we're importing it from service
-
-interface StudentDocumentsTabProps {
-  onDocumentsChange?: () => void;
-}
-
-const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
-  onDocumentsChange,
-}) => {
+const StudentDocumentsTab: React.FC = () => {
+  const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -239,9 +233,7 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
       const docs = await documentService.getStudentDocuments();
       setDocuments(docs);
       // Notify parent component about document changes
-      if (onDocumentsChange) {
-        onDocumentsChange();
-      }
+      refreshStudentData();
     } catch (err: any) {
       console.error("Error loading documents:", err);
 
@@ -890,11 +882,6 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
                               {doc.status.replace(/_/g, " ")}
                             </span>
                           </div>
-                          {doc.remarks && (
-                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                              {doc.remarks}
-                            </p>
-                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {doc.uploadedAt
@@ -1204,11 +1191,20 @@ const StudentDocumentsTab: React.FC<StudentDocumentsTabProps> = ({
               </div>
 
               {selectedDoc.remarks && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
+                <div className={`p-4 rounded-lg border ${selectedDoc.status === "APPROVED"
+                    ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                    : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                  }`}>
+                  <p className={`text-sm font-medium mb-1 ${selectedDoc.status === "APPROVED"
+                      ? "text-green-800 dark:text-green-300"
+                      : "text-red-800 dark:text-red-300"
+                    }`}>
                     Reviewer Remarks:
                   </p>
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className={`text-sm ${selectedDoc.status === "APPROVED"
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-red-600 dark:text-red-400"
+                    }`}>
                     {selectedDoc.remarks}
                   </p>
                 </div>

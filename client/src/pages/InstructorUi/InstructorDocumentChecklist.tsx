@@ -367,9 +367,9 @@ const DocumentChecklistTab = () => {
     averageProgress:
       checklists.length > 0
         ? Math.round(
-            checklists.reduce((sum, c) => sum + c.overallProgress, 0) /
-              checklists.length
-          )
+          checklists.reduce((sum, c) => sum + c.overallProgress, 0) /
+          checklists.length
+        )
         : 0,
   };
 
@@ -704,23 +704,22 @@ const DocumentChecklistTab = () => {
                 {/* Status */}
                 <div className="col-span-2">
                   <span
-                    className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${
-                      checklist.overallProgress === 100
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                        : checklist.overallProgress >= 80
+                    className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${checklist.overallProgress === 100
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                      : checklist.overallProgress >= 80
                         ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                         : checklist.overallProgress >= 40
-                        ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
-                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                    }`}
+                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                      }`}
                   >
                     {checklist.overallProgress === 100
                       ? "Complete"
                       : checklist.overallProgress >= 80
-                      ? "High Progress"
-                      : checklist.overallProgress >= 40
-                      ? "In Progress"
-                      : "Low Progress"}
+                        ? "High Progress"
+                        : checklist.overallProgress >= 40
+                          ? "In Progress"
+                          : "Low Progress"}
                   </span>
                 </div>
 
@@ -846,23 +845,22 @@ const DocumentChecklistTab = () => {
                 </span>
               </div>
               <span
-                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  checklist.overallProgress === 100
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                    : checklist.overallProgress >= 80
+                className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold ${checklist.overallProgress === 100
+                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                  : checklist.overallProgress >= 80
                     ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
                     : checklist.overallProgress >= 40
-                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
-                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                }`}
+                      ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                      : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                  }`}
               >
                 {checklist.overallProgress === 100
                   ? "Complete"
                   : checklist.overallProgress >= 80
-                  ? "High Progress"
-                  : checklist.overallProgress >= 40
-                  ? "In Progress"
-                  : "Low Progress"}
+                    ? "High Progress"
+                    : checklist.overallProgress >= 40
+                      ? "In Progress"
+                      : "Low Progress"}
               </span>
             </div>
           </div>
@@ -876,7 +874,7 @@ const DocumentChecklistTab = () => {
           style={{ margin: "0" }}
         >
           <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-[#212124] flex-shrink-0">
+            <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-none dark:bg-[#212124] flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                   Document Checklist Details
@@ -899,7 +897,7 @@ const DocumentChecklistTab = () => {
                 return (
                   <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                     {/* Pre-Deployment Documents */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-[#212124] rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
                       <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
                         <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-blue-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                           <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
@@ -935,7 +933,7 @@ const DocumentChecklistTab = () => {
                     </div>
 
                     {/* Upon Approval Documents */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
                       <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
                         <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-yellow-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                           <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
@@ -971,7 +969,7 @@ const DocumentChecklistTab = () => {
                     </div>
 
                     {/* Post-OJT Documents */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
                       <h4 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 dark:text-gray-200 mb-3 sm:mb-4 lg:mb-6 flex items-center">
                         <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-green-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0">
                           <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />

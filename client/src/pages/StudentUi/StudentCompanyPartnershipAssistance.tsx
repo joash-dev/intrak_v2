@@ -13,6 +13,7 @@ import {
   FileText,
   AlertCircle,
 } from "lucide-react";
+import { useOutletContext, Link } from "react-router-dom";
 import api from "../../services/api";
 import { documentService } from "../../services/documentService";
 import type { Document as AppDocument } from "../../services/documentService";
@@ -39,6 +40,30 @@ interface PartnershipDocument {
 }
 
 const StudentCompanyPartnershipAssistance = () => {
+  const { studentCompany, companyApplications } = useOutletContext<{
+    studentCompany: string | null;
+    companyApplications: any[];
+  }>() || { studentCompany: null, companyApplications: [] };
+
+  const hasCompanyOrApplication = () => {
+    if (studentCompany) return true;
+    return companyApplications.some(
+      (app) => app.status === "PENDING" || app.status === "APPROVED"
+    );
+  };
+
+  if (hasCompanyOrApplication()) {
+    return (
+      <div className="p-6">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <p className="text-yellow-800 dark:text-yellow-200">
+            You already have a company assigned or a pending application. Please check the <Link to="/student/companies" className="underline font-semibold">Companies</Link> tab for more information.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const [messages, setMessages] = useState<PartnershipMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);

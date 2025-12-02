@@ -42,17 +42,11 @@ import {
 } from "../../services/coordinatorService";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useCoordinatorContext } from "./CoordinatorLayout";
 
-interface CoordinatorSettingsTabProps {
-  onProfileUpdate?: () => void;
-  onCoordinatorSettingsUpdate?: (settings: CoordinatorSettingsResponse) => void;
-}
-
-const CoordinatorSettingsTab = ({
-  onProfileUpdate,
-  onCoordinatorSettingsUpdate,
-}: CoordinatorSettingsTabProps) => {
+const CoordinatorSettingsTab = () => {
   const { t, i18n } = useTranslation();
+  const { refreshUserData } = useCoordinatorContext();
   const [activeSection, setActiveSection] = useState("profile");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -203,7 +197,6 @@ const CoordinatorSettingsTab = ({
     try {
       const settings = await coordinatorService.getCoordinatorSettings();
       setCoordinatorSettings(settings);
-      onCoordinatorSettingsUpdate?.(settings);
     } catch (error) {
       console.error("Error loading coordinator settings:", error);
     }
@@ -252,9 +245,7 @@ const CoordinatorSettingsTab = ({
       await loadUserData();
 
       // Notify parent component to refresh dashboard data
-      if (onProfileUpdate) {
-        onProfileUpdate();
-      }
+      refreshUserData();
 
       setSaveSuccess(true);
       toast.success(t("settings.saved"));
@@ -327,7 +318,6 @@ const CoordinatorSettingsTab = ({
         coordinatorSettings,
       );
       setCoordinatorSettings(updated);
-      onCoordinatorSettingsUpdate?.(updated);
       setSaveSuccess(true);
       toast.success(t("settings.coordinator.saveSuccess"));
       setTimeout(() => setSaveSuccess(false), 3000);

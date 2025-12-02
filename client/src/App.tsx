@@ -8,12 +8,48 @@ import PageLoader from "./components/common/PageLoader";
 
 // Lazy load pages
 const Login = React.lazy(() => import("./pages/AuthUi/Login"));
-const Dashboard = React.lazy(() => import("./pages/StudentUi/Dashboard"));
-const DashboardCoordinator = React.lazy(() => import("./pages/CoordinatorUi/DashboardCoordinator"));
-const DashboardInstructor = React.lazy(() => import("./pages/InstructorUi/DashboardInstructor"));
-const DashboardIndustryPartner = React.lazy(() => import("./pages/SupervisorUi/SupervisorDashboard"));
+const StudentLayout = React.lazy(() => import("./pages/StudentUi/StudentLayout"));
+const StudentOverview = React.lazy(() => import("./pages/StudentUi/StudentOverview"));
+const StudentDocumentsTab = React.lazy(() => import("./pages/StudentUi/StudentDocumentsTab"));
+const StudentTemplates = React.lazy(() => import("./pages/StudentUi/StudentTemplates"));
+const StudentCompanySelection = React.lazy(() => import("./pages/StudentUi/StudentCompanySelection"));
+const StudentCompanyPartnershipAssistance = React.lazy(() => import("./pages/StudentUi/StudentCompanyPartnershipAssistance"));
+const StudentAttendanceTab = React.lazy(() => import("./pages/StudentUi/StudentAttendance"));
+const StudentEvaluationsTab = React.lazy(() => import("./pages/StudentUi/StudentEvaluation"));
+const StudentReportsTab = React.lazy(() => import("./pages/StudentUi/StudentReport"));
+const StudentSettings = React.lazy(() => import("./pages/StudentUi/Settings"));
+const StudentNotifications = React.lazy(() => import("./pages/StudentUi/StudentNotifications"));
+const CoordinatorLayout = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorLayout"));
+const CoordinatorOverview = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorOverview"));
+const CoordinatorDocumentsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorDocumentsTab"));
+const CoordinatorCompanyManagement = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorCompanyManagement"));
+const CoordinatorAnnouncementsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorAnnouncement"));
+const CoordinatorSettingsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorSettings"));
+const CoordinatorStudentManagement = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorStudentManagement"));
+const CoordinatorReportsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorReportsTab"));
+const CoordinatorNotifications = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorNotifications"));
+const SupervisorLayout = React.lazy(() => import("./pages/SupervisorUi/SupervisorLayout"));
+const SupervisorOverview = React.lazy(() => import("./pages/SupervisorUi/SupervisorOverview"));
+const SupervisorAttendanceTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorAttendanceTab"));
+const SupervisorDocumentsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorDocumentsTab"));
+const SupervisorEvaluationsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorEvaluationsTab"));
+const SupervisorSettingsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorSettingsTab"));
+const SupervisorNotifications = React.lazy(() => import("./pages/SupervisorUi/SupervisorNotifications"));
 const AdminPage = React.lazy(() => import("./pages/AdminUi/AdminPage"));
 const MaintenancePage = React.lazy(() => import("./pages/MaintenancePage"));
+
+// Instructor Pages
+const InstructorLayout = React.lazy(() => import("./pages/InstructorUi/InstructorLayout"));
+const InstructorOverview = React.lazy(() => import("./pages/InstructorUi/InstructorOverview"));
+const InstructorDocumentsTab = React.lazy(() => import("./pages/InstructorUi/InstructorDocuments"));
+const InstructorStudentManagement = React.lazy(() => import("./pages/InstructorUi/InstructorStudentManagement"));
+const InstructorApplications = React.lazy(() => import("./pages/InstructorUi/InstructorApplications"));
+const InstructorTemplateManagement = React.lazy(() => import("./pages/InstructorUi/InstructorTemplateManagement"));
+const DocumentChecklistTab = React.lazy(() => import("./pages/InstructorUi/InstructorDocumentChecklist"));
+const InstructorMonitoringTab = React.lazy(() => import("./pages/InstructorUi/InstructorStudent"));
+const InstructorReportsTab = React.lazy(() => import("./pages/InstructorUi/InstructorReportsTab"));
+const InstructorSettings = React.lazy(() => import("./pages/InstructorUi/InstructorSettings"));
+const InstructorNotifications = React.lazy(() => import("./pages/InstructorUi/InstructorNotifications"));
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -101,48 +137,90 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
 
             <Route
-              path="/student/dashboard"
+              path="/student"
               element={
                 <MaintenanceWrapper>
                   <ProtectedRoute allowedRoles={["student"]}>
-                    <Dashboard />
+                    <StudentLayout />
                   </ProtectedRoute>
                 </MaintenanceWrapper>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<StudentOverview />} />
+              <Route path="documents" element={<StudentDocumentsTab />} />
+              <Route path="templates" element={<StudentTemplates />} />
+              <Route path="companies" element={<StudentCompanySelection />} />
+              <Route path="partnership-assistance" element={<StudentCompanyPartnershipAssistance />} />
+              <Route path="attendance" element={<StudentAttendanceTab />} />
+              <Route path="evaluations" element={<StudentEvaluationsTab />} />
+              <Route path="reports" element={<StudentReportsTab />} />
+              <Route path="settings" element={<StudentSettings />} />
+              <Route path="notifications" element={<StudentNotifications />} />
+            </Route>
 
             <Route
-              path="/coordinator/dashboard"
+              path="/coordinator"
               element={
                 <MaintenanceWrapper>
                   <ProtectedRoute allowedRoles={["coordinator"]}>
-                    <DashboardCoordinator />
+                    <CoordinatorLayout />
                   </ProtectedRoute>
                 </MaintenanceWrapper>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<CoordinatorOverview />} />
+              <Route path="students" element={<CoordinatorStudentManagement />} />
+              <Route path="documents" element={<CoordinatorDocumentsTab />} />
+              <Route path="companies" element={<CoordinatorCompanyManagement />} />
+              <Route path="announcements" element={<CoordinatorAnnouncementsTab />} />
+              <Route path="reports" element={<CoordinatorReportsTab />} />
+              <Route path="settings" element={<CoordinatorSettingsTab />} />
+              <Route path="notifications" element={<CoordinatorNotifications />} />
+            </Route>
 
             <Route
-              path="/instructor/dashboard"
+              path="/instructor"
               element={
                 <MaintenanceWrapper>
                   <ProtectedRoute allowedRoles={["instructor"]}>
-                    <DashboardInstructor />
+                    <InstructorLayout />
                   </ProtectedRoute>
                 </MaintenanceWrapper>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<InstructorOverview />} />
+              <Route path="students" element={<InstructorStudentManagement />} />
+              <Route path="documents" element={<InstructorDocumentsTab />} />
+              <Route path="applications" element={<InstructorApplications />} />
+              <Route path="templates" element={<InstructorTemplateManagement />} />
+              <Route path="checklist" element={<DocumentChecklistTab />} />
+              <Route path="monitoring" element={<InstructorMonitoringTab />} />
+              <Route path="reports" element={<InstructorReportsTab />} />
+              <Route path="settings" element={<InstructorSettings />} />
+              <Route path="notifications" element={<InstructorNotifications />} />
+            </Route>
 
             <Route
-              path="/industry-partner/dashboard"
+              path="/industry-partner"
               element={
                 <MaintenanceWrapper>
                   <ProtectedRoute allowedRoles={["industry_partner"]}>
-                    <DashboardIndustryPartner />
+                    <SupervisorLayout />
                   </ProtectedRoute>
                 </MaintenanceWrapper>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<SupervisorOverview />} />
+              <Route path="attendance" element={<SupervisorAttendanceTab />} />
+              <Route path="documents" element={<SupervisorDocumentsTab />} />
+              <Route path="evaluations" element={<SupervisorEvaluationsTab />} />
+              <Route path="settings" element={<SupervisorSettingsTab />} />
+              <Route path="notifications" element={<SupervisorNotifications />} />
+            </Route>
 
             {/* Admin routes bypass maintenance mode */}
             <Route

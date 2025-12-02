@@ -35,7 +35,10 @@ const HELP_LINKS = {
   supportEmail: "intraksystem@gmail.com",
 };
 
+import { useSupervisorContext } from "./SupervisorLayout";
+
 const SupervisorSettings = () => {
+  const { refreshUserData } = useSupervisorContext();
   const [activeTab, setActiveTab] = useState<
     "profile" | "password" | "appearance" | "notifications" | "preferences" | "supervisor" | "help"
   >("profile");
@@ -180,6 +183,7 @@ const SupervisorSettings = () => {
       await settingsService.uploadProfilePhoto(file);
       const newPhoto = await settingsService.getProfilePhoto();
       setProfilePhoto(newPhoto);
+      refreshUserData();
       toast.success("Profile photo updated successfully");
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -199,6 +203,7 @@ const SupervisorSettings = () => {
     try {
       await settingsService.deleteProfilePhoto();
       setProfilePhoto(null);
+      refreshUserData();
       toast.success("Profile photo removed successfully");
     } catch (error) {
       console.error("Error deleting photo:", error);
@@ -224,6 +229,7 @@ const SupervisorSettings = () => {
           JSON.stringify({ ...user, ...profileData })
         );
       }
+      refreshUserData();
 
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -303,8 +309,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("profile")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "profile"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <User className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -313,8 +319,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("password")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "password"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -323,8 +329,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("appearance")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "appearance"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <Palette className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -333,8 +339,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("notifications")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "notifications"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -343,8 +349,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("preferences")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "preferences"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -353,8 +359,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("supervisor")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "supervisor"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -363,8 +369,8 @@ const SupervisorSettings = () => {
               <button
                 onClick={() => setActiveTab("help")}
                 className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "help"
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
               >
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -670,10 +676,10 @@ const SupervisorSettings = () => {
                             <div
                               key={level}
                               className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
-                                  ? passwordData.newPassword.length >= 8
-                                    ? "bg-green-500"
-                                    : "bg-yellow-500"
-                                  : "bg-gray-200 dark:bg-gray-600"
+                                ? passwordData.newPassword.length >= 8
+                                  ? "bg-green-500"
+                                  : "bg-yellow-500"
+                                : "bg-gray-200 dark:bg-gray-600"
                                 }`}
                             />
                           ))}
@@ -856,8 +862,8 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("light")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "light"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
@@ -880,8 +886,8 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("dark")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "dark"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">
@@ -904,8 +910,8 @@ const SupervisorSettings = () => {
                     <button
                       onClick={() => handleThemeChange("system")}
                       className={`relative p-4 sm:p-6 rounded-xl border-2 transition-all duration-200 ${theme === "system"
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                         }`}
                     >
                       <div className="flex flex-col items-center space-y-3 sm:space-y-4">

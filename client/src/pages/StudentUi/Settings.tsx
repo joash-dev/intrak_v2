@@ -22,6 +22,7 @@ import {
   Book,
   X,
 } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
 import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
@@ -32,11 +33,9 @@ import {
 } from "../../services/settingsService";
 import toast from "react-hot-toast";
 
-interface StudentSettingsTabProps {
-  onProfileUpdate?: () => void;
-}
+const StudentSettingsTab = () => {
+  const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
 
-const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
   const [activeSection, setActiveSection] = useState<
     "profile" | "password" | "appearance" | "notifications" | "preferences" | "student" | "help"
   >("profile");
@@ -223,8 +222,8 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
       // Notify parent component to refresh dashboard data
-      if (onProfileUpdate) {
-        onProfileUpdate();
+      if (refreshStudentData) {
+        refreshStudentData();
       }
 
       setSaveSuccess(true);
@@ -304,8 +303,8 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
       toast.success("Profile photo removed successfully!");
 
       // Notify parent component to refresh dashboard
-      if (onProfileUpdate) {
-        onProfileUpdate();
+      if (refreshStudentData) {
+        refreshStudentData();
       }
     } catch (error) {
       console.error("Error removing photo:", error);
@@ -343,8 +342,8 @@ const StudentSettingsTab = ({ onProfileUpdate }: StudentSettingsTabProps) => {
       toast.success("Profile photo updated successfully!");
 
       // Notify parent component to refresh dashboard
-      if (onProfileUpdate) {
-        onProfileUpdate();
+      if (refreshStudentData) {
+        refreshStudentData();
       }
 
       // Reset the file input
