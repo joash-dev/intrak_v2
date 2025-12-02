@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -23,12 +23,13 @@ import {
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 
-import CoordinatorDocumentsTab from "./CoordinatorDocumentsTab";
-import CoordinatorCompanyManagement from "./CoordinatorCompanyManagement";
-import CoordinatorAnnouncementsTab from "./CoordinatorAnnouncement";
-import CoordinatorSettingsTab from "./CoordinatorSettings";
-import CoordinatorStudentManagement from "./CoordinatorStudentManagement";
-import CoordinatorReportsTab from "./CoordinatorReportsTab";
+// Lazy load tab components
+const CoordinatorDocumentsTab = React.lazy(() => import("./CoordinatorDocumentsTab"));
+const CoordinatorCompanyManagement = React.lazy(() => import("./CoordinatorCompanyManagement"));
+const CoordinatorAnnouncementsTab = React.lazy(() => import("./CoordinatorAnnouncement"));
+const CoordinatorSettingsTab = React.lazy(() => import("./CoordinatorSettings"));
+const CoordinatorStudentManagement = React.lazy(() => import("./CoordinatorStudentManagement"));
+const CoordinatorReportsTab = React.lazy(() => import("./CoordinatorReportsTab"));
 import { coordinatorService } from "../../services/coordinatorService";
 import { settingsService } from "../../services/settingsService";
 import { formatDateTime } from "../../services/localeService";
@@ -240,7 +241,7 @@ const CoordinatorDashboard = ({
               <Skeleton className="h-10 w-32 rounded-xl" />
             </div>
           </div>
-          
+
           {/* Table Skeleton */}
           <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
             <table className="w-full">
@@ -581,7 +582,7 @@ const CoordinatorDashboard = ({
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                     {t("dashboard.students.empty.title")}
                   </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 max-w-sm mx-auto">
                     {t("dashboard.students.empty.description")}
                   </p>
                 </div>
@@ -1285,11 +1286,10 @@ const CoordinatorPortal: React.FC = () => {
                         <button
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                            !notification.read
+                          className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${!notification.read
                               ? "bg-blue-50/50 dark:bg-blue-900/10"
                               : ""
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
@@ -1347,158 +1347,158 @@ const CoordinatorPortal: React.FC = () => {
       {/* Floating Top Bar - Mobile Only */}
       <header className={`fixed top-4 left-4 right-4 lg:hidden bg-white dark:bg-[#212124] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 ${sidebarOpen ? "z-30" : "z-50"}`}>
         <div className="flex items-center justify-between px-4 py-3">
-            {/* Left: Hamburger + Logo */}
+          {/* Left: Hamburger + Logo */}
           <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
+            >
               <Menu className="w-5 h-5" />
-              </button>
+            </button>
             <img
               src="/just_logo.png"
               alt="INTRAK Logo"
               className="w-10 h-10 rounded-lg object-cover"
             />
-            </div>
+          </div>
 
           {/* Right: Notifications + Profile */}
           <div className="flex items-center space-x-2">
             {/* Notifications */}
-              <div className="relative notifications-dropdown">
-                <button
-                  onClick={() => setShowNotifications((prev) => !prev)}
-                  className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <Bell className="w-5 h-5" />
-                  {unreadNotificationCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
-                  )}
-                </button>
-
-                {showNotifications && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#212124] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 flex flex-col max-h-96 sm:max-h-[28rem]">
-                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
-                          {t("dashboard.notifications.title")}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
-                          {t("dashboard.notifications.subtitle")}
-                        </p>
-                      </div>
-                      {unreadNotificationCount > 0 && (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 ml-2 flex-shrink-0">
-                          {t("dashboard.notifications.new", { count: unreadNotificationCount })}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
-                      {notificationsLoading ? (
-                        <div className="px-4 sm:px-5 py-8 flex items-center justify-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
-                          {t("dashboard.notifications.loading")}
-                        </div>
-                      ) : localNotifications.length > 0 ? (
-                        localNotifications
-                          .filter((notification) =>
-                            [
-                              "DOCUMENT",
-                              "ATTENDANCE",
-                              "ALERT",
-                              "SYSTEM",
-                              "OTHER",
-                            ].includes(notification.type ?? "OTHER")
-                          )
-                          .map((notification) => (
-                            <button
-                              key={notification.id}
-                              onClick={() => {
-                                handleNotificationClick(notification);
-                                setShowNotifications(false);
-                              }}
-                              className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${notification.read
-                                ? "bg-white dark:bg-[#212124] hover:bg-gray-50 dark:hover:bg-gray-700"
-                                : "bg-blue-50/70 dark:bg-blue-900/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30"
-                                }`}
-                            >
-                              <div className="flex items-start justify-between gap-2 sm:gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
-                                    {notification.title}
-                                  </p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 mt-0.5 sm:mt-1">
-                                    {formatDropdownTimestamp(notification.createdAt)}
-                                  </p>
-                                </div>
-                                {!notification.read && (
-                                  <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></span>
-                                )}
-                              </div>
-                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
-                                {notification.message}
-                              </p>
-                              {notification.type && (
-                                <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
-                                  {notification.type.replace(/_/g, " ")}
-                                </span>
-                              )}
-                            </button>
-                          ))
-                      ) : (
-                        <div className="px-4 sm:px-5 py-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
-                          {t("dashboard.notifications.empty")}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={async () => {
-                          await handleMarkAllNotificationsRead();
-                          setShowNotifications(false);
-                        }}
-                        disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
-                        className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#212124] dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {t("dashboard.notifications.markAll")}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setActiveTab("dashboard");
-                          setShowNotifications(false);
-                        }}
-                        className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-colors"
-                      >
-                        {t("dashboard.notifications.viewDashboard")}
-                      </button>
-                    </div>
-                  </div>
+            <div className="relative notifications-dropdown">
+              <button
+                onClick={() => setShowNotifications((prev) => !prev)}
+                className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></span>
                 )}
-              </div>
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-[#212124] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 flex flex-col max-h-96 sm:max-h-[28rem]">
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-start justify-between flex-shrink-0">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base sm:text-sm font-semibold text-gray-900 dark:text-white">
+                        {t("dashboard.notifications.title")}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                        {t("dashboard.notifications.subtitle")}
+                      </p>
+                    </div>
+                    {unreadNotificationCount > 0 && (
+                      <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 ml-2 flex-shrink-0">
+                        {t("dashboard.notifications.new", { count: unreadNotificationCount })}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 min-h-0">
+                    {notificationsLoading ? (
+                      <div className="px-4 sm:px-5 py-8 flex items-center justify-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                        {t("dashboard.notifications.loading")}
+                      </div>
+                    ) : localNotifications.length > 0 ? (
+                      localNotifications
+                        .filter((notification) =>
+                          [
+                            "DOCUMENT",
+                            "ATTENDANCE",
+                            "ALERT",
+                            "SYSTEM",
+                            "OTHER",
+                          ].includes(notification.type ?? "OTHER")
+                        )
+                        .map((notification) => (
+                          <button
+                            key={notification.id}
+                            onClick={() => {
+                              handleNotificationClick(notification);
+                              setShowNotifications(false);
+                            }}
+                            className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 transition-colors ${notification.read
+                              ? "bg-white dark:bg-[#212124] hover:bg-gray-50 dark:hover:bg-gray-700"
+                              : "bg-blue-50/70 dark:bg-blue-900/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30"
+                              }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 sm:gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                  {notification.title}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 mt-0.5 sm:mt-1">
+                                  {formatDropdownTimestamp(notification.createdAt)}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <span className="inline-block w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0"></span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1.5 sm:mt-2 line-clamp-2 sm:line-clamp-3">
+                              {notification.message}
+                            </p>
+                            {notification.type && (
+                              <span className="mt-2 sm:mt-3 inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300">
+                                {notification.type.replace(/_/g, " ")}
+                              </span>
+                            )}
+                          </button>
+                        ))
+                    ) : (
+                      <div className="px-4 sm:px-5 py-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-300">
+                        {t("dashboard.notifications.empty")}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={async () => {
+                        await handleMarkAllNotificationsRead();
+                        setShowNotifications(false);
+                      }}
+                      disabled={localNotifications.length === 0 || unreadNotificationCount === 0}
+                      className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#212124] dark:text-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {t("dashboard.notifications.markAll")}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab("dashboard");
+                        setShowNotifications(false);
+                      }}
+                      className="flex-1 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-colors"
+                    >
+                      {t("dashboard.notifications.viewDashboard")}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Profile */}
-                <button
+            <button
               onClick={() => {
                 setActiveTab("settings");
                 setSidebarOpen(false);
               }}
               className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                    {profilePhoto ? (
-                      <img
-                        src={profilePhoto}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-semibold text-sm">
-                        {currentUser?.initials || "CO"}
-                      </span>
-                    )}
-                  </div>
-                </button>
+            >
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">
+                    {currentUser?.initials || "CO"}
+                  </span>
+                )}
+              </div>
+            </button>
           </div>
         </div>
       </header>
@@ -1555,13 +1555,13 @@ const CoordinatorPortal: React.FC = () => {
             {!sidebarExpanded && (
               <div className="hidden lg:flex flex-col items-center space-y-2">
                 {/* Hamburger Icon */}
-            <button
+                <button
                   onClick={() => setSidebarExpanded(!sidebarExpanded)}
                   className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   aria-label="Toggle menu"
-            >
+                >
                   <Menu className="w-5 h-5" />
-            </button>
+                </button>
                 {/* Logo */}
                 <img
                   src="/just_logo.png"
@@ -1584,7 +1584,7 @@ const CoordinatorPortal: React.FC = () => {
                     setActiveTab(item.id);
                     // Close sidebar on mobile only
                     if (window.innerWidth < 1024) {
-                    setSidebarOpen(false);
+                      setSidebarOpen(false);
                     }
                   }}
                   className={`relative w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${activeTab === item.id
@@ -1663,7 +1663,13 @@ const CoordinatorPortal: React.FC = () => {
       {/* Content Area */}
       <main className={`p-6 pt-24 lg:pt-6 transition-all duration-300 relative ${sidebarOpen ? "z-10 lg:z-auto" : "z-auto"} ${sidebarOpen ? (sidebarExpanded ? "lg:ml-80" : "lg:ml-28") : "lg:ml-4"}`}>
         <div key={activeTab} className="tab-fade-in">
-          {renderContent()}
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          }>
+            {renderContent()}
+          </Suspense>
         </div>
       </main>
 

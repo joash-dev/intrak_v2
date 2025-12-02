@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import {
   Users,
   Clock,
@@ -26,14 +26,15 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import InstructorDocumentsTab from "./InstructorDocuments";
-import InstructorMonitoringTab from "./InstructorStudent";
-import DocumentChecklistTab from "./InstructorDocumentChecklist";
-import InstructorStudentManagement from "./InstructorStudentManagement";
-import InstructorTemplateManagement from "./InstructorTemplateManagement";
-import InstructorSettings from "./InstructorSettings";
-import InstructorApplications from "./InstructorApplications";
-import InstructorReportsTab from "./InstructorReportsTab";
+// Lazy load tab components
+const InstructorDocumentsTab = React.lazy(() => import("./InstructorDocuments"));
+const InstructorMonitoringTab = React.lazy(() => import("./InstructorStudent"));
+const DocumentChecklistTab = React.lazy(() => import("./InstructorDocumentChecklist"));
+const InstructorStudentManagement = React.lazy(() => import("./InstructorStudentManagement"));
+const InstructorTemplateManagement = React.lazy(() => import("./InstructorTemplateManagement"));
+const InstructorSettings = React.lazy(() => import("./InstructorSettings"));
+const InstructorApplications = React.lazy(() => import("./InstructorApplications"));
+const InstructorReportsTab = React.lazy(() => import("./InstructorReportsTab"));
 import {
   instructorService,
   type InstructorStudent,
@@ -334,7 +335,7 @@ const InstructorDashboard = ({
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
       </div>
 
-        {/* Stats Cards - Desktop Grid View */}
+      {/* Stats Cards - Desktop Grid View */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Active Students Card */}
         <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200">
@@ -1669,11 +1670,10 @@ const InstructorPortal = () => {
                       .map((notification) => (
                         <div
                           key={notification.id}
-                          className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                            !notification.read
+                          className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${!notification.read
                               ? "bg-blue-50/50 dark:bg-blue-900/10"
                               : ""
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <button
@@ -2090,7 +2090,13 @@ const InstructorPortal = () => {
       {/* Content Area */}
       <main className={`p-6 pt-24 lg:pt-6 transition-all duration-300 relative ${sidebarOpen ? "z-10 lg:z-auto" : "z-auto"} ${sidebarOpen ? (sidebarExpanded ? "lg:ml-80" : "lg:ml-28") : "lg:ml-4"}`}>
         <div key={activeTab} className="tab-fade-in">
-          {renderContent()}
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          }>
+            {renderContent()}
+          </Suspense>
         </div>
       </main>
 
