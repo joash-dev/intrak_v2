@@ -168,7 +168,7 @@ const InstructorOverview: React.FC = () => {
         <div className="space-y-8">
             {/* Header Section */}
             <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-blue-400 text-white shadow-2xl">
-                <div className="absolute inset-0 opacity-20">
+                <div className="hidden md:block absolute inset-0 opacity-20">
                     <div className="absolute top-0 left-0 w-64 md:w-96 h-64 md:h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
                     <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
                     <div className="absolute bottom-0 left-1/2 w-64 md:w-96 h-64 md:h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
