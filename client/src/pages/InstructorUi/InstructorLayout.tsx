@@ -59,9 +59,8 @@ const InstructorLayout = () => {
 
     // Auth Check
     useEffect(() => {
-        const isLoggedIn = sessionStorage.getItem("isAuthenticated");
-        if (!isLoggedIn) setIsAuthenticated(false);
-        else sessionStorage.setItem("isAuthenticated", "true");
+        const token = localStorage.getItem("accessToken");
+        if (!token) setIsAuthenticated(false);
     }, []);
 
     if (!isAuthenticated) {
@@ -116,7 +115,9 @@ const InstructorLayout = () => {
     const handleLogout = () => {
         setIsAuthenticated(false);
         sessionStorage.removeItem("isAuthenticated");
-        localStorage.clear();
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
         setShowLogoutModal(false);
         window.location.replace("/login");
     };

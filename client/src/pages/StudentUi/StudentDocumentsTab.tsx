@@ -7,23 +7,25 @@ import {
   XCircle,
   AlertCircle,
   Search,
-  Filter,
-  X,
   Eye,
   Trash2,
-  RefreshCw,
+  ChevronDown,
+  Clock,
 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document, DocumentStats } from "../../services/documentService";
+import { templateService } from "../../services/templateService";
+import type { DocumentTemplate } from "../../services/templateService";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import Skeleton from "../../components/Skeleton";
+import { toast } from "react-hot-toast";
 
 const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -31,18 +33,20 @@ const StudentDocumentsTab: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string | null>(null);
   const [reuploadingDoc, setReuploadingDoc] = useState<Document | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<string>(
-    "APPLICATION_INTERNSHIP"
-  );
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>("PRE_DEPLOYMENT");
+
+  // For upload modal
+  const [selectedType, setSelectedType] = useState<string>("");
+
+  // Expanded categories state
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    PRE_DEPLOYMENT: true,
+    UPON_APPROVAL: true,
+    POST_OJT: true,
+  });
 
   const documentTypes = [
     // I. PRE-DEPLOYMENT Requirements
@@ -60,14 +64,13 @@ const StudentDocumentsTab: React.FC = () => {
     },
     {
       value: "MEDICAL_CERTIFICATE",
-      label: "Medical Certificate and Psychological Test from any government physician",
+      label: "Medical Certificate and Psychological Test",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
     {
       value: "CERTIFICATION_UNITS",
-      label:
-        "Certification of Units Earned for Practicum/Internship (Form FM-AA-INT-02)",
+      label: "Certification of Units Earned (Form FM-AA-INT-02)",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
@@ -111,7 +114,7 @@ const StudentDocumentsTab: React.FC = () => {
     },
     {
       value: "TRAINING_AGREEMENT",
-      label: "In case of overtime: Training Agreement and Liability Waiver Form (Form FM-AA-INT-15)",
+      label: "Training Agreement and Liability Waiver (Form FM-AA-INT-15)",
       required: false,
       category: "UPON_APPROVAL",
     },
@@ -125,13 +128,13 @@ const StudentDocumentsTab: React.FC = () => {
     },
     {
       value: "CERTIFICATE_COMPLETION",
-      label: "Certificate of Training Completion [from the HTE/Agency]",
+      label: "Certificate of Training Completion",
       required: true,
       category: "POST_OJT",
     },
     {
       value: "NARRATIVE_REPORT",
-      label: "Internship Narrative Report [by the Student-Intern]",
+      label: "Internship Narrative Report",
       required: true,
       category: "POST_OJT",
     },
@@ -155,99 +158,55 @@ const StudentDocumentsTab: React.FC = () => {
     },
     {
       value: "STUDENT_FEEDBACK",
-      label: "Student-Trainees Feedback Form[s] (Form FM-AA-INT-17)",
+      label: "Student-Trainees Feedback Form (Form FM-AA-INT-17)",
       required: true,
       category: "POST_OJT",
     },
     {
       value: "SUPERVISOR_FEEDBACK",
-      label: "Training Supervisor's Feedback Form[s] (Form FM-AA-INT-18)",
+      label: "Training Supervisor's Feedback Form (Form FM-AA-INT-18)",
       required: true,
       category: "POST_OJT",
     },
     {
       value: "AGENCY_SELF_EVALUATION",
-      label:
-        "Evaluation Instrument of PSU Partner Agencies (Self Ratee) (Form FM-AA-INT-19b)",
+      label: "Evaluation Instrument of PSU Partner Agencies (Self Ratee) (Form FM-AA-INT-19b)",
       required: true,
       category: "POST_OJT",
     },
     {
       value: "AGENCY_STUDENT_EVALUATION",
-      label:
-        "Evaluation Instrument of PSU Partner Agencies (Student) (Form FM-AA-INT-19c)",
+      label: "Evaluation Instrument of PSU Partner Agencies (Student) (Form FM-AA-INT-19c)",
       required: true,
       category: "POST_OJT",
     },
   ];
 
-  // Load documents on component mount
+  // Load documents and templates on component mount
   useEffect(() => {
-    loadDocuments();
+    loadData();
   }, []);
 
-  // Get list of approved document types
-  const approvedTypes = useMemo(() => {
-    return documents
-      .filter((doc) => doc.status === "APPROVED")
-      .map((doc) => doc.type);
-  }, [documents]);
-
-  // Ensure document type is valid for selected category
-  useEffect(() => {
-    const categoryTypes = documentTypes.filter(
-      (type) => type.category === selectedCategory
-    );
-
-    // Filter out approved types unless we are re-uploading
-    const availableTypes = reuploadingDoc
-      ? categoryTypes
-      : categoryTypes.filter((type) => !approvedTypes.includes(type.value));
-
-    if (
-      availableTypes.length > 0 &&
-      !availableTypes.some((type) => type.value === selectedType)
-    ) {
-      setSelectedType(availableTypes[0].value);
-    }
-  }, [selectedCategory, selectedType, approvedTypes, reuploadingDoc]);
-
-  // Refresh documents when tab becomes active (optional)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        loadDocuments();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  const loadDocuments = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      setError(null);
-      const docs = await documentService.getStudentDocuments();
+
+      const [docs, fetchedTemplates] = await Promise.all([
+        documentService.getStudentDocuments(),
+        templateService.getTemplates(undefined, true)
+      ]);
+
       setDocuments(docs);
+      setTemplates(fetchedTemplates);
+
       // Notify parent component about document changes
       refreshStudentData();
     } catch (err: any) {
-      console.error("Error loading documents:", err);
-
-      // Provide more specific error messages
+      console.error("Error loading data:", err);
       if (err.response?.status === 401) {
-        setError("Authentication required. Please log in again.");
-      } else if (err.response?.status === 403) {
-        setError("Access denied. You don't have permission to view documents.");
-      } else if (err.response?.status === 404) {
-        setError("Student record not found. Please contact support.");
-      } else if (err.response?.data?.message) {
-        setError(`Error: ${err.response.data.message}`);
+        toast.error("Authentication required. Please log in again.");
       } else {
-        setError("Failed to load documents. Please try again.");
+        toast.error("Failed to load documents. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -258,72 +217,22 @@ const StudentDocumentsTab: React.FC = () => {
     return documentService.calculateStats(documents);
   }, [documents]);
 
-  const filteredDocs = useMemo(() => {
-    if (!documents || !Array.isArray(documents)) {
-      return [];
-    }
-
-    return documents.filter((doc) => {
-      const matchesStatus =
-        filterStatus === "ALL" || doc.status === filterStatus;
-      const matchesSearch =
-        searchQuery === "" ||
-        doc.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.filename?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        filterCategory === "all" ||
-        documentService.getDocumentCategory(doc.type) === filterCategory;
-      return matchesStatus && matchesSearch && matchesCategory;
-    });
-  }, [documents, filterStatus, searchQuery, filterCategory]);
-
-  // Group documents by category (show ALL submissions)
-  const groupedDocs = useMemo(() => {
-    return filteredDocs.reduce((acc, doc) => {
-      const category = documentService.getDocumentCategory(doc.type);
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(doc);
-      return acc;
-    }, {} as Record<string, Document[]>);
-  }, [filteredDocs]);
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
-    }
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
 
   const handleFile = async (file: File) => {
     // Validate file
     if (!documentService.isValidFileType(file)) {
-      alert("Invalid file type. Please upload PDF, JPG, or PNG files only.");
+      toast.error("Invalid file type. Please upload PDF, JPG, or PNG files only.");
       return;
     }
 
     if (!documentService.isValidFileSize(file)) {
-      alert("File size too large. Please upload files smaller than 10MB.");
+      toast.error("File size too large. Please upload files smaller than 10MB.");
       return;
     }
 
@@ -331,9 +240,23 @@ const StudentDocumentsTab: React.FC = () => {
     setUploadProgress(0);
   };
 
-  const handleUpload = async () => {
+  const handleUploadClick = (type: string) => {
+    setSelectedType(type);
+    setReuploadingDoc(null);
+    setSelectedFile(null);
+    setUploadModalOpen(true);
+  };
+
+  const handleReuploadClick = (doc: Document) => {
+    setSelectedType(doc.type);
+    setReuploadingDoc(doc);
+    setSelectedFile(null);
+    setUploadModalOpen(true);
+  };
+
+  const handleUploadSubmit = async () => {
     if (!selectedFile) {
-      alert("Please select a file to upload.");
+      toast.error("Please select a file to upload.");
       return;
     }
 
@@ -341,7 +264,7 @@ const StudentDocumentsTab: React.FC = () => {
       setUploading(true);
       setUploadProgress(0);
 
-      // Simulate progress for better UX
+      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -358,34 +281,45 @@ const StudentDocumentsTab: React.FC = () => {
       });
 
       setUploadProgress(100);
+      clearInterval(progressInterval);
 
-      // Reload documents
-      await loadDocuments();
+      toast.success("Document uploaded successfully");
 
-      // If this was a re-upload, delete the previous document to avoid duplicates
+      // Reload data
+      await loadData();
+
+      // If this was a re-upload, delete the previous document
       if (reuploadingDoc) {
         try {
           await documentService.deleteDocument(reuploadingDoc.id);
-          await loadDocuments();
+          await loadData();
         } catch (e) {
           console.error("Failed to delete old document after re-upload:", e);
         }
       }
 
-      // Reset form
-      setSelectedFile(null);
-      setSelectedType("APPLICATION_INTERNSHIP");
-      setSelectedCategory("PRE_DEPLOYMENT");
+      // Close modal
       setUploadModalOpen(false);
-      setUploadProgress(0);
-      setReuploadingDoc(null);
-
-      clearInterval(progressInterval);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Upload failed. Please try again.");
+      toast.error(err.response?.data?.message || "Upload failed. Please try again.");
       console.error("Upload error:", err);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDownloadTemplate = async (type: string) => {
+    const template = templates.find(t => t.type === type);
+    if (!template) {
+      toast.error("No template available for this document type.");
+      return;
+    }
+
+    try {
+      await templateService.downloadTemplate(template.id, template.filename);
+      toast.success("Template downloaded successfully");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to download template");
     }
   };
 
@@ -398,46 +332,12 @@ const StudentDocumentsTab: React.FC = () => {
     if (confirm("Are you sure you want to delete this document?")) {
       try {
         await documentService.deleteDocument(docId);
-        await loadDocuments(); // Reload documents
+        toast.success("Document deleted successfully");
+        await loadData();
       } catch (err: any) {
-        alert(
-          err.response?.data?.message || "Delete failed. Please try again."
-        );
-        console.error("Delete error:", err);
+        toast.error(err.response?.data?.message || "Delete failed. Please try again.");
       }
     }
-  };
-
-  const handleDownload = async (doc: Document) => {
-    try {
-      const blob = await documentService.downloadDocument(doc.id);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = doc.filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err: any) {
-      alert(
-        err.response?.data?.message || "Download failed. Please try again."
-      );
-      console.error("Download error:", err);
-    }
-  };
-
-  const handleResubmit = (doc: Document) => {
-    try {
-      const cat = documentService.getDocumentCategory(doc.type);
-      setSelectedCategory(cat);
-    } catch {
-      // fallback; keep current category
-    }
-    setSelectedType(doc.type);
-    setSelectedFile(null);
-    setReuploadingDoc(doc);
-    setUploadModalOpen(true);
   };
 
   // Load preview when opening the modal
@@ -462,156 +362,89 @@ const StudentDocumentsTab: React.FC = () => {
       setPreviewUrl(null);
       setPreviewType(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewModalOpen, selectedDoc]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 dark:bg-[#212124] dark:text-yellow-200";
-      case "REJECTED":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      case "RESUBMISSION_REQUESTED":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // Group requirements by category
+  const groupedRequirements = useMemo(() => {
+    const grouped: Record<string, typeof documentTypes> = {
+      PRE_DEPLOYMENT: [],
+      UPON_APPROVAL: [],
+      POST_OJT: [],
+    };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+    documentTypes.forEach(req => {
+      // Filter by search query if exists
+      if (searchQuery && !req.label.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return;
+      }
+      if (grouped[req.category]) {
+        grouped[req.category].push(req);
+      }
+    });
+
+    return grouped;
+  }, [searchQuery]);
+
+  const getStatusBadge = (doc: Document | undefined, required: boolean) => {
+    if (!doc) {
+      return required ? (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+          Missing
+        </span>
+      ) : (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400">
+          Optional
+        </span>
+      );
+    }
+
+    switch (doc.status) {
       case "APPROVED":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+            <CheckCircle className="w-3 h-3 mr-1" /> Approved
+          </span>
+        );
       case "PENDING":
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+            <Clock className="w-3 h-3 mr-1" /> Pending Review
+          </span>
+        );
       case "REJECTED":
-        return <XCircle className="w-5 h-5 text-red-500" />;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+            <XCircle className="w-3 h-3 mr-1" /> Needs Revision
+          </span>
+        );
       case "RESUBMISSION_REQUESTED":
-        return <AlertCircle className="w-5 h-5 text-orange-500" />;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+            <AlertCircle className="w-3 h-3 mr-1" /> Resubmit
+          </span>
+        );
       default:
         return null;
     }
   };
 
-  if (loading && documents.length === 0) {
+  if (loading) {
     return (
       <div className="space-y-6 font-outfit">
-        {/* Header Skeleton */}
         <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="w-12 h-12 rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-4 w-80" />
-              </div>
+          <div className="flex items-center space-x-4">
+            <Skeleton className="w-12 h-12 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-64" />
+              <Skeleton className="h-4 w-80" />
             </div>
           </div>
         </div>
-
-        {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                </div>
-                <Skeleton className="w-10 h-10 rounded-lg" />
-              </div>
-            </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-xl" />
           ))}
         </div>
-
-        {/* Search and Filters Skeleton */}
-        <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex flex-col space-y-3">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex gap-2 flex-1">
-                <Skeleton className="h-10 flex-1 rounded-lg" />
-                <Skeleton className="h-10 flex-1 rounded-lg" />
-              </div>
-              <Skeleton className="h-10 w-full sm:w-40 rounded-lg" />
-            </div>
-          </div>
-        </div>
-
-        {/* Documents Table Skeleton */}
-        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-          {/* Category Header Skeleton */}
-          <div className="bg-gray-50 dark:bg-[#212124] px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="w-9 h-9 rounded-lg" />
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            </div>
-          </div>
-          {/* Table Skeleton */}
-          <div className="overflow-x-auto scrollbar-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-[#212124]">
-                <tr>
-                  {["Document Type", "Filename", "Status", "Uploaded", "Size", "Actions"].map((header) => (
-                    <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {[1, 2, 3].map((i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <Skeleton className="w-5 h-5 rounded" />
-                        <Skeleton className="h-4 w-32" />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Skeleton className="h-4 w-48" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Skeleton className="h-6 w-20 rounded-full" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Skeleton className="h-4 w-12" />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Skeleton className="w-8 h-8 rounded-lg" />
-                        <Skeleton className="w-8 h-8 rounded-lg" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-        <button
-          onClick={loadDocuments}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-        >
-          Try Again
-        </button>
       </div>
     );
   }
@@ -620,493 +453,305 @@ const StudentDocumentsTab: React.FC = () => {
     <div className="space-y-6 font-outfit">
       {/* Header Section */}
       <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Document Management
+                OJT Requirements Checklist
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Upload and manage your OJT documents
+                Track your progress, download templates, and upload documents
               </p>
+            </div>
+          </div>
+
+          {/* Progress Stats */}
+          <div className="flex items-center space-x-6 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Completed</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">{stats.approved}</p>
+            </div>
+            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Pending</p>
+              <p className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{stats.pending}</p>
+            </div>
+            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.total}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Documents
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.total}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Approved
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.approved}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Pending
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.pending}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-[#212124] rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Rejected
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.rejected}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="text"
+          placeholder="Search requirements..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white shadow-sm"
+        />
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col space-y-3">
-          {/* Search Bar - Full width on mobile */}
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search documents..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
+      {/* Requirements Checklist */}
+      <div className="space-y-6">
+        {Object.entries(groupedRequirements).map(([category, requirements]) => {
+          if (requirements.length === 0) return null;
 
-          {/* Filters and Upload Button */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Filter Dropdowns */}
-            <div className="flex gap-2 flex-1">
-              <div className="flex items-center space-x-2 flex-1">
-                <Filter className="text-gray-400 w-4 h-4 flex-shrink-0" />
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-                >
-                  {documentService.getCategoryOptions().map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="ALL">All Status</option>
-                <option value="APPROVED">Approved</option>
-                <option value="PENDING">Pending</option>
-                <option value="REJECTED">Rejected</option>
-              </select>
-            </div>
+          const categoryLabel =
+            category === "PRE_DEPLOYMENT" ? "Pre-Deployment Requirements" :
+              category === "UPON_APPROVAL" ? "Upon Approval Requirements" :
+                "Post-OJT Requirements";
 
-            {/* Upload Button - Full width on mobile */}
-            <button
-              onClick={() => setUploadModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center space-x-2 transition-colors font-medium"
-            >
-              <Upload className="w-5 h-5" />
-              <span>Upload Document</span>
-            </button>
-          </div>
-        </div>
-      </div>
+          const categoryStyles = {
+            PRE_DEPLOYMENT: {
+              button: "bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20",
+              iconBg: "bg-blue-100 dark:bg-blue-900/30",
+              iconColor: "text-blue-600 dark:text-blue-400",
+              title: "text-blue-900 dark:text-blue-100"
+            },
+            UPON_APPROVAL: {
+              button: "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-100 dark:border-yellow-900/20",
+              iconBg: "bg-yellow-100 dark:bg-yellow-900/30",
+              iconColor: "text-yellow-600 dark:text-yellow-400",
+              title: "text-yellow-900 dark:text-yellow-100"
+            },
+            POST_OJT: {
+              button: "bg-green-50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20",
+              iconBg: "bg-green-100 dark:bg-green-900/30",
+              iconColor: "text-green-600 dark:text-green-400",
+              title: "text-green-900 dark:text-green-100"
+            }
+          };
 
-      {/* Documents by Category */}
-      {Object.keys(groupedDocs).length === 0 ? (
-        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-[#212124] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No documents found
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              {searchQuery || filterStatus !== "ALL" || filterCategory !== "all"
-                ? "Try adjusting your search or filter criteria"
-                : "Upload your first document to get started"}
-            </p>
-            {!searchQuery &&
-              filterStatus === "ALL" &&
-              filterCategory === "all" && (
-                <button
-                  onClick={() => setUploadModalOpen(true)}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Document
-                </button>
-              )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(groupedDocs).map(([category, categoryDocs]) => (
-            <div
-              key={category}
-              className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
-            >
+          const styles = categoryStyles[category as keyof typeof categoryStyles];
+
+          return (
+            <div key={category} className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
               {/* Category Header */}
-              <div className="bg-gray-50 dark:bg-[#212124] px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+              <button
+                onClick={() => toggleCategory(category)}
+                className={`w-full flex items-center justify-between px-6 py-4 border-b transition-colors ${styles.button}`}
+              >
                 <div className="flex items-center space-x-3">
-                  <div
-                    className={`p-2 rounded-lg ${category === "PRE_DEPLOYMENT"
-                      ? "bg-blue-100 dark:bg-blue-900/20"
-                      : category === "UPON_APPROVAL"
-                        ? "bg-yellow-100 dark:bg-yellow-900/20"
-                        : "bg-green-100 dark:bg-green-900/20"
-                      }`}
-                  >
-                    <FileText
-                      className={`w-5 h-5 ${category === "PRE_DEPLOYMENT"
-                        ? "text-blue-600 dark:text-blue-400"
-                        : category === "UPON_APPROVAL"
-                          ? "text-yellow-600 dark:text-yellow-400"
-                          : "text-green-600 dark:text-green-400"
-                        }`}
-                    />
+                  <div className={`p-2 rounded-lg ${styles.iconBg}`}>
+                    <FileText className={`w-5 h-5 ${styles.iconColor}`} />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {documentService.getCategoryDisplay(category)}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {categoryDocs.length} document
-                      {categoryDocs.length !== 1 ? "s" : ""}
-                    </p>
+                  <h3 className={`text-lg font-semibold ${styles.title}`}>
+                    {categoryLabel}
+                  </h3>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700">
+                    {requirements.length} items
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${expandedCategories[category] ? "rotate-180" : ""
+                    }`}
+                />
+              </button>
+
+              {/* Requirements List - Animated */}
+              <div
+                className={`grid transition-all duration-300 ease-in-out ${expandedCategories[category] ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {requirements.map((req) => {
+                      const doc = documents.find(d => d.type === req.value);
+                      const template = templates.find(t => t.type === req.value);
+                      const isCompleted = doc?.status === "APPROVED";
+
+                      return (
+                        <div key={req.value} className={`p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${isCompleted ? 'bg-green-50/30 dark:bg-green-900/5' : ''}`}>
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            {/* Left: Info */}
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between mb-2 lg:mb-0">
+                                <div className="flex items-start space-x-3">
+                                  <div className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${isCompleted
+                                    ? "border-green-500 bg-green-500 text-white"
+                                    : "border-gray-300 dark:border-gray-600"
+                                    }`}>
+                                    {isCompleted && <CheckCircle className="w-3.5 h-3.5" />}
+                                  </div>
+                                  <div>
+                                    <h4 className={`font-medium text-gray-900 dark:text-white ${isCompleted ? 'line-through text-gray-500 dark:text-gray-500' : ''}`}>
+                                      {req.label}
+                                    </h4>
+                                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                      {getStatusBadge(doc, req.required)}
+                                      {doc && (
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          Uploaded: {new Date(doc.uploadedAt || "").toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {doc?.remarks && (
+                                      <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-lg text-sm text-yellow-800 dark:text-yellow-200 flex items-start gap-2">
+                                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                        <span>{doc.remarks}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right: Actions */}
+                            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap justify-end min-w-[280px]">
+                              {/* Template Download Button (if missing or rejected) */}
+                              {!isCompleted && template && (
+                                <button
+                                  onClick={() => handleDownloadTemplate(req.value)}
+                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-transparent"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Template
+                                </button>
+                              )}
+
+                              {/* View Button (if uploaded) */}
+                              {doc && (
+                                <button
+                                  onClick={() => handleView(doc)}
+                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View
+                                </button>
+                              )}
+
+                              {/* Upload/Re-upload Button */}
+                              {(!doc || doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && (
+                                <button
+                                  onClick={() => doc ? handleReuploadClick(doc) : handleUploadClick(req.value)}
+                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all hover:shadow-md border border-transparent"
+                                >
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  {doc ? "Re-upload" : "Upload"}
+                                </button>
+                              )}
+
+                              {/* Delete Button (only if pending) */}
+                              {doc && doc.status === "PENDING" && (
+                                <button
+                                  onClick={() => handleDelete(doc.id)}
+                                  className="inline-flex items-center justify-center h-10 w-10 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-transparent"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-
-              {/* Documents Table for this Category */}
-              <div className="overflow-x-auto scrollbar-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-[#212124]">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Document Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Filename
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Uploaded
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Size
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {categoryDocs.map((doc) => (
-                      <tr
-                        key={doc.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {doc.type.replace(/_/g, " ")}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {doc.filename || (
-                              <em className="text-gray-400">Not uploaded</em>
-                            )}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            {getStatusIcon(doc.status)}
-                            <span
-                              className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                                doc.status
-                              )}`}
-                            >
-                              {doc.status.replace(/_/g, " ")}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {doc.uploadedAt
-                            ? new Date(doc.uploadedAt).toLocaleDateString()
-                            : "-"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {doc.fileSize
-                            ? documentService.formatFileSize(doc.fileSize)
-                            : "-"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            {doc.filename && (
-                              <>
-                                <button
-                                  onClick={() => handleView(doc)}
-                                  className="text-purple-600 hover:text-purple-900 dark:text-purple-400 p-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded"
-                                  title="View"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDownload(doc)}
-                                  className="text-blue-600 hover:text-blue-900 dark:text-blue-400 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
-                                  title="Download"
-                                >
-                                  <Download className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
-                            {(doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && (
-                              <button
-                                onClick={() => handleResubmit(doc)}
-                                className="text-green-600 hover:text-green-900 dark:text-green-400 p-1 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
-                                title="Re-upload"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                              </button>
-                            )}
-                            {doc.status === "PENDING" && (
-                              <button
-                                onClick={() => handleDelete(doc.id)}
-                                className="text-red-600 hover:text-red-900 dark:text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {/* Upload Modal */}
       {uploadModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {reuploadingDoc ? "Re-Upload Document" : "Upload Document"}
-              </h2>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ marginTop: "0px" }}>
+          <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {reuploadingDoc ? "Re-upload Document" : "Upload Document"}
+              </h3>
               <button
-                onClick={() => { setUploadModalOpen(false); setReuploadingDoc(null); }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                onClick={() => setUploadModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
               >
-                <X className="w-6 h-6" />
+                <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Document Category
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    // Reset document type when category changes
-                    const categoryTypes = documentTypes.filter(
-                      (type) => type.category === e.target.value
-                    );
-                    if (categoryTypes.length > 0) {
-                      setSelectedType(categoryTypes[0].value);
-                    }
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
-                >
-                  {documentService
-                    .getCategoryOptions()
-                    .filter((option) => option.value !== "all")
-                    .map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Document Type{" "}
-                  <span className="text-xs text-gray-500">
-                    (filtered by category)
-                  </span>
-                </label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
-                  disabled={
-                    documentTypes.filter(
-                      (type) => type.category === selectedCategory
-                    ).length === 0
-                  }
-                >
-                  {documentTypes.filter(
-                    (type) => type.category === selectedCategory
-                  ).length > 0 ? (
-                    documentTypes
-                      .filter((type) => type.category === selectedCategory)
-                      .filter(
-                        (type) =>
-                          reuploadingDoc || !approvedTypes.includes(type.value)
-                      )
-                      .map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label} {type.required && "*"}
-                        </option>
-                      ))
-                  ) : (
-                    <option value="" disabled>
-                      No document types available for this category
-                    </option>
-                  )}
-                </select>
-              </div>
-
-              <div
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                  : "border-gray-300 dark:border-gray-600"
-                  }`}
-              >
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                {selectedFile ? (
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">
-                      Selected: {selectedFile.name}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Size: {documentService.formatFileSize(selectedFile.size)}
-                    </p>
-                    <button
-                      onClick={() => setSelectedFile(null)}
-                      className="mt-2 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Remove file
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-2">
-                      Drag and drop your file here, or
-                    </p>
-                    <label className="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg cursor-pointer">
-                      <span>Browse Files</span>
-                      <input
-                        type="file"
-                        onChange={handleFileInput}
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Supported formats: PDF, JPG, PNG (Max 10MB)
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                  Uploading: {documentTypes.find(t => t.value === selectedType)?.label}
                 </p>
               </div>
 
+              <div
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${selectedFile
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/10"
+                  : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-400"
+                  }`}
+              >
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer flex flex-col items-center justify-center"
+                >
+                  {selectedFile ? (
+                    <>
+                      <FileText className="w-12 h-12 text-purple-600 mb-3" />
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-12 h-12 text-gray-400 mb-3" />
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        PDF, JPG, PNG (max 10MB)
+                      </p>
+                    </>
+                  )}
+                </label>
+              </div>
+
               {uploading && (
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      Uploading...
-                    </span>
-                    <span className="text-purple-600 font-medium">
-                      {uploadProgress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-[#212124] rounded-full h-2">
+                <div className="space-y-2">
+                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                      className="h-full bg-purple-600 transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
+                  <p className="text-xs text-center text-gray-500">Uploading... {uploadProgress}%</p>
                 </div>
               )}
 
-              <div className="flex space-x-3">
+              <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setUploadModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleUpload}
-                  disabled={uploading || !selectedFile}
-                  className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleUploadSubmit}
+                  disabled={!selectedFile || uploading}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-colors font-medium"
                 >
-                  {uploading ? "Uploading..." : "Upload"}
+                  {uploading ? "Uploading..." : "Submit Document"}
                 </button>
               </div>
             </div>
@@ -1116,150 +761,75 @@ const StudentDocumentsTab: React.FC = () => {
 
       {/* View Modal */}
       {viewModalOpen && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Document Details
-              </h2>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style={{ marginTop: "0px" }}>
+          <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#19191c]">
+              <div className="flex items-center space-x-4">
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                  <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    {documentTypes.find(t => t.value === selectedDoc.type)?.label || selectedDoc.type}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                      {selectedDoc.filename}
+                    </span>
+                    <span className="text-xs text-gray-400">•</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Uploaded {new Date(selectedDoc.uploadedAt || "").toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={() => setViewModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
               >
-                <X className="w-6 h-6" />
+                <XCircle className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Document Type
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedDoc.type.replace(/_/g, " ")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Status
-                  </p>
-                  <span
-                    className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                      selectedDoc.status
-                    )}`}
-                  >
-                    {selectedDoc.status.replace(/_/g, " ")}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Filename
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedDoc.filename}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    File Size
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedDoc.fileSize}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Uploaded
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedDoc.uploadedAt
-                      ? new Date(selectedDoc.uploadedAt).toLocaleString()
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Reviewed
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {selectedDoc.reviewedAt
-                      ? new Date(selectedDoc.reviewedAt).toLocaleString()
-                      : "Not reviewed"}
-                  </p>
-                </div>
-              </div>
-
-              {selectedDoc.remarks && (
-                <div className={`p-4 rounded-lg border ${selectedDoc.status === "APPROVED"
-                    ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                    : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                  }`}>
-                  <p className={`text-sm font-medium mb-1 ${selectedDoc.status === "APPROVED"
-                      ? "text-green-800 dark:text-green-300"
-                      : "text-red-800 dark:text-red-300"
-                    }`}>
-                    Reviewer Remarks:
-                  </p>
-                  <p className={`text-sm ${selectedDoc.status === "APPROVED"
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-red-600 dark:text-red-400"
-                    }`}>
-                    {selectedDoc.remarks}
-                  </p>
-                </div>
-              )}
-
-              <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-[#212124]">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+              {/* Document Preview Area */}
+              <div className="flex-1 bg-gray-50 dark:bg-[#0f0f11] p-6 overflow-y-auto flex items-center justify-center relative">
                 {previewUrl ? (
-                  previewType?.startsWith("image/") ? (
+                  previewType?.includes("image") ? (
                     <img
                       src={previewUrl}
-                      alt={selectedDoc.filename}
-                      className="max-h-[70vh] mx-auto rounded"
-                    />
-                  ) : previewType === "application/pdf" ? (
-                    <iframe
-                      title="Document Preview"
-                      src={previewUrl}
-                      className="w-full h-[70vh] rounded bg-white"
+                      alt="Document"
+                      className="max-w-full max-h-full object-contain shadow-sm rounded-lg border border-gray-200 dark:border-gray-700"
                     />
                   ) : (
-                    <div className="text-center py-12">
-                      <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Preview not available for this file type.
-                      </p>
-                    </div>
+                    <iframe
+                      src={previewUrl}
+                      className="w-full h-full rounded-lg shadow-sm bg-white border border-gray-200 dark:border-gray-700"
+                      title="Document Preview"
+                    />
                   )
                 ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Loading preview...
-                    </p>
+                  <div className="text-center">
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+                      <img src="/just_logo.png" alt="Loading..." className="relative w-16 h-16 object-contain z-10" />
+                    </div>
+                    <p className="text-gray-500 font-medium">Loading preview...</p>
                   </div>
                 )}
               </div>
 
-              <DocumentFeedbackPanel
-                documentId={selectedDoc.id}
-                allowFeedback
-                defaultType="STUDENT_RESPONSE"
-                typeOptions={["STUDENT_RESPONSE", "COMMENT"]}
-                allowTypeSelection
-                showRequiresActionToggle={false}
-                submitLabel="Send response"
-                messagePlaceholder="Reply to the reviewer or ask for clarification..."
-              />
-
-              <button
-                onClick={() => selectedDoc && handleDownload(selectedDoc)}
-                className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center space-x-2"
-              >
-                <Download className="w-5 h-5" />
-                <span>Download Document</span>
-              </button>
+              {/* Feedback Panel */}
+              <div className="w-full lg:w-96 h-1/3 lg:h-auto border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19191c] flex flex-col">
+                <div className="flex-1 overflow-y-auto">
+                  <DocumentFeedbackPanel
+                    documentId={selectedDoc.id}
+                    className="h-full border-0 shadow-none"
+                    compact={true}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -2,7 +2,6 @@ import { useState, useEffect, Suspense } from "react";
 import {
     Home,
     FileText,
-    Download,
     Building2,
     Search,
     Clock,
@@ -176,7 +175,6 @@ const StudentLayout = () => {
     const navItems = [
         { id: "dashboard", icon: Home, label: "Overview", path: "/student/dashboard" },
         { id: "documents", icon: FileText, label: "Documents", path: "/student/documents" },
-        { id: "templates", icon: Download, label: "Templates", path: "/student/templates" },
         { id: "companies", icon: Building2, label: "Companies", path: "/student/companies" },
         { id: "partnership-assistance", icon: Search, label: "Find Company", path: "/student/partnership-assistance", disabled: isFindCompanyDisabled },
         { id: "attendance", icon: Clock, label: "Attendance", path: "/student/attendance" },
