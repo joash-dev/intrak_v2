@@ -13,6 +13,8 @@ import {
   X,
   Loader2,
   MessageSquare,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import {
   instructorService,
@@ -32,7 +34,7 @@ const InstructorDocumentsTab = () => {
     null
   );
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(
+  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | "request_changes" | null>(
     null
   );
   const [feedback, setFeedback] = useState("");
@@ -46,6 +48,7 @@ const InstructorDocumentsTab = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string>("");
+  const [recentlyReviewedIds, setRecentlyReviewedIds] = useState<Set<string>>(new Set());
 
   const formatStudentNumber = (value?: string | null) => {
     if (!value) return "";
@@ -161,7 +164,7 @@ const InstructorDocumentsTab = () => {
 
   const handleReview = (
     doc: InstructorDocument,
-    action: "approve" | "reject"
+    action: "approve" | "reject" | "request_changes"
   ) => {
     setSelectedDoc(doc);
     setReviewAction(action);
@@ -177,17 +180,27 @@ const InstructorDocumentsTab = () => {
   const submitReview = async () => {
     if (!selectedDoc) return;
 
-    if (reviewAction === "reject" && !feedback.trim()) {
-      toast.error("Please provide feedback for rejection");
+    if ((reviewAction === "reject" || reviewAction === "request_changes") && !feedback.trim()) {
+      toast.error(reviewAction === "reject" 
+        ? "Please provide a reason for rejection" 
+        : "Please provide feedback for the requested changes");
       return;
     }
 
     try {
       setSubmitting(true);
+      const docName = selectedDoc.documentType;
+      const studentName = selectedDoc.studentName;
 
       let success = false;
       if (reviewAction === "approve") {
         success = await instructorService.approveDocument(
+          selectedDoc.id,
+          feedback
+        );
+      } else if (reviewAction === "request_changes") {
+        // Use reject with specific feedback type for request changes
+        success = await instructorService.requestDocumentChanges(
           selectedDoc.id,
           feedback
         );
@@ -199,15 +212,54 @@ const InstructorDocumentsTab = () => {
       }
 
       if (success) {
-        toast.success(`Document ${reviewAction}d successfully!`);
+        // Add to recently reviewed for visual feedback
+        setRecentlyReviewedIds(prev => new Set(prev).add(selectedDoc.id));
+        
+        // Clear the visual indicator after 5 seconds
+        setTimeout(() => {
+          setRecentlyReviewedIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(selectedDoc.id);
+            return newSet;
+          });
+        }, 5000);
+
+        // Show detailed success toast
+        const actionMessages = {
+          approve: {
+            icon: "✅",
+            title: "Document Approved",
+            message: `${docName} by ${studentName} has been approved successfully.`
+          },
+          reject: {
+            icon: "❌",
+            title: "Document Rejected",
+            message: `${docName} by ${studentName} has been rejected. The student will be notified.`
+          },
+          request_changes: {
+            icon: "📝",
+            title: "Changes Requested",
+            message: `Requested changes for ${docName} by ${studentName}. The student will be notified to resubmit.`
+          }
+        };
+
+        const msg = actionMessages[reviewAction || "approve"];
+        toast.success(
+          <div className="flex flex-col">
+            <span className="font-semibold">{msg.icon} {msg.title}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 mt-1">{msg.message}</span>
+          </div>,
+          { duration: 4000 }
+        );
+
         // Reload documents to get updated data
         await loadDocuments();
       } else {
-        toast.error(`Failed to ${reviewAction} document`);
+        toast.error(`Failed to ${reviewAction === "request_changes" ? "request changes" : reviewAction} document`);
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      toast.error(`Failed to ${reviewAction} document`);
+      toast.error(`Failed to process the document review`);
     } finally {
       setSubmitting(false);
       setShowReviewModal(false);
@@ -588,10 +640,15 @@ const InstructorDocumentsTab = () => {
       <div className="space-y-4">
         {visibleDocuments.map((doc) => {
           const formattedStudentId = formatStudentNumber(doc.studentId);
+          const isRecentlyReviewed = recentlyReviewedIds.has(doc.id);
           return (
             <div
               key={doc.id}
-              className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md"
+              className={`bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden transition-all hover:shadow-md ${
+                isRecentlyReviewed 
+                  ? 'ring-2 ring-green-500 dark:ring-green-400 animate-pulse' 
+                  : ''
+              }`}
             >
               <div className="p-4 sm:p-6">
                 {/* Header - Mobile Optimized */}
@@ -753,6 +810,13 @@ const InstructorDocumentsTab = () => {
                         <span>Reject</span>
                       </button>
                       <button
+                        onClick={() => handleReview(doc, "request_changes")}
+                        className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800 rounded-lg transition-colors font-medium"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Request Changes</span>
+                      </button>
+                      <button
                         onClick={() => handleReview(doc, "approve")}
                         className="flex-1 sm:flex-none flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium"
                       >
@@ -783,67 +847,104 @@ const InstructorDocumentsTab = () => {
       {/* Review Modal */}
       {showReviewModal && selectedDoc && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {reviewAction === "approve"
-                    ? "Approve Document"
-                    : "Reject Document"}
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Review the submission details before continuing.
-                </p>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className={`flex items-center justify-between px-6 pt-6 pb-4 border-b ${
+              reviewAction === "approve" 
+                ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20" 
+                : reviewAction === "request_changes"
+                ? "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20"
+                : "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+            }`}>
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  reviewAction === "approve" 
+                    ? "bg-green-500" 
+                    : reviewAction === "request_changes"
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+                }`}>
+                  {reviewAction === "approve" ? (
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  ) : reviewAction === "request_changes" ? (
+                    <RefreshCw className="w-5 h-5 text-white" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-white" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {reviewAction === "approve"
+                      ? "Approve Document"
+                      : reviewAction === "request_changes"
+                      ? "Request Changes"
+                      : "Reject Document"}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {reviewAction === "approve"
+                      ? "Confirm approval of this submission"
+                      : reviewAction === "request_changes"
+                      ? "Request modifications from the student"
+                      : "Reject this submission with feedback"}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setShowReviewModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="px-6 pb-6 space-y-5">
+            
+            <div className="px-6 pb-6 space-y-5 pt-5">
               {/* Document Summary */}
-              <div className="bg-white dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg p-4">
-                <div className="flex items-start space-x-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+              <div className="bg-white dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-xl p-4">
+                <div className="flex items-start space-x-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
                     {selectedDoc.studentAvatar}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white text-lg">
                       {selectedDoc.studentName}
                     </p>
                     {formatStudentNumber(selectedDoc.studentId) && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         ID: {formatStudentNumber(selectedDoc.studentId)}
                       </p>
                     )}
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                      <Building2 className="w-4 h-4" />
                       {selectedDoc.company}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <FileText className="w-4 h-4 text-gray-400" />
-                  <p className="font-medium text-gray-900 dark:text-white text-sm">
-                    {selectedDoc.documentType}
+                
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <FileText className="w-5 h-5 text-purple-500" />
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedDoc.documentType}
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedDoc.fileName} • {selectedDoc.fileSize}
                   </p>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {selectedDoc.fileName}
-                </p>
               </div>
 
+              {/* Feedback History */}
               <DocumentFeedbackPanel
                 documentId={selectedDoc.id}
-                className="p-0 border border-gray-100 dark:border-gray-700 rounded-lg"
+                className="border border-gray-100 dark:border-gray-700 rounded-xl"
                 allowFeedback={false}
-                hideHeader
+                hideHeader={false}
                 compact
               />
 
+              {/* Status Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600 dark:text-gray-300">
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-4 py-3">
                   <span className="font-medium text-gray-800 dark:text-white">Status:</span>
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(
@@ -854,16 +955,77 @@ const InstructorDocumentsTab = () => {
                     <span>{selectedDoc.status.replace(/_/g, " ").toLowerCase()}</span>
                   </span>
                 </div>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-4 py-3">
                   <span className="font-medium text-gray-800 dark:text-white">Submitted:</span>
                   <span>{selectedDoc.submittedDate}</span>
                 </div>
                 {selectedDoc.reviewedDate && (
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#212124]/40 border border-gray-100 dark:border-gray-700 rounded-lg px-4 py-3 sm:col-span-2">
                     <span className="font-medium text-gray-800 dark:text-white">Last Reviewed:</span>
                     <span>{selectedDoc.reviewedDate}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Action Info Banner */}
+              <div className={`rounded-xl p-4 ${
+                reviewAction === "approve" 
+                  ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" 
+                  : reviewAction === "request_changes"
+                  ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
+                  : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+              }`}>
+                <div className="flex items-start space-x-3">
+                  <Sparkles className={`w-5 h-5 mt-0.5 ${
+                    reviewAction === "approve" 
+                      ? "text-green-600 dark:text-green-400" 
+                      : reviewAction === "request_changes"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`} />
+                  <div>
+                    <p className={`font-medium ${
+                      reviewAction === "approve" 
+                        ? "text-green-800 dark:text-green-200" 
+                        : reviewAction === "request_changes"
+                        ? "text-amber-800 dark:text-amber-200"
+                        : "text-red-800 dark:text-red-200"
+                    }`}>
+                      {reviewAction === "approve" 
+                        ? "What happens when you approve:" 
+                        : reviewAction === "request_changes"
+                        ? "What happens when you request changes:"
+                        : "What happens when you reject:"}
+                    </p>
+                    <ul className={`text-sm mt-1 space-y-1 ${
+                      reviewAction === "approve" 
+                        ? "text-green-700 dark:text-green-300" 
+                        : reviewAction === "request_changes"
+                        ? "text-amber-700 dark:text-amber-300"
+                        : "text-red-700 dark:text-red-300"
+                    }`}>
+                      {reviewAction === "approve" ? (
+                        <>
+                          <li>• Document status will be changed to "Approved"</li>
+                          <li>• The student will receive a notification</li>
+                          <li>• Your feedback will be recorded in the history</li>
+                        </>
+                      ) : reviewAction === "request_changes" ? (
+                        <>
+                          <li>• Document status will be changed to "Resubmission Requested"</li>
+                          <li>• The student will receive a notification to revise and resubmit</li>
+                          <li>• Your feedback will guide the student on what to change</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>• Document status will be changed to "Rejected"</li>
+                          <li>• The student will receive a notification</li>
+                          <li>• A reason for rejection is required</li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               {/* Feedback Input */}
@@ -872,6 +1034,8 @@ const InstructorDocumentsTab = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     {reviewAction === "approve"
                       ? "Feedback (Optional)"
+                      : reviewAction === "request_changes"
+                      ? "Requested Changes (Required)"
                       : "Rejection Reason (Required)"}
                   </label>
                   {selectedDoc && reviewAction && (
@@ -879,7 +1043,7 @@ const InstructorDocumentsTab = () => {
                       onGenerate={async () => {
                         return aiService.generateDocumentFeedback({
                           documentId: selectedDoc.id,
-                          action: reviewAction,
+                          action: reviewAction === "request_changes" ? "reject" : reviewAction,
                         });
                       }}
                       onSuccess={(generatedText) => {
@@ -896,31 +1060,36 @@ const InstructorDocumentsTab = () => {
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder={
                     reviewAction === "approve"
-                      ? "Add feedback or comments..."
+                      ? "Add feedback or comments (optional)..."
+                      : reviewAction === "request_changes"
+                      ? "Please describe what changes are needed..."
                       : "Please explain why this document is being rejected..."
                   }
                   rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-3">
+              <div className="flex items-center justify-end space-x-3 pt-2">
                 <button
                   onClick={() => setShowReviewModal(false)}
-                  className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={submitReview}
                   disabled={
-                    (reviewAction === "reject" && !feedback.trim()) || submitting
+                    ((reviewAction === "reject" || reviewAction === "request_changes") && !feedback.trim()) || submitting
                   }
-                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors ${reviewAction === "approve"
+                  className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-medium transition-all transform hover:scale-[1.02] ${
+                    reviewAction === "approve"
                       ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
+                      : reviewAction === "request_changes"
+                      ? "bg-amber-500 text-white hover:bg-amber-600 disabled:bg-gray-400"
                       : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                    } disabled:cursor-not-allowed`}
+                  } disabled:cursor-not-allowed disabled:transform-none shadow-lg`}
                 >
                   {submitting ? (
                     <>
@@ -931,6 +1100,11 @@ const InstructorDocumentsTab = () => {
                     <>
                       <CheckCircle className="w-4 h-4" />
                       <span>Approve Document</span>
+                    </>
+                  ) : reviewAction === "request_changes" ? (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Request Changes</span>
                     </>
                   ) : (
                     <>

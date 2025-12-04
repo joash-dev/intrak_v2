@@ -657,6 +657,21 @@ class InstructorService {
     }
   }
 
+  // Request changes for a document (sets status to RESUBMISSION_REQUESTED)
+  async requestDocumentChanges(documentId: string, feedback: string): Promise<boolean> {
+    try {
+      await api.post(`/documents/${documentId}/feedback`, {
+        message: feedback,
+        type: 'REQUEST_CHANGES',
+        requiresAction: true
+      });
+      return true;
+    } catch (error) {
+      console.error('Error requesting document changes:', error);
+      return false;
+    }
+  }
+
   // Download a document
   async downloadDocument(documentId: string): Promise<Blob | null> {
     try {
