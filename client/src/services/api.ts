@@ -36,9 +36,9 @@ const resolveBaseURL = (): string => {
     const hostname = window.location.hostname;
     const origin = window.location.origin;
     
-    // Production domains - map to correct API server
+    // Production domains - use same origin for API (server is on same domain via Nginx)
     if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
-      return 'https://intrak.onrender.com/api';
+      return `${origin}/api`;
     }
     
     if (hostname === 'intrak-v2.onrender.com') {

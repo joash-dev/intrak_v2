@@ -19,10 +19,9 @@ const resolveBaseURL = (): string => {
     const hostname = window.location.hostname;
     const origin = window.location.origin;
     
-    // Production domains - use same origin for API (if server is on same domain)
-    // Or use specific API server URL
+    // Production domains - use same origin for API (server is on same domain via Nginx)
     if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
-      return 'https://intrak.onrender.com/api';
+      return `${origin}/api`;
     }
     
     if (hostname === 'intrak-v2.onrender.com') {
@@ -46,7 +45,7 @@ let API_BASE_URL = resolveBaseURL();
 if (typeof window !== 'undefined' && API_BASE_URL.includes('localhost')) {
   const hostname = window.location.hostname;
   if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
-    API_BASE_URL = 'https://intrak.onrender.com/api';
+    API_BASE_URL = `${window.location.origin}/api`;
   } else if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168')) {
     // Try to infer from current origin
     API_BASE_URL = `${window.location.origin}/api`;
@@ -65,11 +64,9 @@ api.interceptors.request.use(
     if (config.baseURL?.includes('localhost') && typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       
-      // Frontend: intrak.site → Backend: intrak.onrender.com
-      if (hostname === 'intrak.site' || hostname === 'www.intrak.site') {
-        config.baseURL = 'https://intrak.onrender.com/api';
-      } else if (hostname === 'intrak.onrender.com') {
-        config.baseURL = 'https://intrak.onrender.com/api';
+      // Frontend: intrak.site → Backend: same origin via Nginx
+      if (hostname === 'intrak.site' || hostname === 'www.intrak.site' || hostname === 'intrak.onrender.com') {
+        config.baseURL = `${window.location.origin}/api`;
       } else if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168')) {
         // For any other production domain, try to infer
         config.baseURL = `${window.location.origin}/api`;

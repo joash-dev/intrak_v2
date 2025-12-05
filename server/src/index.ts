@@ -157,6 +157,30 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// API health check endpoint (for frontend compatibility)
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbConnected = await testDatabaseConnection();
+    res.json({
+      status: dbConnected ? 'OK' : 'DEGRADED',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: dbConnected ? 'connected' : 'disconnected'
+    });
+  } catch (error: any) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      errorCode: process.env.NODE_ENV === 'development' ? error.code : undefined
+    });
+  }
+});
+
 // Debug endpoint for troubleshooting (only in development or with special header)
 app.get('/api/debug/health', async (req, res) => {
   // Only allow in development or with debug header
