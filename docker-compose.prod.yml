@@ -21,12 +21,19 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - CLIENT_URL=${CLIENT_URL}
       - USE_NAS=${USE_NAS}
       - TAILSCALE_AUTH_KEY=${TAILSCALE_AUTH_KEY}
       - NAS_HOST=${NAS_HOST}
       - NAS_SHARE_NAME=${NAS_SHARE_NAME}
       - NAS_USERNAME=${NAS_USERNAME}
       - NAS_PASSWORD=${NAS_PASSWORD}
+      - NAS_PATH=${NAS_PATH}
+      - UPLOAD_PATH=${UPLOAD_PATH}
     cap_add:
       - NET_ADMIN
     devices:
