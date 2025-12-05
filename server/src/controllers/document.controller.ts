@@ -337,6 +337,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
           include: {
             student: {
               select: {
+                id: true,
                 studentNumber: true,
                 user: { select: { name: true } },
                 company: {
@@ -381,6 +382,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       filepath: doc.filepath || '',
       mimeType: doc.mimeType || '',
       student: doc.student ? {
+        id: doc.student.id || '',
         studentNumber: doc.student.studentNumber || '',
         user: doc.student.user ? { name: doc.student.user.name || '' } : null,
         company: doc.student.company ? { name: doc.student.company.name || '' } : null

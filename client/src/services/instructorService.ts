@@ -64,7 +64,8 @@ export interface InstructorAlert {
 
 export interface InstructorDocument {
   id: string;
-  studentId: string;
+  studentId: string; // UUID
+  studentNumber: string; // Display ID
   studentName: string;
   studentAvatar: string;
   company: string;
@@ -613,7 +614,8 @@ class InstructorService {
       // Transform the API response to match InstructorDocument interface
       return documents.map((doc: any) => ({
         id: doc.id,
-        studentId: doc.student?.studentNumber || doc.student?.id || '',
+        studentId: doc.student?.id || '',
+        studentNumber: doc.student?.studentNumber || '',
         studentName: doc.student?.user?.name || 'Unknown',
         studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
         company: doc.student?.company?.name || 'No Company',
@@ -681,7 +683,8 @@ class InstructorService {
 
       return {
         id: doc.id,
-        studentId: doc.student?.studentNumber || doc.student?.id || '',
+        studentId: doc.student?.id || '',
+        studentNumber: doc.student?.studentNumber || '',
         studentName: doc.student?.user?.name || 'Unknown',
         studentAvatar: this.generateAvatar(doc.student?.user?.name || 'Unknown'),
         company: doc.student?.company?.name || 'No Company',

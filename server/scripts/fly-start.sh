@@ -23,7 +23,7 @@ if [ "$NAS_AVAILABLE" = "false" ]; then
     mkdir -p ./uploads/templates
     echo "✅ Using local storage: ./uploads"
     echo "🚀 Starting Node.js server..."
-    exec node dist/index.js
+    exec node dist/src/index.js
     exit 0
 fi
 
@@ -140,6 +140,6 @@ fi
 
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
-exec node dist/index.js
+exec node dist/src/index.js
 
 

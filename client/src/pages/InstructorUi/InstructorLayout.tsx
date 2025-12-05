@@ -8,8 +8,6 @@ import {
     LogOut,
     Home,
     FileCheck,
-    Upload,
-    ClipboardList,
     BarChart3,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
@@ -44,8 +42,6 @@ const InstructorLayout = () => {
         if (path.includes("/instructor/students")) return "students";
         if (path.includes("/instructor/documents")) return "documents";
         if (path.includes("/instructor/applications")) return "applications";
-        if (path.includes("/instructor/templates")) return "templates";
-        if (path.includes("/instructor/checklist")) return "checklist";
         if (path.includes("/instructor/monitoring")) return "monitoring";
         if (path.includes("/instructor/reports")) return "reports";
         if (path.includes("/instructor/settings")) return "settings";
@@ -128,10 +124,8 @@ const InstructorLayout = () => {
     const navItems = [
         { id: "dashboard", icon: Home, label: "Dashboard", path: "/instructor/dashboard" },
         { id: "notifications", icon: Bell, label: "Notifications", path: "/instructor/notifications" },
-        { id: "documents", icon: FileCheck, label: "Document Review", path: "/instructor/documents" },
+        { id: "documents", icon: FileCheck, label: "Student Documents", path: "/instructor/documents" },
         { id: "applications", icon: Building2, label: "Company Applications", path: "/instructor/applications" },
-        { id: "templates", icon: Upload, label: "Document Templates", path: "/instructor/templates" },
-        { id: "checklist", icon: ClipboardList, label: "Document Checklist", path: "/instructor/checklist" },
         { id: "monitoring", icon: TrendingUp, label: "Student Monitoring", path: "/instructor/monitoring" },
         { id: "students", icon: Users, label: "Student Management", path: "/instructor/students" },
         { id: "reports", icon: BarChart3, label: "Reports", path: "/instructor/reports" },
