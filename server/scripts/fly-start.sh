@@ -111,27 +111,72 @@ echo "password=$NAS_PASSWORD" >> "$CREDS_FILE"
 echo "domain=WORKGROUP" >> "$CREDS_FILE"
 chmod 600 "$CREDS_FILE"
 
-# Mount NAS share
-if [ "$USE_NAS" = "true" ] && [ "$NAS_AVAILABLE" = "true" ]; then
-    echo "🔌 Mounting NAS share..."
-    if mount -t cifs "//$NAS_HOST/$NAS_SHARE_NAME" "$MOUNT_POINT" \
-        -o credentials="$CREDS_FILE",uid=1000,gid=1000,iocharset=utf8,file_mode=0777,dir_mode=0777,vers=3.0 2>/dev/null; then
-        # Create directory structure
-        mkdir -p "$MOUNT_POINT/documents/temp"
-        mkdir -p "$MOUNT_POINT/profile-photos"
-        mkdir -p "$MOUNT_POINT/templates"
-        echo "✅ NAS mounted successfully at $MOUNT_POINT"
-        export NAS_PATH="$MOUNT_POINT"
+# Check if NAS is already mounted (via bind mount from host)
+if [ "$USE_NAS" = "true" ]; then
+    # Check if NAS path is already accessible (bind mount from host)
+    if [ -d "$MOUNT_POINT" ] && [ -w "$MOUNT_POINT" ]; then
+        # Test write access
+        if touch "$MOUNT_POINT/.test_write" 2>/dev/null && rm -f "$MOUNT_POINT/.test_write" 2>/dev/null; then
+            echo "✅ NAS already accessible at $MOUNT_POINT (bind mount)"
+            export NAS_PATH="$MOUNT_POINT"
+            # Create directory structure if needed
+            mkdir -p "$MOUNT_POINT/documents/temp"
+            mkdir -p "$MOUNT_POINT/profile-photos"
+            mkdir -p "$MOUNT_POINT/templates"
+        else
+            echo "⚠️  NAS path exists but not writable"
+            if [ "$NAS_AVAILABLE" = "true" ]; then
+                echo "🔌 Attempting to mount NAS share..."
+                if mount -t cifs "//$NAS_HOST/$NAS_SHARE_NAME" "$MOUNT_POINT" \
+                    -o credentials="$CREDS_FILE",uid=1000,gid=1000,file_mode=0777,dir_mode=0777,vers=3.0 2>/dev/null; then
+                    mkdir -p "$MOUNT_POINT/documents/temp"
+                    mkdir -p "$MOUNT_POINT/profile-photos"
+                    mkdir -p "$MOUNT_POINT/templates"
+                    echo "✅ NAS mounted successfully at $MOUNT_POINT"
+                    export NAS_PATH="$MOUNT_POINT"
+                else
+                    echo "⚠️  NAS mount failed"
+                    echo "⚠️  Continuing with local storage..."
+                    export USE_NAS=false
+                    mkdir -p ./uploads/documents/temp
+                    mkdir -p ./uploads/profile-photos
+                    mkdir -p ./uploads/templates
+                fi
+            else
+                echo "⚠️  NAS not available, using local storage"
+                export USE_NAS=false
+                mkdir -p ./uploads/documents/temp
+                mkdir -p ./uploads/profile-photos
+                mkdir -p ./uploads/templates
+            fi
+        fi
+    elif [ "$NAS_AVAILABLE" = "true" ]; then
+        # Path doesn't exist, try to mount
+        echo "🔌 Mounting NAS share..."
+        if mount -t cifs "//$NAS_HOST/$NAS_SHARE_NAME" "$MOUNT_POINT" \
+            -o credentials="$CREDS_FILE",uid=1000,gid=1000,file_mode=0777,dir_mode=0777,vers=3.0 2>/dev/null; then
+            mkdir -p "$MOUNT_POINT/documents/temp"
+            mkdir -p "$MOUNT_POINT/profile-photos"
+            mkdir -p "$MOUNT_POINT/templates"
+            echo "✅ NAS mounted successfully at $MOUNT_POINT"
+            export NAS_PATH="$MOUNT_POINT"
+        else
+            echo "⚠️  NAS mount failed"
+            echo "⚠️  Continuing with local storage..."
+            export USE_NAS=false
+            mkdir -p ./uploads/documents/temp
+            mkdir -p ./uploads/profile-photos
+            mkdir -p ./uploads/templates
+        fi
     else
-        echo "⚠️  NAS mount failed"
-        echo "⚠️  Continuing with local storage..."
+        echo "⚠️  NAS not available, using local storage"
         export USE_NAS=false
         mkdir -p ./uploads/documents/temp
         mkdir -p ./uploads/profile-photos
         mkdir -p ./uploads/templates
     fi
 else
-    echo "⚠️  NAS not available, using local storage"
+    echo "⚠️  NAS not enabled, using local storage"
     export USE_NAS=false
     mkdir -p ./uploads/documents/temp
     mkdir -p ./uploads/profile-photos
