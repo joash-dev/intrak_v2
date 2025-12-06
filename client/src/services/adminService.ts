@@ -161,6 +161,21 @@ export interface DocumentStats {
   pending: number;
 }
 
+export interface SystemAlert {
+  type: 'warning' | 'critical' | 'info';
+  message: string;
+  component: 'storage' | 'database' | 'nas' | 'system';
+  timestamp: string;
+}
+
+export interface NASStorage {
+  total: string;
+  used: string;
+  free: string;
+  percentUsed: number;
+  path: string;
+}
+
 export interface SystemInfo {
   version: string;
   lastUpdated: string;
@@ -184,6 +199,11 @@ export interface SystemInfo {
   arch?: string;
   nodeVersion?: string;
   environment?: string;
+  // NAS storage metrics
+  nasAvailable?: boolean;
+  nasStorage?: NASStorage | null;
+  // System alerts
+  alerts?: SystemAlert[];
 }
 
 // Admin Service Class
