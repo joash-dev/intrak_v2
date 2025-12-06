@@ -5,6 +5,7 @@ import { auditLog } from '../services/audit.service';
 import os from 'os';
 import checkDiskSpace from 'check-disk-space';
 import { prisma } from '../config/database';
+import { getNASStorageMetrics, getLocalStorageMetrics, getAllStorageAlerts, StorageAlert } from '../services/storageMonitor.service';
 
 // simple in-memory cache reference that can be cleared via admin actions
 const globalCache = globalThis as { __appCache?: Record<string, unknown> };
@@ -814,26 +815,57 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const uptimeHours = Math.floor((uptimeSeconds % (24 * 60 * 60)) / (60 * 60));
     const systemUptime = `${uptimeDays} days, ${uptimeHours} hours`;
 
-    // Get disk usage using check-disk-space
+    // Get NAS storage metrics (preferred) or local storage fallback
+    const nasMetrics = await getNASStorageMetrics();
+    const localMetrics = await getLocalStorageMetrics();
+    
+    // Use NAS storage if available, otherwise use local storage, fallback to root filesystem
+    let storageMetrics = nasMetrics;
     let diskUsage = 0;
     let totalDiskGiB = 0;
     let usedDiskGiB = 0;
-    try {
-      const diskPath = os.platform() === 'win32' ? 'C:' : '/';
-      const disk = await checkDiskSpace(diskPath);
-      if (disk && disk.size > 0) {
-        totalDiskGiB = Number((disk.size / 1024 / 1024 / 1024).toFixed(2));
-        const freeGiB = Number((disk.free / 1024 / 1024 / 1024).toFixed(2));
-        usedDiskGiB = Number((totalDiskGiB - freeGiB).toFixed(2));
-        diskUsage = Math.min(
-          100,
-          Math.max(0, Math.round(((disk.size - disk.free) / disk.size) * 100))
-        );
+    let nasAvailable = false;
+    let nasStorage = null;
+
+    if (nasMetrics && nasMetrics.available) {
+      // Use NAS storage
+      storageMetrics = nasMetrics;
+      diskUsage = nasMetrics.percentUsed;
+      totalDiskGiB = Number((nasMetrics.total / 1024 / 1024 / 1024).toFixed(2));
+      usedDiskGiB = Number((nasMetrics.used / 1024 / 1024 / 1024).toFixed(2));
+      nasAvailable = true;
+      nasStorage = {
+        total: nasMetrics.totalFormatted,
+        used: nasMetrics.usedFormatted,
+        free: nasMetrics.freeFormatted,
+        percentUsed: nasMetrics.percentUsed,
+        path: nasMetrics.path
+      };
+    } else if (localMetrics && localMetrics.available) {
+      // Use local storage
+      storageMetrics = localMetrics;
+      diskUsage = localMetrics.percentUsed;
+      totalDiskGiB = Number((localMetrics.total / 1024 / 1024 / 1024).toFixed(2));
+      usedDiskGiB = Number((localMetrics.used / 1024 / 1024 / 1024).toFixed(2));
+    } else {
+      // Fallback to root filesystem check
+      try {
+        const diskPath = os.platform() === 'win32' ? 'C:' : '/';
+        const disk = await checkDiskSpace(diskPath);
+        if (disk && disk.size > 0) {
+          totalDiskGiB = Number((disk.size / 1024 / 1024 / 1024).toFixed(2));
+          const freeGiB = Number((disk.free / 1024 / 1024 / 1024).toFixed(2));
+          usedDiskGiB = Number((totalDiskGiB - freeGiB).toFixed(2));
+          diskUsage = Math.min(
+            100,
+            Math.max(0, Math.round(((disk.size - disk.free) / disk.size) * 100))
+          );
+        }
+      } catch (diskError) {
+        console.warn('Could not calculate disk usage:', diskError);
+        // fallback to previous behavior
+        diskUsage = 75;
       }
-    } catch (diskError) {
-      console.warn('Could not calculate disk usage:', diskError);
-      // fallback to previous behavior
-      diskUsage = 75;
     }
 
     // Get database information
@@ -862,6 +894,20 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       console.error('Database connectivity check failed:', dbError);
     }
 
+    // Get storage alerts
+    const storageAlerts = await getAllStorageAlerts();
+    
+    // Check for database alerts
+    const alerts: StorageAlert[] = [...storageAlerts];
+    if (databaseStatus === 'offline') {
+      alerts.push({
+        type: 'critical',
+        message: 'Database is offline. System functionality may be limited.',
+        component: 'database',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Check if API server is responsive
     const apiServerStatus = 'running'; // Since we're responding to this request
 
@@ -887,7 +933,12 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       platform: os.platform(),
       arch: os.arch(),
       nodeVersion: process.version,
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
+      // NAS storage metrics
+      nasAvailable,
+      nasStorage,
+      // Storage alerts
+      alerts
     };
 
     res.json({ systemInfo });

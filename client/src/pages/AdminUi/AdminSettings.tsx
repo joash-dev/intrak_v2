@@ -23,12 +23,14 @@ import {
   Download,
   Upload,
   X,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import {
   settingsService,
   type AppPreferences,
 } from "../../services/settingsService";
-import { adminService, type SystemInfo } from "../../services/adminService";
+import { adminService, type SystemInfo, type SystemAlert } from "../../services/adminService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
@@ -114,7 +116,10 @@ const AdminSettings = () => {
     totalDocuments: 1247,
     databaseSize: "2.3 GB",
     diskUsageLabel: "0 / 0 GB",
+    nasAvailable: false,
+    nasStorage: null as SystemInfo['nasStorage'] | null,
   });
+  const [systemAlerts, setSystemAlerts] = useState<SystemInfo['alerts']>([]);
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
     version: "2.1.3",
     lastUpdated: new Date().toISOString(),
@@ -294,20 +299,32 @@ const AdminSettings = () => {
       setSystemInfo(systemInfoData);
 
       // Update system status with real data
+      // Use NAS storage if available, otherwise use regular disk usage
+      const storagePercent = systemInfoData.nasAvailable && systemInfoData.nasStorage
+        ? systemInfoData.nasStorage.percentUsed
+        : systemInfoData.diskUsage || 75;
+      
+      const diskUsageLabel = systemInfoData.nasAvailable && systemInfoData.nasStorage
+        ? `${systemInfoData.nasStorage.used} / ${systemInfoData.nasStorage.total}`
+        : systemInfoData.usedDisk !== undefined && systemInfoData.totalDisk !== undefined
+        ? `${systemInfoData.usedDisk}GB / ${systemInfoData.totalDisk}GB`
+        : "0 / 0 GB";
+
       setSystemStatus({
         database: systemInfoData.databaseStatus || "online",
         apiServer: systemInfoData.apiServerStatus || "running",
-        storage: systemInfoData.diskUsage || 75,
+        storage: storagePercent,
         uptime: systemInfoData.systemUptime || "15 days, 8 hours",
         activeUsers: systemInfoData.activeUsers || 156,
         totalDocuments: systemInfoData.totalDocuments || 1247,
         databaseSize: systemInfoData.databaseSize || "2.3 GB",
-        diskUsageLabel:
-          systemInfoData.usedDisk !== undefined &&
-          systemInfoData.totalDisk !== undefined
-            ? `${systemInfoData.usedDisk}GB / ${systemInfoData.totalDisk}GB`
-            : "0 / 0 GB",
+        diskUsageLabel,
+        nasAvailable: systemInfoData.nasAvailable || false,
+        nasStorage: systemInfoData.nasStorage || null,
       });
+      
+      // Update alerts
+      setSystemAlerts(systemInfoData.alerts || []);
 
       console.log("System info loaded:", systemInfoData);
     } catch (error) {
@@ -1379,6 +1396,11 @@ const AdminSettings = () => {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                         <Database className="w-5 h-5 mr-2 text-green-600" />
                         System Status
+                        {systemAlerts.length > 0 && (
+                          <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
+                            {systemAlerts.length} {systemAlerts.length === 1 ? 'alert' : 'alerts'}
+                          </span>
+                        )}
                       </h3>
                       <button
                         onClick={refreshSystemStatus}
@@ -1506,10 +1528,65 @@ const AdminSettings = () => {
                           {systemStatus.storage}% Used
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {systemStatus.diskUsageLabel}
+                            {systemStatus.nasAvailable && systemStatus.nasStorage && (
+                              <span className="ml-1 text-blue-600 dark:text-blue-400">
+                                (NAS)
+                              </span>
+                            )}
                           </div>
                         </p>
                       </div>
                     </div>
+
+                    {/* System Alerts */}
+                    {systemAlerts.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
+                          System Alerts ({systemAlerts.length})
+                        </h4>
+                        <div className="space-y-2">
+                          {systemAlerts.map((alert, index) => (
+                            <div
+                              key={index}
+                              className={`p-3 border rounded-lg ${
+                                alert.type === 'critical'
+                                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                  : alert.type === 'warning'
+                                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                              }`}
+                            >
+                              <div className="flex items-start space-x-2">
+                                {alert.type === 'critical' ? (
+                                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                                ) : alert.type === 'warning' ? (
+                                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                                ) : (
+                                  <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p
+                                    className={`text-sm font-medium ${
+                                      alert.type === 'critical'
+                                        ? 'text-red-800 dark:text-red-200'
+                                        : alert.type === 'warning'
+                                        ? 'text-yellow-800 dark:text-yellow-200'
+                                        : 'text-blue-800 dark:text-blue-200'
+                                    }`}
+                                  >
+                                    {alert.message}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {alert.component.toUpperCase()} • {new Date(alert.timestamp).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Detailed System Metrics */}
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
