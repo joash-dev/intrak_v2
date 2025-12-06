@@ -39,7 +39,29 @@ class SocketService {
             return this.socket;
         }
 
-        const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        // Resolve server URL (same logic as API client)
+        let serverUrl = import.meta.env.VITE_API_URL || '';
+        
+        // Remove /api suffix if present (Socket.IO doesn't need it)
+        if (serverUrl.endsWith('/api')) {
+            serverUrl = serverUrl.replace('/api', '');
+        }
+        
+        // Runtime detection for production
+        if (!serverUrl && typeof window !== 'undefined') {
+            const hostname = window.location.hostname;
+            if (hostname === 'intrak.site' || hostname === 'www.intrak.site' || hostname === 'intrak.onrender.com') {
+                serverUrl = window.location.origin;
+            } else if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168')) {
+                serverUrl = window.location.origin;
+            } else {
+                serverUrl = 'http://localhost:5000';
+            }
+        }
+        
+        if (!serverUrl) {
+            serverUrl = 'http://localhost:5000';
+        }
 
         this.socket = io(serverUrl, {
             auth: { token },
