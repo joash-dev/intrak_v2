@@ -43,6 +43,8 @@ services:
       - SYS_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /mnt/nas-intrak:/mnt/nas/intrak
     depends_on:
       - db
 
