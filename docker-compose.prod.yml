@@ -40,6 +40,7 @@ services:
       - EMAIL_PROVIDER=${EMAIL_PROVIDER}
     cap_add:
       - NET_ADMIN
+      - SYS_ADMIN
     devices:
       - /dev/net/tun:/dev/net/tun
     depends_on:
