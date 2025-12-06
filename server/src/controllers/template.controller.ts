@@ -53,7 +53,22 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
     const filepath = path.join(templatesDir, uniqueFilename);
 
     // Move file from temp location to templates directory
-    fs.renameSync(req.file.path, filepath);
+    // Use copy + unlink instead of rename for cross-filesystem compatibility
+    try {
+      fs.copyFileSync(req.file.path, filepath);
+      fs.unlinkSync(req.file.path);
+    } catch (moveError) {
+      console.error('Error moving template file:', moveError);
+      // Clean up temp file if move fails
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      // Clean up destination if copy succeeded but unlink failed
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+      throw new Error('Failed to save template file');
+    }
 
     const template = await prisma.documentTemplate.create({
       data: {

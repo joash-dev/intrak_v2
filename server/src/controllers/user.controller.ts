@@ -424,7 +424,22 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
     const filepath = path.join(photosDir, filename);
 
     // Move file from temp location to profile photos directory
-    fs.renameSync(req.file.path, filepath);
+    // Use copy + unlink instead of rename for cross-filesystem compatibility
+    try {
+      fs.copyFileSync(req.file.path, filepath);
+      fs.unlinkSync(req.file.path);
+    } catch (moveError) {
+      console.error('Error moving profile photo:', moveError);
+      // Clean up temp file if move fails
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      // Clean up destination if copy succeeded but unlink failed
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+      throw new Error('Failed to save profile photo');
+    }
 
     // Delete old profile photo if it exists
     const user = await prisma.user.findUnique({

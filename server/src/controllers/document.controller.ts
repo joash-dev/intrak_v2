@@ -167,13 +167,19 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     const finalPath = path.join(studentDir, finalFilename);
 
     // Move file from temp location to final location
+    // Use copy + unlink instead of rename for cross-filesystem compatibility
     try {
-      fs.renameSync(req.file.path, finalPath);
+      fs.copyFileSync(req.file.path, finalPath);
+      fs.unlinkSync(req.file.path);
     } catch (moveError) {
       console.error('Error moving file:', moveError);
       // Clean up temp file if move fails
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
+      }
+      // Clean up destination if copy succeeded but unlink failed
+      if (fs.existsSync(finalPath)) {
+        fs.unlinkSync(finalPath);
       }
       throw new Error('Failed to save file');
     }
