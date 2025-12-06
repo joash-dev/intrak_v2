@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
+import { getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup } from '../config/nas';
 import path from 'path';
 import fs from 'fs';
 
@@ -42,8 +42,14 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Get storage path with automatic fallback to local if NAS unavailable
+    const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+    if (isUsingFallback) {
+      console.warn('⚠️  NAS unavailable, using local storage fallback for template upload');
+    }
+
     // Create templates directory if it doesn't exist (using persistent storage path)
-    const templatesDir = path.join(uploadPath, 'templates');
+    const templatesDir = path.join(storagePath, 'templates');
     await ensureNASDirectoryExists(templatesDir);
 
     // Generate unique filename to avoid conflicts
@@ -57,6 +63,14 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
     try {
       fs.copyFileSync(req.file.path, filepath);
       fs.unlinkSync(req.file.path);
+      
+      // Create local backup if saving to NAS (for redundancy)
+      if (!isUsingFallback && filepath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
+        const backupPath = createLocalBackup(filepath, filepath);
+        if (backupPath) {
+          console.log(`✅ Created local backup for template: ${backupPath}`);
+        }
+      }
     } catch (moveError) {
       console.error('Error moving template file:', moveError);
       // Clean up temp file if move fails
@@ -201,40 +215,18 @@ export const downloadTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Template is no longer available' });
     }
 
-    // Resolve filepath - handle both absolute and relative paths
-    // Normalize the path first (handles ./ and ../)
-    const normalizedPath = path.normalize(template.filepath);
-    let filepath: string;
+    // Resolve filepath - checks both NAS and local storage
+    const filepath = resolveFilePath(template.filepath);
     
-    if (path.isAbsolute(normalizedPath)) {
-      filepath = normalizedPath;
-    } else {
-      // If relative, resolve from storage path or try multiple locations
-      const possiblePaths = [
-        path.resolve(uploadPath, normalizedPath), // Try from storage path first
-        path.resolve(uploadPath, 'templates', path.basename(normalizedPath)), // Try just filename in storage/templates
-        path.resolve(process.cwd(), normalizedPath),
-        path.resolve(process.cwd(), 'server', normalizedPath),
-        path.resolve(__dirname, '../../', normalizedPath),
-        path.resolve(process.cwd(), 'uploads', 'templates', path.basename(normalizedPath)), // Legacy: uploads/templates
-        normalizedPath // Try as-is if it's already correct
-      ];
-      
-      filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-    }
-    
-    if (!fs.existsSync(filepath)) {
+    if (!filepath || !fs.existsSync(filepath)) {
       console.error('Template file not found. Template ID:', id);
       console.error('Stored filepath:', template.filepath);
       console.error('Resolved filepath:', filepath);
-      console.error('process.cwd():', process.cwd());
-      console.error('__dirname:', __dirname);
       return res.status(404).json({ 
-        message: 'Template file not found',
+        message: 'Template file not found. The file may be on disconnected storage.',
         details: process.env.NODE_ENV === 'development' ? { 
           storedPath: template.filepath, 
-          resolvedPath: filepath,
-          cwd: process.cwd()
+          resolvedPath: filepath
         } : undefined
       });
     }

@@ -2,13 +2,14 @@ import { Response } from 'express';
 import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { validateNASConnection, getStoragePath, ensureNASDirectoryExists } from '../config/nas';
+import { validateNASConnection, getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup } from '../config/nas';
 import path from 'path';
 import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
-const uploadPath = getStoragePath();
+// Note: uploadPath is now determined dynamically with fallback in uploadDocument
+const uploadPath = getStoragePath(); // Fallback for other uses
 
 const getStudentIdForUser = async (userId: string): Promise<string | null> => {
   const student = await prisma.student.findFirst({
@@ -82,14 +83,6 @@ const dispatchNotification = async (
 
 export const uploadDocument = async (req: AuthRequest, res: Response) => {
   try {
-    // Validate NAS connection if enabled
-    const nasValid = await validateNASConnection();
-    if (!nasValid) {
-      return res.status(503).json({
-        message: 'Storage system unavailable. Please try again later.'
-      });
-    }
-
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
@@ -156,11 +149,17 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Get storage path with automatic fallback to local if NAS unavailable
+    const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+    if (isUsingFallback) {
+      console.warn('⚠️  NAS unavailable, using local storage fallback for document upload');
+    }
+
     // Calculate file size in MB
     const fileSizeMB = (req.file.size / (1024 * 1024)).toFixed(2);
 
     // Move file to student-specific directory
-    const studentDir = path.join(uploadPath, 'documents', targetStudentId);
+    const studentDir = path.join(storagePath, 'documents', targetStudentId);
     await ensureNASDirectoryExists(studentDir);
 
     const finalFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
@@ -171,6 +170,14 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     try {
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
+      
+      // Create local backup if saving to NAS (for redundancy)
+      if (!isUsingFallback && finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
+        const backupPath = createLocalBackup(finalPath, finalPath);
+        if (backupPath) {
+          console.log(`✅ Created local backup: ${backupPath}`);
+        }
+      }
     } catch (moveError) {
       console.error('Error moving file:', moveError);
       // Clean up temp file if move fails
@@ -865,38 +872,18 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Resolve filepath - handle both absolute and relative paths
-    // Normalize the path first (handles ./ and ../)
-    const normalizedPath = path.normalize(document.filepath);
-    let filepath: string;
+    // Resolve filepath - checks both NAS and local storage
+    const filepath = resolveFilePath(document.filepath);
 
-    if (path.isAbsolute(normalizedPath)) {
-      filepath = normalizedPath;
-    } else {
-      // If relative, resolve from process.cwd() or try multiple locations
-      const possiblePaths = [
-        path.resolve(process.cwd(), normalizedPath),
-        path.resolve(process.cwd(), 'server', normalizedPath),
-        path.resolve(__dirname, '../../', normalizedPath),
-        path.resolve(process.cwd(), 'uploads', 'documents', path.basename(normalizedPath)), // Try just filename in uploads/documents
-        normalizedPath // Try as-is if it's already correct
-      ];
-
-      filepath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-    }
-
-    if (!fs.existsSync(filepath)) {
+    if (!filepath || !fs.existsSync(filepath)) {
       console.error('Document file not found. Document ID:', id);
       console.error('Stored filepath:', document.filepath);
       console.error('Resolved filepath:', filepath);
-      console.error('process.cwd():', process.cwd());
-      console.error('__dirname:', __dirname);
       return res.status(404).json({
-        message: 'File not found',
+        message: 'File not found. The file may be on disconnected storage.',
         details: process.env.NODE_ENV === 'development' ? {
           storedPath: document.filepath,
-          resolvedPath: filepath,
-          cwd: process.cwd()
+          resolvedPath: filepath
         } : undefined
       });
     }

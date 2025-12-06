@@ -10,7 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
-import { validateNASConnection, getStoragePath } from './config/nas';
+import { validateNASConnection, getStoragePath, syncLocalToNAS } from './config/nas';
 import { testDatabaseConnection, prisma } from './config/database';
 
 // Routes
@@ -285,7 +285,7 @@ if (process.env.NODE_ENV !== 'test') {
     }
   };
 
-  // Wait for NAS to be ready (if enabled)
+  // Wait for NAS to be ready (if enabled) and sync local files
   const waitForNAS = async () => {
     if (process.env.USE_NAS === 'true') {
       console.log('🔌 Checking NAS connection...');
@@ -296,6 +296,17 @@ if (process.env.NODE_ENV !== 'test') {
         const isValid = await validateNASConnection();
         if (isValid) {
           console.log('✅ NAS connection validated successfully');
+          
+          // Sync local files to NAS if any exist
+          console.log('🔄 Checking for local files to sync to NAS...');
+          const syncResult = await syncLocalToNAS();
+          if (syncResult.synced > 0) {
+            console.log(`✅ Synced ${syncResult.synced} files from local storage to NAS`);
+          }
+          if (syncResult.failed > 0) {
+            console.warn(`⚠️  Failed to sync ${syncResult.failed} files`);
+          }
+          
           return;
         }
         attempts++;
