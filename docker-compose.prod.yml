@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:14-alpine
@@ -34,6 +32,10 @@ services:
       - NAS_PASSWORD=${NAS_PASSWORD}
       - NAS_PATH=${NAS_PATH}
       - UPLOAD_PATH=${UPLOAD_PATH}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+      - RESEND_FROM_NAME=${RESEND_FROM_NAME}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
     cap_add:
       - NET_ADMIN
     devices:
