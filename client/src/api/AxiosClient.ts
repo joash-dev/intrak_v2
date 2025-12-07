@@ -139,6 +139,19 @@ api.interceptors.response.use(
       }
     }
     
+    // Handle server errors (502, 503, 504) - redirect to error page
+    const status = error.response?.status;
+    if (status === 502 || status === 503 || status === 504) {
+      window.location.href = `/error/${status}`;
+      return Promise.reject(error);
+    }
+    
+    // Handle 500 errors
+    if (status === 500) {
+      window.location.href = '/error/500';
+      return Promise.reject(error);
+    }
+    
     return Promise.reject(error);
   }
 );

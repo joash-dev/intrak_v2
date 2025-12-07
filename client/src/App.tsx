@@ -37,6 +37,7 @@ const SupervisorSettingsTab = React.lazy(() => import("./pages/SupervisorUi/Supe
 const SupervisorNotifications = React.lazy(() => import("./pages/SupervisorUi/SupervisorNotifications"));
 const AdminPage = React.lazy(() => import("./pages/AdminUi/AdminPage"));
 const MaintenancePage = React.lazy(() => import("./pages/MaintenancePage"));
+const ErrorPage = React.lazy(() => import("./pages/ErrorPage"));
 
 // Instructor Pages
 const InstructorLayout = React.lazy(() => import("./pages/InstructorUi/InstructorLayout"));
@@ -232,9 +233,13 @@ const App: React.FC = () => {
               }
             />
 
+            {/* Error Pages */}
+            <Route path="/error/:code" element={<ErrorPage />} />
+            <Route path="/error" element={<ErrorPage errorCode={500} />} />
+
             {/* default + catch-all */}
             <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<ErrorPage errorCode={404} />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
