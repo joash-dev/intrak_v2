@@ -309,15 +309,24 @@ const StudentAttendanceTab: React.FC = () => {
       return false;
     }
     
+    // IMPORTANT: If student doesn't have a start date, don't mark any days as absent
+    if (!ojtStartDate) {
+      return false;
+    }
+    
     // Check if OJT has started - if date is before start date, don't mark as absent
-    if (ojtStartDate) {
-      const startDate = new Date(ojtStartDate);
-      startDate.setHours(0, 0, 0, 0);
-      
-      // If the day is before the OJT start date, don't mark as absent
-      if (dayDate < startDate) {
-        return false;
-      }
+    const startDate = new Date(ojtStartDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // If the day is before the OJT start date, don't mark as absent
+    if (dayDate < startDate) {
+      return false;
+    }
+    
+    // Check if student has actually started OJT (today must be >= start date)
+    // If today is before start date, student hasn't started yet - don't mark as absent
+    if (today < startDate) {
+      return false;
     }
     
     // Check if it's an expected working day
