@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   FileText,
@@ -9,6 +9,8 @@ import {
   CheckCircle,
   XCircle,
   ArrowLeft,
+  Upload,
+  X,
 } from "lucide-react";
 import { templateService } from "../../services/templateService";
 import type { DocumentTemplate } from "../../services/templateService";
@@ -50,6 +52,9 @@ const InstructorTemplateManagement: React.FC = () => {
   const [fileValidationMap, setFileValidationMap] = useState<
     Record<string, { name?: boolean; type?: boolean }>
   >({});
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const generateUploadEntryId = () =>
     `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -57,28 +62,95 @@ const InstructorTemplateManagement: React.FC = () => {
   const documentTypeOptions =
     templateService.getDocumentTypeOptionsByCategory(uploadForm.category);
 
-  const handleFileSelection = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const selectedFiles = Array.from(event.target.files ?? []);
-    if (selectedFiles.length === 0) {
+  const validateFile = (file: File): boolean => {
+    // Only allow .docx files
+    const validExtensions = ['.docx'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+      toast.error(`Invalid file type. Only .docx files are allowed.`);
+      return false;
+    }
+
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast.error(`File size too large. Maximum size is 10MB.`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const processFiles = (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(validateFile);
+
+    if (validFiles.length === 0) {
       return;
+    }
+
+    if (validFiles.length < fileArray.length) {
+      toast.error(`${fileArray.length - validFiles.length} file(s) were rejected. Only .docx files are allowed.`);
     }
 
     setUploadForm((prev) => ({
       ...prev,
       files: [
         ...prev.files,
-        ...selectedFiles.map((file) => ({
+        ...validFiles.map((file) => ({
           id: generateUploadEntryId(),
           file,
-          name: file.name.replace(/\.[^/.]+$/, ""),
+          name: file.name.replace(/\.docx$/i, ""),
           type: "",
         })),
       ],
     }));
     clearValidationError("files");
+  };
+
+  const handleFileSelection = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFiles = event.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) {
+      return;
+    }
+
+    processFiles(selectedFiles);
     event.target.value = "";
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      processFiles(files);
+    }
+  };
+
+  const handleDropZoneClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleRemoveFile = (id: string) => {
@@ -985,49 +1057,116 @@ const InstructorTemplateManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Template Files *
                 </label>
+                
+                {/* Hidden file input */}
                 <input
+                  ref={fileInputRef}
                   type="file"
                   multiple
                   onChange={handleFileSelection}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${validationErrors.files
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-200 dark:border-gray-600"
-                    }`}
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  accept=".docx"
+                  className="hidden"
                 />
+
+                {/* Drag and Drop Zone */}
+                <div
+                  ref={dropZoneRef}
+                  onClick={handleDropZoneClick}
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+                    isDragging
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                      : validationErrors.files
+                      ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-900/10"
+                  }`}
+                >
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className={`p-4 rounded-full ${
+                      isDragging
+                        ? "bg-purple-100 dark:bg-purple-900/40"
+                        : "bg-gray-100 dark:bg-gray-700"
+                    }`}>
+                      <Upload className={`w-8 h-8 ${
+                        isDragging
+                          ? "text-purple-600 dark:text-purple-400"
+                          : "text-gray-400 dark:text-gray-500"
+                      }`} />
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                        {isDragging
+                          ? "Drop files here"
+                          : "Drag and drop .docx files here"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        or <span className="text-purple-600 dark:text-purple-400 font-medium">click to browse</span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                      <FileText className="w-4 h-4" />
+                      <span>Only .docx files are supported</span>
+                    </div>
+
+                    {uploadForm.files.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 w-full">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                          {uploadForm.files.length} file(s) selected
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {validationErrors.files && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Please select at least one file to upload
+                  <p className="text-red-500 text-sm mt-2">
+                    Please select at least one .docx file to upload
                   </p>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Supported formats: PDF, DOC, DOCX, XLS, XLSX. You can select multiple files.
-                </p>
               </div>
 
               {uploadForm.files.length > 0 && (
-                <div className="space-y-4">
-                  {uploadForm.files.map((entry, index) => {
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Selected Files ({uploadForm.files.length})
+                    </h4>
+                  </div>
+                  {uploadForm.files.map((entry) => {
                     const entryErrors = fileValidationMap[entry.id] || {};
                     return (
                       <div
                         key={entry.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-[#212124]/40 space-y-4"
+                        className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800/50 space-y-4 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
                       >
                         <div className="flex items-start justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              File {index + 1}: {entry.file.name}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {(entry.file.size / (1024 * 1024)).toFixed(2)} MB
-                            </p>
+                          <div className="flex items-start space-x-3 flex-1">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                              <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {entry.file.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {(entry.file.size / (1024 * 1024)).toFixed(2)} MB
+                              </p>
+                            </div>
                           </div>
                           <button
-                            onClick={() => handleRemoveFile(entry.id)}
-                            className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(entry.id);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Remove file"
                           >
-                            Remove
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
 
