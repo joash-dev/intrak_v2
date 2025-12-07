@@ -872,18 +872,32 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const [
       totalUsers,
       totalDocuments,
-      activeUsers
+      activeUsers,
+      actualDbSize
     ] = await Promise.all([
       prisma.user.count(),
       prisma.document.count(),
-      prisma.user.count({ where: { active: true } })
+      prisma.user.count({ where: { active: true } }),
+      // Get actual database size from PostgreSQL
+      prisma.$queryRaw<Array<{ size: bigint }>>`
+        SELECT pg_database_size(current_database()) as size
+      `.then(result => result[0]?.size || BigInt(0)).catch(() => BigInt(0))
     ]);
 
-    const dbSize = Math.round((totalDocuments * 0.5) / 1024 / 1024 * 100) / 100; // Estimate in MB
+    // Convert bytes to MB/GB
+    const dbSizeBytes = Number(actualDbSize);
+    const dbSizeMB = Math.round((dbSizeBytes / 1024 / 1024) * 100) / 100;
+    const dbSizeGB = Math.round((dbSizeBytes / 1024 / 1024 / 1024) * 100) / 100;
+    const dbSizeFormatted = dbSizeGB >= 1 
+      ? `${dbSizeGB} GB` 
+      : `${dbSizeMB} MB`;
 
     // Get server load (simplified)
     const loadAverage = os.loadavg();
     const serverLoad = Math.round(loadAverage[0] * 100 / cpuCount);
+    const loadAverage1min = loadAverage[0].toFixed(2);
+    const loadAverage5min = loadAverage[1].toFixed(2);
+    const loadAverage15min = loadAverage[2].toFixed(2);
 
     // Check database connectivity
     let databaseStatus = 'online';
@@ -914,7 +928,8 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const systemInfo = {
       version: process.env.npm_package_version || '2.1.3',
       lastUpdated: new Date().toISOString(),
-      databaseSize: `${dbSize} MB`,
+      databaseSize: dbSizeFormatted,
+      databaseSizeBytes: dbSizeBytes,
       activeUsers: totalUsers,
       totalDocuments,
       systemUptime,
@@ -934,6 +949,10 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       arch: os.arch(),
       nodeVersion: process.version,
       environment: process.env.NODE_ENV || 'development',
+      // Load average details
+      loadAverage1min,
+      loadAverage5min,
+      loadAverage15min,
       // NAS storage metrics
       nasAvailable,
       nasStorage,

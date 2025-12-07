@@ -180,6 +180,7 @@ export interface SystemInfo {
   version: string;
   lastUpdated: string;
   databaseSize: string;
+  databaseSizeBytes?: number;
   activeUsers: number;
   totalDocuments: number;
   systemUptime: string;
@@ -199,6 +200,10 @@ export interface SystemInfo {
   arch?: string;
   nodeVersion?: string;
   environment?: string;
+  // Load average details
+  loadAverage1min?: string;
+  loadAverage5min?: string;
+  loadAverage15min?: string;
   // NAS storage metrics
   nasAvailable?: boolean;
   nasStorage?: NASStorage | null;

@@ -1590,74 +1590,85 @@ const AdminSettings = () => {
 
                     {/* Detailed System Metrics */}
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Memory Usage Card */}
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
                             Memory Usage
                           </span>
-                          <span className="text-xs text-blue-600 dark:text-blue-400">
-                            {systemInfo.memoryUsage || 68}%
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
+                            {systemInfo.memoryUsage || 0}%
                           </span>
                         </div>
-                        <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                        <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mb-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                             style={{
-                              width: `${systemInfo.memoryUsage || 68}%`,
+                              width: `${systemInfo.memoryUsage || 0}%`,
                             }}
                           ></div>
                         </div>
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                          {systemInfo.usedMemory || 8.5}GB /{" "}
-                          {systemInfo.totalMemory || 16}GB
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          {systemInfo.usedMemory || 0}GB / {systemInfo.totalMemory || 0}GB
+                        </p>
+                        <p className="text-xs text-blue-500 dark:text-blue-500 mt-1 italic">
+                          RAM allocated for system processes
                         </p>
                       </div>
 
+                      {/* CPU Load Card */}
                       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
                             CPU Load
                           </span>
-                          <span className="text-xs text-purple-600 dark:text-purple-400">
-                            {systemInfo.serverLoad || 45}%
+                          <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
+                            {systemInfo.serverLoad || 0}%
                           </span>
                         </div>
-                        <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2">
+                        <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2 mb-2">
                           <div
                             className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${systemInfo.serverLoad || 45}%` }}
+                            style={{ width: `${systemInfo.serverLoad || 0}%` }}
                           ></div>
                         </div>
-                        <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                          {systemInfo.cpuModel || "Intel Core i7"} (
-                          {systemInfo.cpuCount || 8} cores)
+                        <p className="text-xs text-purple-600 dark:text-purple-400">
+                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
+                        </p>
+                        <p className="text-xs text-purple-500 dark:text-purple-500 mt-1 italic">
+                          Processor utilization (1min avg: {systemInfo.loadAverage1min || "0.00"})
                         </p>
                       </div>
 
+                      {/* Database Card */}
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            Active Users
+                            Database
                           </span>
-                          <span className="text-xs text-green-600 dark:text-green-400">
-                            {systemInfo.activeUsers || 156}
+                          <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
+                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
                           </span>
                         </div>
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Total Users: {systemInfo.activeUsers || 156}
+                        <p className="text-xs text-green-600 dark:text-green-400 mb-1">
+                          Size: {systemInfo.databaseSize || '0 MB'}
                         </p>
                         <p className="text-xs text-green-600 dark:text-green-400">
-                          Documents: {systemInfo.totalDocuments || 1247}
+                          Users: {systemInfo.activeUsers || 0} | Docs: {systemInfo.totalDocuments || 0}
+                        </p>
+                        <p className="text-xs text-green-500 dark:text-green-500 mt-1 italic">
+                          PostgreSQL database storage
                         </p>
                       </div>
 
+                      {/* System Uptime Card */}
                       <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
                             System Uptime
                           </span>
-                          <span className="text-xs text-orange-600 dark:text-orange-400">
-                            {systemInfo.systemUptime || "15 days, 8 hours"}
+                          <span className="text-xs text-orange-600 dark:text-orange-400 font-semibold">
+                            {systemInfo.systemUptime || "0 days, 0 hours"}
                           </span>
                         </div>
                         <p className="text-xs text-orange-600 dark:text-orange-400">
@@ -1666,8 +1677,66 @@ const AdminSettings = () => {
                         <p className="text-xs text-orange-600 dark:text-orange-400">
                           Environment: {systemInfo.environment || "production"}
                         </p>
+                        <p className="text-xs text-orange-500 dark:text-orange-500 mt-1 italic">
+                          Server runtime since last restart
+                        </p>
                       </div>
                     </div>
+
+                    {/* Storage Information */}
+                    {systemInfo.nasAvailable && systemInfo.nasStorage && (
+                      <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-indigo-800 dark:text-indigo-200">
+                            NAS Storage
+                          </span>
+                          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                            {systemInfo.nasStorage.percentUsed}% Used
+                          </span>
+                        </div>
+                        <div className="w-full bg-indigo-200 dark:bg-indigo-800 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${systemInfo.nasStorage.percentUsed}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                          {systemInfo.nasStorage.used} / {systemInfo.nasStorage.total}
+                          {systemInfo.nasStorage.free && ` (${systemInfo.nasStorage.free} free)`}
+                        </p>
+                        <p className="text-xs text-indigo-500 dark:text-indigo-500 mt-1 italic">
+                          Network Attached Storage for documents and files
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Disk Usage (if NAS not available) */}
+                    {!systemInfo.nasAvailable && (
+                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            Disk Usage
+                          </span>
+                          <span className="text-xs text-gray-600 dark:text-gray-400 font-semibold">
+                            {systemInfo.diskUsage || 0}% Used
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-gray-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${systemInfo.diskUsage || 0}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {systemInfo.usedDisk !== undefined && systemInfo.totalDisk !== undefined
+                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
+                            : 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
+                          Local server disk storage
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* System Configuration */}
@@ -1953,46 +2022,83 @@ const AdminSettings = () => {
                       <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <p>
                           <span className="font-medium">Version:</span>{" "}
-                          {systemInfo.version}
+                          {systemInfo.version || "2.1.3"}
                         </p>
                         <p>
                           <span className="font-medium">Last Updated:</span>{" "}
-                          {new Date(
-                            systemInfo.lastUpdated
-                          ).toLocaleDateString()}
+                          {systemInfo.lastUpdated 
+                            ? new Date(systemInfo.lastUpdated).toLocaleString()
+                            : "N/A"}
                         </p>
                         <p>
                           <span className="font-medium">Database Size:</span>{" "}
-                          {systemInfo.databaseSize}
+                          {systemInfo.databaseSize || "0 MB"}
+                          {systemInfo.databaseSizeBytes && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({Math.round(systemInfo.databaseSizeBytes / 1024 / 1024)} MB)
+                            </span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">Database Status:</span>{" "}
+                          <span className={systemInfo.databaseStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
+                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
+                          </span>
                         </p>
                         <p>
                           <span className="font-medium">Server Load:</span>{" "}
-                          {systemInfo.serverLoad}%
+                          {systemInfo.serverLoad || 0}%
+                          {systemInfo.loadAverage1min && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              (1min: {systemInfo.loadAverage1min}, 5min: {systemInfo.loadAverage5min}, 15min: {systemInfo.loadAverage15min})
+                            </span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">CPU:</span>{" "}
+                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
                         </p>
                       </div>
                       <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <p>
                           <span className="font-medium">Active Users:</span>{" "}
-                          {systemInfo.activeUsers}
+                          {systemInfo.activeUsers || 0}
                         </p>
                         <p>
                           <span className="font-medium">Total Documents:</span>{" "}
-                          {systemInfo.totalDocuments.toLocaleString()}
+                          {systemInfo.totalDocuments?.toLocaleString() || 0}
                         </p>
                         <p>
                           <span className="font-medium">System Uptime:</span>{" "}
-                          {systemInfo.systemUptime}
+                          {systemInfo.systemUptime || "0 days, 0 hours"}
                         </p>
                         <p>
                           <span className="font-medium">Memory Usage:</span>{" "}
-                          {systemInfo.memoryUsage}%
+                          {systemInfo.memoryUsage || 0}% 
+                          {systemInfo.usedMemory !== undefined && systemInfo.totalMemory !== undefined && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({systemInfo.usedMemory}GB / {systemInfo.totalMemory}GB)
+                            </span>
+                          )}
                         </p>
                         <p>
                           <span className="font-medium">Disk Usage:</span>{" "}
                           {systemInfo.usedDisk !== undefined &&
                           systemInfo.totalDisk !== undefined
-                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
-                            : `${systemInfo.diskUsage}%`}
+                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB (${systemInfo.diskUsage || 0}%)`
+                            : `${systemInfo.diskUsage || 0}%`}
+                        </p>
+                        <p>
+                          <span className="font-medium">Platform:</span>{" "}
+                          {systemInfo.platform || "Unknown"} ({systemInfo.arch || "Unknown"})
+                        </p>
+                        <p>
+                          <span className="font-medium">Node.js:</span>{" "}
+                          {systemInfo.nodeVersion || "Unknown"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Environment:</span>{" "}
+                          <span className="uppercase">{systemInfo.environment || "production"}</span>
                         </p>
                       </div>
                     </div>
