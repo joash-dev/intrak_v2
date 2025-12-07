@@ -13,7 +13,7 @@ export interface NASConfig {
 export const getNASConfig = (): NASConfig => {
   return {
     enabled: process.env.USE_NAS === 'true',
-    mountPath: process.env.NAS_PATH || '/mnt/nas/intrak/documents',
+    mountPath: process.env.NAS_PATH || '/mnt/nas/intrak',
     host: process.env.NAS_HOST || '192.168.1.100',
     username: process.env.NAS_USERNAME || 'nas_user',
     password: process.env.NAS_PASSWORD || 'nas_password',
@@ -273,14 +273,17 @@ export const createLocalBackup = (nasFilePath: string, fileContent: string | Buf
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
   
+  // Get base NAS path (remove /documents suffix if present)
+  const baseNASPath = nasConfig.mountPath.replace(/\/documents$/, '') || '/mnt/nas/intrak';
+  
   // Only create backup if NAS is enabled and file is on NAS
-  if (!nasConfig.enabled || !nasFilePath.startsWith(nasConfig.mountPath)) {
+  if (!nasConfig.enabled || !nasFilePath.startsWith(baseNASPath)) {
     return null;
   }
   
   try {
-    // Convert NAS path to local backup path
-    const localBackupPath = nasFilePath.replace(nasConfig.mountPath, localPath);
+    // Convert NAS path to local backup path (replace base NAS path with local path)
+    const localBackupPath = nasFilePath.replace(baseNASPath, localPath);
     const localBackupDir = path.dirname(localBackupPath);
     
     // Create directory if it doesn't exist
