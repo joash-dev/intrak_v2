@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:14-alpine
@@ -50,11 +52,11 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL}
     restart: always
     ports:
       - "8080:80"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       - server
 
