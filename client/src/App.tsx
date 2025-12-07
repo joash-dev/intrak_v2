@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { adminService } from "./services/adminService";
 import { settingsService } from "./services/settingsService";
 import { SocketProvider } from "./contexts/SocketContext";
+import { SessionTimeoutWrapper } from "./components/SessionTimeoutWrapper";
 import i18n from "i18next";
 import PageLoader from "./components/common/PageLoader";
 
@@ -35,7 +36,12 @@ const SupervisorDocumentsTab = React.lazy(() => import("./pages/SupervisorUi/Sup
 const SupervisorEvaluationsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorEvaluationsTab"));
 const SupervisorSettingsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorSettingsTab"));
 const SupervisorNotifications = React.lazy(() => import("./pages/SupervisorUi/SupervisorNotifications"));
-const AdminPage = React.lazy(() => import("./pages/AdminUi/AdminPage"));
+const AdminLayout = React.lazy(() => import("./pages/AdminUi/AdminLayout"));
+const AdminOverview = React.lazy(() => import("./pages/AdminUi/AdminOverview"));
+const AdminUserManagement = React.lazy(() => import("./pages/AdminUi/AdminUserManagement"));
+const AdminCompanyManagement = React.lazy(() => import("./pages/AdminUi/AdminCompanyManagement"));
+const AdminSettings = React.lazy(() => import("./pages/AdminUi/AdminSettings"));
+const AdminNotifications = React.lazy(() => import("./pages/AdminUi/AdminNotifications"));
 const MaintenancePage = React.lazy(() => import("./pages/MaintenancePage"));
 const ErrorPage = React.lazy(() => import("./pages/ErrorPage"));
 
@@ -133,8 +139,9 @@ const App: React.FC = () => {
   return (
     <SocketProvider>
       <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+        <SessionTimeoutWrapper>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             <Route path="/login" element={<Login />} />
 
             <Route
@@ -228,10 +235,17 @@ const App: React.FC = () => {
               path="/admin"
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminPage />
+                  <AdminLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminOverview />} />
+              <Route path="users" element={<AdminUserManagement />} />
+              <Route path="companies" element={<AdminCompanyManagement />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="notifications" element={<AdminNotifications />} />
+            </Route>
 
             {/* Error Pages */}
             <Route path="/error/:code" element={<ErrorPage />} />
@@ -240,8 +254,9 @@ const App: React.FC = () => {
             {/* default + catch-all */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<ErrorPage errorCode={404} />} />
-          </Routes>
-        </Suspense>
+            </Routes>
+          </Suspense>
+        </SessionTimeoutWrapper>
       </BrowserRouter>
     </SocketProvider>
   );

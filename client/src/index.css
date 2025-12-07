@@ -391,3 +391,71 @@ body.modal-open {
 .dark .scrollbar-visible::-webkit-scrollbar-thumb:hover {
   background: #6366f1;
 }
+
+/* Admin Dark Theme Scrollbar - Matches #19191c background */
+.scrollbar-admin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(107 114 128) transparent;
+}
+
+.scrollbar-admin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-admin::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.scrollbar-admin::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-admin::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+  background-clip: padding-box;
+}
+
+.scrollbar-admin::-webkit-scrollbar-thumb:active {
+  background: rgb(147 197 253);
+  background-clip: padding-box;
+}
+
+/* Purple accent scrollbar for admin theme */
+.scrollbar-admin-purple {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(147 51 234) transparent;
+}
+
+.scrollbar-admin-purple::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-admin-purple::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.scrollbar-admin-purple::-webkit-scrollbar-thumb {
+  background: rgb(147 51 234);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-admin-purple::-webkit-scrollbar-thumb:hover {
+  background: rgb(168 85 247);
+  background-clip: padding-box;
+}
+
+.scrollbar-admin-purple::-webkit-scrollbar-thumb:active {
+  background: rgb(192 132 252);
+  background-clip: padding-box;
+}

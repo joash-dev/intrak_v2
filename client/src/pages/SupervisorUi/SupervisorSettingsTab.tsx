@@ -1211,7 +1211,7 @@ const SupervisorSettings = () => {
                       <span className="text-gray-400">Version:</span> 1.0.0
                     </p>
                     <p>
-                      <span className="text-gray-400">Last Updated:</span> October 2024
+                      <span className="text-gray-400">Last Updated:</span> December 2025
                     </p>
                     <p>
                       <span className="text-gray-400">License:</span> Educational Use

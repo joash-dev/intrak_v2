@@ -18,7 +18,7 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
 import { instructorService } from "../../services/instructorService";
-import { TableSkeleton } from "../../components/LoadingStates/ModernLoader";
+import { UserTableSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 import toast from "react-hot-toast";
 
 const AdminUserManagement = () => {
@@ -425,14 +425,14 @@ const AdminUserManagement = () => {
         <button
           onClick={refreshUsersList}
           disabled={usersLoading}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2 disabled:opacity-50"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center space-x-2 disabled:opacity-50"
         >
           <RefreshCw
             className={`w-4 h-4 ${usersLoading ? "animate-spin" : ""}`}
           />
           <span>Refresh</span>
         </button>
-        <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-2">
+        <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center space-x-2">
           <Download className="w-4 h-4" />
           <span>Export</span>
         </button>
@@ -446,17 +446,17 @@ const AdminUserManagement = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
             {stats.total}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Students</p>
           <p className="text-2xl font-bold text-blue-600">{stats.students}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">
             Coordinators
           </p>
@@ -464,7 +464,7 @@ const AdminUserManagement = () => {
             {stats.coordinators}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">
             Instructors
           </p>
@@ -472,36 +472,36 @@ const AdminUserManagement = () => {
             {stats.instructors}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Partners</p>
           <p className="text-2xl font-bold text-orange-600">{stats.partners}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Active</p>
           <p className="text-2xl font-bold text-green-600">{stats.active}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+        <div className="bg-white dark:bg-[#19191c] rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-600 dark:text-gray-400">Inactive</p>
-          <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.inactive}</p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-[#19191c] rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search by name, email, or student number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="ALL">All Roles</option>
             <option value="STUDENT">Students</option>
@@ -512,7 +512,7 @@ const AdminUserManagement = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -529,21 +529,21 @@ const AdminUserManagement = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white dark:bg-[#19191c] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto scrollbar-admin">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700">
+            <thead className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -552,12 +552,12 @@ const AdminUserManagement = () => {
               {filteredUsers.map((user) => (
                 <tr
                   key={user.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-100 dark:border-gray-700/50"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 border-b border-gray-200 dark:border-gray-700/50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900 dark:to-purple-900 rounded-xl flex items-center justify-center shadow-sm border border-indigo-200 dark:border-indigo-700">
-                        <span className="text-indigo-600 dark:text-indigo-300 font-bold text-sm">
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl flex items-center justify-center shadow-sm border border-indigo-700">
+                        <span className="text-indigo-300 font-bold text-sm">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -565,7 +565,7 @@ const AdminUserManagement = () => {
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.name}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                           {user.email}
                         </div>
                       </div>
@@ -631,12 +631,12 @@ const AdminUserManagement = () => {
         </div>
         {usersLoading ? (
           <div className="p-6">
-            <TableSkeleton rows={5} columns={4} />
+            <UserTableSkeleton />
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No users found</p>
+            <p className="text-gray-600 dark:text-gray-400">No users found</p>
           </div>
         ) : null}
 
@@ -676,7 +676,7 @@ const AdminUserManagement = () => {
           className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
           style={{ margin: "0" }}
         >
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#19191c] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto scrollbar-admin-purple">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {showAddModal ? "Add New User" : "Edit User"}

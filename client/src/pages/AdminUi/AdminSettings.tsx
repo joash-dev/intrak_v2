@@ -33,6 +33,7 @@ import {
 import { adminService, type SystemInfo, type SystemAlert } from "../../services/adminService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 
 interface AdminProfile {
   id: string;
@@ -900,16 +901,7 @@ const AdminSettings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading settings...
-          </p>
-        </div>
-      </div>
-    );
+    return <AdminSettingsSkeleton />;
   }
 
   return (
@@ -959,7 +951,7 @@ const AdminSettings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
+          <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-2">
             <nav className="space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -969,8 +961,8 @@ const AdminSettings = () => {
                     onClick={() => setActiveSection(section.id)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors text-left ${
                       activeSection === section.id
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -984,7 +976,7 @@ const AdminSettings = () => {
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             {/* Profile Section */}
             {activeSection === "profile" && (
               <div className="space-y-6">
@@ -1071,7 +1063,7 @@ const AdminSettings = () => {
                               setErrors({ ...errors, name: "" });
                             }
                           }}
-                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                             errors.name
                               ? "border-red-500"
                               : "border-gray-300 dark:border-gray-600"
@@ -1097,7 +1089,7 @@ const AdminSettings = () => {
                               setErrors({ ...errors, email: "" });
                             }
                           }}
-                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                             errors.email
                               ? "border-red-500"
                               : "border-gray-300 dark:border-gray-600"
@@ -1123,7 +1115,7 @@ const AdminSettings = () => {
                               setErrors({ ...errors, phone: "" });
                             }
                           }}
-                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
+                          className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${
                             errors.phone
                               ? "border-red-500"
                               : "border-gray-300 dark:border-gray-600"
@@ -1149,7 +1141,7 @@ const AdminSettings = () => {
                               department: e.target.value,
                             })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         />
                       </div>
 
@@ -1163,7 +1155,7 @@ const AdminSettings = () => {
                           onChange={(e) =>
                             setProfile({ ...profile, office: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                         />
                       </div>
                     </div>
@@ -1334,10 +1326,10 @@ const AdminSettings = () => {
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">
                     Two-Factor Authentication
                   </h3>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-purple-600" />
                       <div>
@@ -1405,7 +1397,7 @@ const AdminSettings = () => {
                       <button
                         onClick={refreshSystemStatus}
                         disabled={saving}
-                        className="flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                        className="flex items-center space-x-2 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                       >
                         <SettingsIcon className="w-4 h-4" />
                         <span>Refresh</span>
@@ -1541,7 +1533,7 @@ const AdminSettings = () => {
                     {/* System Alerts */}
                     {systemAlerts && systemAlerts.length > 0 && (
                       <div className="mt-6">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                        <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                           <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
                           System Alerts ({systemAlerts.length})
                         </h4>
@@ -1714,23 +1706,23 @@ const AdminSettings = () => {
                     {!systemInfo.nasAvailable && (
                       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
                             Disk Usage
                           </span>
-                          <span className="text-xs text-gray-600 dark:text-gray-400 font-semibold">
+                          <span className="text-xs text-gray-700 dark:text-gray-400 font-semibold">
                             {systemInfo.diskUsage || 0}% Used
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mb-2">
                           <div
-                            className="bg-gray-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-green-500 dark:bg-gray-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${systemInfo.diskUsage || 0}%` }}
                           ></div>
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {systemInfo.usedDisk !== undefined && systemInfo.totalDisk !== undefined
+                          {systemStatus.diskUsageLabel || (systemInfo.usedDisk !== undefined && systemInfo.totalDisk !== undefined
                             ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
-                            : 'N/A'}
+                            : 'N/A')}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
                           Local server disk storage
@@ -1765,7 +1757,7 @@ const AdminSettings = () => {
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                             systemSettings.maintenanceMode
                               ? "bg-red-600"
-                              : "bg-gray-200 dark:bg-gray-600"
+                              : "bg-gray-600"
                           }`}
                         >
                           <span
@@ -1797,7 +1789,7 @@ const AdminSettings = () => {
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                             systemSettings.autoBackup
                               ? "bg-green-600"
-                              : "bg-gray-200 dark:bg-gray-600"
+                              : "bg-gray-600"
                           }`}
                         >
                           <span
@@ -1827,7 +1819,7 @@ const AdminSettings = () => {
                               sessionTimeout: parseInt(e.target.value),
                             })
                           }
-                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
                           <option value={15}>15 minutes</option>
                           <option value={30}>30 minutes</option>
@@ -1853,7 +1845,7 @@ const AdminSettings = () => {
                               maxLoginAttempts: parseInt(e.target.value),
                             })
                           }
-                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
                           <option value={3}>3 attempts</option>
                           <option value={5}>5 attempts</option>
@@ -2011,99 +2003,6 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  {/* System Information */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-gray-600" />
-                      System Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        <p>
-                          <span className="font-medium">Version:</span>{" "}
-                          {systemInfo.version || "2.1.3"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Last Updated:</span>{" "}
-                          {systemInfo.lastUpdated 
-                            ? new Date(systemInfo.lastUpdated).toLocaleString()
-                            : "N/A"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Database Size:</span>{" "}
-                          {systemInfo.databaseSize || "0 MB"}
-                          {systemInfo.databaseSizeBytes && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({Math.round(systemInfo.databaseSizeBytes / 1024 / 1024)} MB)
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">Database Status:</span>{" "}
-                          <span className={systemInfo.databaseStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
-                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
-                          </span>
-                        </p>
-                        <p>
-                          <span className="font-medium">Server Load:</span>{" "}
-                          {systemInfo.serverLoad || 0}%
-                          {systemInfo.loadAverage1min && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              (1min: {systemInfo.loadAverage1min}, 5min: {systemInfo.loadAverage5min}, 15min: {systemInfo.loadAverage15min})
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">CPU:</span>{" "}
-                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        <p>
-                          <span className="font-medium">Active Users:</span>{" "}
-                          {systemInfo.activeUsers || 0}
-                        </p>
-                        <p>
-                          <span className="font-medium">Total Documents:</span>{" "}
-                          {systemInfo.totalDocuments?.toLocaleString() || 0}
-                        </p>
-                        <p>
-                          <span className="font-medium">System Uptime:</span>{" "}
-                          {systemInfo.systemUptime || "0 days, 0 hours"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Memory Usage:</span>{" "}
-                          {systemInfo.memoryUsage || 0}% 
-                          {systemInfo.usedMemory !== undefined && systemInfo.totalMemory !== undefined && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({systemInfo.usedMemory}GB / {systemInfo.totalMemory}GB)
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">Disk Usage:</span>{" "}
-                          {systemInfo.usedDisk !== undefined &&
-                          systemInfo.totalDisk !== undefined
-                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB (${systemInfo.diskUsage || 0}%)`
-                            : `${systemInfo.diskUsage || 0}%`}
-                        </p>
-                        <p>
-                          <span className="font-medium">Platform:</span>{" "}
-                          {systemInfo.platform || "Unknown"} ({systemInfo.arch || "Unknown"})
-                        </p>
-                        <p>
-                          <span className="font-medium">Node.js:</span>{" "}
-                          {systemInfo.nodeVersion || "Unknown"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Environment:</span>{" "}
-                          <span className="uppercase">{systemInfo.environment || "production"}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Email Testing Section - TODO: Remove this section later */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -2213,7 +2112,7 @@ const AdminSettings = () => {
                             value={emailTestEmail}
                             onChange={(e) => setEmailTestEmail(e.target.value)}
                             placeholder="Enter email address to test"
-                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                            className="flex-1 px-4 py-2 border border-gray-600 rounded-lg bg-gray-800 text-white focus:ring-2 focus:ring-purple-500"
                           />
                           <button
                             onClick={async () => {
@@ -2314,6 +2213,99 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
+                  {/* System Information */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                      <Database className="w-5 h-5 mr-2 text-gray-600" />
+                      System Information
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p>
+                          <span className="font-medium">Version:</span>{" "}
+                          {systemInfo.version || "2.1.3"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Last Updated:</span>{" "}
+                          {systemInfo.lastUpdated 
+                            ? new Date(systemInfo.lastUpdated).toLocaleString()
+                            : "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Database Size:</span>{" "}
+                          {systemInfo.databaseSize || "0 MB"}
+                          {systemInfo.databaseSizeBytes && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({Math.round(systemInfo.databaseSizeBytes / 1024 / 1024)} MB)
+                            </span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">Database Status:</span>{" "}
+                          <span className={systemInfo.databaseStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
+                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="font-medium">Server Load:</span>{" "}
+                          {systemInfo.serverLoad || 0}%
+                          {systemInfo.loadAverage1min && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              (1min: {systemInfo.loadAverage1min}, 5min: {systemInfo.loadAverage5min}, 15min: {systemInfo.loadAverage15min})
+                            </span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">CPU:</span>{" "}
+                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
+                        </p>
+                      </div>
+                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p>
+                          <span className="font-medium">Active Users:</span>{" "}
+                          {systemInfo.activeUsers || 0}
+                        </p>
+                        <p>
+                          <span className="font-medium">Total Documents:</span>{" "}
+                          {systemInfo.totalDocuments?.toLocaleString() || 0}
+                        </p>
+                        <p>
+                          <span className="font-medium">System Uptime:</span>{" "}
+                          {systemInfo.systemUptime || "0 days, 0 hours"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Memory Usage:</span>{" "}
+                          {systemInfo.memoryUsage || 0}% 
+                          {systemInfo.usedMemory !== undefined && systemInfo.totalMemory !== undefined && (
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({systemInfo.usedMemory}GB / {systemInfo.totalMemory}GB)
+                            </span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">Disk Usage:</span>{" "}
+                          {systemInfo.usedDisk !== undefined &&
+                          systemInfo.totalDisk !== undefined
+                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB (${systemInfo.diskUsage || 0}%)`
+                            : `${systemInfo.diskUsage || 0}%`}
+                        </p>
+                        <p>
+                          <span className="font-medium">Platform:</span>{" "}
+                          {systemInfo.platform || "Unknown"} ({systemInfo.arch || "Unknown"})
+                        </p>
+                        <p>
+                          <span className="font-medium">Node.js:</span>{" "}
+                          {systemInfo.nodeVersion || "Unknown"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Environment:</span>{" "}
+                          <span className="uppercase">{systemInfo.environment || "production"}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex justify-end">
                     <button
                       onClick={handleSystemSettingsUpdate}
@@ -2393,7 +2385,7 @@ const AdminSettings = () => {
                           }
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                       </label>
                     </div>
                   ))}
@@ -2449,7 +2441,7 @@ const AdminSettings = () => {
                           <Sun className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="font-semibold text-white">
                             Light
                           </h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -2478,7 +2470,7 @@ const AdminSettings = () => {
                           <Moon className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="font-semibold text-white">
                             Dark
                           </h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -2507,7 +2499,7 @@ const AdminSettings = () => {
                           <Monitor className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                          <h4 className="font-semibold text-white">
                             System
                           </h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -2596,7 +2588,7 @@ const AdminSettings = () => {
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">
                     System Information
                   </h3>
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -2604,8 +2596,8 @@ const AdminSettings = () => {
                       <span className="font-medium">Version:</span> 1.0.0
                     </p>
                     <p>
-                      <span className="font-medium">Last Updated:</span> October
-                      2024
+                      <span className="font-medium">Last Updated:</span> December
+                      2025
                     </p>
                     <p>
                       <span className="font-medium">License:</span> Educational

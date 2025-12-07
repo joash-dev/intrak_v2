@@ -83,6 +83,12 @@ export const login = async (req: Request, res: Response) => {
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
+    // Get max login attempts from admin settings
+    const adminSettings = await prisma.adminSettings.findFirst({
+      select: { maxLoginAttempts: true }
+    });
+    const maxLoginAttempts = adminSettings?.maxLoginAttempts || 5;
+
     const user = await prisma.user.findUnique({
       where: { email }
     });
@@ -94,11 +100,27 @@ export const login = async (req: Request, res: Response) => {
 
     console.log('User found:', { id: user.id, name: user.name, role: user.role });
 
+    // Check failed login attempts (stored in metadata or we can use a separate table)
+    // For now, we'll use a simple approach with rate limiting
     const validPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!validPassword) {
       console.log('Invalid password for user:', user.email);
-      return res.status(401).json({ message: 'Invalid credentials' });
+      
+      // Log failed attempt
+      await logActivity({
+        type: 'LOGIN_FAILED',
+        description: `Failed login attempt for ${user.email}`,
+        userId: user.id,
+        userName: user.email,
+        ipAddress: req.ip,
+        metadata: { maxAttempts: maxLoginAttempts }
+      });
+      
+      return res.status(401).json({ 
+        message: 'Invalid credentials',
+        maxAttempts: maxLoginAttempts
+      });
     }
 
     console.log('Password valid, generating tokens...');
@@ -216,6 +238,25 @@ export const refresh = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
+    // Check session timeout before refreshing
+    const adminSettings = await prisma.adminSettings.findFirst({
+      select: { sessionTimeout: true }
+    });
+    const sessionTimeoutMinutes = adminSettings?.sessionTimeout || 30;
+    const sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
+    const timeSinceActivity = Date.now() - tokenRecord.createdAt.getTime();
+    
+    if (timeSinceActivity > sessionTimeoutMs) {
+      // Session expired - delete token
+      await prisma.refreshToken.delete({
+        where: { token: refreshToken }
+      });
+      return res.status(401).json({ 
+        message: 'Session expired due to inactivity',
+        code: 'SESSION_TIMEOUT'
+      });
+    }
+
     const { accessToken, refreshToken: newRefreshToken } = 
       generateTokens(tokenRecord.user);
 
@@ -223,6 +264,7 @@ export const refresh = async (req: Request, res: Response) => {
       where: { token: refreshToken }
     });
 
+    // Create new refresh token (this updates last activity timestamp)
     await prisma.refreshToken.create({
       data: {
         token: newRefreshToken,

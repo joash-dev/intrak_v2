@@ -11,6 +11,48 @@ export interface AuthRequest extends Request {
   };
 }
 
+// Check session timeout based on last activity
+const checkSessionTimeout = async (userId: string): Promise<{ valid: boolean; remaining?: number }> => {
+  try {
+    // Get admin settings for session timeout
+    const adminSettings = await prisma.adminSettings.findFirst({
+      select: { sessionTimeout: true }
+    });
+
+    const sessionTimeoutMinutes = adminSettings?.sessionTimeout || 30;
+    const sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
+
+    // Get most recent refresh token (represents last activity)
+    const refreshToken = await prisma.refreshToken.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!refreshToken) {
+      return { valid: false };
+    }
+
+    const lastActivity = refreshToken.createdAt.getTime();
+    const now = Date.now();
+    const timeSinceActivity = now - lastActivity;
+    const remaining = sessionTimeoutMs - timeSinceActivity;
+
+    if (remaining <= 0) {
+      // Session expired - delete all refresh tokens
+      await prisma.refreshToken.deleteMany({
+        where: { userId }
+      });
+      return { valid: false };
+    }
+
+    return { valid: true, remaining: Math.floor(remaining / 1000) }; // Return in seconds
+  } catch (error) {
+    console.error('Error checking session timeout:', error);
+    // On error, allow access to prevent lockout
+    return { valid: true };
+  }
+};
+
 export const authenticate = async (
   req: AuthRequest,
   res: Response,
@@ -41,6 +83,22 @@ export const authenticate = async (
 
     if (!user || !user.active) {
       return res.status(401).json({ message: 'Invalid or inactive user' });
+    }
+
+    // Check session timeout (only for non-admin routes to allow admin access during maintenance)
+    if (!req.path.startsWith('/admin') && !req.path.startsWith('/auth')) {
+      const sessionCheck = await checkSessionTimeout(user.id);
+      if (!sessionCheck.valid) {
+        return res.status(401).json({ 
+          message: 'Session expired due to inactivity',
+          code: 'SESSION_TIMEOUT'
+        });
+      }
+      
+      // Add remaining time to response header for frontend
+      if (sessionCheck.remaining !== undefined) {
+        res.setHeader('X-Session-Remaining', sessionCheck.remaining.toString());
+      }
     }
 
     req.user = {

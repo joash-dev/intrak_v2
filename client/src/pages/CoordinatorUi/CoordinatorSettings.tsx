@@ -1484,8 +1484,8 @@ const CoordinatorSettingsTab = () => {
                       <span className="font-medium">Version:</span> 1.0.0
                     </p>
                     <p>
-                      <span className="font-medium">Last Updated:</span> October
-                      2024
+                      <span className="font-medium">Last Updated:</span> December
+                      2025
                     </p>
                     <p>
                       <span className="font-medium">License:</span> Educational
