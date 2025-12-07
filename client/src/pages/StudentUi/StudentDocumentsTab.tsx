@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Upload,
   Download,
@@ -37,6 +37,10 @@ const StudentDocumentsTab: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // For upload modal
   const [selectedType, setSelectedType] = useState<string>("");
@@ -47,6 +51,15 @@ const StudentDocumentsTab: React.FC = () => {
     UPON_APPROVAL: true,
     POST_OJT: true,
   });
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewFileUrl) {
+        URL.revokeObjectURL(previewFileUrl);
+      }
+    };
+  }, [previewFileUrl]);
 
   const documentTypes = [
     // I. PRE-DEPLOYMENT Requirements
@@ -225,9 +238,15 @@ const StudentDocumentsTab: React.FC = () => {
   };
 
   const handleFile = async (file: File) => {
-    // Validate file
-    if (!documentService.isValidFileType(file)) {
-      toast.error("Invalid file type. Please upload PDF, JPG, or PNG files only.");
+    // Validate file type - PDF only
+    if (file.type !== 'application/pdf') {
+      toast.error("Invalid file type. Please upload PDF files only.");
+      return;
+    }
+
+    // Validate file extension as well
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error("Invalid file type. Please upload PDF files only.");
       return;
     }
 
@@ -238,12 +257,64 @@ const StudentDocumentsTab: React.FC = () => {
 
     setSelectedFile(file);
     setUploadProgress(0);
+
+    // Create preview URL for PDF
+    const url = URL.createObjectURL(file);
+    setPreviewFileUrl(url);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFile(files[0]);
+    }
+  };
+
+  const handleDropZoneClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveFile = () => {
+    if (previewFileUrl) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setSelectedFile(null);
+    setPreviewFileUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleUploadClick = (type: string) => {
     setSelectedType(type);
     setReuploadingDoc(null);
     setSelectedFile(null);
+    if (previewFileUrl) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setPreviewFileUrl(null);
+    setIsDragging(false);
     setUploadModalOpen(true);
   };
 
@@ -251,6 +322,11 @@ const StudentDocumentsTab: React.FC = () => {
     setSelectedType(doc.type);
     setReuploadingDoc(doc);
     setSelectedFile(null);
+    if (previewFileUrl) {
+      URL.revokeObjectURL(previewFileUrl);
+    }
+    setPreviewFileUrl(null);
+    setIsDragging(false);
     setUploadModalOpen(true);
   };
 
@@ -285,6 +361,12 @@ const StudentDocumentsTab: React.FC = () => {
 
       toast.success("Document uploaded successfully");
 
+      // Clean up preview URL
+      if (previewFileUrl) {
+        URL.revokeObjectURL(previewFileUrl);
+        setPreviewFileUrl(null);
+      }
+
       // Reload data
       await loadData();
 
@@ -297,6 +379,11 @@ const StudentDocumentsTab: React.FC = () => {
           console.error("Failed to delete old document after re-upload:", e);
         }
       }
+
+      // Reset and close modal
+      setSelectedFile(null);
+      setUploadModalOpen(false);
+      setIsDragging(false);
 
       // Close modal
       setUploadModalOpen(false);
@@ -666,7 +753,7 @@ const StudentDocumentsTab: React.FC = () => {
       {/* Upload Modal */}
       {uploadModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ marginTop: "0px" }}>
-          <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className={`bg-white dark:bg-[#19191c] rounded-2xl shadow-xl w-full ${previewFileUrl ? 'max-w-4xl max-h-[90vh]' : 'max-w-md'} overflow-hidden flex flex-col`}>
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {reuploadingDoc ? "Re-upload Document" : "Upload Document"}
@@ -679,53 +766,106 @@ const StudentDocumentsTab: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
                 <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
                   Uploading: {documentTypes.find(t => t.value === selectedType)?.label}
                 </p>
               </div>
 
+              {/* Drag and Drop Zone */}
               <div
-                className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${selectedFile
-                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/10"
-                  : "border-gray-300 dark:border-gray-600 hover:border-purple-400 dark:hover:border-purple-400"
-                  }`}
+                ref={dropZoneRef}
+                onClick={handleDropZoneClick}
+                onDragEnter={handleDragEnter}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+                  isDragging
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : selectedFile
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                    : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400"
+                }`}
               >
                 <input
+                  ref={fileInputRef}
                   type="file"
                   id="file-upload"
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,application/pdf"
                 />
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer flex flex-col items-center justify-center"
-                >
-                  {selectedFile ? (
-                    <>
-                      <FileText className="w-12 h-12 text-purple-600 mb-3" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {selectedFile.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Click to upload or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF, JPG, PNG (max 10MB)
-                      </p>
-                    </>
-                  )}
-                </label>
+                {selectedFile ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center space-x-3">
+                      <FileText className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {selectedFile.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFile();
+                        }}
+                        className="ml-2 p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        title="Remove file"
+                      >
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Click to change file or drag and drop a new PDF
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center">
+                    <Upload className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      PDF only (max 10MB)
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {/* PDF Preview */}
+              {selectedFile && previewFileUrl && (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-900">
+                  <div className="p-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Document Preview
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (previewFileUrl) {
+                          URL.revokeObjectURL(previewFileUrl);
+                          setPreviewFileUrl(null);
+                        }
+                      }}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Close preview"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="h-96 overflow-auto bg-white dark:bg-gray-800 p-4">
+                    <iframe
+                      src={previewFileUrl}
+                      className="w-full h-full border-0"
+                      title="PDF Preview"
+                    />
+                  </div>
+                </div>
+              )}
 
               {uploading && (
                 <div className="space-y-2">
@@ -741,7 +881,15 @@ const StudentDocumentsTab: React.FC = () => {
 
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() => setUploadModalOpen(false)}
+                  onClick={() => {
+                    setUploadModalOpen(false);
+                    if (previewFileUrl) {
+                      URL.revokeObjectURL(previewFileUrl);
+                      setPreviewFileUrl(null);
+                    }
+                    setSelectedFile(null);
+                    setIsDragging(false);
+                  }}
                   className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
                 >
                   Cancel
