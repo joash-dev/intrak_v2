@@ -119,7 +119,7 @@ const AdminSettings = () => {
     nasAvailable: false,
     nasStorage: null as SystemInfo['nasStorage'] | null,
   });
-  const [systemAlerts, setSystemAlerts] = useState<SystemInfo['alerts']>([]);
+  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
     version: "2.1.3",
     lastUpdated: new Date().toISOString(),
@@ -1396,7 +1396,7 @@ const AdminSettings = () => {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                         <Database className="w-5 h-5 mr-2 text-green-600" />
                         System Status
-                        {systemAlerts.length > 0 && (
+                        {systemAlerts && systemAlerts.length > 0 && (
                           <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
                             {systemAlerts.length} {systemAlerts.length === 1 ? 'alert' : 'alerts'}
                           </span>
@@ -1539,14 +1539,14 @@ const AdminSettings = () => {
                     </div>
 
                     {/* System Alerts */}
-                    {systemAlerts.length > 0 && (
+                    {systemAlerts && systemAlerts.length > 0 && (
                       <div className="mt-6">
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                           <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
                           System Alerts ({systemAlerts.length})
                         </h4>
                         <div className="space-y-2">
-                          {systemAlerts.map((alert, index) => (
+                          {systemAlerts.map((alert: SystemAlert, index: number) => (
                             <div
                               key={index}
                               className={`p-3 border rounded-lg ${
