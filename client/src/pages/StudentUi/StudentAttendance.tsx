@@ -58,6 +58,7 @@ const StudentAttendanceTab: React.FC = () => {
   const [workingDays, setWorkingDays] = useState<string[]>([]);
   const [showSaturdayPreferenceModal, setShowSaturdayPreferenceModal] = useState(false);
   const [saturdayPreferenceLoading, setSaturdayPreferenceLoading] = useState(false);
+  const [ojtStartDate, setOjtStartDate] = useState<string | null>(null);
 
   const qrGeneratedAtRef = useRef<number>(0);
   const showQRModalRef = useRef(false);
@@ -136,6 +137,10 @@ const StudentAttendanceTab: React.FC = () => {
       } else if (profile.companyType === 'PRIVATE' && profile.company) {
         // Show Saturday preference modal if student is in private company and hasn't set preference
         setShowSaturdayPreferenceModal(true);
+      }
+      // Store OJT start date
+      if (profile.startDate) {
+        setOjtStartDate(profile.startDate);
       }
     } catch (error) {
       console.error("Error fetching student/company info:", error);
@@ -243,13 +248,6 @@ const StudentAttendanceTab: React.FC = () => {
 
   // Helper function to check if a day is an expected working day
   const isExpectedWorkingDay = (day: number): boolean => {
-    if (!workingDays || workingDays.length === 0) {
-      // Default to Mon-Fri if no working days set
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-      const dayOfWeek = date.getDay();
-      return dayOfWeek >= 1 && dayOfWeek <= 5;
-    }
-
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const dayOfWeek = date.getDay();
     
@@ -257,21 +255,78 @@ const StudentAttendanceTab: React.FC = () => {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[dayOfWeek];
     
+    // Never treat Sunday as a working day
+    if (dayOfWeek === 0) {
+      return false;
+    }
+    
+    // If no working days are set, default to Mon-Fri (weekdays)
+    if (!workingDays || workingDays.length === 0) {
+      // Default to Mon-Fri if no working days set
+      return dayOfWeek >= 1 && dayOfWeek <= 5;
+    }
+
     // For private companies, check Saturday preference
     if (companyType === 'PRIVATE' && dayName === 'Saturday') {
       return worksOnSaturday;
     }
     
-    return workingDays.includes(dayName);
+    // If workingDays is set, check if the day is explicitly included
+    // But also default weekdays (Mon-Fri) to working days if not explicitly excluded
+    if (workingDays.includes(dayName)) {
+      return true;
+    }
+    
+    // Fallback: if it's a weekday (Mon-Fri) and workingDays is set but doesn't explicitly exclude it,
+    // treat it as a working day (this handles cases where workingDays might be incomplete)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      return true;
+    }
+    
+    return false;
   };
 
   // Helper function to check if a day is absent (expected but no log)
   const isAbsentDay = (day: number): boolean => {
-    if (!isExpectedWorkingDay(day)) return false;
-    
     const dateStr = `${currentDate.getFullYear()}-${String(
       currentDate.getMonth() + 1
     ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    
+    const dayDate = new Date(dateStr);
+    const dayOfWeek = dayDate.getDay();
+    
+    // Never mark weekends (Sunday = 0, Saturday = 6) as absent
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return false;
+    }
+    
+    // Check if date is in the future - don't mark future dates as absent
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dayDate.setHours(0, 0, 0, 0);
+    
+    if (dayDate > today) {
+      return false;
+    }
+    
+    // Check if OJT has started - if date is before start date, don't mark as absent
+    if (ojtStartDate) {
+      const startDate = new Date(ojtStartDate);
+      startDate.setHours(0, 0, 0, 0);
+      
+      // If the day is before the OJT start date, don't mark as absent
+      if (dayDate < startDate) {
+        return false;
+      }
+    }
+    
+    // Check if it's an expected working day
+    // If workingDays is empty or not set, default to Mon-Fri (weekdays)
+    // If workingDays is set, check if the day is in the array
+    const isWorkingDay = isExpectedWorkingDay(day);
+    if (!isWorkingDay) {
+      return false;
+    }
     
     // Check if there's any attendance log for this day
     if (!Array.isArray(attendanceLogs)) return true;
