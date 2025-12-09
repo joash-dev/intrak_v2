@@ -99,11 +99,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Rate limiting for auth routes
+// Rate limiting for auth routes (general protection, very lenient)
+// Note: Login now uses per-account lockout instead of IP-based rate limiting
 app.use('/api/auth', rateLimiter);
-
-// More specific rate limiting for login endpoint
-app.use('/api/auth/login', loginRateLimiter);
 
 // Static files (uploaded documents) with CORS headers
 // Use storage path (supports both local and NAS)
