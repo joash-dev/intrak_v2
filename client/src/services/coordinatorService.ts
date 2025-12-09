@@ -599,9 +599,10 @@ class CoordinatorService {
       
       console.log('Student assigned successfully:', response.data);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error assigning student to instructor:', error);
-      return false;
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to assign student to instructor';
+      throw new Error(errorMessage);
     }
   }
 

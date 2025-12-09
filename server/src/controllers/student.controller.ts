@@ -519,7 +519,16 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
     const { studentId } = req.params;
     const { instructorId } = req.body;
 
-    // Verify instructor exists and has INSTRUCTOR role
+    // Check if student exists
+    const existingStudent = await prisma.student.findUnique({
+      where: { id: studentId }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Verify instructor exists and has INSTRUCTOR role (if instructorId is provided)
     if (instructorId) {
       const instructor = await prisma.user.findFirst({
         where: {
@@ -534,19 +543,35 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Update student with instructor assignment
     const student = await prisma.student.update({
       where: { id: studentId },
-      data: { instructorId },
+      data: { instructorId: instructorId || null },
       include: {
         user: { select: { name: true, email: true } },
-        instructor: { select: { id: true, name: true, email: true } }
+        instructor: { 
+          select: { id: true, name: true, email: true } 
+        }
       }
     });
 
     res.json({ student });
   } catch (error: any) {
     console.error('Error assigning instructor:', error);
-    res.status(500).json({ message: 'Failed to assign instructor', error });
+    
+    // Provide more specific error messages
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    
+    if (error.code === 'P2003') {
+      return res.status(400).json({ message: 'Invalid instructor ID' });
+    }
+
+    res.status(500).json({ 
+      message: 'Failed to assign instructor', 
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
   }
 };
 
