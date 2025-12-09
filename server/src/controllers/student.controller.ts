@@ -544,9 +544,14 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
     }
 
     // Update student with instructor assignment
+    // Handle null/undefined instructorId explicitly
+    const updateData: { instructorId: string | null } = {
+      instructorId: instructorId && instructorId.trim() !== '' ? instructorId : null
+    };
+
     const student = await prisma.student.update({
       where: { id: studentId },
-      data: { instructorId: instructorId || null },
+      data: updateData,
       include: {
         user: { select: { name: true, email: true } },
         instructor: { 
@@ -558,6 +563,12 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
     res.json({ student });
   } catch (error: any) {
     console.error('Error assigning instructor:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      meta: error.meta,
+      stack: error.stack
+    });
     
     // Provide more specific error messages
     if (error.code === 'P2025') {
@@ -570,7 +581,11 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
 
     res.status(500).json({ 
       message: 'Failed to assign instructor', 
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      error: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        code: error.code,
+        meta: error.meta
+      } : undefined 
     });
   }
 };
