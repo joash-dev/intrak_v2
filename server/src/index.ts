@@ -49,6 +49,10 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy - required when running behind nginx/reverse proxy
+// This fixes express-rate-limit X-Forwarded-For header issues
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 
@@ -224,16 +228,16 @@ app.get('/api/admin/run-migrations', async (req, res) => {
     const { execSync } = require('child_process');
     console.log('🔄 Running database migrations...');
     execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd: './server' });
-    res.json({ 
-      success: true, 
-      message: 'Migrations completed successfully' 
+    res.json({
+      success: true,
+      message: 'Migrations completed successfully'
     });
   } catch (error: any) {
     console.error('Migration error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Migration failed', 
-      error: error.message 
+    res.status(500).json({
+      success: false,
+      message: 'Migration failed',
+      error: error.message
     });
   }
 });
@@ -291,12 +295,12 @@ if (process.env.NODE_ENV !== 'test') {
       console.log('🔌 Checking NAS connection...');
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       while (attempts < maxAttempts) {
         const isValid = await validateNASConnection();
         if (isValid) {
           console.log('✅ NAS connection validated successfully');
-          
+
           // Sync local files to NAS if any exist
           console.log('🔄 Checking for local files to sync to NAS...');
           const syncResult = await syncLocalToNAS();
@@ -306,7 +310,7 @@ if (process.env.NODE_ENV !== 'test') {
           if (syncResult.failed > 0) {
             console.warn(`⚠️  Failed to sync ${syncResult.failed} files`);
           }
-          
+
           return;
         }
         attempts++;
@@ -323,7 +327,7 @@ if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     await initializeDatabase();
     await waitForNAS();
-    
+
     const http = require('http');
     const { initializeSocketServer } = require('./socket');
 
