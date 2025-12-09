@@ -14,6 +14,7 @@ export interface AdminUser {
   office?: string | null;
   profilePhoto?: string | null;
   student?: {
+    id: string;  // Student record ID (different from user ID)
     studentNumber: string;
     program: string;
     year: number;
@@ -249,7 +250,7 @@ class AdminService {
       console.log('🔐 AdminService: Attempting password change...');
       console.log('🔐 AdminService: Current token exists:', !!localStorage.getItem('accessToken'));
       console.log('🔐 AdminService: Refresh token exists:', !!localStorage.getItem('refreshToken'));
-      
+
       const response = await api.put('/admin/password', passwordData);
       console.log('✅ AdminService: Password change successful:', response.data);
       return response.data;
@@ -259,13 +260,13 @@ class AdminService {
       console.error('❌ AdminService: Error response data:', error.response?.data);
       console.error('❌ AdminService: Error response status:', error.response?.status);
       console.error('❌ AdminService: Error response headers:', error.response?.headers);
-      
-      
+
+
       // Extract the specific error message from the API response
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Failed to change password';
-      
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        'Failed to change password';
+
       console.error('❌ AdminService: Final error message:', errorMessage);
       throw new Error(errorMessage);
     }
@@ -396,7 +397,7 @@ class AdminService {
     try {
       // Generate a default password if not provided
       const password = userData.password || this.generateDefaultPassword();
-      
+
       // Prepare user data for registration
       const userRegistrationData = {
         name: userData.name,
@@ -449,7 +450,7 @@ class AdminService {
       let emailSent = false;
       try {
         console.log('Sending welcome email to user...');
-        
+
         // Use the same approach as instructor service for consistency
         if (userData.role === 'STUDENT') {
           // For students, use the student welcome email endpoint
@@ -475,7 +476,7 @@ class AdminService {
           });
           emailSent = emailResponse.data.emailSent;
         }
-        
+
         console.log('Welcome email sent successfully:', emailSent);
       } catch (emailError: any) {
         console.warn('Failed to send welcome email:', emailError);
@@ -642,7 +643,7 @@ class AdminService {
 
       // Group students by program
       const programMap = new Map<string, { total: number; active: number }>();
-      
+
       students.forEach(student => {
         if (student.student) {
           const program = student.student.program;
@@ -742,12 +743,12 @@ class AdminService {
     try {
       const response = await announcementService.getAnnouncements();
       const allAnnouncements = response.announcements;
-      
+
       // Admin can see all announcements
-      const transformedAnnouncements = allAnnouncements.map(announcement => 
+      const transformedAnnouncements = allAnnouncements.map(announcement =>
         announcementService.transformAnnouncement(announcement)
       );
-      
+
       return transformedAnnouncements;
     } catch (error) {
       console.error('Error fetching announcements for admin:', error);

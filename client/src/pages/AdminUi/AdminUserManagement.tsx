@@ -338,11 +338,14 @@ const AdminUserManagement = () => {
   };
 
   const handleConfirmAssignment = async () => {
-    if (!selectedStudent || !selectedInstructor) return;
+    if (!selectedStudent || !selectedInstructor || !selectedStudent.student?.id) {
+      toast.error("Student record not found");
+      return;
+    }
 
     try {
       await instructorService.assignStudentToInstructor(
-        selectedStudent.id,
+        selectedStudent.student.id,  // Use Student ID, not User ID
         selectedInstructor
       );
       toast.success(
@@ -585,11 +588,10 @@ const AdminUserManagement = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.active
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${user.active
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                      }`}
+                        }`}
                     >
                       {user.active ? "ACTIVE" : "INACTIVE"}
                     </span>
@@ -772,8 +774,8 @@ const AdminUserManagement = () => {
                   value={formData.role}
                   onChange={(e) => {
                     const newRole = e.target.value;
-                    setFormData({ 
-                      ...formData, 
+                    setFormData({
+                      ...formData,
                       role: newRole,
                       // Auto-set program to Computer Engineering when role is STUDENT
                       program: newRole === "STUDENT" ? "Computer Engineering" : formData.program
@@ -850,42 +852,42 @@ const AdminUserManagement = () => {
 
               {(formData.role === "COORDINATOR" ||
                 formData.role === "INSTRUCTOR") && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Department *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.department}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          department: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="e.g., Engineering, Computer Science, IT Department"
-                      title="Enter the department name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      placeholder="+63-912-345-6789"
-                      title="Format: +63-XXX-XXX-XXXX (Philippine mobile number)"
-                    />
-                  </div>
-                </>
-              )}
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Department *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.department}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            department: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="e.g., Engineering, Computer Science, IT Department"
+                        title="Enter the department name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Phone
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="+63-912-345-6789"
+                        title="Format: +63-XXX-XXX-XXXX (Philippine mobile number)"
+                      />
+                    </div>
+                  </>
+                )}
 
               {formData.role === "INDUSTRY_PARTNER" && (
                 <>
