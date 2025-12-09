@@ -40,6 +40,20 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
               studentsAssigned: true,
             },
           },
+          // Include student relation for student users
+          student: {
+            select: {
+              id: true,  // Student record ID (needed for instructor assignment)
+              studentNumber: true,
+              program: true,
+              year: true,
+              company: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
         },
         skip,
         take: Number(limit),
@@ -146,8 +160,8 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     }
 
     if (newPassword.length < 8) {
-      return res.status(400).json({ 
-        message: 'New password must be at least 8 characters long' 
+      return res.status(400).json({
+        message: 'New password must be at least 8 characters long'
       });
     }
 
@@ -163,10 +177,10 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
-    
+
     if (!isCurrentPasswordValid) {
-      return res.status(400).json({ 
-        message: 'Current password is incorrect. Please enter your current password correctly.' 
+      return res.status(400).json({
+        message: 'Current password is incorrect. Please enter your current password correctly.'
       });
     }
 
@@ -180,7 +194,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     });
 
     // Log the password change
-    await auditLog(userId, 'PASSWORD_CHANGED', { 
+    await auditLog(userId, 'PASSWORD_CHANGED', {
       userId: userId,
       userEmail: user.email
     }, req);
@@ -188,9 +202,9 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'Password changed successfully' });
   } catch (error: any) {
     console.error('Change password error:', error);
-    res.status(500).json({ 
-      message: 'Failed to change password. Please try again.', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to change password. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -224,7 +238,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     // Use a transaction to handle related data deletion
     await prisma.$transaction(async (tx) => {
       // Delete related data in the correct order to avoid foreign key constraints
-      
+
       // 1. Delete audit logs
       await tx.auditLog.deleteMany({
         where: { userId: id }
@@ -354,10 +368,10 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     }
 
     // Log the deletion
-    await auditLog(req.user!.id, 'USER_DELETED', { 
-      deletedUserId: id, 
+    await auditLog(req.user!.id, 'USER_DELETED', {
+      deletedUserId: id,
       deletedUserName: user.name,
-      deletedUserEmail: user.email 
+      deletedUserEmail: user.email
     }, req);
 
     // Log activity
@@ -372,30 +386,30 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
     console.error('Delete user error:', error);
-    
+
     // Handle specific database errors
     if (error.code === 'P2003') {
-      return res.status(400).json({ 
-        message: 'Cannot delete user. User has related data that must be handled first. Please contact support for assistance.' 
+      return res.status(400).json({
+        message: 'Cannot delete user. User has related data that must be handled first. Please contact support for assistance.'
       });
     }
-    
+
     if (error.code === 'P2025') {
       return res.status(404).json({ message: 'User not found. The user may have already been deleted.' });
     }
 
     if (error.code === 'P2002') {
-      return res.status(400).json({ 
-        message: 'Cannot delete user due to unique constraint violation. Please contact support.' 
+      return res.status(400).json({
+        message: 'Cannot delete user due to unique constraint violation. Please contact support.'
       });
     }
 
     // Provide more detailed error message in development
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? `Failed to delete user: ${error.message}` 
+    const errorMessage = process.env.NODE_ENV === 'development'
+      ? `Failed to delete user: ${error.message}`
       : 'Failed to delete user. Please try again or contact support.';
 
-    res.status(500).json({ 
+    res.status(500).json({
       message: errorMessage,
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
@@ -459,15 +473,15 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
       data: { profilePhoto: filename } as any
     });
 
-    res.json({ 
+    res.json({
       message: 'Profile photo uploaded successfully',
       profilePhoto: `/api/users/profile-photo/${filename}`
     });
   } catch (error) {
     console.error('Profile photo upload error:', error);
-    res.status(500).json({ 
-      message: 'Profile photo upload failed', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Profile photo upload failed',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -486,18 +500,18 @@ export const getCurrentUserProfilePhoto = async (req: AuthRequest, res: Response
     }
 
     // Return the full URL path for the profile photo
-    const baseUrl = process.env.NODE_ENV === 'production' 
+    const baseUrl = process.env.NODE_ENV === 'production'
       ? process.env.BASE_URL || 'http://localhost:5000'
       : 'http://localhost:5000';
-    
-    res.json({ 
+
+    res.json({
       profilePhoto: `${baseUrl}/api/users/profile-photo/${user.profilePhoto}`
     });
   } catch (error) {
     console.error('Get current user profile photo error:', error);
-    res.status(500).json({ 
-      message: 'Failed to get profile photo', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to get profile photo',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -517,18 +531,18 @@ export const getProfilePhoto = async (req: any, res: Response) => {
 
     const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', filename);
     console.log(`📸 Looking for file at: ${filepath}`);
-    
+
     if (!fs.existsSync(filepath)) {
       console.log(`📸 File does not exist at: ${filepath}`);
       return res.status(404).json({ message: 'Profile photo file not found' });
     }
 
     console.log(`📸 Serving profile photo: ${filename}`);
-    
+
     // Add CORS headers for image serving
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
-    
+
     // Set appropriate content type based on file extension
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes: { [key: string]: string } = {
@@ -539,13 +553,13 @@ export const getProfilePhoto = async (req: any, res: Response) => {
       '.webp': 'image/webp'
     };
     res.header('Content-Type', mimeTypes[ext] || 'image/jpeg');
-    
+
     res.sendFile(filepath);
   } catch (error) {
     console.error('Get profile photo error:', error);
-    res.status(500).json({ 
-      message: 'Failed to get profile photo', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to get profile photo',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -575,9 +589,9 @@ export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'Profile photo removed successfully' });
   } catch (error) {
     console.error('Remove profile photo error:', error);
-    res.status(500).json({ 
-      message: 'Failed to remove profile photo', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to remove profile photo',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
