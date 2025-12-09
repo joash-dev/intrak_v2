@@ -45,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
       'INDUSTRY_PARTNER': 'industry partner'
     };
     const roleDisplay = roleDisplayNames[user.role] || user.role.toLowerCase();
-    
+
     await logActivity({
       type: 'USER_REGISTERED',
       description: `New ${roleDisplay} registered: ${user.name} (${user.email})`,
@@ -100,27 +100,85 @@ export const login = async (req: Request, res: Response) => {
 
     console.log('User found:', { id: user.id, name: user.name, role: user.role });
 
-    // Check failed login attempts (stored in metadata or we can use a separate table)
-    // For now, we'll use a simple approach with rate limiting
+    // Check if account is locked
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const remainingMinutes = Math.ceil((user.lockedUntil.getTime() - Date.now()) / (1000 * 60));
+      console.log('Account is locked:', user.email, 'Remaining minutes:', remainingMinutes);
+      return res.status(423).json({
+        message: `Account is temporarily locked due to too many failed login attempts. Please try again in ${remainingMinutes} minute(s).`,
+        lockedUntil: user.lockedUntil,
+        remainingMinutes
+      });
+    }
+
+    // Auto-unlock if lockout period has passed
+    if (user.lockedUntil && user.lockedUntil <= new Date()) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: 0,
+          lockedUntil: null
+        }
+      });
+      console.log('Account auto-unlocked:', user.email);
+    }
+
     const validPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!validPassword) {
       console.log('Invalid password for user:', user.email);
-      
+
+      // Increment failed login attempts
+      const newFailedAttempts = (user.failedLoginAttempts || 0) + 1;
+      const shouldLock = newFailedAttempts >= maxLoginAttempts;
+      const lockoutDuration = 15 * 60 * 1000; // 15 minutes
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: newFailedAttempts,
+          lockedUntil: shouldLock ? new Date(Date.now() + lockoutDuration) : null
+        }
+      });
+
       // Log failed attempt
       await logActivity({
         type: 'LOGIN_FAILED',
-        description: `Failed login attempt for ${user.email}`,
+        description: `Failed login attempt for ${user.email} (Attempt ${newFailedAttempts}/${maxLoginAttempts})`,
         userId: user.id,
         userName: user.email,
         ipAddress: req.ip,
-        metadata: { maxAttempts: maxLoginAttempts }
+        metadata: {
+          maxAttempts: maxLoginAttempts,
+          currentAttempts: newFailedAttempts,
+          accountLocked: shouldLock
+        }
       });
-      
-      return res.status(401).json({ 
+
+      if (shouldLock) {
+        return res.status(423).json({
+          message: `Account locked due to ${maxLoginAttempts} failed login attempts. Please try again in 15 minutes.`,
+          locked: true,
+          remainingMinutes: 15
+        });
+      }
+
+      return res.status(401).json({
         message: 'Invalid credentials',
-        maxAttempts: maxLoginAttempts
+        remainingAttempts: maxLoginAttempts - newFailedAttempts
       });
+    }
+
+    // Successful login - reset failed attempts
+    if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: 0,
+          lockedUntil: null
+        }
+      });
+      console.log('Reset failed login attempts for:', user.email);
     }
 
     console.log('Password valid, generating tokens...');
@@ -174,18 +232,18 @@ export const login = async (req: Request, res: Response) => {
 
       companyInfo = company
         ? {
-            id: company.id,
-            name: company.name,
-            address: company.address,
-            contactPerson: company.contactPerson,
-            contactEmail: company.contactEmail,
-            contactNumber: company.contactNumber
-          }
+          id: company.id,
+          name: company.name,
+          address: company.address,
+          contactPerson: company.contactPerson,
+          contactEmail: company.contactEmail,
+          contactNumber: company.contactNumber
+        }
         : {
-            id: null,
-            name: null,
-            address: null
-          };
+          id: null,
+          name: null,
+          address: null
+        };
     }
 
     console.log('Sending response...');
@@ -212,8 +270,8 @@ export const login = async (req: Request, res: Response) => {
       stack: error.stack,
       name: error.name
     });
-    res.status(500).json({ 
-      message: 'Login failed', 
+    res.status(500).json({
+      message: 'Login failed',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
@@ -245,19 +303,19 @@ export const refresh = async (req: Request, res: Response) => {
     const sessionTimeoutMinutes = adminSettings?.sessionTimeout || 30;
     const sessionTimeoutMs = sessionTimeoutMinutes * 60 * 1000;
     const timeSinceActivity = Date.now() - tokenRecord.createdAt.getTime();
-    
+
     if (timeSinceActivity > sessionTimeoutMs) {
       // Session expired - delete token
       await prisma.refreshToken.delete({
         where: { token: refreshToken }
       });
-      return res.status(401).json({ 
+      return res.status(401).json({
         message: 'Session expired due to inactivity',
         code: 'SESSION_TIMEOUT'
       });
     }
 
-    const { accessToken, refreshToken: newRefreshToken } = 
+    const { accessToken, refreshToken: newRefreshToken } =
       generateTokens(tokenRecord.user);
 
     await prisma.refreshToken.delete({
