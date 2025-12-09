@@ -22,6 +22,11 @@ router.put('/partnership-checklist', authorize(['STUDENT']), studentController.u
 router.put('/:id/saturday-preference', authorize(['STUDENT']), studentController.updateSaturdayPreference);
 router.post('/apply-company', authorize(['STUDENT']), studentController.applyToCompany);
 router.post('/request-company-partnership', authorize(['STUDENT']), studentController.requestCompanyPartnership);
+
+// Instructor assignment routes - specific routes before generic :id
+router.patch('/bulk-assign-instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.bulkAssignInstructor);
+router.patch('/:studentId/instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.assignInstructor);
+
 // Weekly report routes
 router.get('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.getWeeklyReport);
 router.post('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.saveWeeklyReport);
@@ -38,8 +43,6 @@ router.get('/agency-self-evaluation/export', authorize(['INDUSTRY_PARTNER', 'STU
 router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);
 router.put('/:id', authorize(['ADMIN', 'INSTRUCTOR', 'STUDENT', 'COORDINATOR']), studentController.updateStudent);
-router.patch('/:studentId/instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.assignInstructor);
-router.patch('/bulk-assign-instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.bulkAssignInstructor);
 router.delete('/:id', authorize(['ADMIN', 'INSTRUCTOR']), studentController.deleteStudent);
 
 export default router;
