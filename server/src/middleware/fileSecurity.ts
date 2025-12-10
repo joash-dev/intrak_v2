@@ -9,16 +9,16 @@ export const validateFileType = (req: Request, res: Response, next: NextFunction
     return next();
   }
 
-  const allowedMimes = (process.env.ALLOWED_MIMETYPES || 
+  const allowedMimes = (process.env.ALLOWED_MIMETYPES ||
     'application/pdf,image/jpeg,image/png').split(',');
-  
+
   if (!allowedMimes.includes(req.file.mimetype)) {
     // Delete the uploaded file if it's invalid
     if (fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    return res.status(400).json({ 
-      message: 'Invalid file type. Only PDF, JPG, and PNG files are allowed.' 
+    return res.status(400).json({
+      message: 'Invalid file type. Only PDF, JPG, and PNG files are allowed.'
     });
   }
 
@@ -32,14 +32,14 @@ export const validateFileSize = (req: Request, res: Response, next: NextFunction
   }
 
   const maxSize = parseInt(process.env.MAX_FILE_SIZE || '10485760'); // 10MB default
-  
+
   if (req.file.size > maxSize) {
     // Delete the uploaded file if it's too large
     if (fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    return res.status(400).json({ 
-      message: `File size exceeds limit. Maximum size is ${maxSize / (1024 * 1024)}MB.` 
+    return res.status(400).json({
+      message: `File size exceeds limit. Maximum size is ${maxSize / (1024 * 1024)}MB.`
     });
   }
 
@@ -55,7 +55,7 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
   try {
     const fileBuffer = fs.readFileSync(req.file.path);
     const fileContent = fileBuffer.toString('utf8', 0, Math.min(1024, fileBuffer.length)); // Read first 1KB
-    
+
     // Check for potentially malicious content
     const maliciousPatterns = [
       /<script/i,
@@ -74,8 +74,8 @@ export const scanFileContent = (req: Request, res: Response, next: NextFunction)
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
-        return res.status(400).json({ 
-          message: 'File contains potentially malicious content and cannot be uploaded.' 
+        return res.status(400).json({
+          message: 'File contains potentially malicious content and cannot be uploaded.'
         });
       }
     }
@@ -95,9 +95,9 @@ export const uploadRateLimit = multer({
   },
   fileFilter: (req, file, cb) => {
     // Additional file filter for security
-    const allowedMimes = (process.env.ALLOWED_MIMETYPES || 
+    const allowedMimes = (process.env.ALLOWED_MIMETYPES ||
       'application/pdf,image/jpeg,image/png').split(',');
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -109,8 +109,8 @@ export const uploadRateLimit = multer({
 // Clean up temporary files on error
 export const cleanupOnError = (req: Request, res: Response, next: NextFunction) => {
   const originalSend = res.send;
-  
-  res.send = function(data) {
+
+  res.send = function (data) {
     // If response indicates an error, clean up uploaded file
     if (res.statusCode >= 400 && req.file && fs.existsSync(req.file.path)) {
       try {
@@ -119,9 +119,9 @@ export const cleanupOnError = (req: Request, res: Response, next: NextFunction) 
         console.error('Failed to cleanup file:', error);
       }
     }
-    
+
     return originalSend.call(this, data);
   };
-  
+
   next();
 };

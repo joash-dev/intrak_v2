@@ -170,7 +170,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     try {
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
-      
+
       // Create local backup if saving to NAS (for redundancy)
       if (!isUsingFallback && finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
         const backupPath = createLocalBackup(finalPath, finalPath);

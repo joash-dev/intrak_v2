@@ -784,10 +784,10 @@ const StudentDocumentsTab: React.FC = () => {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${isDragging
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                    : selectedFile
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
-                      : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  : selectedFile
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                    : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400"
                   }`}
               >
                 <input
@@ -952,11 +952,36 @@ const StudentDocumentsTab: React.FC = () => {
                       className="max-w-full max-h-full object-contain shadow-sm rounded-lg border border-gray-200 dark:border-gray-700"
                     />
                   ) : (
-                    <iframe
-                      src={previewUrl}
-                      className="w-full h-full rounded-lg shadow-sm bg-white border border-gray-200 dark:border-gray-700"
-                      title="Document Preview"
-                    />
+                    <div className="w-full h-full">
+                      {/* Desktop View: Iframe */}
+                      <iframe
+                        src={previewUrl}
+                        className="hidden lg:block w-full h-full rounded-lg shadow-sm bg-white border border-gray-200 dark:border-gray-700"
+                        title="Document Preview"
+                      />
+
+                      {/* Mobile View: Open Button */}
+                      <div className="lg:hidden w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 text-center">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4">
+                          <FileText className="w-8 h-8 text-red-600 dark:text-red-400" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          PDF Document
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+                          This document makes use of a PDF viewer which may not be fully supported on mobile screens.
+                        </p>
+                        <a
+                          href={previewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg transition-all"
+                        >
+                          <Eye className="w-5 h-5 mr-2" />
+                          Open Document
+                        </a>
+                      </div>
+                    </div>
                   )
                 ) : (
                   <div className="text-center">
