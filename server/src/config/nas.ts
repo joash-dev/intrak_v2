@@ -52,10 +52,6 @@ export const getStoragePath = (): string => {
 };
 
 /**
- * Get storage path with automatic fallback to local storage if NAS is unavailable
- * @returns Object with storagePath and isUsingFallback flag
- */
-/**
  * Check if a path is actually a network mount (CIFS/NFS) - synchronous version
  * This helps detect stale mounts where directory exists but NAS is unmounted
  */
