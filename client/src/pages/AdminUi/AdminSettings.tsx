@@ -1439,33 +1439,33 @@ const AdminSettings = () => {
 
                       <div
                         className={`p-4 border rounded-lg ${!systemStatus.nasAvailable
-                            ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
-                            : systemStatus.storage > 80
-                              ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                              : systemStatus.storage > 60
-                                ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
-                                : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                          ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
+                          : systemStatus.storage > 80
+                            ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                            : systemStatus.storage > 60
+                              ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
+                              : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                           }`}
                       >
                         <div className="flex items-center space-x-2 mb-2">
                           <div
                             className={`w-3 h-3 rounded-full ${!systemStatus.nasAvailable
-                                ? "bg-orange-500 animate-pulse"
-                                : systemStatus.storage > 80
-                                  ? "bg-red-500"
-                                  : systemStatus.storage > 60
-                                    ? "bg-yellow-500"
-                                    : "bg-green-500"
+                              ? "bg-orange-500 animate-pulse"
+                              : systemStatus.storage > 80
+                                ? "bg-red-500"
+                                : systemStatus.storage > 60
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
                               }`}
                           ></div>
                           <span
                             className={`text-sm font-medium ${!systemStatus.nasAvailable
-                                ? "text-orange-800 dark:text-orange-200"
-                                : systemStatus.storage > 80
-                                  ? "text-red-800 dark:text-red-200"
-                                  : systemStatus.storage > 60
-                                    ? "text-yellow-800 dark:text-yellow-200"
-                                    : "text-green-800 dark:text-green-200"
+                              ? "text-orange-800 dark:text-orange-200"
+                              : systemStatus.storage > 80
+                                ? "text-red-800 dark:text-red-200"
+                                : systemStatus.storage > 60
+                                  ? "text-yellow-800 dark:text-yellow-200"
+                                  : "text-green-800 dark:text-green-200"
                               }`}
                           >
                             Storage
@@ -1477,18 +1477,18 @@ const AdminSettings = () => {
                           )}
                         </div>
                         {!systemStatus.nasAvailable && (
-                          <div className="mb-2 p-2 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded text-xs text-orange-800 dark:text-orange-200">
-                            ⚠️ NAS Offline - Gumagamit ng Local Storage
+                          <div className="mb-2 p-2.5 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-lg text-xs text-orange-800 dark:text-orange-200 leading-relaxed">
+                            ⚠️ NAS Offline - Using Local Storage
                           </div>
                         )}
                         <p
                           className={`text-xs ${!systemStatus.nasAvailable
-                              ? "text-orange-600 dark:text-orange-400"
-                              : systemStatus.storage > 80
-                                ? "text-red-600 dark:text-red-400"
-                                : systemStatus.storage > 60
-                                  ? "text-yellow-600 dark:text-yellow-400"
-                                  : "text-green-600 dark:text-green-400"
+                            ? "text-orange-600 dark:text-orange-400"
+                            : systemStatus.storage > 80
+                              ? "text-red-600 dark:text-red-400"
+                              : systemStatus.storage > 60
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-green-600 dark:text-green-400"
                             }`}
                         >
                           {systemStatus.storage}% Used
