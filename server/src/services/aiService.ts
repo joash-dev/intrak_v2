@@ -109,7 +109,10 @@ interface GenerateAnnouncementContentParams {
 }
 
 class AIService {
-  private config = getAIConfig();
+  // Get config dynamically to pick up env changes after restarts
+  private get config() {
+    return getAIConfig();
+  }
 
   private async callOpenAI(prompt: string): Promise<string> {
     if (!this.config.enabled || !this.config.apiKey) {
@@ -202,22 +205,22 @@ class AIService {
       // Available models: models/gemini-2.5-flash, models/gemini-2.0-flash, models/gemini-2.5-pro
       // Model names must include 'models/' prefix
       let modelName = this.config.model;
-      
+
       // Map legacy/incorrect model names to available models
       if (modelName === 'gemini-1.5-flash' || modelName === 'gemini-1.5-pro') {
         modelName = 'gemini-2.5-flash'; // Use 2.5 instead of 1.5
       } else if (modelName === 'gemini-pro') {
         modelName = 'gemini-2.5-flash'; // Use flash as default
       }
-      
+
       // Ensure model name has 'models/' prefix
       if (!modelName.startsWith('models/')) {
         modelName = `models/${modelName}`;
       }
-      
+
       // Use v1 API (works for all current models)
       const url = `https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${this.config.apiKey}`;
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -252,24 +255,24 @@ class AIService {
       }
 
       const data: any = await response.json();
-      
+
       // Check for finish reason
       const finishReason = data.candidates?.[0]?.finishReason;
-      
+
       // Handle safety filters or blocked content
       if (finishReason === 'SAFETY' || finishReason === 'RECITATION') {
         throw new Error('Content was blocked by safety filters. Please try with different input.');
       }
-      
+
       if (finishReason === 'MAX_TOKENS') {
         console.warn('Gemini response was truncated due to token limit. Consider increasing AI_MAX_TOKENS.');
         // Still try to return what we got
       }
-      
+
       // Extract text from response
       let text = '';
       const candidate = data.candidates?.[0];
-      
+
       if (candidate?.content?.parts) {
         // Check all parts for text
         for (const part of candidate.content.parts) {
@@ -279,17 +282,17 @@ class AIService {
         }
         text = text.trim();
       }
-      
+
       if (!text) {
         // Log full response for debugging
         const usageMetadata = data.usageMetadata || {};
         const thinkingTokens = usageMetadata.thoughtsTokenCount || 0;
         const totalTokens = usageMetadata.totalTokenCount || 0;
-        
+
         console.error('Gemini API returned empty text.');
         console.error('Finish reason:', finishReason);
         console.error('Token usage:', { thinkingTokens, totalTokens, maxTokens: this.config.maxTokens });
-        
+
         if (finishReason === 'MAX_TOKENS') {
           // Calculate recommended tokens (thinking tokens + output tokens)
           const recommendedTokens = Math.max(thinkingTokens + 500, 2000);
@@ -300,7 +303,7 @@ class AIService {
           throw new Error('AI returned empty response. Please check your API key and model configuration.');
         }
       }
-      
+
       return text;
     } catch (error: any) {
       console.error('Gemini API call failed:', error);
@@ -618,17 +621,17 @@ Write in a professional, supportive tone. Focus on growth opportunities.`;
   async generateAnnouncementContent(params: GenerateAnnouncementContentParams): Promise<string> {
     const { title, audience, type } = params;
 
-    const audienceDescription = audience === 'ALL' 
+    const audienceDescription = audience === 'ALL'
       ? 'all users (students, instructors, coordinators, and supervisors)'
       : audience === 'STUDENTS'
-      ? 'students'
-      : audience === 'INSTRUCTORS'
-      ? 'instructors'
-      : audience === 'COORDINATORS'
-      ? 'coordinators'
-      : audience === 'INDUSTRY_PARTNERS'
-      ? 'industry partners/supervisors'
-      : audience.toLowerCase();
+        ? 'students'
+        : audience === 'INSTRUCTORS'
+          ? 'instructors'
+          : audience === 'COORDINATORS'
+            ? 'coordinators'
+            : audience === 'INDUSTRY_PARTNERS'
+              ? 'industry partners/supervisors'
+              : audience.toLowerCase();
 
     const typeContext = type ? `\nAnnouncement Type: ${type}` : '';
 

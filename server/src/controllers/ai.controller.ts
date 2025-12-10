@@ -14,7 +14,7 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
 
     if (!competencyId || !rating || !studentId) {
       console.error('❌ Missing required fields:', { competencyId: !!competencyId, rating: !!rating, studentId: !!studentId });
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Missing required fields: competencyId, rating, studentId',
         received: { competencyId: !!competencyId, rating: !!rating, studentId: !!studentId }
       });
@@ -98,8 +98,8 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
   } catch (error: any) {
     console.error('Error generating evaluation remarks:', error);
     console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Failed to generate remarks', 
+    res.status(500).json({
+      message: 'Failed to generate remarks',
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
@@ -111,8 +111,8 @@ export const generateDocumentFeedback = async (req: AuthRequest, res: Response) 
     const { documentId, action } = req.body;
 
     if (!documentId || !action) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: documentId, action' 
+      return res.status(400).json({
+        message: 'Missing required fields: documentId, action'
       });
     }
 
@@ -155,9 +155,9 @@ export const generateDocumentFeedback = async (req: AuthRequest, res: Response) 
     res.json({ feedback });
   } catch (error: any) {
     console.error('Error generating document feedback:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate feedback', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate feedback',
+      error: error.message
     });
   }
 };
@@ -167,8 +167,8 @@ export const generateAttendanceNote = async (req: AuthRequest, res: Response) =>
     const { attendanceLogId, action } = req.body;
 
     if (!attendanceLogId || !action) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: attendanceLogId, action' 
+      return res.status(400).json({
+        message: 'Missing required fields: attendanceLogId, action'
       });
     }
 
@@ -220,9 +220,9 @@ export const generateAttendanceNote = async (req: AuthRequest, res: Response) =>
     res.json({ note });
   } catch (error: any) {
     console.error('Error generating attendance note:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate note', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate note',
+      error: error.message
     });
   }
 };
@@ -231,9 +231,17 @@ export const generateWeeklyReportSummary = async (req: AuthRequest, res: Respons
   try {
     const { tasksAccomplished, knowledgeSkillsValues } = req.body;
 
+    // Log AI config status for debugging
+    const config = getAIConfigFromConfig();
+    console.log('📝 AI Weekly Report Summary requested');
+    console.log('   AI Enabled:', config.enabled);
+    console.log('   AI Provider:', config.provider);
+    console.log('   AI Model:', config.model);
+    console.log('   Has API Key:', !!config.apiKey);
+
     if (!tasksAccomplished && !knowledgeSkillsValues) {
-      return res.status(400).json({ 
-        message: 'At least one of tasksAccomplished or knowledgeSkillsValues is required' 
+      return res.status(400).json({
+        message: 'At least one of tasksAccomplished or knowledgeSkillsValues is required'
       });
     }
 
@@ -244,10 +252,11 @@ export const generateWeeklyReportSummary = async (req: AuthRequest, res: Respons
 
     res.json({ summary });
   } catch (error: any) {
-    console.error('Error generating weekly report summary:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate summary', 
-      error: error.message 
+    console.error('❌ Error generating weekly report summary:', error.message);
+    console.error('   Full error:', error);
+    res.status(500).json({
+      message: 'Failed to generate summary',
+      error: error.message
     });
   }
 };
@@ -257,8 +266,8 @@ export const generateOverallComments = async (req: AuthRequest, res: Response) =
     const { studentId, competencies, overallRating, terminationData } = req.body;
 
     if (!studentId || !competencies || !overallRating) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: studentId, competencies, overallRating' 
+      return res.status(400).json({
+        message: 'Missing required fields: studentId, competencies, overallRating'
       });
     }
 
@@ -316,9 +325,9 @@ export const generateOverallComments = async (req: AuthRequest, res: Response) =
     res.json({ comments });
   } catch (error: any) {
     console.error('Error generating overall comments:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate comments', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate comments',
+      error: error.message
     });
   }
 };
@@ -328,8 +337,8 @@ export const generateForm18Comments = async (req: AuthRequest, res: Response) =>
     const { studentId, ratings } = req.body;
 
     if (!studentId || !ratings) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: studentId, ratings' 
+      return res.status(400).json({
+        message: 'Missing required fields: studentId, ratings'
       });
     }
 
@@ -360,9 +369,9 @@ export const generateForm18Comments = async (req: AuthRequest, res: Response) =>
     res.json({ comments });
   } catch (error: any) {
     console.error('Error generating Form 18 comments:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate comments', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate comments',
+      error: error.message
     });
   }
 };
@@ -372,8 +381,8 @@ export const generateInstructorEvaluationComments = async (req: AuthRequest, res
     const { studentId, ratings, overallRating } = req.body;
 
     if (!studentId) {
-      return res.status(400).json({ 
-        message: 'Missing required field: studentId' 
+      return res.status(400).json({
+        message: 'Missing required field: studentId'
       });
     }
 
@@ -428,9 +437,9 @@ export const generateInstructorEvaluationComments = async (req: AuthRequest, res
     res.json({ comments });
   } catch (error: any) {
     console.error('Error generating instructor evaluation comments:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate comments', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate comments',
+      error: error.message
     });
   }
 };
@@ -440,8 +449,8 @@ export const generateImprovementSuggestions = async (req: AuthRequest, res: Resp
     const { studentId, currentPerformance, ratings } = req.body;
 
     if (!studentId) {
-      return res.status(400).json({ 
-        message: 'Missing required field: studentId' 
+      return res.status(400).json({
+        message: 'Missing required field: studentId'
       });
     }
 
@@ -496,9 +505,9 @@ export const generateImprovementSuggestions = async (req: AuthRequest, res: Resp
     res.json({ suggestions });
   } catch (error: any) {
     console.error('Error generating improvement suggestions:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate suggestions', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate suggestions',
+      error: error.message
     });
   }
 };
@@ -508,8 +517,8 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
     const { title, audience, type } = req.body;
 
     if (!title || !audience) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: title, audience' 
+      return res.status(400).json({
+        message: 'Missing required fields: title, audience'
       });
     }
 
@@ -522,9 +531,9 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
     res.json({ content });
   } catch (error: any) {
     console.error('Error generating announcement content:', error);
-    res.status(500).json({ 
-      message: 'Failed to generate content', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to generate content',
+      error: error.message
     });
   }
 };
@@ -533,7 +542,7 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
 export const getAIConfig = async (req: AuthRequest, res: Response) => {
   try {
     const config = getAIConfigFromConfig();
-    
+
     // Return only safe config (don't expose API key)
     res.json({
       enabled: config.enabled,
@@ -545,9 +554,9 @@ export const getAIConfig = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error getting AI config:', error);
-    res.status(500).json({ 
-      message: 'Failed to get AI configuration', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Failed to get AI configuration',
+      error: error.message
     });
   }
 };

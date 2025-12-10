@@ -625,21 +625,23 @@ const StudentDocumentsTab: React.FC = () => {
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category)}
-                className={`w-full flex items-center justify-between px-6 py-4 border-b transition-colors ${styles.button}`}
+                className={`w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b transition-colors ${styles.button}`}
               >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${styles.iconBg}`}>
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${styles.iconBg}`}>
                     <FileText className={`w-5 h-5 ${styles.iconColor}`} />
                   </div>
-                  <h3 className={`text-lg font-semibold ${styles.title}`}>
-                    {categoryLabel}
-                  </h3>
-                  <span className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700">
-                    {requirements.length} items
-                  </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
+                    <h3 className={`text-base sm:text-lg font-semibold ${styles.title} truncate`}>
+                      {categoryLabel}
+                    </h3>
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 whitespace-nowrap w-fit">
+                      {requirements.length} items
+                    </span>
+                  </div>
                 </div>
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${expandedCategories[category] ? "rotate-180" : ""
+                  className={`w-5 h-5 text-gray-500 flex-shrink-0 ml-2 transition-transform duration-300 ${expandedCategories[category] ? "rotate-180" : ""
                     }`}
                 />
               </button>
@@ -781,13 +783,12 @@ const StudentDocumentsTab: React.FC = () => {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
-                  isDragging
+                className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${isDragging
                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                     : selectedFile
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
-                    : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400"
-                }`}
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                      : "border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-400"
+                  }`}
               >
                 <input
                   ref={fileInputRef}
