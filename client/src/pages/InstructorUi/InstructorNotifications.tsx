@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, Trash2, Check, Clock, AlertCircle, FileText, Info } from "lucide-react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
@@ -6,7 +6,14 @@ import toast from "react-hot-toast";
 
 const InstructorNotifications = () => {
     const navigate = useNavigate();
-    const { notifications: contextNotifications } = useOutletContext<{ notifications: NotificationItem[] }>() || { notifications: [] };
+    const {
+        notifications: contextNotifications,
+        setLocalNotifications: setParentNotifications
+    } = useOutletContext<{
+        notifications: NotificationItem[],
+        refreshNotifications?: () => Promise<void>,
+        setLocalNotifications?: React.Dispatch<React.SetStateAction<NotificationItem[]>>
+    }>() || { notifications: [] };
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -35,6 +42,10 @@ const InstructorNotifications = () => {
         try {
             await notificationService.markAsRead(id);
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+            // Also update parent state
+            if (setParentNotifications) {
+                setParentNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+            }
             toast.success("Marked as read");
         } catch (error) {
             toast.error("Failed to mark as read");
@@ -45,6 +56,10 @@ const InstructorNotifications = () => {
         try {
             await notificationService.markAllAsRead();
             setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            // Also update parent state so it persists when navigating
+            if (setParentNotifications) {
+                setParentNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            }
             toast.success("All notifications marked as read");
         } catch (error) {
             toast.error("Failed to mark all as read");
@@ -66,10 +81,29 @@ const InstructorNotifications = () => {
             await handleMarkAsRead(notification.id);
         }
 
+        // Handle message notifications - navigate to student management and open chat
+        if (notification.title === "New Message from Student" && notification.link) {
+            const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
+            const studentId = urlParams.get('studentId');
+            if (studentId) {
+                sessionStorage.setItem('openStudentId', studentId);
+                navigate('/instructor/students');
+                return;
+            }
+        }
+
         if (notification.link) {
             if (notification.link.startsWith("http")) {
                 window.open(notification.link, "_blank");
             } else {
+                // Check if link contains studentId parameter
+                const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
+                const studentId = urlParams.get('studentId');
+                if (studentId && notification.link.includes('/instructor/students')) {
+                    sessionStorage.setItem('openStudentId', studentId);
+                    navigate('/instructor/students');
+                    return;
+                }
                 navigate(notification.link);
             }
         } else if (notification.type === "DOCUMENT") {

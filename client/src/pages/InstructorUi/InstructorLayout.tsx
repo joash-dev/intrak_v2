@@ -226,8 +226,15 @@ const InstructorLayout = () => {
             {/* Main Content */}
             <main className={`p-6 pt-24 lg:pt-6 transition-all duration-300 relative ${sidebarOpen ? "z-10 lg:z-auto" : "z-auto"} ${sidebarOpen ? (sidebarExpanded ? "lg:ml-80" : "lg:ml-28") : "lg:ml-4"}`}>
                 <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
-                    {/* Pass notifications to children if they need it */}
-                    <Outlet context={{ notifications: localNotifications }} />
+                    {/* Pass notifications and refresh function to children */}
+                    <Outlet context={{
+                        notifications: localNotifications,
+                        refreshNotifications: async () => {
+                            const fresh = await notificationService.getNotifications({ limit: 15 });
+                            setLocalNotifications(fresh);
+                        },
+                        setLocalNotifications
+                    }} />
                 </Suspense>
             </main>
 

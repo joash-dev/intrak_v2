@@ -443,10 +443,10 @@ const StudentCompanyPartnershipAssistance = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
         {/* Left Column - Communication */}
-        <div className="lg:col-span-3 flex">
-          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col w-full">
+        <div className="lg:col-span-3 flex order-first lg:order-none">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col w-full min-h-[400px] lg:min-h-[600px]">
             {/* Header Section */}
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -462,14 +462,15 @@ const StudentCompanyPartnershipAssistance = () => {
               </div>
             </div>
 
-            <div className="flex flex-col p-6 flex-1 min-h-0">
+            <div className="flex flex-col p-4 sm:p-6 flex-1 min-h-0">
 
               {/* Messages */}
-              <div className="relative mb-4" style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%', overflow: 'hidden' }}>
+              <div className="relative mb-4 flex-1" style={{ minHeight: '200px' }}>
                 <div
                   ref={messagesContainerRef}
-                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-[#212124] rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
+                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
                     }`}
+                  style={{ maxHeight: '350px' }}
                 >
                   {messages.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -487,9 +488,9 @@ const StudentCompanyPartnershipAssistance = () => {
                               key={message.id}
                               className={`flex flex-col ${isStudent ? "items-end" : "items-start"}`}
                             >
-                              <div className={`flex items-start space-x-2 max-w-[85%] ${isStudent ? "flex-row-reverse space-x-reverse" : ""}`}>
+                              <div className={`flex items-start space-x-2 max-w-[90%] sm:max-w-[85%] ${isStudent ? "flex-row-reverse space-x-reverse" : ""}`}>
                                 {/* Avatar */}
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${message.senderRole === "STUDENT"
+                                <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-semibold ${message.senderRole === "STUDENT"
                                   ? "bg-blue-500 text-white"
                                   : message.senderRole === "INSTRUCTOR"
                                     ? "bg-green-500 text-white"
@@ -500,7 +501,7 @@ const StudentCompanyPartnershipAssistance = () => {
 
                                 {/* Message Bubble */}
                                 <div className="flex flex-col space-y-1">
-                                  <div className="flex items-center space-x-2 mb-1">
+                                  <div className="flex items-center space-x-2 mb-1 flex-wrap">
                                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                       {message.senderName}
                                     </span>
@@ -513,7 +514,7 @@ const StudentCompanyPartnershipAssistance = () => {
                                     </span>
                                   </div>
                                   <div
-                                    className={`rounded-2xl px-4 py-2.5 shadow-sm ${isStudent
+                                    className={`rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm ${isStudent
                                       ? "bg-indigo-600 text-white rounded-br-sm"
                                       : "bg-white dark:bg-[#212124] text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
                                       }`}
@@ -540,7 +541,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 {showScrollToBottom && (
                   <button
                     onClick={scrollToBottom}
-                    className="absolute bottom-20 right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 animate-bounce"
+                    className="absolute bottom-16 sm:bottom-20 right-4 sm:right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 animate-bounce"
                     title="Scroll to latest message"
                   >
                     <ChevronDown className="w-5 h-5" />
@@ -549,7 +550,7 @@ const StudentCompanyPartnershipAssistance = () => {
               </div>
 
               {/* Message Input */}
-              <div className="flex space-x-3 items-end bg-gray-50 dark:bg-[#19191c]/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+              <div className="flex space-x-2 sm:space-x-3 items-end bg-gray-50 dark:bg-[#19191c]/50 rounded-xl p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
                 <input
                   type="text"
                   value={newMessage}
@@ -561,12 +562,12 @@ const StudentCompanyPartnershipAssistance = () => {
                     }
                   }}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm text-sm"
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={sending || !newMessage.trim()}
-                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
+                  className="px-4 sm:px-5 py-2 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -607,7 +608,7 @@ const StudentCompanyPartnershipAssistance = () => {
               </p>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 max-h-[350px] sm:max-h-[400px] overflow-y-auto documents-scrollbar">
               <div className="space-y-3">
                 {preDeploymentDocuments.map((doc) => {
                   const document = doc.document;

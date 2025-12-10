@@ -459,3 +459,50 @@ body.modal-open {
   background: rgb(192 132 252);
   background-clip: padding-box;
 }
+
+/* Documents auto-hiding scrollbar - fades out when not scrolling */
+.documents-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.documents-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.documents-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.documents-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+/* Show scrollbar on hover */
+.documents-scrollbar:hover {
+  scrollbar-color: #6366f1 transparent;
+}
+
+.documents-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #6366f1;
+}
+
+.documents-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
+}
+
+/* Dark mode */
+.dark .documents-scrollbar:hover {
+  scrollbar-color: #818cf8 transparent;
+}
+
+.dark .documents-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #818cf8;
+}
+
+.dark .documents-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}

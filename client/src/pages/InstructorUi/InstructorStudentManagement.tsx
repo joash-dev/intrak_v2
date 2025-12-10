@@ -165,6 +165,20 @@ const InstructorStudentManagement: React.FC = () => {
     }
   };
 
+  // Check for openStudentId from notification click - auto-open student modal
+  useEffect(() => {
+    const openStudentId = sessionStorage.getItem('openStudentId');
+    if (openStudentId && students.length > 0) {
+      const studentToOpen = students.find(s => s.id === openStudentId);
+      if (studentToOpen) {
+        setSelectedStudent(studentToOpen);
+        setShowStudentModal(true);
+        // Clear the session storage so it doesn't reopen on refresh
+        sessionStorage.removeItem('openStudentId');
+      }
+    }
+  }, [students]);
+
   const handleAddStudent = () => {
     setShowAddModal(true);
     setCreateError(null);
@@ -855,10 +869,10 @@ const InstructorStudentManagement: React.FC = () => {
                         <div
                           key={star}
                           className={`w-2 h-2 rounded ${star <= Math.floor(performanceRating)
-                              ? "bg-orange-500"
-                              : star === Math.ceil(performanceRating) && performanceRating % 1 !== 0
-                                ? "bg-orange-300"
-                                : "bg-gray-300 dark:bg-gray-600"
+                            ? "bg-orange-500"
+                            : star === Math.ceil(performanceRating) && performanceRating % 1 !== 0
+                              ? "bg-orange-300"
+                              : "bg-gray-300 dark:bg-gray-600"
                             }`}
                         />
                       ))}
@@ -995,8 +1009,8 @@ const InstructorStudentManagement: React.FC = () => {
                   }}
                   placeholder="22-UR-0592"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.studentNumber
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                     }`}
                 />
                 {fieldErrors.studentNumber && (
@@ -1020,8 +1034,8 @@ const InstructorStudentManagement: React.FC = () => {
                   }}
                   placeholder="Juan Dela Cruz"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.name
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                     }`}
                 />
                 {fieldErrors.name && (
@@ -1045,8 +1059,8 @@ const InstructorStudentManagement: React.FC = () => {
                   }}
                   placeholder="juan.delacruz@email.com"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.email
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                     }`}
                 />
                 {fieldErrors.email && (
@@ -1070,8 +1084,8 @@ const InstructorStudentManagement: React.FC = () => {
                   }}
                   placeholder="+63 912 345 6789"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.phone
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                     }`}
                 />
                 {fieldErrors.phone && (
@@ -1106,8 +1120,8 @@ const InstructorStudentManagement: React.FC = () => {
                     clearValidationError("year");
                   }}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white ${fieldErrors.year
-                      ? "border-red-500"
-                      : "border-gray-300 dark:border-gray-600"
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
                     }`}
                 >
                   <option value="">Select Year</option>
@@ -1432,10 +1446,10 @@ const InstructorStudentManagement: React.FC = () => {
                   </div>
                   <div
                     className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${selectedStudent.status === "completed"
-                        ? "bg-green-500"
-                        : selectedStudent.status === "at_risk"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
+                      ? "bg-green-500"
+                      : selectedStudent.status === "at_risk"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
                       }`}
                   ></div>
                 </div>
@@ -1482,10 +1496,10 @@ const InstructorStudentManagement: React.FC = () => {
                     <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-500 ${(selectedStudent.attendanceRate || 0) >= 90
-                            ? "bg-gradient-to-r from-green-500 to-green-600"
-                            : (selectedStudent.attendanceRate || 0) >= 75
-                              ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                              : "bg-gradient-to-r from-red-500 to-red-600"
+                          ? "bg-gradient-to-r from-green-500 to-green-600"
+                          : (selectedStudent.attendanceRate || 0) >= 75
+                            ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                            : "bg-gradient-to-r from-red-500 to-red-600"
                           }`}
                         style={{ width: `${selectedStudent.attendanceRate || 0}%` }}
                       />
@@ -1545,9 +1559,9 @@ const InstructorStudentManagement: React.FC = () => {
                         <Award
                           key={star}
                           className={`w-3 h-3 ${selectedStudent.lastEvaluation &&
-                              star <= Math.round(selectedStudent.lastEvaluation)
-                              ? "text-purple-600 dark:text-purple-300 fill-current"
-                              : "text-purple-200 dark:text-purple-900"
+                            star <= Math.round(selectedStudent.lastEvaluation)
+                            ? "text-purple-600 dark:text-purple-300 fill-current"
+                            : "text-purple-200 dark:text-purple-900"
                             }`}
                         />
                       ))}
