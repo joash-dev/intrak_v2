@@ -55,6 +55,28 @@ export const getStoragePath = (): string => {
  * Get storage path with automatic fallback to local storage if NAS is unavailable
  * @returns Object with storagePath and isUsingFallback flag
  */
+/**
+ * Check if a path is actually a network mount (CIFS/NFS) - synchronous version
+ * This helps detect stale mounts where directory exists but NAS is unmounted
+ */
+const isNetworkMountSync = (mountPath: string): boolean => {
+  try {
+    const { execSync } = require('child_process');
+    // Check if the path is a mount point and if it's a network filesystem
+    const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
+    
+    // Look for network filesystem types: cifs, nfs, smbfs
+    const isNetwork = mountInfo.includes('type cifs') ||
+      mountInfo.includes('type nfs') ||
+      mountInfo.includes('type smbfs');
+    
+    return isNetwork;
+  } catch (error) {
+    // If command fails, assume not a network mount
+    return false;
+  }
+};
+
 export const getStoragePathWithFallback = (): { storagePath: string; isUsingFallback: boolean } => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
@@ -66,6 +88,13 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
   // Check if NAS is actually available
   try {
     if (fs.existsSync(nasConfig.mountPath)) {
+      // Check if it's actually a network mount (not just a local directory)
+      const isActualNAS = isNetworkMountSync(nasConfig.mountPath);
+      if (!isActualNAS) {
+        console.warn('⚠️  NAS mount point exists but is NOT a network mount (NAS is unmounted), falling back to local storage');
+        return { storagePath: localPath, isUsingFallback: true };
+      }
+      
       // Test write access
       const testFile = path.join(nasConfig.mountPath, '.test_write');
       try {
@@ -87,6 +116,28 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
   return { storagePath: localPath, isUsingFallback: true };
 };
 
+/**
+ * Check if a path is actually a network mount (CIFS/NFS)
+ * This helps detect stale mounts where directory exists but NAS is unmounted
+ */
+const isNetworkMount = (mountPath: string): boolean => {
+  try {
+    const { execSync } = require('child_process');
+    // Check if the path is a mount point and if it's a network filesystem
+    const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
+    
+    // Look for network filesystem types: cifs, nfs, smbfs
+    const isNetwork = mountInfo.includes('type cifs') ||
+      mountInfo.includes('type nfs') ||
+      mountInfo.includes('type smbfs');
+    
+    return isNetwork;
+  } catch (error) {
+    // If command fails, assume not a network mount
+    return false;
+  }
+};
+
 export const validateNASConnection = async (): Promise<boolean> => {
   const nasConfig = getNASConfig();
   
@@ -95,15 +146,29 @@ export const validateNASConnection = async (): Promise<boolean> => {
   }
   
   try {
-    // Check if mount point exists and is writable
-    if (fs.existsSync(nasConfig.mountPath)) {
-      // Test write access
-      const testFile = path.join(nasConfig.mountPath, '.test_write');
+    // Check if mount point exists
+    if (!fs.existsSync(nasConfig.mountPath)) {
+      console.warn(`⚠️  NAS mount point does not exist: ${nasConfig.mountPath}`);
+      return false;
+    }
+    
+    // Check if it's actually a network mount (not just a local directory)
+    const isActualNAS = isNetworkMount(nasConfig.mountPath);
+    if (!isActualNAS) {
+      console.warn(`⚠️  ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory - NAS is unmounted)`);
+      return false;
+    }
+    
+    // Test write access
+    const testFile = path.join(nasConfig.mountPath, '.test_write');
+    try {
       fs.writeFileSync(testFile, 'test');
       fs.unlinkSync(testFile);
       return true;
+    } catch (writeError) {
+      console.warn(`⚠️  NAS mount point exists but not writable:`, writeError);
+      return false;
     }
-    return false;
   } catch (error) {
     console.error('NAS connection validation failed:', error);
     return false;
