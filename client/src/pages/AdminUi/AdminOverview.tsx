@@ -53,12 +53,6 @@ const AdminOverview = () => {
     { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
-  const { data: alerts, loading: alertsLoading } = useOptimizedData(
-    () => adminService.getSystemAlerts(),
-    [],
-    { ttl: 1 * 60 * 1000 } // 1 minute cache
-  );
-
   const safeStats = stats || {
     totalStudents: 0,
     activeStudents: 0,
@@ -74,9 +68,17 @@ const AdminOverview = () => {
   };
 
   const safeActivities = activities || [];
-  const safeAlerts = alerts || [];
+  // Get alerts from systemInfo instead of separate call
+  const safeAlerts = systemInfo?.alerts?.map(alert => ({
+    title: alert.component === 'nas' || alert.component === 'storage'
+      ? `${alert.component.toUpperCase()} ${alert.type === 'critical' ? 'Critical' : 'Warning'}`
+      : alert.message.split('.')[0],
+    message: alert.message,
+    priority: alert.type === 'critical' ? 'critical' : alert.type === 'warning' ? 'medium' : 'low',
+    timestamp: alert.timestamp
+  })) || [];
 
-  const loading = systemInfoLoading || statsLoading || activitiesLoading || alertsLoading;
+  const loading = systemInfoLoading || statsLoading || activitiesLoading;
 
   const displayName = adminProfile?.name || "Admin User";
 
@@ -340,25 +342,23 @@ const AdminOverview = () => {
               safeAlerts.slice(0, 10).map((alert, index) => (
                 <div
                   key={index}
-                  className={`p-3 rounded-lg ${
-                    alert.priority === 'high' || alert.priority === 'critical'
+                  className={`p-3 rounded-lg ${alert.priority === 'high' || alert.priority === 'critical'
                       ? 'bg-red-900/20 border border-red-800'
                       : alert.priority === 'medium'
-                      ? 'bg-orange-900/20 border border-orange-800'
-                      : 'bg-blue-900/20 border border-blue-800'
-                  }`}
+                        ? 'bg-orange-900/20 border border-orange-800'
+                        : 'bg-blue-900/20 border border-blue-800'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2 flex-1">
                       {alert.title}
                     </p>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      alert.priority === 'high' || alert.priority === 'critical'
+                    <span className={`text-xs px-2 py-1 rounded ${alert.priority === 'high' || alert.priority === 'critical'
                         ? 'bg-red-900 text-red-300'
                         : alert.priority === 'medium'
-                        ? 'bg-orange-900 text-orange-300'
-                        : 'bg-blue-900 text-blue-300'
-                    }`}>
+                          ? 'bg-orange-900 text-orange-300'
+                          : 'bg-blue-900 text-blue-300'
+                      }`}>
                       {alert.priority.toUpperCase()}
                     </span>
                   </div>
