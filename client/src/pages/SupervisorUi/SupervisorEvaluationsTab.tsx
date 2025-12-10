@@ -10,6 +10,8 @@ import {
   TrendingUp,
   FileText,
   Download,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type {
@@ -266,6 +268,7 @@ const SupervisorEvaluation = () => {
     useState<SupervisorStudent | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showEvaluationForm, setShowEvaluationForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -929,26 +932,44 @@ const SupervisorEvaluation = () => {
         <div className="space-y-4 sm:space-y-6">
           {/* Filters */}
           <div className="bg-white dark:bg-[#19191c] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
-            <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                <input
-                  type="text"
-                  placeholder="Search interns..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                />
+            <div className="flex flex-col md:flex-row gap-3 sm:gap-4 justify-between">
+              <div className="flex-1 flex gap-3 sm:gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search interns..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Evaluated</option>
+                </select>
               </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 w-full md:w-auto"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Evaluated</option>
-              </select>
+              <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 self-end md:self-auto">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-400 hover:text-gray-600"}`}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-400 hover:text-gray-600"}`}
+                  title="List View"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -956,91 +977,170 @@ const SupervisorEvaluation = () => {
             Showing {filteredInterns.length} of {interns.length} interns
           </p>
 
-          {/* Interns Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-            {filteredInterns.map((intern) => (
-              <div
-                key={intern.id}
-                className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
-              >
-                <div className="flex items-start justify-between mb-3 sm:mb-4">
-                  <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
-                      {intern.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .substring(0, 2)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
-                        {intern.name}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
-                        {intern.studentNumber}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{intern.program}</p>
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 ml-2">
-                    {getStatusBadge(intern)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
-                  <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
-                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
-                      Hours
-                    </p>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                      {intern.completedHours}/{intern.totalHours}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
-                    <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
-                      Attendance
-                    </p>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                      {intern.attendanceRate}%
-                    </p>
-                  </div>
-                </div>
-
-                {intern.lastEvaluation && (
-                  <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md sm:rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
-                          Last Evaluation
-                        </p>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                          {new Date(
-                            intern.lastEvaluation.date
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
-                          {intern.lastEvaluation.overallRating.toFixed(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => handleStartEvaluation(intern)}
-                  className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          {/* Interns Grid/List */}
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+              {filteredInterns.map((intern) => (
+                <div
+                  key={intern.id}
+                  className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
                 >
-                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span>
-                    {intern.lastEvaluation ? "Re-evaluate" : "Evaluate Now"}
-                  </span>
-                </button>
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                        {intern.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {intern.name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {intern.studentNumber}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">{intern.program}</p>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 ml-2">
+                      {getStatusBadge(intern)}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 mb-3 sm:mb-4">
+                    <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
+                      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
+                        Hours
+                      </p>
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                        {intern.completedHours}/{intern.totalHours}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-[#212124] rounded-md sm:rounded-lg p-2 sm:p-3">
+                      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">
+                        Attendance
+                      </p>
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                        {intern.attendanceRate}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {intern.lastEvaluation && (
+                    <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md sm:rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">
+                            Last Evaluation
+                          </p>
+                          <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                            {new Date(
+                              intern.lastEvaluation.date
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
+                          <span className="text-sm sm:text-lg font-bold text-gray-900 dark:text-white">
+                            {intern.lastEvaluation.overallRating.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handleStartEvaluation(intern)}
+                    className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span>
+                      {intern.lastEvaluation ? "Re-evaluate" : "Evaluate Now"}
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Intern</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Hours</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Attendance</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell">Last Evaluation</th>
+                      <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {filteredInterns.map((intern) => (
+                      <tr key={intern.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                              {intern.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .substring(0, 2)}
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">{intern.name}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{intern.studentNumber}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {getStatusBadge(intern)}
+                        </td>
+                        <td className="px-6 py-4 hidden md:table-cell">
+                          <div className="text-sm text-gray-900 dark:text-white font-medium">
+                            {intern.completedHours} <span className="text-gray-500 text-xs font-normal">/ {intern.totalHours}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {Math.round((intern.completedHours / Math.max(intern.totalHours, 1)) * 100)}% complete
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 hidden md:table-cell">
+                          <div className="text-sm text-gray-900 dark:text-white font-medium">{intern.attendanceRate}%</div>
+                          <div className="w-24 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full mt-1 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${intern.attendanceRate >= 90 ? 'bg-green-500' : intern.attendanceRate >= 80 ? 'bg-blue-500' : 'bg-yellow-500'}`}
+                              style={{ width: `${intern.attendanceRate}%` }}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 hidden lg:table-cell">
+                          {intern.lastEvaluation ? (
+                            <div className="flex items-center space-x-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                              <span className="font-medium text-gray-900 dark:text-white">{intern.lastEvaluation.overallRating.toFixed(1)}</span>
+                              <span className="text-xs text-gray-500">({new Date(intern.lastEvaluation.date).toLocaleDateString()})</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">Not evaluated</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleStartEvaluation(intern)}
+                            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                          >
+                            {intern.lastEvaluation ? "Re-evaluate" : "Evaluate"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
 
           {filteredInterns.length === 0 && (
             <div className="text-center py-8 sm:py-12 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl">
@@ -1562,7 +1662,7 @@ const SupervisorEvaluation = () => {
             <>
               {/* Filters */}
               <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
-                <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
+                <div className="flex flex-col md:flex-row gap-3 sm:gap-4 justify-between">
                   <div className="relative flex-1">
                     <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                     <input
@@ -1573,6 +1673,22 @@ const SupervisorEvaluation = () => {
                       className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
+                  <div className="flex items-center bg-gray-50 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700 self-end md:self-auto">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-400 hover:text-gray-600"}`}
+                      title="Grid View"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400" : "text-gray-400 hover:text-gray-600"}`}
+                      title="List View"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1580,52 +1696,110 @@ const SupervisorEvaluation = () => {
                 Showing {filteredInterns.length} of {interns.length} interns
               </p>
 
-              {/* Interns Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-                {filteredInterns.map((intern) => (
-                  <div
-                    key={intern.id}
-                    className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
-                  >
-                    <div className="flex items-start justify-between mb-3 sm:mb-4">
-                      <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
-                          {intern.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .substring(0, 2)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
-                            {intern.name}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
-                            {intern.studentNumber}
-                          </p>
-                          <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {intern.program}
-                          </p>
-                        </div>
-                      </div>
-                      {/* Status Badge */}
-                      {studentFeedbackStatus[intern.id] && (
-                        <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex-shrink-0">
-                          Completed
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => handleLoadForm18Feedback(intern)}
-                      className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              {/* Interns Grid/List */}
+              {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                  {filteredInterns.map((intern) => (
+                    <div
+                      key={intern.id}
+                      className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
                     >
-                      <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>Provide Feedback</span>
-                    </button>
+                      <div className="flex items-start justify-between mb-3 sm:mb-4">
+                        <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
+                            {intern.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .substring(0, 2)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                              {intern.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+                              {intern.studentNumber}
+                            </p>
+                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {intern.program}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Status Badge */}
+                        {studentFeedbackStatus[intern.id] && (
+                          <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex-shrink-0">
+                            Completed
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleLoadForm18Feedback(intern)}
+                        className="w-full flex items-center justify-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span>Provide Feedback</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-gray-800/50">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Intern</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {filteredInterns.map((intern) => (
+                          <tr key={intern.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                                  {intern.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .substring(0, 2)}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900 dark:text-white">{intern.name}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">{intern.studentNumber}</div>
+                                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{intern.program}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              {studentFeedbackStatus[intern.id] ? (
+                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                                  Completed
+                                </span>
+                              ) : (
+                                <span className="text-xs px-2 py-1 rounded-full font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                  Pending
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                onClick={() => handleLoadForm18Feedback(intern)}
+                                className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-end space-x-1 ml-auto"
+                              >
+                                <span>Provide Feedback</span>
+                                <FileText className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
               {filteredInterns.length === 0 && (
                 <div className="text-center py-8 sm:py-12 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl">
