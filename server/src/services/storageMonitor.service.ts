@@ -27,11 +27,11 @@ export interface StorageAlert {
  */
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
@@ -46,7 +46,7 @@ const getStorageMetricsForPath = async (storagePath: string): Promise<StorageMet
     }
 
     const disk = await checkDiskSpace(storagePath);
-    
+
     if (!disk || disk.size === 0) {
       return null;
     }
@@ -74,12 +74,46 @@ const getStorageMetricsForPath = async (storagePath: string): Promise<StorageMet
 };
 
 /**
+ * Check if a path is actually a network mount (CIFS/NFS)
+ */
+const isNetworkMount = async (mountPath: string): Promise<boolean> => {
+  try {
+    const { execSync } = require('child_process');
+    // Check if the path is a mount point and if it's a network filesystem
+    const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`).toString();
+
+    // Look for network filesystem types: cifs, nfs, smbfs
+    const isNetwork = mountInfo.includes('type cifs') ||
+      mountInfo.includes('type nfs') ||
+      mountInfo.includes('type smbfs');
+
+    console.log(`🔍 Checking if ${mountPath} is network mount: ${isNetwork ? '✅ YES' : '❌ NO'}`);
+    if (mountInfo && !isNetwork) {
+      console.log(`   Mount info: ${mountInfo.trim()}`);
+    }
+
+    return isNetwork;
+  } catch (error) {
+    console.error(`Error checking mount status for ${mountPath}:`, error);
+    return false;
+  }
+};
+
+/**
  * Get NAS storage metrics
  */
 export const getNASStorageMetrics = async (): Promise<StorageMetrics | null> => {
   const nasConfig = getNASConfig();
-  
+
   if (!nasConfig.enabled) {
+    return null;
+  }
+
+  // First check if it's actually a network mount
+  const isActualNAS = await isNetworkMount(nasConfig.mountPath);
+
+  if (!isActualNAS) {
+    console.log(`⚠️ ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory created by Docker)`);
     return null;
   }
 
@@ -91,10 +125,10 @@ export const getNASStorageMetrics = async (): Promise<StorageMetrics | null> => 
  */
 export const getLocalStorageMetrics = async (): Promise<StorageMetrics | null> => {
   const localPath = process.env.UPLOAD_PATH || './uploads';
-  
+
   // Use the directory's parent or root for disk space check
   // For local storage, check the root filesystem or the uploads directory's parent
-  const checkPath = path.isAbsolute(localPath) 
+  const checkPath = path.isAbsolute(localPath)
     ? path.dirname(localPath) || '/'
     : process.cwd();
 
