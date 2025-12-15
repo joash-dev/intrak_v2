@@ -207,9 +207,9 @@ class AIService {
       let modelName = this.config.model;
 
       // Map legacy/incorrect model names to available stable models
-      // Default to gemini-1.5-flash as it is the most reliable free-tier model
-      if (modelName === 'gemini-pro' || modelName === 'gemini-2.0-flash' || modelName === 'gemini-2.5-flash') {
-        modelName = 'gemini-1.5-flash';
+      // Default to gemini-flash-latest as it is the confirmed available alias
+      if (modelName === 'gemini-pro' || modelName === 'gemini-2.0-flash' || modelName === 'gemini-2.5-flash' || modelName === 'gemini-1.5-flash') {
+        modelName = 'gemini-flash-latest';
       }
 
       // Ensure model name has 'models/' prefix
