@@ -206,11 +206,10 @@ class AIService {
       // Model names must include 'models/' prefix
       let modelName = this.config.model;
 
-      // Map legacy/incorrect model names to available models
-      if (modelName === 'gemini-1.5-flash' || modelName === 'gemini-1.5-pro') {
-        modelName = 'gemini-2.5-flash'; // Use 2.5 instead of 1.5
-      } else if (modelName === 'gemini-pro') {
-        modelName = 'gemini-2.5-flash'; // Use flash as default
+      // Map legacy/incorrect model names to available stable models
+      // Default to gemini-1.5-flash as it is the most reliable free-tier model
+      if (modelName === 'gemini-pro' || modelName === 'gemini-2.0-flash' || modelName === 'gemini-2.5-flash') {
+        modelName = 'gemini-1.5-flash';
       }
 
       // Ensure model name has 'models/' prefix
