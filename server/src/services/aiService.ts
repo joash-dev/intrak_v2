@@ -217,8 +217,8 @@ class AIService {
         modelName = `models/${modelName}`;
       }
 
-      // Use v1 API (works for all current models)
-      const url = `https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${this.config.apiKey}`;
+      // Use v1beta API (required for newer models like 1.5-flash)
+      const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${this.config.apiKey}`;
 
       const response = await fetch(url, {
         method: 'POST',
