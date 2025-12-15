@@ -99,6 +99,34 @@ const InstructorLayout = () => {
             }
         };
         loadUserData();
+
+        const handleProfileUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            if (customEvent.detail?.user) {
+                const user = customEvent.detail.user;
+                const initials = (user.name || "Instructor")
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .substring(0, 2);
+
+                setCurrentUser({
+                    name: user.name || "Instructor",
+                    email: user.email || "instructor@university.edu",
+                    initials,
+                });
+            } else {
+                // Fallback: reload from localStorage if no detail provided
+                loadUserData();
+            }
+        };
+
+        window.addEventListener("profileUpdated", handleProfileUpdate);
+
+        return () => {
+            window.removeEventListener("profileUpdated", handleProfileUpdate);
+        };
     }, []);
 
     // Sync Notifications

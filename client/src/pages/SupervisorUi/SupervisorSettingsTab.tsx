@@ -42,6 +42,7 @@ const SupervisorSettings = () => {
   const [activeTab, setActiveTab] = useState<
     "profile" | "password" | "appearance" | "notifications" | "preferences" | "supervisor" | "help"
   >("profile");
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -184,7 +185,7 @@ const SupervisorSettings = () => {
       const newPhoto = await settingsService.getProfilePhoto();
       setProfilePhoto(newPhoto);
       refreshUserData();
-      toast.success("Profile photo updated successfully");
+      setSaveSuccess(true);
     } catch (error) {
       console.error("Error uploading photo:", error);
       toast.error("Failed to upload photo");
@@ -231,7 +232,7 @@ const SupervisorSettings = () => {
       }
       refreshUserData();
 
-      toast.success("Profile updated successfully");
+      setSaveSuccess(true);
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
@@ -258,7 +259,7 @@ const SupervisorSettings = () => {
         newPassword: passwordData.newPassword,
         confirmPassword: passwordData.confirmPassword,
       });
-      toast.success("Password changed successfully");
+      setSaveSuccess(true);
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -276,7 +277,7 @@ const SupervisorSettings = () => {
     try {
       setSaving(true);
       // Save notification preferences to backend (API endpoint pending)
-      toast.success("Notification preferences saved");
+      setSaveSuccess(true);
     } catch (error) {
       console.error("Error saving notifications:", error);
       toast.error("Failed to save preferences");
@@ -301,6 +302,28 @@ const SupervisorSettings = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Success Modal */}
+      {saveSuccess && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-3xl border border-emerald-200 bg-white p-6 text-center shadow-2xl dark:border-emerald-800/60 dark:bg-gray-900">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-200">
+              Settings Saved
+            </h3>
+            <p className="mt-2 text-sm text-emerald-600/80 dark:text-emerald-200/80">
+              Your profile has been updated successfully.
+            </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="mt-6 inline-flex items-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">

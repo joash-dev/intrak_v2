@@ -207,19 +207,30 @@ const StudentSettingsTab = () => {
         return;
       }
 
-      await settingsService.updateProfile({
+      const updatedProfile = await settingsService.updateProfile({
         name: profileData.name,
         email: profileData.email,
+        phone: profileData.phone,
+        emergencyContact: profileData.emergencyContact,
+        emergencyName: profileData.emergencyName,
       });
 
-      // Reload user data to get the latest information
-      await loadUserData();
-
-      // Update localStorage with new user data
-      const updatedUserData = await settingsService.getCurrentUserProfile();
+      // Update localStorage with new user data immediately
       const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = { ...currentUser, ...updatedUserData };
+      const updatedUser = { ...currentUser, ...updatedProfile };
       localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Dispatch event for specialized components
+      window.dispatchEvent(
+        new CustomEvent("profileUpdated", {
+          detail: {
+            user: updatedUser,
+          },
+        })
+      );
+
+      // Reload local state to verify
+      await loadUserData();
 
       // Notify parent component to refresh dashboard data
       if (refreshStudentData) {
@@ -227,8 +238,8 @@ const StudentSettingsTab = () => {
       }
 
       setSaveSuccess(true);
-      toast.success("Profile updated successfully");
-      setTimeout(() => setSaveSuccess(false), 3000);
+      // toast.success("Profile updated successfully"); // Removed toast in favor of modal
+      // setTimeout(() => setSaveSuccess(false), 3000); // Let user dismiss modal
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(error.response?.data?.message || "Failed to update profile");
@@ -426,14 +437,25 @@ const StudentSettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Success Message */}
+      {/* Success Message Modal */}
       {saveSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-              Settings saved successfully!
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm rounded-3xl border border-emerald-200 bg-white p-6 text-center shadow-2xl dark:border-emerald-800/60 dark:bg-gray-900">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-200">
+              Settings Saved
+            </h3>
+            <p className="mt-2 text-sm text-emerald-600/80 dark:text-emerald-200/80">
+              Your profile has been updated successfully.
             </p>
+            <button
+              onClick={() => setSaveSuccess(false)}
+              className="mt-6 inline-flex items-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}

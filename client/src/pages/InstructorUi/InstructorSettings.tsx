@@ -272,18 +272,22 @@ const InstructorSettings = () => {
         window.dispatchEvent(
           new CustomEvent("userUpdated", {
             detail: {
-              name: profile.name,
-              email: profile.email,
-              phone: profile.phone,
+              user: {
+                name: profile.name,
+                email: profile.email,
+                phone: profile.phone,
+              }
             },
           })
         );
         window.dispatchEvent(
           new CustomEvent("profileUpdated", {
             detail: {
-              name: profile.name,
-              email: profile.email,
-              phone: profile.phone,
+              user: {
+                name: profile.name,
+                email: profile.email,
+                phone: profile.phone,
+              }
             },
           })
         );
