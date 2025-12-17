@@ -1158,6 +1158,16 @@ const StudentSettingsTab = () => {
                     </button>
                   </div>
                 </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSavePreferences}
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
               </div>
             )}
 
