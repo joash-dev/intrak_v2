@@ -6,6 +6,7 @@ import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
+import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
@@ -426,10 +427,9 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
 
     // Create profile photos directory if it doesn't exist
-    const photosDir = path.join(process.cwd(), 'uploads', 'profile-photos');
-    if (!fs.existsSync(photosDir)) {
-      fs.mkdirSync(photosDir, { recursive: true });
-    }
+    const storagePath = getStoragePath();
+    const photosDir = path.join(storagePath, 'profile-photos');
+    await ensureNASDirectoryExists(photosDir);
 
     // Generate unique filename
     const timestamp = Date.now();
@@ -461,7 +461,7 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
     }) as any;
 
     if (user?.profilePhoto) {
-      const oldFilePath = path.join(process.cwd(), 'uploads', 'profile-photos', user.profilePhoto);
+      const oldFilePath = path.join(photosDir, user.profilePhoto);
       if (fs.existsSync(oldFilePath)) {
         fs.unlinkSync(oldFilePath);
       }
@@ -529,7 +529,8 @@ export const getProfilePhoto = async (req: any, res: Response) => {
       return res.status(404).json({ message: 'Invalid profile photo filename' });
     }
 
-    const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', filename);
+    const storagePath = getStoragePath();
+    const filepath = path.join(storagePath, 'profile-photos', filename);
     console.log(`📸 Looking for file at: ${filepath}`);
 
     if (!fs.existsSync(filepath)) {
@@ -574,7 +575,8 @@ export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
     }) as any;
 
     if (user?.profilePhoto) {
-      const filepath = path.join(process.cwd(), 'uploads', 'profile-photos', user.profilePhoto);
+      const storagePath = getStoragePath();
+      const filepath = path.join(storagePath, 'profile-photos', user.profilePhoto);
       if (fs.existsSync(filepath)) {
         fs.unlinkSync(filepath);
       }
