@@ -13,7 +13,9 @@ import {
   LayoutGrid,
   List,
   Settings,
+  Sparkles,
 } from "lucide-react";
+import api from "../../services/api";
 import {
   instructorService,
   type InstructorStudent,
@@ -83,6 +85,7 @@ const InstructorDocumentsTab = () => {
   const [previewType, setPreviewType] = useState<string>("");
   const [reviewRemarks, setReviewRemarks] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [feedbackRefreshKey, setFeedbackRefreshKey] = useState(0);
 
   // --- Effects ---
@@ -174,20 +177,50 @@ const InstructorDocumentsTab = () => {
 
   // --- Handlers ---
 
-  const handleReview = async (doc: InstructorDocument) => {
+  const handleGenerateAIFeedback = async (type: 'approve' | 'request_changes') => {
+    if (!selectedDoc) return;
+
+    try {
+      setIsGeneratingAI(true);
+      const response = await api.post('/ai/document-feedback', {
+        documentId: selectedDoc.id,
+        action: type
+      });
+
+      if (response.data && response.data.feedback) {
+        setReviewRemarks(response.data.feedback);
+        toast.success("AI feedback generated!");
+      }
+    } catch (error) {
+      console.error("AI Generation error:", error);
+      toast.error("Failed to generate AI feedback");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
+  const loadDocumentPreview = async (doc: InstructorDocument) => {
     try {
       const blob = await instructorService.downloadDocument(doc.id);
       if (blob) {
         const url = window.URL.createObjectURL(blob);
-        setPreviewUrl(url);
+        setPreviewUrl(url); // Note: Cleanup of old URL is handled by useEffect
         setPreviewType(blob.type);
         setSelectedDoc(doc);
-        setShowReviewModal(true);
-      } else {
-        toast.error("Failed to load document preview");
+        return true;
       }
+      return false;
     } catch (error) {
       console.error("Error loading preview:", error);
+      return false;
+    }
+  };
+
+  const handleReview = async (doc: InstructorDocument) => {
+    const success = await loadDocumentPreview(doc);
+    if (success) {
+      setShowReviewModal(true);
+    } else {
       toast.error("Failed to load document preview");
     }
   };
@@ -203,92 +236,73 @@ const InstructorDocumentsTab = () => {
 
     try {
       setIsSubmittingReview(true);
-      let updatedDoc: InstructorDocument | null = null;
+
+      // Store current student ID before selectedDoc might change
+      const currentStudentId = selectedDoc.studentId;
 
       if (action === 'approve') {
         await documentService.approveDocument(selectedDoc.id, reviewRemarks || undefined);
-        toast.success("Document approved successfully ✓", { duration: 3000 });
-        // Update status immediately for visual feedback
-        updatedDoc = { ...selectedDoc, status: 'APPROVED' as const, reviewedDate: new Date().toLocaleDateString() };
+        toast.success("Document approved successfully ✓");
       } else if (action === 'reject') {
         await documentService.rejectDocument(selectedDoc.id, reviewRemarks);
-        toast.success("Document rejected", { duration: 3000 });
-        // Update status immediately for visual feedback
-        updatedDoc = { ...selectedDoc, status: 'REJECTED' as const, reviewedDate: new Date().toLocaleDateString(), remarks: reviewRemarks };
+        toast.success("Document rejected");
       } else if (action === 'request_changes') {
-        // Add feedback which will update document status to RESUBMISSION_REQUESTED
         await documentService.addDocumentFeedback(selectedDoc.id, {
           message: reviewRemarks,
           type: 'REQUEST_CHANGES',
           requiresAction: true
         });
-        toast.success("Changes requested - student will be notified", { duration: 3000 });
-        // Update status immediately for visual feedback
-        updatedDoc = { ...selectedDoc, status: 'RESUBMISSION_REQUESTED' as const, remarks: reviewRemarks };
+        toast.success("Changes requested");
       }
 
-      // Refresh feedback panel to show new feedback entry
+      // Refresh feedback panel
       setFeedbackRefreshKey(prev => prev + 1);
 
       // Refresh documents list to get updated status from server
       const updatedDocs = await instructorService.getDocumentsForReview();
       setDocuments(updatedDocs);
 
-      // Update selected doc with latest data from server (this ensures we have the correct status)
-      const refreshedDoc = updatedDocs.find(d => d.id === selectedDoc.id);
-      if (refreshedDoc) {
-        setSelectedDoc(refreshedDoc);
-      } else if (updatedDoc) {
-        // Fallback: use the optimistic update if server data not found
-        setSelectedDoc(updatedDoc);
-      }
+      // --- AUTO-ADVANCE LOGIC ---
+      // Find the next pending document
+      // Priority 1: Next pending document for the SAME student
+      // Priority 2: Next pending document for ANY student
+      const nextDoc = updatedDocs.find(d =>
+        d.status === 'PENDING' &&
+        d.studentId === currentStudentId &&
+        d.id !== selectedDoc.id
+      ) || updatedDocs.find(d =>
+        d.status === 'PENDING' &&
+        d.id !== selectedDoc.id
+      );
 
       // Clear remarks
       setReviewRemarks("");
 
-      // Close modal after a brief delay to show success state
-      setTimeout(() => {
-        setShowReviewModal(false);
-        setSelectedDoc(null);
-        setPreviewUrl(null);
-      }, 1500);
+      if (nextDoc) {
+        toast("Opening next document...", { icon: '➡️' });
+        // Load the next document immediately
+        const success = await loadDocumentPreview(nextDoc);
+        if (!success) {
+          toast.error("Failed to load next document");
+          // Fallback: If load fails, maybe close modal or let user choose
+        }
+      } else {
+        toast.success("All pending documents reviewed! 🎉", { duration: 3000 });
+        // Close modal after a brief delay
+        setTimeout(() => {
+          setShowReviewModal(false);
+          setSelectedDoc(null);
+          setPreviewUrl(null);
+        }, 1500);
+      }
 
     } catch (error: any) {
       console.error("Error submitting review:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status,
-        action
-      });
-      
       let errorMessage = "Failed to submit review. Please try again.";
-      
-      if (error?.response) {
-        // Server responded with error
-        const status = error.response.status;
-        const data = error.response.data;
-        
-        if (status === 403) {
-          errorMessage = "You don't have permission to perform this action.";
-        } else if (status === 404) {
-          errorMessage = "Document not found. It may have been deleted.";
-        } else if (status === 400) {
-          errorMessage = data?.message || "Invalid request. Please check your input.";
-        } else if (status === 500) {
-          errorMessage = data?.message || "Server error. Please try again later.";
-        } else {
-          errorMessage = data?.message || `Error: ${status}`;
-        }
-      } else if (error?.request) {
-        // Request was made but no response received
-        errorMessage = "Network error. Please check your connection and try again.";
-      } else {
-        // Error setting up the request
-        errorMessage = error?.message || "An unexpected error occurred.";
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
-      
-      toast.error(errorMessage, { duration: 5000 });
+      toast.error(errorMessage);
     } finally {
       setIsSubmittingReview(false);
     }
@@ -745,17 +759,17 @@ const InstructorDocumentsTab = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Status Badge */}
                 <div className="flex items-center justify-between">
-                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 ${selectedDoc.status === 'APPROVED' 
-                    ? 'bg-green-600 dark:bg-green-700 text-white' 
+                  <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 ${selectedDoc.status === 'APPROVED'
+                    ? 'bg-green-600 dark:bg-green-700 text-white'
                     : selectedDoc.status === 'REJECTED'
-                    ? 'bg-red-600 dark:bg-red-700 text-white'
-                    : selectedDoc.status === 'PENDING'
-                    ? 'bg-yellow-500 dark:bg-yellow-600 text-white'
-                    : 'bg-orange-500 dark:bg-orange-600 text-white'
-                  }`}>
+                      ? 'bg-red-600 dark:bg-red-700 text-white'
+                      : selectedDoc.status === 'PENDING'
+                        ? 'bg-yellow-500 dark:bg-yellow-600 text-white'
+                        : 'bg-orange-500 dark:bg-orange-600 text-white'
+                    }`}>
                     {getStatusIcon(selectedDoc.status)}
                     <span>{selectedDoc.status.replace(/_/g, ' ')}</span>
                   </span>
@@ -770,7 +784,7 @@ const InstructorDocumentsTab = () => {
                   <div className="p-3 bg-blue-100 dark:bg-blue-500/20 rounded-lg flex-shrink-0">
                     <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
-                  
+
                   {/* Document Info */}
                   <div className="flex-1 min-w-0">
                     {/* Document Title */}
@@ -783,18 +797,18 @@ const InstructorDocumentsTab = () => {
                 {/* Right Section - Status and Actions */}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   {/* Status Badge */}
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 ${selectedDoc.status === 'APPROVED' 
-                    ? 'bg-green-600 dark:bg-green-700 text-white' 
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 ${selectedDoc.status === 'APPROVED'
+                    ? 'bg-green-600 dark:bg-green-700 text-white'
                     : selectedDoc.status === 'REJECTED'
-                    ? 'bg-red-600 dark:bg-red-700 text-white'
-                    : selectedDoc.status === 'PENDING'
-                    ? 'bg-yellow-500 dark:bg-yellow-600 text-white'
-                    : 'bg-orange-500 dark:bg-orange-600 text-white'
-                  }`}>
+                      ? 'bg-red-600 dark:bg-red-700 text-white'
+                      : selectedDoc.status === 'PENDING'
+                        ? 'bg-yellow-500 dark:bg-yellow-600 text-white'
+                        : 'bg-orange-500 dark:bg-orange-600 text-white'
+                    }`}>
                     {getStatusIcon(selectedDoc.status)}
                     <span>{selectedDoc.status.replace(/_/g, ' ')}</span>
                   </span>
-                  
+
                   {/* Action Icons */}
                   <div className="flex items-center gap-1">
                     <button
@@ -896,10 +910,32 @@ const InstructorDocumentsTab = () => {
                 {/* Review Actions Section */}
                 {selectedDoc.status === 'PENDING' && (
                   <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] shadow-lg lg:shadow-none">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-blue-500" />
-                      Review Actions
-                    </h4>
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-blue-500" />
+                        Review Actions
+                      </h4>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleGenerateAIFeedback('approve')}
+                          disabled={isGeneratingAI || isSubmittingReview}
+                          className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
+                          title="Generate approval suggestions"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          AI Approve
+                        </button>
+                        <button
+                          onClick={() => handleGenerateAIFeedback('request_changes')}
+                          disabled={isGeneratingAI || isSubmittingReview}
+                          className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
+                          title="Generate feedback for changes"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          AI Feedback
+                        </button>
+                      </div>
+                    </div>
 
                     <textarea
                       value={reviewRemarks}
@@ -928,7 +964,7 @@ const InstructorDocumentsTab = () => {
                         )}
                       </button>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-1 gap-2">
                         <button
                           onClick={() => handleReviewAction('request_changes')}
                           disabled={isSubmittingReview}
@@ -943,74 +979,55 @@ const InstructorDocumentsTab = () => {
                             </>
                           )}
                         </button>
-
-                        <button
-                          onClick={() => handleReviewAction('reject')}
-                          disabled={isSubmittingReview}
-                          className="flex items-center justify-center space-x-2 w-full p-3 sm:p-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm touch-manipulation"
-                        >
-                          {isSubmittingReview ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>
-                              <XCircle className="w-4 h-4" />
-                              <span>Reject</span>
-                            </>
-                          )}
-                        </button>
                       </div>
                     </div>
                   </div>
                 )}
                 {selectedDoc.status !== 'PENDING' && (
                   <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] shadow-lg lg:shadow-none">
-                    <div className={`rounded-xl p-4 shadow-sm ${selectedDoc.status === 'APPROVED' 
-                      ? 'bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 border-2 border-green-200 dark:border-green-800' 
+                    <div className={`rounded-xl p-4 shadow-sm ${selectedDoc.status === 'APPROVED'
+                      ? 'bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 border-2 border-green-200 dark:border-green-800'
                       : selectedDoc.status === 'REJECTED'
-                      ? 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10 border-2 border-red-200 dark:border-red-800'
-                      : 'bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10 border-2 border-amber-200 dark:border-amber-800'
-                    }`}>
+                        ? 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10 border-2 border-red-200 dark:border-red-800'
+                        : 'bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10 border-2 border-amber-200 dark:border-amber-800'
+                      }`}>
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${
-                          selectedDoc.status === 'APPROVED' 
-                            ? 'bg-green-100 dark:bg-green-900/40' 
-                            : selectedDoc.status === 'REJECTED'
+                        <div className={`p-2 rounded-lg flex-shrink-0 ${selectedDoc.status === 'APPROVED'
+                          ? 'bg-green-100 dark:bg-green-900/40'
+                          : selectedDoc.status === 'REJECTED'
                             ? 'bg-red-100 dark:bg-red-900/40'
                             : 'bg-amber-100 dark:bg-amber-900/40'
-                        }`}>
+                          }`}>
                           {selectedDoc.status === 'APPROVED' && <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />}
                           {selectedDoc.status === 'REJECTED' && <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />}
                           {(selectedDoc.status === 'RESUBMISSION_REQUESTED') && <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`text-base font-bold mb-1 ${
-                            selectedDoc.status === 'APPROVED' 
-                              ? 'text-green-900 dark:text-green-100' 
-                              : selectedDoc.status === 'REJECTED'
+                          <p className={`text-base font-bold mb-1 ${selectedDoc.status === 'APPROVED'
+                            ? 'text-green-900 dark:text-green-100'
+                            : selectedDoc.status === 'REJECTED'
                               ? 'text-red-900 dark:text-red-100'
                               : 'text-amber-900 dark:text-amber-100'
-                          }`}>
+                            }`}>
                             Document {selectedDoc.status === 'APPROVED' ? 'Approved' : selectedDoc.status === 'REJECTED' ? 'Rejected' : 'Changes Requested'}
                           </p>
                           {selectedDoc.reviewedDate && (
-                            <p className={`text-sm ${
-                              selectedDoc.status === 'APPROVED' 
-                                ? 'text-green-700 dark:text-green-300' 
-                                : selectedDoc.status === 'REJECTED'
+                            <p className={`text-sm ${selectedDoc.status === 'APPROVED'
+                              ? 'text-green-700 dark:text-green-300'
+                              : selectedDoc.status === 'REJECTED'
                                 ? 'text-red-700 dark:text-red-300'
                                 : 'text-amber-700 dark:text-amber-300'
-                            }`}>
+                              }`}>
                               Reviewed {selectedDoc.reviewedDate}
                             </p>
                           )}
                           {selectedDoc.remarks && (
-                            <p className={`text-sm mt-2 pt-2 border-t ${
-                              selectedDoc.status === 'APPROVED' 
-                                ? 'border-green-200 dark:border-green-800 text-green-800 dark:text-green-200' 
-                                : selectedDoc.status === 'REJECTED'
+                            <p className={`text-sm mt-2 pt-2 border-t ${selectedDoc.status === 'APPROVED'
+                              ? 'border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
+                              : selectedDoc.status === 'REJECTED'
                                 ? 'border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
                                 : 'border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200'
-                            }`}>
+                              }`}>
                               {selectedDoc.remarks}
                             </p>
                           )}

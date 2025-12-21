@@ -17,6 +17,7 @@ import { settingsService } from "../../services/settingsService";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
 import { dashboardService } from "../../services/dashboardService";
 import api from "../../services/api";
+import { useWalkthrough } from "../../hooks/useWalkthrough";
 
 const StudentLayout = () => {
     const navigate = useNavigate();
@@ -136,6 +137,12 @@ const StudentLayout = () => {
         loadUserData();
     }, []);
 
+    // Walkthrough
+    const { startWalkthrough } = useWalkthrough('student');
+    useEffect(() => {
+        startWalkthrough();
+    }, []);
+
     const refreshStudentData = () => {
         loadUserData();
     };
@@ -189,7 +196,7 @@ const StudentLayout = () => {
             <header className={`fixed top-4 left-4 right-4 lg:hidden bg-white dark:bg-[#212124] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 ${sidebarOpen ? "z-30" : "z-50"}`}>
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center space-x-3">
-                        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                        <button id="mobile-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                             <Menu className="w-5 h-5" />
                         </button>
                         <img src="/just_logo.png" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
@@ -212,7 +219,7 @@ const StudentLayout = () => {
             {sidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-[50] lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
             {/* Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 lg:top-4 lg:bottom-4 lg:left-4 z-[60] bg-white dark:bg-[#212124] lg:rounded-2xl lg:shadow-2xl border-r lg:border border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} w-72 ${sidebarExpanded ? "lg:w-72" : "lg:w-20"}`}>
+            <aside id="tour-sidebar" className={`fixed inset-y-0 left-0 lg:top-4 lg:bottom-4 lg:left-4 z-[60] bg-white dark:bg-[#212124] lg:rounded-2xl lg:shadow-2xl border-r lg:border border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} w-72 ${sidebarExpanded ? "lg:w-72" : "lg:w-20"}`}>
                 <div className="flex flex-col h-full">
                     {/* Sidebar Header */}
                     <div className={`flex items-center ${sidebarExpanded ? "justify-between" : "justify-center"} p-4 border-b border-gray-200 dark:border-gray-700`}>
@@ -239,6 +246,7 @@ const StudentLayout = () => {
                         {navItems.map((item) => (
                             <button
                                 key={item.id}
+                                id={`tour-nav-${item.id}`}
                                 onClick={() => {
                                     if (!item.disabled) {
                                         navigate(item.path);
@@ -260,7 +268,7 @@ const StudentLayout = () => {
 
                     {/* Profile & Logout */}
                     <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                        <button onClick={() => navigate("/student/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg`}>
+                        <button id="tour-user-menu" onClick={() => navigate("/student/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg`}>
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                                 {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
                             </div>

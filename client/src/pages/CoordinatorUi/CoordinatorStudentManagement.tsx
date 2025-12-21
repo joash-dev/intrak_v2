@@ -541,8 +541,8 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
       {/* Student Details Modal */}
       {showStudentDetailsModal && detailStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Student Details
@@ -563,7 +563,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto min-h-0">
               <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-4 space-y-1">
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">
                   {detailStudent.name}
@@ -618,7 +618,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
               )}
             </div>
 
-            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
                   setShowStudentDetailsModal(false);
@@ -671,7 +671,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
       )}
       {/* Desktop Table View - Hidden on Mobile */}
       <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className=""> {/* Removed overflow-x-auto */}
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-[#212124]">
               <tr>
@@ -734,7 +734,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                     className="hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
                     {bulkOperationsEnabled && (
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedStudents.includes(student.id)}
@@ -744,9 +744,9 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                         />
                       </td>
                     )}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
                           {student.name
                             .split(" ")
                             .map((n) => n[0])
@@ -765,15 +765,15 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <Building2 className="w-4 h-4 text-gray-400 mr-2" />
+                        <Building2 className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                         <span className="text-sm text-gray-900 dark:text-white">
                           {getCompanyDisplay(student)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                           student.status
@@ -782,22 +782,23 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                         {student.status.replace("_", " ").toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       {student.instructorName ? (
                         <div className="flex items-center">
-                          <UserCheck className="w-4 h-4 text-green-500 mr-2" />
+                          <UserCheck className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                           <div>
                             <span className="text-sm font-medium text-gray-900 dark:text-white">
                               {student.instructorName}
                             </span>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 break-words">
+                              {/* Added break-words for long emails */}
                               {student.instructorEmail}
                             </div>
                           </div>
                         </div>
                       ) : (
                         <div className="flex items-center">
-                          <UserX className="w-4 h-4 text-gray-400 mr-2" />
+                          <UserX className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                           <span className="text-sm text-gray-500">
                             Unassigned
                           </span>
@@ -1293,10 +1294,10 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
             <div
               key={doc.id}
               className={`p-4 rounded-lg border ${doc.status === "APPROVED"
-                  ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
-                  : doc.status === "PENDING"
-                    ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
-                    : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
+                ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
+                : doc.status === "PENDING"
+                  ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
+                  : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
                 }`}
             >
               <div className="flex items-start justify-between">
@@ -1307,10 +1308,10 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
                       {getDocName(doc.type)}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded ${doc.status === "APPROVED"
-                        ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
-                        : doc.status === "PENDING"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
-                          : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
+                      : doc.status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
+                        : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
                       }`}>
                       {doc.status}
                     </span>
@@ -1390,8 +1391,8 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
                 onClick={reviewAction === "approve" ? handleApprove : handleReject}
                 disabled={reviewAction === "reject" && !remarks.trim()}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${reviewAction === "approve"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   }`}
               >
                 {reviewAction === "approve" ? "Approve" : "Reject"}

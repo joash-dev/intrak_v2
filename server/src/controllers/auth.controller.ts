@@ -255,6 +255,7 @@ export const login = async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         role: user.role,
+        createdAt: user.createdAt,
         companyId: companyInfo?.id || null,
         companyName: companyInfo?.name || null,
         companyAddress: companyInfo?.address || null,

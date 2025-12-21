@@ -16,6 +16,7 @@ import {
 } from "../../services/notificationService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import api from "../../services/api";
+import { useWalkthrough } from "../../hooks/useWalkthrough";
 
 // Define the context type for shared data
 type SupervisorContextType = {
@@ -149,6 +150,12 @@ const SupervisorLayout: React.FC = () => {
         };
     }, [currentUser]);
 
+    // Walkthrough
+    const { startWalkthrough } = useWalkthrough('supervisor');
+    useEffect(() => {
+        startWalkthrough();
+    }, []);
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Element;
@@ -242,6 +249,7 @@ const SupervisorLayout: React.FC = () => {
                     {/* Left: Hamburger + Logo */}
                     <div className="flex items-center space-x-3">
                         <button
+                            id="mobile-menu-toggle"
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         >
@@ -387,6 +395,7 @@ const SupervisorLayout: React.FC = () => {
 
             {/* Floating Sidebar Menu */}
             <aside
+                id="tour-sidebar"
                 className={`fixed inset-y-0 left-0 lg:top-4 lg:bottom-4 lg:left-4 z-[60] bg-white dark:bg-[#212124] lg:rounded-2xl lg:shadow-2xl border-r lg:border border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} w-72 ${sidebarExpanded ? "lg:w-72" : "lg:w-20"}`}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -452,6 +461,7 @@ const SupervisorLayout: React.FC = () => {
                             return (
                                 <button
                                     key={item.id}
+                                    id={`tour-nav-${item.id}`}
                                     onClick={() => {
                                         navigate(item.path);
                                         if (window.innerWidth < 1024) {
@@ -484,6 +494,7 @@ const SupervisorLayout: React.FC = () => {
                     {/* User Profile Section */}
                     <div className={`border-t border-gray-200 dark:border-gray-700 p-4 ${sidebarExpanded ? "lg:p-4" : "lg:p-2"}`}>
                         <button
+                            id="tour-user-menu"
                             onClick={() => {
                                 navigate("/industry-partner/settings");
                                 if (window.innerWidth < 1024) {
