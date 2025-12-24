@@ -25,6 +25,7 @@ import toast from "react-hot-toast";
 import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import { documentService } from "../../services/documentService";
+import PDFViewer from "../../components/document/PDFViewer";
 
 // --- Types ---
 
@@ -870,11 +871,17 @@ const InstructorDocumentsTab = () => {
                         className="max-w-full max-h-full object-contain shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 bg-white"
                       />
                     ) : (
-                      <iframe
-                        src={previewUrl}
-                        className="w-full h-full min-h-[400px] sm:min-h-0 rounded-lg shadow-lg bg-white border border-gray-200 dark:border-gray-700"
-                        title="Document Preview"
-                      />
+                      previewType === "application/pdf" ? (
+                        <div className="w-full h-full min-h-[400px]">
+                          <PDFViewer url={previewUrl} />
+                        </div>
+                      ) : (
+                        <iframe
+                          src={previewUrl}
+                          className="w-full h-full min-h-[400px] sm:min-h-0 rounded-lg shadow-lg bg-white border border-gray-200 dark:border-gray-700"
+                          title="Document Preview"
+                        />
+                      )
                     )
                   ) : (
                     <div className="text-center">

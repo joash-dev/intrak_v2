@@ -34,11 +34,17 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      canvas: 'location',
+    }
+  },
   server: {
     host: true,
     port: 5173,
   },
   build: {
+    target: 'esnext',
     // Optimize bundle size
     rollupOptions: {
       output: {
