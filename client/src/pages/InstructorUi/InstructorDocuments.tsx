@@ -14,6 +14,7 @@ import {
   List,
   Settings,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import api from "../../services/api";
 import {
@@ -893,153 +894,89 @@ const InstructorDocumentsTab = () => {
               </div>
 
               {/* Feedback Panel */}
-              <div className="w-full lg:w-96 h-auto lg:h-auto border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] flex flex-col shadow-lg lg:shadow-none">
-                <div className="flex-1 overflow-y-auto min-h-0 max-h-[50vh] lg:max-h-full bg-gray-50 dark:bg-gray-900/50">
+              <div className="w-full lg:w-96 h-auto lg:h-auto border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19191c] flex flex-col shadow-lg lg:shadow-none">
+                <div className="flex-1 overflow-y-auto min-h-0 max-h-[40vh] lg:max-h-full bg-white dark:bg-[#19191c]">
                   <DocumentFeedbackPanel
                     key={feedbackRefreshKey}
                     documentId={selectedDoc.id}
                     className="h-full border-0 shadow-none bg-transparent"
                     compact={true}
-                    allowFeedback={false} // Only show feedback history, no general comments
+                    allowFeedback={false}
                     onFeedbackAdded={async () => {
-                      // Refresh data when feedback is added (which might change status)
                       const updatedDocs = await instructorService.getDocumentsForReview();
                       setDocuments(updatedDocs);
-                      // Update selected doc status locally to reflect change immediately if needed
                       const updatedDoc = updatedDocs.find(d => d.id === selectedDoc.id);
                       if (updatedDoc) setSelectedDoc(updatedDoc);
-                      // Refresh feedback panel
                       setFeedbackRefreshKey(prev => prev + 1);
                     }}
                   />
                 </div>
 
-                {/* Review Actions Section */}
+                {/* Review Actions Section - Fixed at bottom for mobile */}
                 {selectedDoc.status === 'PENDING' && (
-                  <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] shadow-lg lg:shadow-none">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 text-blue-500" />
-                        Review Actions
-                      </h4>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleGenerateAIFeedback('approve')}
-                          disabled={isGeneratingAI || isSubmittingReview}
-                          className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
-                          title="Generate approval suggestions"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          AI Approve
-                        </button>
-                        <button
-                          onClick={() => handleGenerateAIFeedback('request_changes')}
-                          disabled={isGeneratingAI || isSubmittingReview}
-                          className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 transition-colors"
-                          title="Generate feedback for changes"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          AI Feedback
-                        </button>
-                      </div>
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c]">
+                    <div className="mb-3">
+                      <textarea
+                        value={reviewRemarks}
+                        onChange={(e) => setReviewRemarks(e.target.value)}
+                        placeholder="Add remarks (required for reject)..."
+                        className="w-full p-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={2}
+                      />
                     </div>
-
-                    <textarea
-                      value={reviewRemarks}
-                      onChange={(e) => setReviewRemarks(e.target.value)}
-                      placeholder="Add remarks or feedback (required for reject/request changes)..."
-                      className="w-full p-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none mb-4"
-                      rows={3}
-                    />
-
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => handleReviewAction('approve')}
                         disabled={isSubmittingReview}
-                        className="flex items-center justify-center space-x-2 w-full p-3 sm:p-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm touch-manipulation"
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
                       >
-                        {isSubmittingReview ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Approve Document</span>
-                          </>
-                        )}
+                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                        Approve
                       </button>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-1 gap-2">
-                        <button
-                          onClick={() => handleReviewAction('request_changes')}
-                          disabled={isSubmittingReview}
-                          className="flex items-center justify-center space-x-2 w-full p-3 sm:p-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm touch-manipulation"
-                        >
-                          {isSubmittingReview ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>
-                              <AlertCircle className="w-4 h-4" />
-                              <span>Request Changes</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleReviewAction('request_changes')}
+                        disabled={isSubmittingReview}
+                        className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
+                        Changes
+                      </button>
+                      <button
+                        onClick={() => handleReviewAction('reject')}
+                        disabled={isSubmittingReview}
+                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                        Reject
+                      </button>
+                    </div>
+                    {/* AI Buttons - Compact */}
+                    <div className="flex justify-end gap-3 mt-3">
+                      <button
+                        onClick={() => handleGenerateAIFeedback('approve')}
+                        disabled={isGeneratingAI || isSubmittingReview}
+                        className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" /> AI Approve
+                      </button>
+                      <button
+                        onClick={() => handleGenerateAIFeedback('request_changes')}
+                        disabled={isGeneratingAI || isSubmittingReview}
+                        className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3 h-3" /> AI Feedback
+                      </button>
                     </div>
                   </div>
                 )}
+
                 {selectedDoc.status !== 'PENDING' && (
-                  <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] shadow-lg lg:shadow-none">
-                    <div className={`rounded-xl p-4 shadow-sm ${selectedDoc.status === 'APPROVED'
-                      ? 'bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10 border-2 border-green-200 dark:border-green-800'
-                      : selectedDoc.status === 'REJECTED'
-                        ? 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-900/10 border-2 border-red-200 dark:border-red-800'
-                        : 'bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-900/20 dark:to-amber-900/10 border-2 border-amber-200 dark:border-amber-800'
+                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c]">
+                    <div className={`p-3 rounded-lg text-center font-medium ${selectedDoc.status === 'APPROVED' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
+                      selectedDoc.status === 'REJECTED' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
+                        'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
                       }`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-lg flex-shrink-0 ${selectedDoc.status === 'APPROVED'
-                          ? 'bg-green-100 dark:bg-green-900/40'
-                          : selectedDoc.status === 'REJECTED'
-                            ? 'bg-red-100 dark:bg-red-900/40'
-                            : 'bg-amber-100 dark:bg-amber-900/40'
-                          }`}>
-                          {selectedDoc.status === 'APPROVED' && <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />}
-                          {selectedDoc.status === 'REJECTED' && <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />}
-                          {(selectedDoc.status === 'RESUBMISSION_REQUESTED') && <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-base font-bold mb-1 ${selectedDoc.status === 'APPROVED'
-                            ? 'text-green-900 dark:text-green-100'
-                            : selectedDoc.status === 'REJECTED'
-                              ? 'text-red-900 dark:text-red-100'
-                              : 'text-amber-900 dark:text-amber-100'
-                            }`}>
-                            Document {selectedDoc.status === 'APPROVED' ? 'Approved' : selectedDoc.status === 'REJECTED' ? 'Rejected' : 'Changes Requested'}
-                          </p>
-                          {selectedDoc.reviewedDate && (
-                            <p className={`text-sm ${selectedDoc.status === 'APPROVED'
-                              ? 'text-green-700 dark:text-green-300'
-                              : selectedDoc.status === 'REJECTED'
-                                ? 'text-red-700 dark:text-red-300'
-                                : 'text-amber-700 dark:text-amber-300'
-                              }`}>
-                              Reviewed {selectedDoc.reviewedDate}
-                            </p>
-                          )}
-                          {selectedDoc.remarks && (
-                            <p className={`text-sm mt-2 pt-2 border-t ${selectedDoc.status === 'APPROVED'
-                              ? 'border-green-200 dark:border-green-800 text-green-800 dark:text-green-200'
-                              : selectedDoc.status === 'REJECTED'
-                                ? 'border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
-                                : 'border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200'
-                              }`}>
-                              {selectedDoc.remarks}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                      Document {selectedDoc.status === 'APPROVED' ? 'Approved' : selectedDoc.status === 'REJECTED' ? 'Rejected' : 'Changes Requested'}
                     </div>
                   </div>
                 )}

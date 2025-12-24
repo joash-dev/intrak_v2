@@ -981,7 +981,7 @@ const StudentDocumentsTab: React.FC = () => {
                 <div className="flex-1 overflow-y-auto">
                   <DocumentFeedbackPanel
                     documentId={selectedDoc.id}
-                    className="h-full border-0 shadow-none"
+                    className="h-full border-0 shadow-none bg-transparent"
                     compact={true}
                   />
                 </div>

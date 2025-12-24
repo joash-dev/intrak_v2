@@ -22,6 +22,7 @@ import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
+import PDFViewer from "../../components/document/PDFViewer";
 
 interface Document {
   id: string;
@@ -718,8 +719,8 @@ const CoordinatorDocumentsTab: React.FC = () => {
                 doc.remarks && (
                   <div
                     className={`rounded-lg sm:rounded-2xl border p-3 sm:p-4 mb-3 sm:mb-4 ${doc.status === "APPROVED"
-                        ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
-                        : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
+                      ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
+                      : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
                       }`}
                   >
                     <div className="flex items-start space-x-2 sm:space-x-3">
@@ -921,8 +922,8 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   submitting || (reviewAction === "reject" && !remarks.trim())
                 }
                 className={`px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 ${reviewAction === "approve"
-                    ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
-                    : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
+                  ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
+                  : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
                   } disabled:cursor-not-allowed`}
               >
                 {submitting ? (
@@ -1036,12 +1037,16 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title={`Preview of ${previewDoc.fileName || previewDoc.filename}`}
-                  style={{ minHeight: "500px" }}
-                />
+                previewDoc.fileType === "pdf" || previewDoc.type === "pdf" ? (
+                  <PDFViewer url={previewUrl} />
+                ) : (
+                  <iframe
+                    src={previewUrl}
+                    className="w-full h-full border-0"
+                    title={`Preview of ${previewDoc.fileName || previewDoc.filename}`}
+                    style={{ minHeight: "500px" }}
+                  />
+                )
               )}
             </div>
           </div>
