@@ -121,7 +121,7 @@ const ResetPassword = () => {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     id="password"
-                                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
@@ -150,7 +150,7 @@ const ResetPassword = () => {
                                 <input
                                     type={showConfirmPassword ? "text" : "password"}
                                     id="confirmPassword"
-                                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required
