@@ -499,13 +499,9 @@ export const getCurrentUserProfilePhoto = async (req: AuthRequest, res: Response
       return res.json({ profilePhoto: null });
     }
 
-    // Return the full URL path for the profile photo
-    const baseUrl = process.env.NODE_ENV === 'production'
-      ? process.env.BASE_URL || 'http://localhost:5000'
-      : 'http://localhost:5000';
-
+    // Return relative URL path for the profile photo
     res.json({
-      profilePhoto: `${baseUrl}/api/users/profile-photo/${user.profilePhoto}`
+      profilePhoto: `/api/users/profile-photo/${user.profilePhoto}`
     });
   } catch (error) {
     console.error('Get current user profile photo error:', error);
