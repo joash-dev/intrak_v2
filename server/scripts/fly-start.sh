@@ -183,6 +183,10 @@ else
     mkdir -p ./uploads/templates
 fi
 
+# Run database migrations
+echo "🗄️  Running database migrations..."
+npx prisma migrate deploy || echo "⚠️  Migration failed or already applied"
+
 # Start Node.js server
 echo "🚀 Starting Node.js server..."
 exec node dist/src/index.js

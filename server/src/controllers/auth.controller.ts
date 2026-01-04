@@ -353,3 +353,100 @@ export const logout = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Logout failed' });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    // Don't reveal if user exists or not, but explicitly check role
+    if (!user || user.role === 'ADMIN') {
+      // Fake success for security or return error? 
+      // Requirement says "roles except the admin", so for admin we should probably just return success but do nothing, 
+      // or return error if we want to be explicit.
+      // Standard practice is generic message.
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to prevent timing attacks
+      return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Save token to user
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetExpires
+      }
+    });
+
+    // Send email
+    const { success, error } = await import('../services/email.service').then(m => m.emailService.sendPasswordResetEmail(user.email, resetToken));
+
+    if (!success) {
+      console.error('Failed to send password reset email:', error);
+      return res.status(500).json({ message: 'Failed to send email' });
+    }
+
+    await auditLog(user.id, 'PASSWORD_FORGOT_REQUEST', { email }, req);
+
+    res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null
+      }
+    });
+
+    await auditLog(user.id, 'PASSWORD_RESET', { method: 'token' }, req);
+
+    // Log activity
+    await logActivity({
+      type: 'PASSWORD_CHANGED',
+      description: `${user.name} reset their password via email link`,
+      userId: user.id,
+      userName: user.name,
+      ipAddress: req.ip
+    });
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'An error occurred' });
+  }
+};

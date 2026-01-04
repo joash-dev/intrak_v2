@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refresh, logout, testEndpoint } from '../controllers/auth.controller';
+import { register, login, refresh, logout, testEndpoint, forgotPassword, resetPassword } from '../controllers/auth.controller';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 
@@ -28,6 +28,8 @@ router.post(
 
 router.post('/refresh', refresh);
 router.post('/logout', logout);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 router.get('/test', testEndpoint);
 
 export default router;

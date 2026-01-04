@@ -153,9 +153,9 @@ class EmailService {
 
       if (error) {
         console.error('❌ Resend API error:', error);
-        return { 
-          success: false, 
-          error: `Resend API error: ${error.message || JSON.stringify(error)}` 
+        return {
+          success: false,
+          error: `Resend API error: ${error.message || JSON.stringify(error)}`
         };
       }
 
@@ -233,10 +233,10 @@ class EmailService {
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT
       });
-      
+
       // Build user-friendly error message
       let errorMessage = error.message || 'Unknown error occurred';
-      
+
       if (error.code === 'ETIMEDOUT') {
         errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
       } else if (error.code === 'ECONNREFUSED') {
@@ -246,7 +246,7 @@ class EmailService {
       } else if (error.responseCode) {
         errorMessage = `SMTP error ${error.responseCode}: ${error.response || error.message}`;
       }
-      
+
       // Provide helpful troubleshooting tips in logs
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
         console.error('💡 Troubleshooting tips:');
@@ -255,7 +255,7 @@ class EmailService {
         console.error('   3. Check if Render.com is blocking outbound SMTP connections');
         console.error('   4. Try using a different SMTP provider (Gmail, SendGrid API, etc.)');
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }
@@ -263,7 +263,7 @@ class EmailService {
   public generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
     const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
     const logoUrl = `${clientUrl}/logo_intrak.png`;
-    
+
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -423,7 +423,7 @@ class EmailService {
     const roleDisplayName = roleDisplayNames[userRole] || userRole;
     const subject = `Welcome to INTRAK - Your ${roleDisplayName} Account Credentials`;
     const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
-    
+
     const additionalInfoHtml = additionalInfo ? `
       ${additionalInfo.studentNumber ? `<p><strong>Student Number:</strong> ${additionalInfo.studentNumber}</p>` : ''}
       ${additionalInfo.program ? `<p><strong>Program:</strong> ${additionalInfo.program}</p>` : ''}
@@ -508,6 +508,59 @@ This is an automated message. Please do not reply to this email.
     );
   }
 
+  async sendPasswordResetEmail(
+    userEmail: string,
+    resetToken: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
+    const resetUrl = `${clientUrl}/reset-password?token=${resetToken}`;
+    const subject = 'Password Reset Request - INTRAK System';
+
+    const content = `
+      <p>Hello,</p>
+      <p>We received a request to reset your password for your INTRAK account.</p>
+      
+      <div class="credentials-box" style="text-align: center;">
+        <p>Click the button below to reset your password:</p>
+        <a href="${resetUrl}" class="login-button">Reset Password</a>
+        <p class="note">This link will expire in 1 hour.</p>
+      </div>
+
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${resetUrl}</span></p>
+      
+      <p>If you did not request a password reset, please ignore this email.</p>
+      
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      'Password Reset',
+      'https://img.icons8.com/ios-filled/50/ffffff/lock.png'
+    );
+
+    const text = `
+Password Reset Request - INTRAK System
+
+We received a request to reset your password.
+
+Click the link below to reset your password:
+${resetUrl}
+
+This link will expire in 1 hour.
+
+If you did not request a password reset, please ignore this email.
+    `;
+
+    return this.sendEmail({
+      to: userEmail,
+      subject,
+      html,
+      text
+    });
+  }
+
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     // Test Resend connection
     if (this.emailProvider === 'resend' && this.resend) {
@@ -520,9 +573,9 @@ This is an automated message. Please do not reply to this email.
         }
         return { success: false, error: 'Resend client not properly initialized' };
       } catch (error: any) {
-        return { 
-          success: false, 
-          error: `Resend connection test failed: ${error?.message || 'Unknown error'}` 
+        return {
+          success: false,
+          error: `Resend connection test failed: ${error?.message || 'Unknown error'}`
         };
       }
     }
@@ -534,7 +587,7 @@ This is an automated message. Please do not reply to this email.
           if (error) {
             console.error('❌ SMTP connection failed:', error);
             let errorMessage = error.message || 'Unknown error occurred';
-            
+
             if ((error as any).code === 'ETIMEDOUT') {
               errorMessage = `Connection timeout: Unable to connect to SMTP server (${process.env.SMTP_HOST}:${process.env.SMTP_PORT || '587'}). This may be due to network issues or Render.com blocking outbound SMTP connections.`;
             } else if ((error as any).code === 'ECONNREFUSED') {
@@ -542,7 +595,7 @@ This is an automated message. Please do not reply to this email.
             } else if ((error as any).code === 'EAUTH') {
               errorMessage = `Authentication failed: Invalid SMTP credentials. Please check SMTP_USER and SMTP_PASS.`;
             }
-            
+
             resolve({ success: false, error: errorMessage });
           } else {
             console.log('✅ SMTP connection verified');

@@ -9,6 +9,8 @@ import PageLoader from "./components/common/PageLoader";
 
 // Lazy load pages
 const Login = React.lazy(() => import("./pages/AuthUi/Login"));
+const ForgotPassword = React.lazy(() => import("./pages/AuthUi/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/AuthUi/ResetPassword"));
 const StudentLayout = React.lazy(() => import("./pages/StudentUi/StudentLayout"));
 const StudentOverview = React.lazy(() => import("./pages/StudentUi/StudentOverview"));
 const StudentDocumentsTab = React.lazy(() => import("./pages/StudentUi/StudentDocumentsTab"));
@@ -142,118 +144,120 @@ const App: React.FC = () => {
         <SessionTimeoutWrapper>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-            <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route
-              path="/student"
-              element={
-                <MaintenanceWrapper>
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <StudentLayout />
+              <Route
+                path="/student"
+                element={
+                  <MaintenanceWrapper>
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <StudentLayout />
+                    </ProtectedRoute>
+                  </MaintenanceWrapper>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<StudentOverview />} />
+                <Route path="documents" element={<StudentDocumentsTab />} />
+                <Route path="templates" element={<StudentTemplates />} />
+                <Route path="companies" element={<StudentCompanySelection />} />
+                <Route path="partnership-assistance" element={<StudentCompanyPartnershipAssistance />} />
+                <Route path="attendance" element={<StudentAttendanceTab />} />
+                <Route path="evaluations" element={<StudentEvaluationsTab />} />
+                <Route path="reports" element={<StudentReportsTab />} />
+                <Route path="settings" element={<StudentSettings />} />
+                <Route path="notifications" element={<StudentNotifications />} />
+              </Route>
+
+              <Route
+                path="/coordinator"
+                element={
+                  <MaintenanceWrapper>
+                    <ProtectedRoute allowedRoles={["coordinator"]}>
+                      <CoordinatorLayout />
+                    </ProtectedRoute>
+                  </MaintenanceWrapper>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<CoordinatorOverview />} />
+                <Route path="students" element={<CoordinatorStudentManagement />} />
+                <Route path="documents" element={<CoordinatorDocumentsTab />} />
+                <Route path="companies" element={<CoordinatorCompanyManagement />} />
+                <Route path="announcements" element={<CoordinatorAnnouncementsTab />} />
+                <Route path="reports" element={<CoordinatorReportsTab />} />
+                <Route path="settings" element={<CoordinatorSettingsTab />} />
+                <Route path="notifications" element={<CoordinatorNotifications />} />
+              </Route>
+
+              <Route
+                path="/instructor"
+                element={
+                  <MaintenanceWrapper>
+                    <ProtectedRoute allowedRoles={["instructor"]}>
+                      <InstructorLayout />
+                    </ProtectedRoute>
+                  </MaintenanceWrapper>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<InstructorOverview />} />
+                <Route path="students" element={<InstructorStudentManagement />} />
+                <Route path="documents" element={<InstructorDocumentsTab />} />
+                <Route path="applications" element={<InstructorApplications />} />
+                <Route path="templates" element={<InstructorTemplateManagement />} />
+                <Route path="checklist" element={<DocumentChecklistTab />} />
+                <Route path="monitoring" element={<InstructorMonitoringTab />} />
+                <Route path="reports" element={<InstructorReportsTab />} />
+                <Route path="settings" element={<InstructorSettings />} />
+                <Route path="notifications" element={<InstructorNotifications />} />
+              </Route>
+
+              <Route
+                path="/industry-partner"
+                element={
+                  <MaintenanceWrapper>
+                    <ProtectedRoute allowedRoles={["industry_partner"]}>
+                      <SupervisorLayout />
+                    </ProtectedRoute>
+                  </MaintenanceWrapper>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<SupervisorOverview />} />
+                <Route path="attendance" element={<SupervisorAttendanceTab />} />
+                <Route path="documents" element={<SupervisorDocumentsTab />} />
+                <Route path="evaluations" element={<SupervisorEvaluationsTab />} />
+                <Route path="settings" element={<SupervisorSettingsTab />} />
+                <Route path="notifications" element={<SupervisorNotifications />} />
+              </Route>
+
+              {/* Admin routes bypass maintenance mode */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminLayout />
                   </ProtectedRoute>
-                </MaintenanceWrapper>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<StudentOverview />} />
-              <Route path="documents" element={<StudentDocumentsTab />} />
-              <Route path="templates" element={<StudentTemplates />} />
-              <Route path="companies" element={<StudentCompanySelection />} />
-              <Route path="partnership-assistance" element={<StudentCompanyPartnershipAssistance />} />
-              <Route path="attendance" element={<StudentAttendanceTab />} />
-              <Route path="evaluations" element={<StudentEvaluationsTab />} />
-              <Route path="reports" element={<StudentReportsTab />} />
-              <Route path="settings" element={<StudentSettings />} />
-              <Route path="notifications" element={<StudentNotifications />} />
-            </Route>
+                }
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminOverview />} />
+                <Route path="users" element={<AdminUserManagement />} />
+                <Route path="companies" element={<AdminCompanyManagement />} />
+                <Route path="settings" element={<AdminSettings />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+              </Route>
 
-            <Route
-              path="/coordinator"
-              element={
-                <MaintenanceWrapper>
-                  <ProtectedRoute allowedRoles={["coordinator"]}>
-                    <CoordinatorLayout />
-                  </ProtectedRoute>
-                </MaintenanceWrapper>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<CoordinatorOverview />} />
-              <Route path="students" element={<CoordinatorStudentManagement />} />
-              <Route path="documents" element={<CoordinatorDocumentsTab />} />
-              <Route path="companies" element={<CoordinatorCompanyManagement />} />
-              <Route path="announcements" element={<CoordinatorAnnouncementsTab />} />
-              <Route path="reports" element={<CoordinatorReportsTab />} />
-              <Route path="settings" element={<CoordinatorSettingsTab />} />
-              <Route path="notifications" element={<CoordinatorNotifications />} />
-            </Route>
+              {/* Error Pages */}
+              <Route path="/error/:code" element={<ErrorPage />} />
+              <Route path="/error" element={<ErrorPage errorCode={500} />} />
 
-            <Route
-              path="/instructor"
-              element={
-                <MaintenanceWrapper>
-                  <ProtectedRoute allowedRoles={["instructor"]}>
-                    <InstructorLayout />
-                  </ProtectedRoute>
-                </MaintenanceWrapper>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<InstructorOverview />} />
-              <Route path="students" element={<InstructorStudentManagement />} />
-              <Route path="documents" element={<InstructorDocumentsTab />} />
-              <Route path="applications" element={<InstructorApplications />} />
-              <Route path="templates" element={<InstructorTemplateManagement />} />
-              <Route path="checklist" element={<DocumentChecklistTab />} />
-              <Route path="monitoring" element={<InstructorMonitoringTab />} />
-              <Route path="reports" element={<InstructorReportsTab />} />
-              <Route path="settings" element={<InstructorSettings />} />
-              <Route path="notifications" element={<InstructorNotifications />} />
-            </Route>
-
-            <Route
-              path="/industry-partner"
-              element={
-                <MaintenanceWrapper>
-                  <ProtectedRoute allowedRoles={["industry_partner"]}>
-                    <SupervisorLayout />
-                  </ProtectedRoute>
-                </MaintenanceWrapper>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<SupervisorOverview />} />
-              <Route path="attendance" element={<SupervisorAttendanceTab />} />
-              <Route path="documents" element={<SupervisorDocumentsTab />} />
-              <Route path="evaluations" element={<SupervisorEvaluationsTab />} />
-              <Route path="settings" element={<SupervisorSettingsTab />} />
-              <Route path="notifications" element={<SupervisorNotifications />} />
-            </Route>
-
-            {/* Admin routes bypass maintenance mode */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminOverview />} />
-              <Route path="users" element={<AdminUserManagement />} />
-              <Route path="companies" element={<AdminCompanyManagement />} />
-              <Route path="settings" element={<AdminSettings />} />
-              <Route path="notifications" element={<AdminNotifications />} />
-            </Route>
-
-            {/* Error Pages */}
-            <Route path="/error/:code" element={<ErrorPage />} />
-            <Route path="/error" element={<ErrorPage errorCode={500} />} />
-
-            {/* default + catch-all */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<ErrorPage errorCode={404} />} />
+              {/* default + catch-all */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<ErrorPage errorCode={404} />} />
             </Routes>
           </Suspense>
         </SessionTimeoutWrapper>

@@ -28,6 +28,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({ email: false, password: false });
@@ -163,6 +164,8 @@ const Login: React.FC = () => {
       } else {
         setErrors({ general: errorMessage });
       }
+      // Show forgot password link on failure
+      setShowForgotPassword(true);
     } finally {
       setLoading(false);
     }
@@ -225,9 +228,8 @@ const Login: React.FC = () => {
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail
-                      className={`w-5 h-5 ${
-                        errors.email ? "text-red-400" : "text-gray-400"
-                      }`}
+                      className={`w-5 h-5 ${errors.email ? "text-red-400" : "text-gray-400"
+                        }`}
                     />
                   </div>
                   <input
@@ -236,11 +238,10 @@ const Login: React.FC = () => {
                     onChange={handleEmailChange}
                     onBlur={handleEmailBlur}
                     required
-                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${
-                      errors.email
-                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    }`}
+                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.email
+                      ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
                     placeholder="example@psu.edu.ph"
                     style={outfitFont}
                   />
@@ -272,9 +273,8 @@ const Login: React.FC = () => {
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Lock
-                      className={`w-5 h-5 ${
-                        errors.password ? "text-red-400" : "text-gray-400"
-                      }`}
+                      className={`w-5 h-5 ${errors.password ? "text-red-400" : "text-gray-400"
+                        }`}
                     />
                   </div>
                   <input
@@ -283,11 +283,10 @@ const Login: React.FC = () => {
                     onChange={handlePasswordChange}
                     onBlur={handlePasswordBlur}
                     required
-                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${
-                      errors.password
-                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    }`}
+                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.password
+                      ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      }`}
                     placeholder="••••••••"
                     style={outfitFont}
                   />
@@ -319,6 +318,19 @@ const Login: React.FC = () => {
                 )}
               </div>
 
+
+              {showForgotPassword && (
+                <div className="flex justify-end">
+                  <a
+                    href="/forgot-password"
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    style={outfitFont}
+                  >
+                    Forgot Password?
+                  </a>
+                </div>
+              )}
+
               {/* Continue Button */}
               <button
                 type="submit"
@@ -345,10 +357,10 @@ const Login: React.FC = () => {
               <p>Streamline. Manage. Connect.</p>
             </div>
           </div>
-        </div>
+        </div >
 
         {/* Right Section - Image (Hidden on Mobile/Tablet) */}
-        <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center">
+        < div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center" >
           <div className="relative">
             <img
               src="/intrak_light.jpg"
@@ -356,8 +368,8 @@ const Login: React.FC = () => {
               className="max-w-full h-auto"
             />
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
     </>
   );
 };
