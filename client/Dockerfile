@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine AS build
 
 # Accept build argument for API URL
 ARG VITE_API_URL
