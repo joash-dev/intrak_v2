@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
 import { Mail, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 
@@ -23,24 +24,13 @@ const ForgotPassword = () => {
         setMessage(null);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://intrak.site/api'}/auth/forgot-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setMessage({ type: 'success', text: data.message });
-            } else {
-                setMessage({ type: 'error', text: data.message || 'An error occurred' });
-            }
-        } catch (error) {
+            const response = await api.post('/auth/forgot-password', { email });
+            const data = response.data;
+            setMessage({ type: 'success', text: data.message });
+        } catch (error: any) {
             console.error("Forgot password error:", error);
-            setMessage({ type: 'error', text: 'Failed to connect to the server' });
+            const errorMessage = error.response?.data?.message || 'An error occurred';
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setLoading(false);
         }

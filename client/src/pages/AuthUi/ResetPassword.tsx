@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
 import { Lock, AlertCircle, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
@@ -45,27 +46,19 @@ const ResetPassword = () => {
         setMessage(null);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://intrak.site/api'}/auth/reset-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token, newPassword: password }),
+            const response = await api.post('/auth/reset-password', {
+                token,
+                newPassword: password
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                setMessage({ type: 'success', text: "Password reset successfully. Redirecting to login..." });
-                setTimeout(() => {
-                    navigate('/login');
-                }, 3000);
-            } else {
-                setMessage({ type: 'error', text: data.message || 'An error occurred' });
-            }
-        } catch (error) {
+            setMessage({ type: 'success', text: "Password reset successfully. Redirecting to login..." });
+            setTimeout(() => {
+                navigate('/login');
+            }, 3000);
+        } catch (error: any) {
             console.error("Reset password error:", error);
-            setMessage({ type: 'error', text: 'Failed to connect to the server' });
+            const errorMessage = error.response?.data?.message || 'An error occurred';
+            setMessage({ type: 'error', text: errorMessage });
         } finally {
             setLoading(false);
         }

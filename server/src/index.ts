@@ -71,7 +71,9 @@ const corsOptions = {
       ...envOrigins,
       'http://localhost:5173',
       'http://localhost:3000',
-      'https://intrak-v2.onrender.com'
+      'https://intrak-v2.onrender.com',
+      'https://intrak.site',
+      'https://www.intrak.site'
     ];
 
     if (allowedOrigins.includes(origin)) {
