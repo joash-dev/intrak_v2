@@ -53,7 +53,7 @@ class SettingsService {
           emergencyName: user.emergencyName || "",
         };
       }
-      
+
       // Fallback: try API endpoint for students
       const response = await api.get('/students/profile');
       return {
@@ -87,10 +87,10 @@ class SettingsService {
     return stored
       ? JSON.parse(stored)
       : {
-          autoApproveDocuments: true,
-          requireManualReview: false,
-          defaultAnnouncementAudience: 'All Users',
-        };
+        autoApproveDocuments: true,
+        requireManualReview: false,
+        defaultAnnouncementAudience: 'All Users',
+      };
   }
 
   // Update user profile
@@ -105,24 +105,24 @@ class SettingsService {
     try {
       console.log('🔐 SettingsService: Attempting password change...');
       console.log('🔐 SettingsService: Current token exists:', !!localStorage.getItem('accessToken'));
-      
+
       const response = await api.put('/users/password/change', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
-      
+
       console.log('✅ SettingsService: Password change successful:', response.data);
     } catch (error: any) {
       console.error('❌ SettingsService: Error changing password:', error);
       console.error('❌ SettingsService: Error response:', error.response);
       console.error('❌ SettingsService: Error response data:', error.response?.data);
       console.error('❌ SettingsService: Error response status:', error.response?.status);
-      
+
       // Extract the specific error message from the API response
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Failed to change password';
-      
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        'Failed to change password';
+
       console.error('❌ SettingsService: Final error message:', errorMessage);
       throw new Error(errorMessage);
     }
@@ -162,7 +162,7 @@ class SettingsService {
       language: 'en',
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12hr',
-      theme: 'auto',
+      theme: 'light',
     };
     // If standalone theme key exists, prefer it for consistency
     const simpleTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
@@ -176,7 +176,7 @@ class SettingsService {
   // Apply theme to document
   applyTheme(theme: 'light' | 'dark' | 'auto' | 'system'): void {
     const root = document.documentElement;
-    
+
     if (theme === 'dark') {
       root.classList.add('dark');
     } else if (theme === 'light') {
@@ -200,23 +200,23 @@ class SettingsService {
   // Validate password strength
   validatePassword(password: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     if (password.length < 8) {
       errors.push('Password must be at least 8 characters long');
     }
-    
+
     if (!/[A-Z]/.test(password)) {
       errors.push('Password must contain at least one uppercase letter');
     }
-    
+
     if (!/[a-z]/.test(password)) {
       errors.push('Password must contain at least one lowercase letter');
     }
-    
+
     if (!/\d/.test(password)) {
       errors.push('Password must contain at least one number');
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors
