@@ -35,6 +35,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           name: true,
           role: true,
           active: true,
+          profilePhoto: true,
           createdAt: true,
           _count: {
             select: {

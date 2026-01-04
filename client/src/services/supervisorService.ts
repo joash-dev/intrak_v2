@@ -10,6 +10,7 @@ export interface SupervisorStudent {
   program: string;
   year: number;
   section: string;
+  profilePhoto?: string | null;
   startDate: string | null;
   endDate: string | null;
   totalHours: number;
@@ -111,6 +112,7 @@ class SupervisorService {
         studentNumber: student.studentNumber,
         name: student.user?.name || student.name || 'Unknown',
         email: student.user?.email || student.email || '',
+        profilePhoto: student.user?.profilePhoto || null,
         program: student.program,
         year: student.year,
         section: student.section,
@@ -502,7 +504,7 @@ class SupervisorService {
       const response = await api.get('/students/agency-self-evaluation/export', {
         responseType: 'blob',
       });
-      
+
       // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');

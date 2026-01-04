@@ -79,7 +79,7 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
           completedHours: true,
           createdAt: true,
           updatedAt: true,
-          user: { select: { name: true, email: true } },
+          user: { select: { name: true, email: true, profilePhoto: true } },
           company: { select: { id: true, name: true } },
           instructor: { select: { id: true, name: true, email: true } },
           evaluations: {
@@ -554,8 +554,8 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
       data: updateData,
       include: {
         user: { select: { name: true, email: true } },
-        instructor: { 
-          select: { id: true, name: true, email: true } 
+        instructor: {
+          select: { id: true, name: true, email: true }
         }
       }
     });
@@ -569,23 +569,23 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
       meta: error.meta,
       stack: error.stack
     });
-    
+
     // Provide more specific error messages
     if (error.code === 'P2025') {
       return res.status(404).json({ message: 'Student not found' });
     }
-    
+
     if (error.code === 'P2003') {
       return res.status(400).json({ message: 'Invalid instructor ID' });
     }
 
-    res.status(500).json({ 
-      message: 'Failed to assign instructor', 
+    res.status(500).json({
+      message: 'Failed to assign instructor',
       error: process.env.NODE_ENV === 'development' ? {
         message: error.message,
         code: error.code,
         meta: error.meta
-      } : undefined 
+      } : undefined
     });
   }
 };
@@ -685,7 +685,7 @@ export const getStudentsByInstructor = async (req: AuthRequest, res: Response) =
       prisma.student.findMany({
         where,
         include: {
-          user: { select: { name: true, email: true } },
+          user: { select: { name: true, email: true, profilePhoto: true } },
           company: { select: { name: true } },
           instructor: { select: { id: true, name: true, email: true } }
         },
@@ -767,7 +767,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
             jobDescription: true,
             createdAt: true,
             updatedAt: true,
-            user: { select: { name: true, email: true } },
+            user: { select: { name: true, email: true, profilePhoto: true } },
             company: {
               select: {
                 name: true,

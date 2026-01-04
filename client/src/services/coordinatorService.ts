@@ -46,6 +46,7 @@ export interface CoordinatorStudent {
     total: number;
   };
   evaluation: number;
+  profilePhoto?: string | null;
   lastActivity: string;
   avatar: string;
   program: string;
@@ -94,7 +95,7 @@ class CoordinatorService {
       const response = await api.get('/students');
       console.log('Students API response:', response.data);
       const students = response.data.students || [];
-      
+
       // Transform the API response to match CoordinatorStudent interface
       return students.map((student: any) => ({
         id: student.id,
@@ -105,6 +106,7 @@ class CoordinatorService {
         company: student.company?.name || 'No Company',
         companyId: student.company?.id || null,
         status: this.mapStudentStatus(student),
+        profilePhoto: student.user?.profilePhoto || null,
         attendance: 0, // Would need separate API call
         tasks: { completed: 0, total: 0 }, // Would need separate API call
         evaluation: 0, // Would need separate API call
@@ -191,16 +193,16 @@ class CoordinatorService {
     const activeInterns = students.filter(s => s.status === 'active').length;
     const pendingApprovals = students.filter(s => s.status === 'pending').length;
     const completedInternships = students.filter(s => s.status === 'completed').length;
-    
-    const attendanceRate = totalStudents > 0 
-      ? students.reduce((sum, s) => sum + s.attendance, 0) / totalStudents 
+
+    const attendanceRate = totalStudents > 0
+      ? students.reduce((sum, s) => sum + s.attendance, 0) / totalStudents
       : 0;
-    
+
     const documentsPending = students.reduce((sum, s) => sum + (s.tasks.total - s.tasks.completed), 0);
     const tasksCompleted = students.reduce((sum, s) => sum + s.tasks.completed, 0);
-    
-    const averageRating = totalStudents > 0 
-      ? students.reduce((sum, s) => sum + s.evaluation, 0) / totalStudents 
+
+    const averageRating = totalStudents > 0
+      ? students.reduce((sum, s) => sum + s.evaluation, 0) / totalStudents
       : 0;
 
     return {
@@ -251,7 +253,7 @@ class CoordinatorService {
     try {
       const response = await api.get(`/students/${studentId}`);
       const student = response.data;
-      
+
       // Transform the API response to match CoordinatorStudent interface
       return {
         id: student.id,
@@ -317,7 +319,7 @@ class CoordinatorService {
       const response = await api.get('/users?role=INSTRUCTOR');
       console.log('Instructors API response:', response.data);
       const instructors = response.data.users || [];
-      
+
       // Transform the API response to include student count
       return instructors.map((instructor: any) => ({
         id: instructor.id,
@@ -340,7 +342,7 @@ class CoordinatorService {
     try {
       const response = await api.get(`/students?search=${encodeURIComponent(query)}`);
       const students = response.data.students || [];
-      
+
       // Transform the API response to match CoordinatorStudent interface
       return students.map((student: any) => ({
         id: student.id,
@@ -401,10 +403,10 @@ class CoordinatorService {
   private generateStudentPassword(studentNumber: string, _studentName: string): string {
     // Clean student number (remove dashes and spaces)
     const cleanStudentNumber = studentNumber.replace(/[-\s]/g, '');
-    
+
     // Get current year
     const currentYear = new Date().getFullYear().toString();
-    
+
     // Generate random characters (2 uppercase, 2 lowercase, 1 special)
     const randomUpper = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
     const randomUpper2 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
@@ -412,10 +414,10 @@ class CoordinatorService {
     const randomLower2 = String.fromCharCode(97 + Math.floor(Math.random() * 26));
     const specialChars = ['!', '@', '#', '$', '%', '&', '*'];
     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
-    
+
     // Combine all elements
     const password = `${cleanStudentNumber}${randomUpper}${randomLower}${randomUpper2}${randomLower2}${randomSpecial}${currentYear}`;
-    
+
     return password;
   }
 
@@ -435,11 +437,11 @@ class CoordinatorService {
     try {
       console.log('Creating student with data:', studentData);
       console.log('API base URL:', api.defaults.baseURL);
-      
+
       // Generate secure password for the student
       const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
       console.log('Generated password for student:', generatedPassword);
-      
+
       // First, create a user account using the register endpoint
       console.log('Creating user account...');
       const userResponse = await api.post('/auth/register', {
@@ -448,14 +450,14 @@ class CoordinatorService {
         role: 'STUDENT',
         password: generatedPassword
       });
-      
+
       console.log('User created successfully:', userResponse.data);
 
       const userId = userResponse.data.user.id;
 
       // Convert year string to integer (e.g., "4th Year" -> 4)
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
-      
+
       // Then create the student record
       console.log('Creating student record...');
       const studentResponse = await api.post('/students', {
@@ -528,7 +530,7 @@ class CoordinatorService {
       console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
       console.error('Error data:', error.response?.data);
-      
+
       // Provide more specific error messages
       if (error.response?.status === 400) {
         const message = error.response.data.message || 'Invalid data provided';
@@ -555,10 +557,10 @@ class CoordinatorService {
   async deleteStudent(studentId: string): Promise<boolean> {
     try {
       console.log('Deleting student with ID:', studentId);
-      
+
       // Delete the student record (this should cascade to delete the user as well)
       await api.delete(`/students/${studentId}`);
-      
+
       console.log('Student deleted successfully');
       return true;
     } catch (error: any) {
@@ -566,7 +568,7 @@ class CoordinatorService {
       console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
       console.error('Error data:', error.response?.data);
-      
+
       // Provide specific error messages
       if (error.response?.status === 404) {
         throw new Error('Student not found');
@@ -596,7 +598,7 @@ class CoordinatorService {
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId
       });
-      
+
       console.log('Student assigned successfully:', response.data);
       return true;
     } catch (error: any) {
@@ -613,7 +615,7 @@ class CoordinatorService {
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId: null
       });
-      
+
       console.log('Student unassigned successfully:', response.data);
       return true;
     } catch (error) {

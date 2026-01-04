@@ -381,12 +381,25 @@ const SupervisorOverview = () => {
                         >
                             <div className="flex items-start justify-between mb-2.5 sm:mb-3 lg:mb-4">
                                 <div className="flex items-start space-x-2.5 sm:space-x-3 lg:space-x-4 flex-1 min-w-0">
-                                    <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm lg:text-base flex-shrink-0">
-                                        {intern.name
-                                            .split(" ")
-                                            .map((namePart: string) => namePart[0] ?? "")
-                                            .join("")
-                                            .substring(0, 2)}
+                                    <div className="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm lg:text-base flex-shrink-0 overflow-hidden">
+                                        {intern.profilePhoto ? (
+                                            <img
+                                                src={intern.profilePhoto}
+                                                alt={intern.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                                }}
+                                            />
+                                        ) : null}
+                                        <span className={intern.profilePhoto ? 'hidden' : ''}>
+                                            {intern.name
+                                                .split(" ")
+                                                .map((namePart: string) => namePart[0] ?? "")
+                                                .join("")
+                                                .substring(0, 2)}
+                                        </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate mb-0.5">
@@ -475,12 +488,25 @@ const SupervisorOverview = () => {
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                                                    {intern.name
-                                                        .split(" ")
-                                                        .map((namePart: string) => namePart[0] ?? "")
-                                                        .join("")
-                                                        .substring(0, 2)}
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 overflow-hidden">
+                                                    {intern.profilePhoto ? (
+                                                        <img
+                                                            src={intern.profilePhoto}
+                                                            alt={intern.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <span className={intern.profilePhoto ? 'hidden' : ''}>
+                                                        {intern.name
+                                                            .split(" ")
+                                                            .map((namePart: string) => namePart[0] ?? "")
+                                                            .join("")
+                                                            .substring(0, 2)}
+                                                    </span>
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-gray-900 dark:text-white">{intern.name}</div>
@@ -549,12 +575,25 @@ const SupervisorOverview = () => {
                         {/* Header */}
                         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
-                                    {selectedIntern.name
-                                        .split(" ")
-                                        .map((namePart: string) => namePart[0] ?? "")
-                                        .join("")
-                                        .substring(0, 2)}
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0 overflow-hidden">
+                                    {selectedIntern.profilePhoto ? (
+                                        <img
+                                            src={selectedIntern.profilePhoto}
+                                            alt={selectedIntern.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                            }}
+                                        />
+                                    ) : null}
+                                    <span className={selectedIntern.profilePhoto ? 'hidden' : ''}>
+                                        {selectedIntern.name
+                                            .split(" ")
+                                            .map((namePart: string) => namePart[0] ?? "")
+                                            .join("")
+                                            .substring(0, 2)}
+                                    </span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate">

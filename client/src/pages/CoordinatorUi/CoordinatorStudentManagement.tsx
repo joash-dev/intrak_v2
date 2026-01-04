@@ -746,13 +746,26 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                     )}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                          {student.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .substring(0, 2)}
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                          {student.profilePhoto ? (
+                            <img
+                              src={student.profilePhoto}
+                              alt={student.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <span className={student.profilePhoto ? 'hidden' : ''}>
+                            {student.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .substring(0, 2)}
+                          </span>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -871,13 +884,26 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
             >
               {/* Student Header */}
               <div className="flex items-start space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {student.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .substring(0, 2)}
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 overflow-hidden">
+                  {student.profilePhoto ? (
+                    <img
+                      src={student.profilePhoto}
+                      alt={student.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={student.profilePhoto ? 'hidden' : ''}>
+                    {student.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .substring(0, 2)}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5">

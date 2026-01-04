@@ -559,10 +559,23 @@ const AdminUserManagement = () => {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-xl flex items-center justify-center shadow-sm border border-indigo-700">
-                        <span className="text-indigo-300 font-bold text-sm">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
+                      <div className="w-10 h-10 rounded-xl shadow-sm border border-indigo-700/30 overflow-hidden flex-shrink-0">
+                        {user.profilePhoto ? (
+                          <img
+                            src={user.profilePhoto}
+                            alt={user.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-full h-full bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center ${user.profilePhoto ? 'hidden' : ''}`}>
+                          <span className="text-indigo-300 font-bold text-sm">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">

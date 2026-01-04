@@ -22,6 +22,7 @@ export interface InstructorStudent {
   email: string;
   phone?: string;
   avatar: string;
+  profilePhoto?: string | null;
   program: string;
   company: string;
   supervisor: string;
@@ -97,6 +98,7 @@ class InstructorService {
         name: student.user?.name || 'Unknown',
         email: student.user?.email || '',
         avatar: this.generateAvatar(student.user?.name || 'Unknown'),
+        profilePhoto: student.user?.profilePhoto || null,
         program: student.program || 'BS Computer Engineering',
         company: student.company?.name || 'No Company',
         supervisor: student.supervisorName || 'No Supervisor',

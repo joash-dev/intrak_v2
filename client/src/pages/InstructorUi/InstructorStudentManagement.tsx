@@ -675,13 +675,26 @@ const InstructorStudentManagement: React.FC = () => {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                        {student.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()
-                          .substring(0, 2)}
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm overflow-hidden">
+                        {student.profilePhoto ? (
+                          <img
+                            src={student.profilePhoto}
+                            alt={student.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <span className={student.profilePhoto ? 'hidden' : ''}>
+                          {student.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .substring(0, 2)}
+                        </span>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -811,13 +824,26 @@ const InstructorStudentManagement: React.FC = () => {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
-                      {student.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .substring(0, 2)}
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {student.profilePhoto ? (
+                        <img
+                          src={student.profilePhoto}
+                          alt={student.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <span className={student.profilePhoto ? 'hidden' : ''}>
+                        {student.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                          .substring(0, 2)}
+                      </span>
                     </div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white dark:border-gray-800"></div>
                   </div>
@@ -1436,13 +1462,26 @@ const InstructorStudentManagement: React.FC = () => {
               {/* Student Header */}
               <div className="flex items-start space-x-4">
                 <div className="relative">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    {selectedStudent.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .substring(0, 2)}
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg overflow-hidden">
+                    {selectedStudent.profilePhoto ? (
+                      <img
+                        src={selectedStudent.profilePhoto}
+                        alt={selectedStudent.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <span className={selectedStudent.profilePhoto ? 'hidden' : ''}>
+                      {selectedStudent.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .substring(0, 2)}
+                    </span>
                   </div>
                   <div
                     className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 ${selectedStudent.status === "completed"
