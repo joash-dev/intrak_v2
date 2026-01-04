@@ -363,10 +363,10 @@ const CoordinatorSettingsTab = () => {
       return;
     }
 
-    // Validate file size (2MB max)
-    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      toast.error("File size must be less than 2MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -388,9 +388,13 @@ const CoordinatorSettingsTab = () => {
 
       // Reset the file input
       event.target.value = "";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading photo:", error);
-      toast.error("Failed to upload photo. Please try again.");
+      if (error.response?.status === 413) {
+        toast.error("File is too large. Please upload an image smaller than 5MB.");
+      } else {
+        toast.error("Failed to upload photo. Please try again.");
+      }
       // Clear preview on error
       setProfilePhotoPreview(null);
     } finally {
@@ -547,7 +551,7 @@ const CoordinatorSettingsTab = () => {
                       />
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      {t("settings.profile.photoHint")}
+                      {t("settings.profile.photoHint").replace("2MB", "5MB")}
                     </p>
                     {profilePhotoPreview && (
                       <button

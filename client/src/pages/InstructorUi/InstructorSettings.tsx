@@ -368,8 +368,8 @@ const InstructorSettings = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("File size must be less than 2MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -393,9 +393,13 @@ const InstructorSettings = () => {
       );
 
       toast.success("Profile photo updated successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading photo:", error);
-      toast.error("Failed to upload profile photo");
+      if (error.response?.status === 413) {
+        toast.error("File is too large. Please upload an image smaller than 5MB.");
+      } else {
+        toast.error("Failed to upload profile photo");
+      }
     } finally {
       setSaving(false);
     }
@@ -569,7 +573,7 @@ const InstructorSettings = () => {
                         Change Photo
                       </button>
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        JPG, PNG or GIF. Max size 2MB
+                        JPG, PNG or GIF. Max size 5MB
                       </p>
                       {profilePhoto && (
                         <button

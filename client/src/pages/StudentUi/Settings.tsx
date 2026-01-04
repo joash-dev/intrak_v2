@@ -336,10 +336,10 @@ const StudentSettingsTab = () => {
       return;
     }
 
-    // Validate file size (2MB max)
-    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
     if (file.size > maxSize) {
-      toast.error("File size must be less than 2MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -359,9 +359,13 @@ const StudentSettingsTab = () => {
 
       // Reset the file input
       event.target.value = "";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading photo:", error);
-      toast.error("Failed to upload photo. Please try again.");
+      if (error.response?.status === 413) {
+        toast.error("File is too large. Please upload an image smaller than 5MB.");
+      } else {
+        toast.error("Failed to upload photo. Please try again.");
+      }
       // Clear preview on error
       setProfilePhotoPreview(null);
     } finally {
@@ -563,7 +567,7 @@ const StudentSettingsTab = () => {
                       />
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      JPG, PNG or GIF. Max size 2MB
+                      JPG, PNG or GIF. Max size 5MB
                     </p>
                     {profilePhotoPreview && (
                       <button
