@@ -512,7 +512,7 @@ This is an automated message. Please do not reply to this email.
     userEmail: string,
     resetToken: string
   ): Promise<{ success: boolean; error?: string }> {
-    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
     const resetUrl = `${clientUrl}/reset-password?token=${resetToken}`;
     const subject = 'Password Reset Request - INTRAK System';
 
