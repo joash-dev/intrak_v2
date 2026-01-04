@@ -28,12 +28,12 @@ const fileFilter = (req: any, file: any, cb: any) => {
   // Allow image files only for profile photos
   const allowedMimes = [
     'image/jpeg',
-    'image/jpg', 
+    'image/jpg',
     'image/png',
     'image/gif',
     'image/webp'
   ];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -45,6 +45,6 @@ export const profilePhotoUpload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 2 * 1024 * 1024 // 2MB limit for profile photos
+    fileSize: 5 * 1024 * 1024 // 5MB limit for profile photos
   }
 });
