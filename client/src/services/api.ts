@@ -10,6 +10,16 @@ const ensureApiPath = (url: string): string => {
 };
 
 const resolveBaseURL = (): string => {
+  // Check browser environment first to enforce same-origin on production
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If we are on the production domain (www or non-www), verify if we should use relative path
+    // This avoids CORS issues by keeping requests on the same origin
+    if (hostname.includes('intrak.site') || hostname.includes('onrender.com')) {
+      return '/api';
+    }
+  }
+
   const envCandidates = [
     import.meta.env.VITE_API_URL as string | undefined,
     import.meta.env.VITE_API_BASE_URL as string | undefined,
@@ -35,16 +45,16 @@ const resolveBaseURL = (): string => {
 
     const hostname = window.location.hostname;
     const origin = window.location.origin;
-    
+
     // Production domains - use same origin for API (server is on same domain via Nginx)
     if (hostname === 'intrak.onrender.com' || hostname === 'www.intrak.site' || hostname === 'intrak.site') {
       return `${origin}/api`;
     }
-    
+
     if (hostname === 'intrak-v2.onrender.com') {
       return 'https://intrak-backend.onrender.com/api';
     }
-    
+
     // If we're on a production-like domain but not localhost, try to infer API URL
     if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('192.168')) {
       // Try to use same origin with /api
@@ -86,7 +96,7 @@ api.interceptors.response.use(
     // Only trigger token refresh for specific 401 errors (token expiration, not authentication failures)
     if (error.response?.status === 401 && !originalRequest._retry) {
       const errorMessage = error.response?.data?.message;
-      
+
       // Don't refresh token for password-related errors or other authentication failures
       if (errorMessage && (
         errorMessage.includes('Current password is incorrect') ||
@@ -96,7 +106,7 @@ api.interceptors.response.use(
       )) {
         return Promise.reject(error);
       }
-      
+
       originalRequest._retry = true;
 
       try {
@@ -114,7 +124,7 @@ api.interceptors.response.use(
         );
 
         const { accessToken, refreshToken: newRefreshToken } = response.data;
-        
+
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', newRefreshToken);
 
