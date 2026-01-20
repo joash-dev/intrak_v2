@@ -63,17 +63,15 @@ services:
       - VITE_API_URL=/api
     depends_on:
       - server
-
-  # Cloudflare Tunnel
-  # Securely exposes the application to the internet without port forwarding
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: always
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    depends_on:
-      - client
+  # Cloudflare Tunnel - DISABLED (Using Host Systemd Service Instead)
+  # tunnel:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: always
+  #   command: tunnel run
+  #   environment:
+  #     - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+  #   depends_on:
+  #     - client
 
 volumes:
   db_data:

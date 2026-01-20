@@ -1,37 +1,43 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'admin@intrak.edu.ph';
-  const password = 'Admin@2024!';
+  const email = 'admin@intrak.site';
+  const password = 'Password123!'; // Default password
+
+  console.log(`Creating/Updating admin account: ${email}`);
+
   const passwordHash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.upsert({
     where: { email },
     update: {
-      name: 'System Administrator',
+      // Update password if user exists, just to be sure
       passwordHash,
-      role: 'ADMIN',
-      department: 'IT Department',
-      active: true,
+      role: 'ADMIN'
     },
     create: {
       email,
       name: 'System Administrator',
       passwordHash,
       role: 'ADMIN',
-      department: 'IT Department',
     },
   });
 
-  console.log('Admin user ready:', { email: user.email });
+  console.log('------------------------------------------------');
+  console.log('✅ Admin Account Configured Successfully!');
+  console.log('------------------------------------------------');
+  console.log(`📧 Email:    ${user.email}`);
+  console.log(`🔑 Password: ${password}`);
+  console.log('------------------------------------------------');
+  console.log('You can change this password later in the settings.');
 }
 
 main()
-  .catch((error) => {
-    console.error('Error creating admin user:', error);
+  .catch((e) => {
+    console.error('❌ Error creating admin user:', e);
     process.exit(1);
   })
   .finally(async () => {
