@@ -350,6 +350,15 @@ class AdminService {
   }): Promise<{ users: AdminUser[]; pagination: any }> {
     try {
       const response = await api.get('/users', { params });
+      // Map the users to include the correct profile photo URL
+      if (response.data && response.data.users) {
+        response.data.users = response.data.users.map((user: AdminUser) => ({
+          ...user,
+          profilePhoto: user.profilePhoto
+            ? `/api/users/profile-photo/${user.profilePhoto}`
+            : null
+        }));
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -360,6 +369,14 @@ class AdminService {
   async getUserById(id: string): Promise<{ user: AdminUser }> {
     try {
       const response = await api.get(`/users/${id}`);
+      if (response.data && response.data.user) {
+        response.data.user = {
+          ...response.data.user,
+          profilePhoto: response.data.user.profilePhoto
+            ? `/api/users/profile-photo/${response.data.user.profilePhoto}`
+            : null
+        };
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching user:', error);

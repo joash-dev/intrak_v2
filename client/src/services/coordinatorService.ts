@@ -106,7 +106,9 @@ class CoordinatorService {
         company: student.company?.name || 'No Company',
         companyId: student.company?.id || null,
         status: this.mapStudentStatus(student),
-        profilePhoto: student.user?.profilePhoto || null,
+        profilePhoto: student.user?.profilePhoto
+          ? `/api/users/profile-photo/${student.user.profilePhoto}`
+          : null,
         attendance: 0, // Would need separate API call
         tasks: { completed: 0, total: 0 }, // Would need separate API call
         evaluation: 0, // Would need separate API call

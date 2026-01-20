@@ -98,7 +98,9 @@ class InstructorService {
         name: student.user?.name || 'Unknown',
         email: student.user?.email || '',
         avatar: this.generateAvatar(student.user?.name || 'Unknown'),
-        profilePhoto: student.user?.profilePhoto || null,
+        profilePhoto: student.user?.profilePhoto
+          ? `/api/users/profile-photo/${student.user.profilePhoto}`
+          : null,
         program: student.program || 'BS Computer Engineering',
         company: student.company?.name || 'No Company',
         supervisor: student.supervisorName || 'No Supervisor',

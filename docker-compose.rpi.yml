@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - NODE_ENV=production
+      - PORT=5000
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - CLIENT_URL=${CLIENT_URL}
+      # NAS Configuration (Local Mount)
+      - USE_NAS=true
+      - NAS_PATH=/mnt/nas/intrak
+      # Email & AI
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+      - RESEND_FROM_NAME=${RESEND_FROM_NAME}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - AI_PROVIDER=${AI_PROVIDER}
+      - AI_ENABLED=${AI_ENABLED}
+      - AI_MODEL=gemini-flash-latest
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS}
+      - AI_TEMPERATURE=${AI_TEMPERATURE}
+    command: [ "bash", "scripts/rpi-start.sh" ]
+    volumes:
+      # DIRECT Local NAS Mount
+      # Ensure you run: sudo mount -t cifs ... /mnt/nas-intrak on the Host Pi first!
+      - /mnt/nas-intrak:/mnt/nas/intrak
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Client needs to know where the API is (relative URL for proxy)
+        # In production with Nginx proxy, this is just /api
+        VITE_API_URL: /api
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - VITE_API_URL=/api
+    depends_on:
+      - server
+
+  # Cloudflare Tunnel
+  # Securely exposes the application to the internet without port forwarding
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - client
+
+volumes:
+  db_data:
