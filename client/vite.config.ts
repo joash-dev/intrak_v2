@@ -31,6 +31,10 @@ export default defineConfig({
             type: 'image/png'
           }
         ]
+      },
+      workbox: {
+        // Don't fallback to index.html for API routes
+        navigateFallbackDenylist: [/^\/api/]
       }
     })
   ],
