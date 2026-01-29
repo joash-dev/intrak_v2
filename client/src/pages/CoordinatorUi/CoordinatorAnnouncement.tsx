@@ -55,6 +55,14 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     type: "info" as "info" | "warning" | "success" | "urgent",
     isPinned: false,
   });
+  const [editingAnnouncement, setEditingAnnouncement] = useState<{
+    id: string;
+    title: string;
+    content: string;
+    audience: AudienceOption;
+    type: "info" | "warning" | "success" | "urgent";
+    isPinned: boolean;
+  } | null>(null);
 
   // Fetch announcements from API
   const fetchAnnouncements = async () => {
@@ -175,10 +183,46 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     }
   };
 
-  const handleEdit = (_announcement: Announcement) => {
-    // TODO: Implement edit functionality
-    console.log("Edit announcement:", _announcement.id);
+  const handleEdit = (announcement: Announcement) => {
+    setEditingAnnouncement({
+      id: announcement.id,
+      title: announcement.title,
+      content: announcement.content || announcement.message || "",
+      audience: announcement.audience,
+      type: announcement.type || "info",
+      isPinned: announcement.isPinned || false,
+    });
     setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingAnnouncement) return;
+
+    if (!editingAnnouncement.title || !editingAnnouncement.content) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await announcementService.updateAnnouncement(editingAnnouncement.id, {
+        title: editingAnnouncement.title,
+        content: editingAnnouncement.content,
+        audience: editingAnnouncement.audience,
+        type: editingAnnouncement.type,
+        isPinned: editingAnnouncement.isPinned,
+      });
+
+      toast.success("Announcement updated successfully");
+      await fetchAnnouncements();
+      setShowEditModal(false);
+      setEditingAnnouncement(null);
+    } catch (err: any) {
+      console.error("Error updating announcement:", err);
+      toast.error(err.response?.data?.message || "Failed to update announcement");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (announcement: Announcement) => {
@@ -195,15 +239,17 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
   const handleTogglePin = async (announcement: Announcement) => {
     try {
-      // For now, just show a message since pinning functionality isn't implemented in backend
-      alert(
-        `Announcement ${announcement.isPinned ? "unpinned" : "pinned"
-        } successfully!`
+      await announcementService.updateAnnouncement(announcement.id, {
+        isPinned: !announcement.isPinned,
+      });
+
+      toast.success(
+        `Announcement ${announcement.isPinned ? "unpinned" : "pinned"} successfully`
       );
-      // TODO: Implement pin/unpin API endpoint
+      await fetchAnnouncements();
     } catch (err: any) {
       console.error("Error toggling pin:", err);
-      alert("Failed to toggle pin status");
+      toast.error("Failed to toggle pin status");
     }
   };
 
@@ -790,27 +836,179 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
         </div>
       )}
 
-      {/* Edit Modal Placeholder */}
-      {showEditModal && (
+      {/* Edit Modal */}
+      {showEditModal && editingAnnouncement && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Edit Announcement
               </h3>
-              <button onClick={() => setShowEditModal(false)}>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingAnnouncement(null);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="text-center py-12">
-              <Edit className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">
-                Edit functionality coming soon...
-              </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editingAnnouncement.title}
+                  onChange={(e) =>
+                    setEditingAnnouncement({
+                      ...editingAnnouncement,
+                      title: e.target.value,
+                    })
+                  }
+                  placeholder="Enter announcement title"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Message <span className="text-red-500">*</span>
+                  </label>
+                  {editingAnnouncement.title && editingAnnouncement.audience && (
+                    <AIGenerateButton
+                      onGenerate={async () => {
+                        return aiService.generateAnnouncementContent({
+                          title: editingAnnouncement.title,
+                          audience: editingAnnouncement.audience,
+                          type: editingAnnouncement.type,
+                        });
+                      }}
+                      onSuccess={(generatedText) => {
+                        setEditingAnnouncement({
+                          ...editingAnnouncement,
+                          content: generatedText,
+                        });
+                        toast.success('Announcement content generated successfully');
+                      }}
+                      disabled={!editingAnnouncement.title || !editingAnnouncement.audience}
+                      size="sm"
+                      variant="outline"
+                    />
+                  )}
+                </div>
+                <textarea
+                  value={editingAnnouncement.content}
+                  onChange={(e) =>
+                    setEditingAnnouncement({
+                      ...editingAnnouncement,
+                      content: e.target.value,
+                    })
+                  }
+                  placeholder="Enter announcement message"
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Type
+                  </label>
+                  <select
+                    value={editingAnnouncement.type}
+                    onChange={(e) =>
+                      setEditingAnnouncement({
+                        ...editingAnnouncement,
+                        type: e.target.value as "info" | "warning" | "success" | "urgent",
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="info">Info</option>
+                    <option value="warning">Warning</option>
+                    <option value="success">Success</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Target Audience
+                  </label>
+                  <select
+                    value={editingAnnouncement.audience}
+                    onChange={(e) =>
+                      setEditingAnnouncement({
+                        ...editingAnnouncement,
+                        audience: e.target.value as AudienceOption,
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="ALL">All Users</option>
+                    <option value="STUDENTS">Students Only</option>
+                    <option value="COORDINATORS">Coordinators Only</option>
+                    <option value="INSTRUCTORS">Instructors Only</option>
+                    <option value="INDUSTRY_PARTNERS">
+                      Industry Partners Only
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={editingAnnouncement.isPinned}
+                    onChange={(e) =>
+                      setEditingAnnouncement({
+                        ...editingAnnouncement,
+                        isPinned: e.target.checked,
+                      })
+                    }
+                    className="rounded text-purple-600"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Pin this announcement
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingAnnouncement(null);
+                }}
+                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={submitting}
+                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium"
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Edit className="w-4 h-4" />
+                )}
+                <span>{submitting ? "Saving..." : "Save Changes"}</span>
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

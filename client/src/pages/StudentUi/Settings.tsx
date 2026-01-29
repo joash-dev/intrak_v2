@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
+import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
@@ -912,6 +913,7 @@ const StudentSettingsTab = () => {
                   </div>
                 </div>
 
+                <TwoFactorSettings />
               </div>
             )}
 

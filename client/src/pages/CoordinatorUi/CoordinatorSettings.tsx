@@ -42,6 +42,7 @@ import {
 } from "../../services/coordinatorService";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import { useCoordinatorContext } from "./CoordinatorLayout";
 
 const CoordinatorSettingsTab = () => {
@@ -812,6 +813,8 @@ const CoordinatorSettingsTab = () => {
                     )}
                   </button>
                 </div>
+
+                <TwoFactorSettings />
               </div>
             )}
 

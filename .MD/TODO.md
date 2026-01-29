@@ -36,6 +36,7 @@ This is a comprehensive On-the-Job Training (OJT) management system for BS Compu
 - [x] **ENHANCED: Document review with priority system**
 - [x] **ENHANCED: Advanced filtering (status, type, priority)**
 - [x] **ENHANCED: Real-time API integration**
+- [x] **NEW: Dynamic alerts system for student monitoring**
 
 ### 👨‍💼 **Coordinator Portal**
 
@@ -46,6 +47,7 @@ This is a comprehensive On-the-Job Training (OJT) management system for BS Compu
 - [x] Report generation
 - [x] Announcement management
 - [x] Settings management
+- [x] **NEW: Announcement edit functionality with full form support**
 
 ### 📊 **Core Features**
 
@@ -278,8 +280,12 @@ This is a comprehensive On-the-Job Training (OJT) management system for BS Compu
 
 - ✅ Fix instructor document review
 - ✅ Fix student attendance widget
+- ✅ Implement coordinator announcement edit functionality
+- ✅ Implement instructor alerts system
+- ✅ Remove deprecated email testing from admin settings
 - 🔄 Complete API integration
 - 🔄 Add notification system
+- 🔄 Implement announcement pin/unpin API (requires DB migration)
 
 ### 📅 **Next Sprint**
 
@@ -317,6 +323,7 @@ For bugs, feature requests, or questions:
 
 ---
 
-**Last Updated**: January 2025
-**Version**: 1.0.0
+**Last Updated**: January 28, 2026
+**Version**: 1.0.1
 **Status**: Active Development
+

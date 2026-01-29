@@ -71,7 +71,7 @@ class AnnouncementService {
       message: announcement.content,
       createdDate: announcement.createdAt,
       type: this.determineTypeFromContent(announcement.content, announcement.title),
-      isPinned: false, // This would need to be added to the backend schema
+      isPinned: announcement.isPinned || false,
       views: announcement.views || 0, // Real views count from database
     };
   }
@@ -89,7 +89,7 @@ class AnnouncementService {
   // Determine announcement type based on content and title
   private determineTypeFromContent(content: string, title: string): 'info' | 'warning' | 'success' | 'urgent' {
     const text = (title + ' ' + content).toLowerCase();
-    
+
     if (text.includes('urgent') || text.includes('emergency') || text.includes('immediate')) {
       return 'urgent';
     }
@@ -106,12 +106,12 @@ class AnnouncementService {
   calculateStats(announcements: Announcement[]): AnnouncementStats {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
-    const thisWeek = announcements.filter(a => 
+
+    const thisWeek = announcements.filter(a =>
       new Date(a.createdAt) >= weekAgo
     ).length;
-    
-    const avgViews = announcements.length > 0 
+
+    const avgViews = announcements.length > 0
       ? Math.round(announcements.reduce((sum, a) => sum + (a.views || 0), 0) / announcements.length)
       : 0;
 

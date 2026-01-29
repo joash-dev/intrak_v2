@@ -16,7 +16,7 @@ export const getAnnouncements = async (req: AuthRequest, res: Response) => {
     const announcements = await prisma.announcement.findMany({
       where,
       include: { createdBy: { select: { name: true, role: true } } },
-      orderBy: { createdAt: 'desc' }
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }]
     });
 
     res.json({ announcements });
@@ -45,13 +45,14 @@ export const getAnnouncementById = async (req: AuthRequest, res: Response) => {
 
 export const createAnnouncement = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, content, audience } = req.body;
+    const { title, content, audience, isPinned } = req.body;
 
     const announcement = await prisma.announcement.create({
       data: {
         title,
         content,
         audience: audience || 'ALL',
+        isPinned: isPinned || false,
         createdById: req.user!.id
       },
       include: { createdBy: { select: { name: true, role: true } } }
@@ -95,11 +96,11 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
 export const updateAnnouncement = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, content, audience } = req.body;
+    const { title, content, audience, isPinned } = req.body;
 
     const announcement = await prisma.announcement.update({
       where: { id },
-      data: { title, content, audience }
+      data: { title, content, audience, isPinned }
     });
 
     res.json({ announcement });
@@ -121,7 +122,7 @@ export const deleteAnnouncement = async (req: AuthRequest, res: Response) => {
 export const trackAnnouncementView = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    
+
     // Increment the view count for the announcement
     const announcement = await prisma.announcement.update({
       where: { id },

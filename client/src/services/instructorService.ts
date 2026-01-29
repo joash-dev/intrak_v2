@@ -373,22 +373,100 @@ class InstructorService {
   // Get alerts for instructor
   async getAlerts(): Promise<InstructorAlert[]> {
     try {
-      console.log('Fetching alerts for instructor...');
+      const alerts: InstructorAlert[] = [];
 
-      // TODO: Implement actual alerts system based on:
-      // - Students with low attendance
-      // - Pending document reviews
-      // - Students at risk
-      // - Overdue evaluations
+      // Fetch assigned students to generate alerts from
+      const students = await this.getAssignedStudents();
 
-      console.log('No alerts endpoint available yet');
-      return [];
+      if (students.length === 0) {
+        return [];
+      }
+
+      // Generate alerts based on student data
+      const now = new Date();
+
+      for (const student of students) {
+        // Alert for students at risk (status === 'at_risk')
+        if (student.status === 'at_risk') {
+          alerts.push({
+            id: `at-risk-${student.id}`,
+            type: 'error',
+            title: 'Student At Risk',
+            message: `${student.name} has not logged attendance for ${student.attendanceGapDays || 5}+ days and may need attention.`,
+            studentId: student.id,
+            timestamp: now.toISOString(),
+            priority: 'high',
+          });
+        }
+
+        // Alert for students with warning status
+        if (student.status === 'warning') {
+          alerts.push({
+            id: `warning-${student.id}`,
+            type: 'warning',
+            title: 'Attendance Warning',
+            message: `${student.name} has missed attendance for ${student.attendanceGapDays || 3} days. Consider following up.`,
+            studentId: student.id,
+            timestamp: now.toISOString(),
+            priority: 'medium',
+          });
+        }
+
+        // Alert for low attendance rate (< 70%)
+        if (student.attendanceRate > 0 && student.attendanceRate < 70 && student.status !== 'at_risk') {
+          alerts.push({
+            id: `low-attendance-${student.id}`,
+            type: 'warning',
+            title: 'Low Attendance Rate',
+            message: `${student.name} has an attendance rate of ${student.attendanceRate.toFixed(1)}%, which is below the 70% threshold.`,
+            studentId: student.id,
+            timestamp: now.toISOString(),
+            priority: 'medium',
+          });
+        }
+
+        // Alert for pending documents
+        if (student.documentsPending && student.documentsPending > 0) {
+          alerts.push({
+            id: `docs-pending-${student.id}`,
+            type: 'info',
+            title: 'Documents Pending Review',
+            message: `${student.name} has ${student.documentsPending} document${student.documentsPending > 1 ? 's' : ''} awaiting your review.`,
+            studentId: student.id,
+            timestamp: now.toISOString(),
+            priority: 'low',
+          });
+        }
+
+        // Alert for students nearing completion (90%+ hours completed)
+        const completionPercent = student.requiredHours > 0
+          ? (student.hoursCompleted / student.requiredHours) * 100
+          : 0;
+        if (completionPercent >= 90 && completionPercent < 100 && student.status !== 'completed') {
+          alerts.push({
+            id: `near-completion-${student.id}`,
+            type: 'success',
+            title: 'Near Completion',
+            message: `${student.name} has completed ${completionPercent.toFixed(1)}% of required hours and is nearing completion.`,
+            studentId: student.id,
+            timestamp: now.toISOString(),
+            priority: 'low',
+          });
+        }
+      }
+
+      // Sort alerts by priority (high first, then medium, then low)
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      alerts.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+      return alerts;
     } catch (error) {
       console.error('Error fetching alerts:', error);
       // Return empty array if API fails
       return [];
     }
   }
+
 
   // Map student status from detailed status to simple status
   private mapStudentStatus(student: any): 'active' | 'warning' | 'at_risk' | 'completed' {

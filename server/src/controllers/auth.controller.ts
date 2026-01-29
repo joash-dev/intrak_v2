@@ -181,6 +181,56 @@ export const login = async (req: Request, res: Response) => {
       console.log('Reset failed login attempts for:', user.email);
     }
 
+    // Check if 2FA is enabled for this user
+    if (user.twoFactorEnabled) {
+      // Check if device is trusted
+      const deviceToken = req.cookies?.device_token;
+      let isTrusted = false;
+
+      if (deviceToken) {
+        try {
+          const trustedDevice = await prisma.trustedDevice.findUnique({
+            where: { token: deviceToken }
+          });
+
+          if (trustedDevice && trustedDevice.userId === user.id && trustedDevice.expiresAt > new Date()) {
+            isTrusted = true;
+            console.log('Skipping 2FA: Device is trusted');
+            // Update last used
+            await prisma.trustedDevice.update({
+              where: { id: trustedDevice.id },
+              data: { lastUsed: new Date() }
+            });
+          }
+        } catch (e) {
+          console.error('Error checking trusted device:', e);
+        }
+      }
+
+      if (!isTrusted) {
+        console.log('2FA is enabled for admin user, sending OTP...');
+
+        // Import and use twoFactorService
+        const { twoFactorService } = await import('../services/twoFactor.service');
+        const otpResult = await twoFactorService.sendOTPEmail(user.id);
+
+        if (!otpResult.success) {
+          console.error('Failed to send 2FA OTP:', otpResult.error);
+          return res.status(500).json({
+            message: 'Failed to send verification code. Please try again.',
+            error: otpResult.error
+          });
+        }
+
+        // Return 2FA challenge response
+        return res.status(200).json({
+          requires2FA: true,
+          userId: user.id,
+          message: 'Verification code sent to your email'
+        });
+      }
+    }
+
     console.log('Password valid, generating tokens...');
     const { accessToken, refreshToken } = generateTokens(user);
     console.log('Tokens generated successfully');

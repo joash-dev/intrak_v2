@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, VerificationMethod } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -15,7 +15,7 @@ async function main() {
       }
     }
   });
-  
+
   await prisma.attendanceLog.deleteMany({
     where: {
       verificationMethod: {
@@ -23,7 +23,7 @@ async function main() {
       }
     }
   });
-  
+
   await prisma.evaluation.deleteMany({
     where: {
       comments: {
@@ -31,7 +31,7 @@ async function main() {
       }
     }
   });
-  
+
   await prisma.announcement.deleteMany({
     where: {
       title: {
@@ -149,17 +149,17 @@ async function main() {
   });
   if (!company1) {
     company1 = await prisma.company.create({
-    data: {
-      name: 'Tech Innovations Inc.',
-      address: 'Urdaneta City, Pangasinan',
-      contactPerson: 'Robert Manager',
-      contactEmail: 'robert@techinnovations.com',
-      contactNumber: '09171234567',
-      latitude: 15.9759,
-      longitude: 120.5711,
-      radiusMeters: 100
-    }
-  });
+      data: {
+        name: 'Tech Innovations Inc.',
+        address: 'Urdaneta City, Pangasinan',
+        contactPerson: 'Robert Manager',
+        contactEmail: 'robert@techinnovations.com',
+        contactNumber: '09171234567',
+        latitude: 15.9759,
+        longitude: 120.5711,
+        radiusMeters: 100
+      }
+    });
   }
 
   let company2 = await prisma.company.findFirst({
@@ -185,7 +185,7 @@ async function main() {
   });
   if (!company3) {
     company3 = await prisma.company.create({
-    data: {
+      data: {
         name: 'Software Development Hub',
         address: 'San Fernando, La Union',
         contactPerson: 'Mark Thompson',
@@ -297,18 +297,18 @@ async function main() {
   // Create sample documents for all students
   const documentTypes = ['APPLICATION_LETTER', 'MOA', 'ACCEPTANCE', 'EVALUATION_FORM', 'DTR_HARDCOPY'];
   const documentStatuses = ['APPROVED', 'PENDING', 'REJECTED'];
-  
+
   // Documents for student1
   await prisma.document.createMany({
     data: [
       {
-      studentId: student1.id,
-      type: 'APPLICATION_LETTER',
-      filename: 'application_letter.pdf',
-      filepath: './uploads/sample/application_letter.pdf',
-      mimeType: 'application/pdf',
-      status: 'APPROVED',
-      uploadedById: studentUser1.id
+        studentId: student1.id,
+        type: 'APPLICATION_LETTER',
+        filename: 'application_letter.pdf',
+        filepath: './uploads/sample/application_letter.pdf',
+        mimeType: 'application/pdf',
+        status: 'APPROVED',
+        uploadedById: studentUser1.id
       },
       {
         studentId: student1.id,
@@ -408,7 +408,7 @@ async function main() {
   const createAttendanceLogs = async (studentId: string, startDate: Date, endDate: Date, attendanceRate: number = 0.85) => {
     const logs = [];
     let currentDate = new Date(startDate);
-    
+
     while (currentDate <= endDate) {
       // Skip weekends
       const dayOfWeek = currentDate.getDay();
@@ -417,14 +417,14 @@ async function main() {
         if (Math.random() < attendanceRate) {
           const timeIn = new Date(currentDate);
           timeIn.setHours(8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0);
-          
+
           // Generate realistic work hours for 240-hour requirement (1-3 hours per day)
           const workHours = 1 + Math.floor(Math.random() * 2); // 1-3 hours
           const timeOut = new Date(timeIn);
           timeOut.setHours(timeIn.getHours() + workHours, timeIn.getMinutes(), 0);
-          
+
           const durationMinutes = workHours * 60;
-          
+
           logs.push({
             studentId,
             date: new Date(currentDate),
@@ -432,13 +432,13 @@ async function main() {
             timeOut,
             durationMinutes,
             verified: Math.random() > 0.2, // 80% verified
-            verificationMethod: Math.random() > 0.5 ? 'QR' : 'MANUAL'
+            verificationMethod: Math.random() > 0.5 ? VerificationMethod.QR : VerificationMethod.MANUAL
           });
         }
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     if (logs.length > 0) {
       await prisma.attendanceLog.createMany({ data: logs });
     }
@@ -447,41 +447,41 @@ async function main() {
   // Create realistic attendance logs for each student
   // Student 1: 90% attendance rate (good student)
   await createAttendanceLogs(
-    student1.id, 
-    new Date('2024-08-01'), 
-    new Date('2024-12-31'), 
+    student1.id,
+    new Date('2024-08-01'),
+    new Date('2024-12-31'),
     0.90
   );
 
   // Student 2: 75% attendance rate (average student)
   await createAttendanceLogs(
-    student2.id, 
-    new Date('2024-08-15'), 
-    new Date('2025-01-15'), 
+    student2.id,
+    new Date('2024-08-15'),
+    new Date('2025-01-15'),
     0.75
   );
 
   // Student 3: 95% attendance rate (excellent student)
   await createAttendanceLogs(
-    student3.id, 
-    new Date('2024-09-01'), 
-    new Date('2025-02-01'), 
+    student3.id,
+    new Date('2024-09-01'),
+    new Date('2025-02-01'),
     0.95
   );
 
   // Student 4: 60% attendance rate (at-risk student)
   await createAttendanceLogs(
-    student4.id, 
-    new Date('2024-09-15'), 
-    new Date('2025-02-15'), 
+    student4.id,
+    new Date('2024-09-15'),
+    new Date('2025-02-15'),
     0.60
   );
 
   // Student 5: 85% attendance rate (good student)
   await createAttendanceLogs(
-    student5.id, 
-    new Date('2024-10-01'), 
-    new Date('2025-03-01'), 
+    student5.id,
+    new Date('2024-10-01'),
+    new Date('2025-03-01'),
     0.85
   );
 
@@ -490,17 +490,17 @@ async function main() {
   await prisma.evaluation.createMany({
     data: [
       {
-      studentId: student1.id,
-      evaluatorId: partnerUser.id,
-      evaluatorRole: 'INDUSTRY_PARTNER',
-      rating: 4.5,
-      comments: 'Excellent performance and initiative.',
-      criteria: {
-        technical: 5,
-        communication: 4,
-        teamwork: 5,
-        punctuality: 4
-      }
+        studentId: student1.id,
+        evaluatorId: partnerUser.id,
+        evaluatorRole: 'INDUSTRY_PARTNER',
+        rating: 4.5,
+        comments: 'Excellent performance and initiative.',
+        criteria: {
+          technical: 5,
+          communication: 4,
+          teamwork: 5,
+          punctuality: 4
+        }
       },
       {
         studentId: student2.id,
@@ -548,10 +548,11 @@ async function main() {
   await prisma.announcement.createMany({
     data: [
       {
-      title: 'Welcome to INTRAK System',
-      content: 'Please submit all required documents by the end of the week.',
-      audience: 'ALL',
-      createdById: coordinator.id
+        title: 'Welcome to INTRAK System',
+        content: 'Please submit all required documents by the end of the week.',
+        audience: 'ALL',
+        createdById: coordinator.id,
+        isPinned: true
       },
       {
         title: 'Mid-term Evaluation Period',
@@ -575,8 +576,8 @@ async function main() {
         title: 'Final Presentation Schedule',
         content: 'Final presentations will be held on November 20-22, 2024. Prepare your reports.',
         audience: 'STUDENTS',
-      createdById: coordinator.id
-    }
+        createdById: coordinator.id
+      }
     ]
   });
 

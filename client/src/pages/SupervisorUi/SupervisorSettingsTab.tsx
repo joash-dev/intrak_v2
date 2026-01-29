@@ -25,6 +25,7 @@ import {
   Book,
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
+import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import toast from "react-hot-toast";
 
 // External help links
@@ -792,6 +793,8 @@ const SupervisorSettings = () => {
                     </button>
                   </div>
                 </div>
+
+                <TwoFactorSettings />
               </div>
             )}
 

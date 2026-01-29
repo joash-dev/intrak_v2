@@ -30,6 +30,7 @@ const HELP_LINKS = {
   supportEmail: "intraksystem@gmail.com",
 };
 import { settingsService } from "../../services/settingsService";
+import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import toast from "react-hot-toast";
 
 interface InstructorProfile {
@@ -959,6 +960,8 @@ const InstructorSettings = () => {
                     </button>
                   </div>
                 </div>
+
+                <TwoFactorSettings />
               </div>
             )}
 

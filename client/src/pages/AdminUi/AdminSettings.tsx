@@ -25,6 +25,7 @@ import {
   X,
   AlertTriangle,
   Info,
+
 } from "lucide-react";
 import {
   settingsService,
@@ -34,6 +35,7 @@ import { adminService, type SystemInfo, type SystemAlert } from "../../services/
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
+import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 
 interface AdminProfile {
   id: string;
@@ -136,7 +138,7 @@ const AdminSettings = () => {
   const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
     null
   );
-  // Email testing state - TODO: Remove this section later
+  // Email testing state
   const [emailTestEmail, setEmailTestEmail] = useState("");
   const [emailTesting, setEmailTesting] = useState(false);
   const [emailTestResult, setEmailTestResult] = useState<{
@@ -160,7 +162,7 @@ const AdminSettings = () => {
       await loadProfile();
       loadTheme();
       await loadSystemSettings();
-      await loadSystemInfo();
+      loadSystemInfo();
       loadProfilePhoto();
     };
 
@@ -168,6 +170,7 @@ const AdminSettings = () => {
   }, []);
 
   const closeHelpModal = () => setHelpModal(null);
+
 
   const loadProfilePhoto = async () => {
     try {
@@ -1315,7 +1318,14 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
+                {/* Two-Factor Authentication Section */}
+                <TwoFactorSettings />
+
+                {/* Disable 2FA Modal */}
+
+
                 <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+
                   <button
                     onClick={handlePasswordChange}
                     disabled={saving}
@@ -1334,6 +1344,7 @@ const AdminSettings = () => {
                     )}
                   </button>
                 </div>
+                <TwoFactorSettings />
               </div>
             )}
 
@@ -1974,7 +1985,7 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  {/* Email Testing Section - TODO: Remove this section later */}
+                  {/* Email Testing Section */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
@@ -2082,7 +2093,7 @@ const AdminSettings = () => {
                             value={emailTestEmail}
                             onChange={(e) => setEmailTestEmail(e.target.value)}
                             placeholder="Enter email address to test"
-                            className="flex-1 px-4 py-2 border border-gray-600 rounded-lg bg-gray-800 text-white focus:ring-2 focus:ring-purple-500"
+                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                           />
                           <button
                             onClick={async () => {
@@ -2183,6 +2194,7 @@ const AdminSettings = () => {
                   </div>
 
                   {/* System Information */}
+
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                       <Database className="w-5 h-5 mr-2 text-gray-600" />
@@ -2580,10 +2592,12 @@ const AdminSettings = () => {
           </div>
         </div>
       </div>
-      {helpModal && (
-        <AdminHelpModalContent variant={helpModal} onClose={closeHelpModal} />
-      )}
-    </div>
+      {
+        helpModal && (
+          <AdminHelpModalContent variant={helpModal} onClose={closeHelpModal} />
+        )
+      }
+    </div >
   );
 };
 

@@ -8,6 +8,8 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
+  Shield,
+  RefreshCw,
 } from "lucide-react";
 import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
@@ -22,6 +24,7 @@ interface FieldErrors {
   email?: string;
   password?: string;
   general?: string;
+  otp?: string;
 }
 
 const Login: React.FC = () => {
@@ -34,11 +37,28 @@ const Login: React.FC = () => {
   const [touched, setTouched] = useState({ email: false, password: false });
   const navigate = useNavigate();
 
+  // 2FA State
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorUserId, setTwoFactorUserId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [resendingCode, setResendingCode] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [trustDevice, setTrustDevice] = useState(false);
+
   useEffect(() => {
     const appPrefs = settingsService.loadAppPreferences();
     settingsService.applyTheme(appPrefs.theme);
     i18n.changeLanguage(appPrefs.language || "en");
   }, []);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
 
   // Validation functions
   const validateEmail = (email: string): string | null => {
@@ -125,6 +145,16 @@ const Login: React.FC = () => {
 
     try {
       const response = await api.post("/auth/login", { email, password });
+
+      // Check if 2FA is required
+      if (response.data.requires2FA) {
+        setRequires2FA(true);
+        setTwoFactorUserId(response.data.userId);
+        setResendCooldown(60); // 60 second cooldown before resend
+        setLoading(false);
+        return;
+      }
+
       const { accessToken, refreshToken, user } = response.data;
 
       // Save tokens + user info
@@ -171,6 +201,69 @@ const Login: React.FC = () => {
     }
   };
 
+  // Handle 2FA OTP verification
+  const handle2FAVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!otpCode.trim() || otpCode.length !== 6) {
+      setErrors({ otp: "Please enter a valid 6-digit code" });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response = await api.post("/auth/2fa/verify", {
+        userId: twoFactorUserId,
+        code: otpCode,
+        trustDevice
+      });
+
+      const { accessToken, refreshToken, user } = response.data;
+
+      // Save tokens + user info
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Navigate to admin dashboard
+      navigate("/admin");
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Verification failed";
+      setErrors({ otp: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend 2FA code
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || !twoFactorUserId) return;
+
+    setResendingCode(true);
+    setErrors({});
+
+    try {
+      await api.post("/auth/2fa/request-code", { userId: twoFactorUserId });
+      setResendCooldown(60);
+      setOtpCode("");
+    } catch (err: any) {
+      setErrors({ otp: err.response?.data?.message || "Failed to resend code" });
+    } finally {
+      setResendingCode(false);
+    }
+  };
+
+  // Back to login from 2FA
+  const handleBack2FA = () => {
+    setRequires2FA(false);
+    setTwoFactorUserId(null);
+    setOtpCode("");
+    setErrors({});
+  };
+
+
   return (
     <>
       <style>
@@ -194,160 +287,293 @@ const Login: React.FC = () => {
                 className="text-4xl font-bold text-gray-900 mb-2"
                 style={outfitFont}
               >
-                Welcome to INTRAK
+                {requires2FA ? "Two-Factor Authentication" : "Welcome to INTRAK"}
               </h1>
               <p className="text-gray-500 text-lg" style={outfitFont}>
-                Please enter your credentials to access the OJT Management
-                System
+                {requires2FA
+                  ? "Enter the verification code sent to your email"
+                  : "Please enter your credentials to access the OJT Management System"
+                }
               </p>
             </div>
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* General Error Message */}
-              {errors.general && (
-                <div
-                  className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg text-sm"
-                  style={outfitFont}
-                >
-                  <div className="flex items-center space-x-2">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{errors.general}</span>
+            {/* 2FA Verification Form */}
+            {requires2FA ? (
+              <form onSubmit={handle2FAVerify} className="space-y-4">
+                {/* 2FA Icon */}
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Shield className="w-8 h-8 text-blue-600" />
                   </div>
                 </div>
-              )}
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label
-                  className="block text-sm font-medium text-gray-700"
-                  style={outfitFont}
-                >
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Mail
-                      className={`w-5 h-5 ${errors.email ? "text-red-400" : "text-gray-400"
-                        }`}
-                    />
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    onBlur={handleEmailBlur}
-                    required
-                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.email
-                      ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      }`}
-                    placeholder="example@psu.edu.ph"
-                    style={outfitFont}
-                  />
-                  {touched.email && !errors.email && email && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    </div>
-                  )}
-                </div>
-                {errors.email && (
+                {/* OTP Error Message */}
+                {errors.otp && (
                   <div
-                    className="flex items-center space-x-1 text-red-500 text-sm"
+                    className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg text-sm"
                     style={outfitFont}
                   >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{errors.email}</span>
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.otp}</span>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label
-                  className="block text-sm font-medium text-gray-700"
+                {/* OTP Input */}
+                <div className="space-y-2">
+                  <label
+                    className="block text-sm font-medium text-gray-700 text-center"
+                    style={outfitFont}
+                  >
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setOtpCode(value);
+                      if (errors.otp) setErrors({});
+                    }}
+                    maxLength={6}
+                    className="w-full py-4 text-center text-3xl font-bold tracking-[0.5em] border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="000000"
+                    style={outfitFont}
+                    autoFocus
+                  />
+                  <p className="text-sm text-gray-500 text-center" style={outfitFont}>
+                    Enter the 6-digit code from your email
+                  </p>
+                </div>
+
+                {/* Trust Device Checkbox */}
+                <div className="flex items-center space-x-2 px-1">
+                  <input
+                    type="checkbox"
+                    id="trustDevice"
+                    checked={trustDevice}
+                    onChange={(e) => setTrustDevice(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="trustDevice"
+                    className="text-sm text-gray-700 select-none cursor-pointer"
+                    style={outfitFont}
+                  >
+                    Trust this device for 30 days
+                  </label>
+                </div>
+
+                {/* Verify Button */}
+                <button
+                  type="submit"
+                  disabled={loading || otpCode.length !== 6}
+                  className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
                   style={outfitFont}
                 >
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock
-                      className={`w-5 h-5 ${errors.password ? "text-red-400" : "text-gray-400"
-                        }`}
-                    />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={handlePasswordChange}
-                    onBlur={handlePasswordBlur}
-                    required
-                    className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.password
-                      ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      }`}
-                    placeholder="••••••••"
-                    style={outfitFont}
-                  />
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Verify Code</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Resend Code */}
+                <div className="text-center">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-12 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={handleResendCode}
+                    disabled={resendCooldown > 0 || resendingCode}
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-1 mx-auto"
+                    style={outfitFont}
                   >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
+                    {resendingCode ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : resendCooldown > 0 ? (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Resend code in {resendCooldown}s</span>
+                      </>
                     ) : (
-                      <Eye className="w-5 h-5" />
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Resend verification code</span>
+                      </>
                     )}
                   </button>
-                  {touched.password && !errors.password && password && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+
+                {/* Back to Login */}
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleBack2FA}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                    style={outfitFont}
+                  >
+                    ← Back to login
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Login Form */
+              <form onSubmit={handleSubmit} className="space-y-4">
+
+                {/* General Error Message */}
+                {errors.general && (
+                  <div
+                    className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg text-sm"
+                    style={outfitFont}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.general}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email Field */}
+                <div className="space-y-2">
+                  <label
+                    className="block text-sm font-medium text-gray-700"
+                    style={outfitFont}
+                  >
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Mail
+                        className={`w-5 h-5 ${errors.email ? "text-red-400" : "text-gray-400"
+                          }`}
+                      />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={handleEmailChange}
+                      onBlur={handleEmailBlur}
+                      required
+                      className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.email
+                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        }`}
+                      placeholder="example@psu.edu.ph"
+                      style={outfitFont}
+                    />
+                    {touched.email && !errors.email && email && (
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+                  {errors.email && (
+                    <div
+                      className="flex items-center space-x-1 text-red-500 text-sm"
+                      style={outfitFont}
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.email}</span>
                     </div>
                   )}
                 </div>
-                {errors.password && (
-                  <div
-                    className="flex items-center space-x-1 text-red-500 text-sm"
+
+                {/* Password Field */}
+                <div className="space-y-2">
+                  <label
+                    className="block text-sm font-medium text-gray-700"
                     style={outfitFont}
                   >
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{errors.password}</span>
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Lock
+                        className={`w-5 h-5 ${errors.password ? "text-red-400" : "text-gray-400"
+                          }`}
+                      />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={handlePasswordChange}
+                      onBlur={handlePasswordBlur}
+                      required
+                      className={`w-full pl-12 pr-12 py-4 border rounded-lg text-gray-900 placeholder-gray-400 transition-all duration-200 ${errors.password
+                        ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        }`}
+                      placeholder="••••••••"
+                      style={outfitFont}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-12 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
+                    </button>
+                    {touched.password && !errors.password && password && (
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+                  {errors.password && (
+                    <div
+                      className="flex items-center space-x-1 text-red-500 text-sm"
+                      style={outfitFont}
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{errors.password}</span>
+                    </div>
+                  )}
+                </div>
+
+
+                {showForgotPassword && (
+                  <div className="flex justify-end">
+                    <a
+                      href="/forgot-password"
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      style={outfitFont}
+                    >
+                      Forgot Password?
+                    </a>
                   </div>
                 )}
-              </div>
 
-
-              {showForgotPassword && (
-                <div className="flex justify-end">
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    style={outfitFont}
-                  >
-                    Forgot Password?
-                  </a>
-                </div>
-              )}
-
-              {/* Continue Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
-                style={outfitFont}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Authenticating...</span>
-                  </>
-                ) : (
-                  <span>Continue</span>
-                )}
-              </button>
-            </form>
+                {/* Continue Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                  style={outfitFont}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Authenticating...</span>
+                    </>
+                  ) : (
+                    <span>Continue</span>
+                  )}
+                </button>
+              </form>
+            )}
 
             {/* Footer Text */}
             <div
