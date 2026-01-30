@@ -84,13 +84,10 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: always
-    # Use quic protocol with retries for better stability
-    command: tunnel run --protocol quic --retries 10 --grace-period 30s
+    # Simple stable configuration
+    command: tunnel run
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-      # Keepalive settings for stable connections
-      - TUNNEL_TRANSPORT_LOGLEVEL=warn
-      - TUNNEL_METRICS=localhost:20241
     depends_on:
       - client
     # Auto-restart handles recovery
