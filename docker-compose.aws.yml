@@ -53,6 +53,7 @@ services:
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
       # NAS mount from host (RPi via Tailscale)
+      - /mnt/nas:/mnt/nas
       - /mnt/nas/uploads:/app/uploads
     depends_on:
       - db
