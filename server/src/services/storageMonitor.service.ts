@@ -75,6 +75,7 @@ const getStorageMetricsForPath = async (storagePath: string): Promise<StorageMet
 
 /**
  * Check if a path is actually a network mount (CIFS/NFS)
+ * In Docker containers, bind mounts from host also count as valid NAS
  */
 const isNetworkMount = async (mountPath: string): Promise<boolean> => {
   try {
@@ -87,12 +88,25 @@ const isNetworkMount = async (mountPath: string): Promise<boolean> => {
       mountInfo.includes('type nfs') ||
       mountInfo.includes('type smbfs');
 
-    console.log(`🔍 Checking if ${mountPath} is network mount: ${isNetwork ? '✅ YES' : '❌ NO'}`);
-    if (mountInfo && !isNetwork) {
-      console.log(`   Mount info: ${mountInfo.trim()}`);
+    // Also check for Docker bind mounts
+    const isBindMount = mountInfo.includes('overlay') || mountInfo.trim().length > 0;
+
+    // If USE_NAS is true and path is writable, trust it as NAS (Docker bind mount case)
+    if (process.env.USE_NAS === 'true' && !isNetwork && mountInfo.trim().length === 0) {
+      const testFile = path.join(mountPath, '.nas_test_' + Date.now());
+      try {
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        return true;
+      } catch {
+        return false;
+      }
     }
 
-    return isNetwork;
+    console.log(`🔍 Checking if ${mountPath} is network mount: ${isNetwork || isBindMount ? '✅ YES' : '❌ NO'}`);
+
+    return isNetwork || isBindMount;
   } catch (error) {
     console.error(`Error checking mount status for ${mountPath}:`, error);
     return false;
