@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Lock,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { adminService, type AdminUser } from "../../services/adminService";
@@ -46,6 +47,7 @@ const AdminUserManagement = () => {
   >([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   // Fetch users with real API
   const {
@@ -222,6 +224,9 @@ const AdminUserManagement = () => {
         }
       }
 
+      // Set loading state
+      setIsAddingUser(true);
+
       console.log("Creating user with data:", formData);
       await adminService.createUser(formData);
 
@@ -263,6 +268,8 @@ const AdminUserManagement = () => {
 
       toast.error(errorMsg);
       alert(`Error creating user: ${errorMsg}`);
+    } finally {
+      setIsAddingUser(false);
     }
   };
 
@@ -981,9 +988,17 @@ const AdminUserManagement = () => {
               </button>
               <button
                 onClick={showAddModal ? handleAddUser : handleEditUser}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                disabled={showAddModal && isAddingUser}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                {showAddModal ? "Add User" : "Save Changes"}
+                {showAddModal && isAddingUser ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Adding...</span>
+                  </>
+                ) : (
+                  <span>{showAddModal ? "Add User" : "Save Changes"}</span>
+                )}
               </button>
             </div>
           </div>
