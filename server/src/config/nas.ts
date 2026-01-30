@@ -23,7 +23,7 @@ export const getNASConfig = (): NASConfig => {
 
 export const ensureNASDirectoryExists = async (dirPath: string): Promise<void> => {
   const nasConfig = getNASConfig();
-  
+
   // Try to create directory, fallback to local if NAS unavailable
   try {
     if (!fs.existsSync(dirPath)) {
@@ -45,28 +45,48 @@ export const ensureNASDirectoryExists = async (dirPath: string): Promise<void> =
 
 export const getStoragePath = (): string => {
   const nasConfig = getNASConfig();
-  
-  return nasConfig.enabled 
-    ? nasConfig.mountPath 
+
+  return nasConfig.enabled
+    ? nasConfig.mountPath
     : process.env.UPLOAD_PATH || './uploads';
 };
 
 /**
  * Check if a path is actually a network mount (CIFS/NFS) - synchronous version
  * This helps detect stale mounts where directory exists but NAS is unmounted
+ * In Docker containers, bind mounts from host also count as valid NAS
  */
 const isNetworkMountSync = (mountPath: string): boolean => {
   try {
     const { execSync } = require('child_process');
     // Check if the path is a mount point and if it's a network filesystem
     const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
-    
+
     // Look for network filesystem types: cifs, nfs, smbfs
     const isNetwork = mountInfo.includes('type cifs') ||
       mountInfo.includes('type nfs') ||
       mountInfo.includes('type smbfs');
-    
-    return isNetwork;
+
+    // Also check for Docker bind mounts (when host has NAS mounted)
+    // In Docker, host bind mounts appear as "overlay" or just exist without specific type
+    const isBindMount = mountInfo.includes('overlay') || mountInfo.trim().length > 0;
+
+    // If USE_NAS is true and path is writable, trust it as NAS
+    // This handles Docker containers where host's CIFS mount becomes a bind mount
+    if (process.env.USE_NAS === 'true' && !isNetwork && mountInfo.trim().length === 0) {
+      // No mount info found, but let's check if it's writable - that's good enough
+      const testFile = require('path').join(mountPath, '.nas_test_' + Date.now());
+      try {
+        require('fs').writeFileSync(testFile, 'test');
+        require('fs').unlinkSync(testFile);
+        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    return isNetwork || isBindMount;
   } catch (error) {
     // If command fails, assume not a network mount
     return false;
@@ -76,11 +96,11 @@ const isNetworkMountSync = (mountPath: string): boolean => {
 export const getStoragePathWithFallback = (): { storagePath: string; isUsingFallback: boolean } => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
-  
+
   if (!nasConfig.enabled) {
     return { storagePath: localPath, isUsingFallback: false };
   }
-  
+
   // Check if NAS is actually available
   try {
     if (fs.existsSync(nasConfig.mountPath)) {
@@ -90,7 +110,7 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
         console.warn('⚠️  NAS mount point exists but is NOT a network mount (NAS is unmounted), falling back to local storage');
         return { storagePath: localPath, isUsingFallback: true };
       }
-      
+
       // Test write access
       const testFile = path.join(nasConfig.mountPath, '.test_write');
       try {
@@ -107,7 +127,7 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
     // NAS mount point doesn't exist or error accessing it
     console.warn('⚠️  NAS mount point not accessible, falling back to local storage');
   }
-  
+
   // Fallback to local storage
   return { storagePath: localPath, isUsingFallback: true };
 };
@@ -115,19 +135,36 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
 /**
  * Check if a path is actually a network mount (CIFS/NFS)
  * This helps detect stale mounts where directory exists but NAS is unmounted
+ * In Docker containers, bind mounts from host also count as valid NAS
  */
 const isNetworkMount = (mountPath: string): boolean => {
   try {
     const { execSync } = require('child_process');
     // Check if the path is a mount point and if it's a network filesystem
     const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
-    
+
     // Look for network filesystem types: cifs, nfs, smbfs
     const isNetwork = mountInfo.includes('type cifs') ||
       mountInfo.includes('type nfs') ||
       mountInfo.includes('type smbfs');
-    
-    return isNetwork;
+
+    // Also check for Docker bind mounts
+    const isBindMount = mountInfo.includes('overlay') || mountInfo.trim().length > 0;
+
+    // If USE_NAS is true and path is writable, trust it as NAS
+    if (process.env.USE_NAS === 'true' && !isNetwork && mountInfo.trim().length === 0) {
+      const testFile = require('path').join(mountPath, '.nas_test_' + Date.now());
+      try {
+        require('fs').writeFileSync(testFile, 'test');
+        require('fs').unlinkSync(testFile);
+        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    return isNetwork || isBindMount;
   } catch (error) {
     // If command fails, assume not a network mount
     return false;
@@ -136,25 +173,25 @@ const isNetworkMount = (mountPath: string): boolean => {
 
 export const validateNASConnection = async (): Promise<boolean> => {
   const nasConfig = getNASConfig();
-  
+
   if (!nasConfig.enabled) {
     return true; // NAS not enabled, use local storage
   }
-  
+
   try {
     // Check if mount point exists
     if (!fs.existsSync(nasConfig.mountPath)) {
       console.warn(`⚠️  NAS mount point does not exist: ${nasConfig.mountPath}`);
       return false;
     }
-    
+
     // Check if it's actually a network mount (not just a local directory)
     const isActualNAS = isNetworkMount(nasConfig.mountPath);
     if (!isActualNAS) {
       console.warn(`⚠️  ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory - NAS is unmounted)`);
       return false;
     }
-    
+
     // Test write access
     const testFile = path.join(nasConfig.mountPath, '.test_write');
     try {
@@ -180,16 +217,16 @@ export const validateNASConnection = async (): Promise<boolean> => {
 export const resolveFilePath = (storedPath: string): string | null => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
-  
+
   // Normalize the path
   const normalizedPath = path.normalize(storedPath);
-  
+
   // If absolute path, check if it exists
   if (path.isAbsolute(normalizedPath)) {
     if (fs.existsSync(normalizedPath)) {
       return normalizedPath;
     }
-    
+
     // If NAS path but file not found, try local fallback
     if (nasConfig.enabled && normalizedPath.startsWith(nasConfig.mountPath)) {
       const localFallback = normalizedPath.replace(nasConfig.mountPath, localPath);
@@ -198,7 +235,7 @@ export const resolveFilePath = (storedPath: string): string | null => {
         return localFallback;
       }
     }
-    
+
     // If local path but file not found, try NAS (in case file was moved)
     if (normalizedPath.startsWith(localPath) && nasConfig.enabled) {
       const nasFallback = normalizedPath.replace(localPath, nasConfig.mountPath);
@@ -208,7 +245,7 @@ export const resolveFilePath = (storedPath: string): string | null => {
       }
     }
   }
-  
+
   // Try relative paths
   const possiblePaths = [
     normalizedPath,
@@ -216,20 +253,20 @@ export const resolveFilePath = (storedPath: string): string | null => {
     path.resolve(process.cwd(), 'server', normalizedPath),
     path.resolve(__dirname, '../../', normalizedPath),
   ];
-  
+
   // Add NAS and local paths
   if (nasConfig.enabled) {
     possiblePaths.push(path.resolve(nasConfig.mountPath, normalizedPath));
   }
   possiblePaths.push(path.resolve(localPath, normalizedPath));
-  
+
   // Find first existing path
   for (const possiblePath of possiblePaths) {
     if (fs.existsSync(possiblePath)) {
       return possiblePath;
     }
   }
-  
+
   return null;
 };
 
@@ -240,39 +277,39 @@ export const resolveFilePath = (storedPath: string): string | null => {
 export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number }> => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
-  
+
   if (!nasConfig.enabled) {
     return { synced: 0, failed: 0 };
   }
-  
+
   // Check if NAS is available
   const nasAvailable = await validateNASConnection();
   if (!nasAvailable) {
     console.log('⏳ NAS not available, skipping sync');
     return { synced: 0, failed: 0 };
   }
-  
+
   let synced = 0;
   let failed = 0;
-  
+
   try {
     // Sync documents
     const syncDirectory = async (localDir: string, nasDir: string) => {
       if (!fs.existsSync(localDir)) {
         return;
       }
-      
+
       // Ensure NAS directory exists
       if (!fs.existsSync(nasDir)) {
         fs.mkdirSync(nasDir, { recursive: true });
       }
-      
+
       const files = fs.readdirSync(localDir, { withFileTypes: true });
-      
+
       for (const file of files) {
         const localFilePath = path.join(localDir, file.name);
         const nasFilePath = path.join(nasDir, file.name);
-        
+
         if (file.isDirectory()) {
           // Recursively sync subdirectories
           await syncDirectory(localFilePath, nasFilePath);
@@ -291,35 +328,35 @@ export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number
         }
       }
     };
-    
+
     // Sync documents directory
     const localDocsDir = path.join(localPath, 'documents');
     const nasDocsDir = path.join(nasConfig.mountPath, 'documents');
     if (fs.existsSync(localDocsDir)) {
       await syncDirectory(localDocsDir, nasDocsDir);
     }
-    
+
     // Sync templates directory
     const localTemplatesDir = path.join(localPath, 'templates');
     const nasTemplatesDir = path.join(nasConfig.mountPath, 'templates');
     if (fs.existsSync(localTemplatesDir)) {
       await syncDirectory(localTemplatesDir, nasTemplatesDir);
     }
-    
+
     // Sync profile photos directory
     const localPhotosDir = path.join(localPath, 'profile-photos');
     const nasPhotosDir = path.join(nasConfig.mountPath, 'profile-photos');
     if (fs.existsSync(localPhotosDir)) {
       await syncDirectory(localPhotosDir, nasPhotosDir);
     }
-    
+
     if (synced > 0) {
       console.log(`✅ Sync complete: ${synced} files synced to NAS, ${failed} failed`);
     }
   } catch (error) {
     console.error('❌ Sync error:', error);
   }
-  
+
   return { synced, failed };
 };
 
@@ -333,25 +370,25 @@ export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number
 export const createLocalBackup = (nasFilePath: string, fileContent: string | Buffer): string | null => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
-  
+
   // Get base NAS path (remove /documents suffix if present)
   const baseNASPath = nasConfig.mountPath.replace(/\/documents$/, '') || '/mnt/nas/intrak';
-  
+
   // Only create backup if NAS is enabled and file is on NAS
   if (!nasConfig.enabled || !nasFilePath.startsWith(baseNASPath)) {
     return null;
   }
-  
+
   try {
     // Convert NAS path to local backup path (replace base NAS path with local path)
     const localBackupPath = nasFilePath.replace(baseNASPath, localPath);
     const localBackupDir = path.dirname(localBackupPath);
-    
+
     // Create directory if it doesn't exist
     if (!fs.existsSync(localBackupDir)) {
       fs.mkdirSync(localBackupDir, { recursive: true });
     }
-    
+
     // Copy file to local backup
     if (typeof fileContent === 'string') {
       // If it's a file path, copy it
@@ -360,7 +397,7 @@ export const createLocalBackup = (nasFilePath: string, fileContent: string | Buf
       // If it's a buffer, write it
       fs.writeFileSync(localBackupPath, fileContent);
     }
-    
+
     return localBackupPath;
   } catch (error) {
     console.warn(`⚠️  Failed to create local backup for ${nasFilePath}:`, error);
