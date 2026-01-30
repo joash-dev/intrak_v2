@@ -89,13 +89,7 @@ services:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:
       - client
-    # Healthcheck to prevent stale connections
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://client:80 || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # Auto-restart handles recovery (cloudflared image has no wget for healthcheck)
 
 volumes:
   db_data:
