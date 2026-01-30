@@ -45,12 +45,12 @@ services:
       - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
       - RESEND_FROM_NAME=${RESEND_FROM_NAME}
       - EMAIL_PROVIDER=${EMAIL_PROVIDER}
-      - AI_PROVIDER=${AI_PROVIDER}
-      - AI_ENABLED=${AI_ENABLED}
-      - AI_MODEL=${AI_MODEL}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - AI_MAX_TOKENS=${AI_MAX_TOKENS}
-      - AI_TEMPERATURE=${AI_TEMPERATURE}
+      - AI_PROVIDER=${AI_PROVIDER:-}
+      - AI_ENABLED=${AI_ENABLED:-false}
+      - AI_MODEL=${AI_MODEL:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
       # NAS mount from host (RPi via Tailscale)
       - /mnt/nas:/mnt/nas
@@ -70,27 +70,28 @@ services:
         VITE_API_URL: /api
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     environment:
       - VITE_API_URL=/api
+    volumes:
+      # Mount SSL certificates from Let's Encrypt
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - server
     deploy:
       resources:
         limits:
           memory: 128M
-
-  # Cloudflare Tunnel for public access
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: always
-    # Simple stable configuration
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    depends_on:
-      - client
-    # Auto-restart handles recovery
+  # Tunnel disabled - using direct EC2 with Elastic IP + SSL
+  # tunnel:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: always
+  #   command: tunnel run
+  #   environment:
+  #     - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+  #   depends_on:
+  #     - client
 
 volumes:
   db_data:
