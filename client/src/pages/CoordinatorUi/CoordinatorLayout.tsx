@@ -10,6 +10,7 @@ import {
     LogOut,
     Home,
     MessageSquare,
+    Loader2,
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
@@ -48,6 +49,7 @@ const CoordinatorLayout: React.FC = () => {
     });
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
@@ -276,7 +278,10 @@ const CoordinatorLayout: React.FC = () => {
         return formatDateTime(timestamp);
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        if (loggingOut) return; // Prevent double-click
+        setLoggingOut(true);
+
         const appPrefs = localStorage.getItem("appPreferences");
         const notificationPrefs = localStorage.getItem("notificationPreferences");
 
@@ -659,9 +664,17 @@ const CoordinatorLayout: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleLogout}
-                                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                                disabled={loggingOut}
+                                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                             >
-                                Logout
+                                {loggingOut ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Logging out...</span>
+                                    </>
+                                ) : (
+                                    <span>Logout</span>
+                                )}
                             </button>
                         </div>
                     </div>

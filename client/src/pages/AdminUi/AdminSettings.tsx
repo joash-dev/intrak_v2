@@ -1344,7 +1344,6 @@ const AdminSettings = () => {
                     )}
                   </button>
                 </div>
-                <TwoFactorSettings />
               </div>
             )}
 

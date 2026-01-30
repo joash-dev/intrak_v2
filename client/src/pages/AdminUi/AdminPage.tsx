@@ -160,13 +160,12 @@ const AdminOverviewTab = ({ data }: { data: AdminData }) => {
               {data.alerts.slice(0, 3).map((alert) => (
                 <div
                   key={alert.id}
-                  className={`p-2 rounded border-l-2 ${
-                    alert.type === "error"
+                  className={`p-2 rounded border-l-2 ${alert.type === "error"
                       ? "border-red-400 bg-red-50 dark:bg-red-900/20"
                       : alert.type === "warning"
-                      ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20"
-                      : "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                  }`}
+                        ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20"
+                        : "border-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    }`}
                 >
                   <p className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">
                     {alert.title}
@@ -233,6 +232,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -460,6 +460,8 @@ const AdminDashboard = () => {
   }, [showUserMenu, showNotifications]);
 
   const handleLogout = async () => {
+    if (loggingOut) return; // Prevent double-click
+    setLoggingOut(true);
     try {
       // Call logout API to invalidate refresh token
       const refreshToken = localStorage.getItem("refreshToken");
@@ -549,9 +551,8 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex h-screen overflow-hidden font-outfit">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:relative lg:flex-shrink-0`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 lg:relative lg:flex-shrink-0`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -588,11 +589,10 @@ const AdminDashboard = () => {
                     setActiveTab(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${
-                    activeTab === item.id
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-200 ${activeTab === item.id
                       ? "bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 dark:from-purple-900 dark:to-blue-900 dark:text-purple-300 shadow-md"
                       : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-sm"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="font-medium text-left">{item.label}</span>
@@ -845,9 +845,17 @@ const AdminDashboard = () => {
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                disabled={loggingOut}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
-                Logout
+                {loggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Logging out...</span>
+                  </>
+                ) : (
+                  <span>Logout</span>
+                )}
               </button>
             </div>
           </div>
