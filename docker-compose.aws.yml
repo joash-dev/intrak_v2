@@ -37,8 +37,8 @@ services:
       - PORT=5000
       - CORS_ORIGIN=${CORS_ORIGIN}
       - CLIENT_URL=${CLIENT_URL}
-      # NAS Disabled for AWS (using local storage)
-      - USE_NAS=false
+      # NAS Enabled via Tailscale (RPi NAS)
+      - USE_NAS=true
       - UPLOAD_PATH=/app/uploads
       # Email & AI
       - RESEND_API_KEY=${RESEND_API_KEY}
@@ -52,8 +52,8 @@ services:
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
-      # Local uploads directory (persisted)
-      - uploads_data:/app/uploads
+      # NAS mount from host (RPi via Tailscale)
+      - /mnt/nas/uploads:/app/uploads
     depends_on:
       - db
     deploy:
