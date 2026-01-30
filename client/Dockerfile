@@ -11,6 +11,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# Limit memory for low-RAM instances (t3.micro)
+ENV NODE_OPTIONS="--max-old-space-size=384"
 RUN npm run build
 
 # Production stage
@@ -22,6 +24,6 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy custom nginx config for SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]
