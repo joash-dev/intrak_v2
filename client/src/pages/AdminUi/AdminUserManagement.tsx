@@ -399,6 +399,8 @@ const AdminUserManagement = () => {
         "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       INDUSTRY_PARTNER:
         "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      ADMIN:
+        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return colors[role] || "bg-gray-100 text-gray-800";
   };
@@ -409,6 +411,7 @@ const AdminUserManagement = () => {
       COORDINATOR: <Shield className="w-4 h-4" />,
       INSTRUCTOR: <UserCheck className="w-4 h-4" />,
       INDUSTRY_PARTNER: <Building2 className="w-4 h-4" />,
+      ADMIN: <Shield className="w-4 h-4" />,
     };
     return icons[role] || <Users className="w-4 h-4" />;
   };
@@ -518,6 +521,7 @@ const AdminUserManagement = () => {
             <option value="COORDINATOR">Coordinators</option>
             <option value="INSTRUCTOR">Instructors</option>
             <option value="INDUSTRY_PARTNER">Industry Partners</option>
+            <option value="ADMIN">Admins</option>
           </select>
           <select
             value={statusFilter}
@@ -807,6 +811,7 @@ const AdminUserManagement = () => {
                   <option value="COORDINATOR">Coordinator</option>
                   <option value="INSTRUCTOR">Instructor</option>
                   <option value="INDUSTRY_PARTNER">Industry Partner</option>
+                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
 
