@@ -39,6 +39,7 @@ services:
       - CLIENT_URL=${CLIENT_URL}
       # NAS Enabled via Tailscale (RPi NAS)
       - USE_NAS=true
+      - NAS_PATH=/app/uploads
       - UPLOAD_PATH=/app/uploads
       # Email & AI
       - RESEND_API_KEY=${RESEND_API_KEY}
