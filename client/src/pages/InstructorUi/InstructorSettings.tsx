@@ -73,6 +73,8 @@ const InstructorSettings = () => {
     "profile" | "password" | "notifications" | "appearance" | "preferences" | "instructor" | "help"
   >("profile");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -381,10 +383,31 @@ const InstructorSettings = () => {
 
     try {
       setSaving(true);
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      // Simulate upload progress (actual progress would come from axios config)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
 
       // Upload to server
       const photoUrl = await settingsService.uploadProfilePhoto(file);
-      setProfilePhoto(photoUrl);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      setTimeout(() => {
+        setProfilePhoto(photoUrl);
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 300);
 
       // Dispatch custom event to notify other components of profile photo change
       window.dispatchEvent(
@@ -396,6 +419,8 @@ const InstructorSettings = () => {
       toast.success("Profile photo updated successfully");
     } catch (error: any) {
       console.error("Error uploading photo:", error);
+      setIsUploading(false);
+      setUploadProgress(0);
       if (error.response?.status === 413) {
         toast.error("File is too large. Please upload an image smaller than 5MB.");
       } else {
@@ -541,8 +566,36 @@ const InstructorSettings = () => {
                   {/* Profile Photo - Top Left with side controls */}
                   <div className="w-full flex items-center">
                     <div className="relative mr-3 sm:mr-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                        {profilePhoto ? (
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center relative">
+                        {isUploading ? (
+                          <>
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <div className="text-white text-sm font-bold">{uploadProgress}%</div>
+                            </div>
+                            <svg className="absolute inset-0 w-full h-full -rotate-90">
+                              <circle
+                                cx="50%"
+                                cy="50%"
+                                r="45%"
+                                fill="none"
+                                stroke="rgba(255,255,255,0.3)"
+                                strokeWidth="4"
+                              />
+                              <circle
+                                cx="50%"
+                                cy="50%"
+                                r="45%"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                                strokeDasharray={`${uploadProgress * 2.83} 283`}
+                                className="transition-all duration-200"
+                              />
+                            </svg>
+                            {profilePhoto && <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover opacity-50" />}
+                          </>
+                        ) : profilePhoto ? (
                           <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-white text-lg sm:text-xl md:text-2xl font-bold">

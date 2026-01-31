@@ -48,6 +48,7 @@ const SupervisorSettings = () => {
   const [saving, setSaving] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -182,16 +183,39 @@ const SupervisorSettings = () => {
 
     try {
       setUploadingPhoto(true);
+      setUploadProgress(0);
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
+
       await settingsService.uploadProfilePhoto(file);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       const newPhoto = await settingsService.getProfilePhoto();
-      setProfilePhoto(newPhoto);
+
+      setTimeout(() => {
+        setProfilePhoto(newPhoto);
+        setUploadingPhoto(false);
+        setUploadProgress(0);
+      }, 300);
+
       refreshUserData();
       setSaveSuccess(true);
     } catch (error) {
       console.error("Error uploading photo:", error);
-      toast.error("Failed to upload photo");
-    } finally {
       setUploadingPhoto(false);
+      setUploadProgress(0);
+      toast.error("Failed to upload photo");
     }
   };
 
@@ -417,8 +441,36 @@ const SupervisorSettings = () => {
                 {/* Profile Photo */}
                 <div className="flex items-center space-x-3 sm:space-x-4 lg:space-x-6">
                   <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center">
-                      {profilePhoto ? (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-500 flex items-center justify-center relative">
+                      {uploadingPhoto ? (
+                        <>
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                            <div className="text-white text-sm font-bold">{uploadProgress}%</div>
+                          </div>
+                          <svg className="absolute inset-0 w-full h-full -rotate-90 z-20">
+                            <circle
+                              cx="50%"
+                              cy="50%"
+                              r="45%"
+                              fill="none"
+                              stroke="rgba(255,255,255,0.3)"
+                              strokeWidth="4"
+                            />
+                            <circle
+                              cx="50%"
+                              cy="50%"
+                              r="45%"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              strokeDasharray={`${uploadProgress * 2.83} 283`}
+                              className="transition-all duration-200"
+                            />
+                          </svg>
+                          {profilePhoto && <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover opacity-50" />}
+                        </>
+                      ) : profilePhoto ? (
                         <img
                           src={profilePhoto}
                           alt="Profile"
@@ -434,11 +486,6 @@ const SupervisorSettings = () => {
                         </span>
                       )}
                     </div>
-                    {uploadingPhoto && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 text-white animate-spin" />
-                      </div>
-                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-1.5 sm:mb-2">

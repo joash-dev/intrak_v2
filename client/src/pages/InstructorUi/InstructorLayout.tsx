@@ -30,6 +30,7 @@ const InstructorLayout = () => {
     const [loggingOut, setLoggingOut] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(true);
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [photoLoading, setPhotoLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<{ name: string; email: string; initials: string } | null>(null);
 
     // Notifications State
@@ -99,6 +100,8 @@ const InstructorLayout = () => {
                 if (photoUrl) setProfilePhoto(photoUrl);
             } catch (error) {
                 console.error("Error loading user data", error);
+            } finally {
+                setPhotoLoading(false);
             }
         };
         loadUserData();
@@ -188,7 +191,9 @@ const InstructorLayout = () => {
                         </button>
                         <button onClick={() => navigate("/instructor/settings")} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="User profile">
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                {profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
                             </div>
                         </button>
                     </div>
@@ -248,7 +253,9 @@ const InstructorLayout = () => {
                     <div className="border-t border-gray-200 dark:border-gray-700 p-4">
                         <button id="tour-user-menu" onClick={() => navigate("/instructor/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg`} aria-label="User profile" title={!sidebarExpanded ? "User Profile" : undefined}>
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                                {profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
                             </div>
                             <div className={`flex-1 text-left min-w-0 ${sidebarExpanded ? "" : "lg:hidden"}`}>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{currentUser?.name}</p>

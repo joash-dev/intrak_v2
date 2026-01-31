@@ -49,6 +49,7 @@ const StudentSettingsTab = () => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
     null
   );
@@ -346,10 +347,30 @@ const StudentSettingsTab = () => {
 
     try {
       setUploadingPhoto(true);
+      setUploadProgress(0);
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 100);
 
       // Upload to server
       const photoUrl = await settingsService.uploadProfilePhoto(file);
-      setProfilePhotoPreview(photoUrl);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      setTimeout(() => {
+        setProfilePhotoPreview(photoUrl);
+        setUploadingPhoto(false);
+        setUploadProgress(0);
+      }, 300);
 
       toast.success("Profile photo updated successfully!");
 
@@ -362,6 +383,8 @@ const StudentSettingsTab = () => {
       event.target.value = "";
     } catch (error: any) {
       console.error("Error uploading photo:", error);
+      setUploadingPhoto(false);
+      setUploadProgress(0);
       if (error.response?.status === 413) {
         toast.error("File is too large. Please upload an image smaller than 5MB.");
       } else {
@@ -369,8 +392,6 @@ const StudentSettingsTab = () => {
       }
       // Clear preview on error
       setProfilePhotoPreview(null);
-    } finally {
-      setUploadingPhoto(false);
     }
   };
 
@@ -527,8 +548,36 @@ const StudentSettingsTab = () => {
                 {/* Profile Picture */}
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center overflow-hidden">
-                      {profilePhotoPreview ? (
+                    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center overflow-hidden relative">
+                      {uploadingPhoto ? (
+                        <>
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                            <div className="text-white text-sm font-bold">{uploadProgress}%</div>
+                          </div>
+                          <svg className="absolute inset-0 w-full h-full -rotate-90 z-20">
+                            <circle
+                              cx="50%"
+                              cy="50%"
+                              r="45%"
+                              fill="none"
+                              stroke="rgba(255,255,255,0.3)"
+                              strokeWidth="4"
+                            />
+                            <circle
+                              cx="50%"
+                              cy="50%"
+                              r="45%"
+                              fill="none"
+                              stroke="white"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                              strokeDasharray={`${uploadProgress * 2.83} 283`}
+                              className="transition-all duration-200"
+                            />
+                          </svg>
+                          {profilePhotoPreview && <img src={profilePhotoPreview} alt="Profile" className="w-full h-full object-cover opacity-50" />}
+                        </>
+                      ) : profilePhotoPreview ? (
                         <img
                           src={profilePhotoPreview}
                           alt="Profile preview"
