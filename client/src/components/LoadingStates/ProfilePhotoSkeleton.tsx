@@ -22,18 +22,21 @@ const ProfilePhotoSkeleton: React.FC<ProfilePhotoSkeletonProps> = ({
 
     return (
         <div
-            className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse ${className}`}
-            style={{
-                backgroundSize: '200% 100%',
-                animation: 'shimmer 1.5s infinite',
-            }}
+            className={`${sizeClasses[size]} rounded-full overflow-hidden relative ${className}`}
         >
+            <div
+                className="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600"
+                style={{
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s ease-in-out infinite',
+                }}
+            />
             <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
+                @keyframes shimmer {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+            `}</style>
         </div>
     );
 };
@@ -82,8 +85,8 @@ export const ProfilePhoto: React.FC<ProfilePhotoProps> = ({
     // Show skeleton during loading
     if (loading || (imageLoading && src && !imageError)) {
         return (
-            <div className={`relative ${className}`}>
-                <ProfilePhotoSkeleton size={size} />
+            <div className={`relative ${sizeClasses[size]} ${className}`}>
+                <ProfilePhotoSkeleton size={size} className="!w-full !h-full" />
                 {/* Hidden image to preload */}
                 {src && !imageError && (
                     <img
