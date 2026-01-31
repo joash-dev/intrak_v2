@@ -11,8 +11,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-# Limit memory for low-RAM instances (t3.micro)
-ENV NODE_OPTIONS="--max-old-space-size=384"
+# Limit memory for low-RAM instances (t3.micro with swap)
+ENV NODE_OPTIONS="--max-old-space-size=512"
 RUN npm run build
 
 # Production stage
