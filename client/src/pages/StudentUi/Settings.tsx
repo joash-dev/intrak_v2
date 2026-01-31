@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
+import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
@@ -969,6 +970,7 @@ const StudentSettingsTab = () => {
                   </div>
                 </div>
 
+                <EmailVerificationSettings />
                 <TwoFactorSettings />
               </div>
             )}

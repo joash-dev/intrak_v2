@@ -31,6 +31,7 @@ const HELP_LINKS = {
 };
 import { settingsService } from "../../services/settingsService";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
+import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import toast from "react-hot-toast";
 
 interface InstructorProfile {
@@ -1014,6 +1015,7 @@ const InstructorSettings = () => {
                   </div>
                 </div>
 
+                <EmailVerificationSettings />
                 <TwoFactorSettings />
               </div>
             )}

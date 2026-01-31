@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
+import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import toast from "react-hot-toast";
 
 // External help links
@@ -841,6 +842,7 @@ const SupervisorSettings = () => {
                   </div>
                 </div>
 
+                <EmailVerificationSettings />
                 <TwoFactorSettings />
               </div>
             )}

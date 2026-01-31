@@ -31,11 +31,6 @@ class TwoFactorService {
                 return { success: false, error: 'User not found' };
             }
 
-            // Only admins can have 2FA
-            if (user.role !== 'ADMIN') {
-                return { success: false, error: 'Two-factor authentication is only available for administrators' };
-            }
-
             // Generate OTP and expiration time
             const otpCode = this.generateOTP();
             const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000);
@@ -197,10 +192,6 @@ If you did not attempt to log in, please change your password immediately.
                 return { success: false, error: 'User not found' };
             }
 
-            if (user.role !== 'ADMIN') {
-                return { success: false, error: 'Two-factor authentication is only available for administrators' };
-            }
-
             // Require email verification before enabling 2FA
             if (!user.emailVerified) {
                 return { success: false, error: 'Please verify your email address before enabling Two-Factor Authentication' };
@@ -265,11 +256,10 @@ If you did not attempt to log in, please change your password immediately.
         try {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { twoFactorEnabled: true, role: true }
+                select: { twoFactorEnabled: true }
             });
 
-            // Only admins can have 2FA enabled
-            return user?.role === 'ADMIN' && user?.twoFactorEnabled === true;
+            return user?.twoFactorEnabled === true;
         } catch (error) {
             console.error('Error checking 2FA status:', error);
             return false;
