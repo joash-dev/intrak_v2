@@ -370,6 +370,13 @@ const StudentSettingsTab = () => {
         setProfilePhotoPreview(photoUrl);
         setUploadingPhoto(false);
         setUploadProgress(0);
+
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(
+          new CustomEvent("profilePhotoUpdated", {
+            detail: { photoUrl },
+          })
+        );
       }, 300);
 
       toast.success("Profile photo updated successfully!");

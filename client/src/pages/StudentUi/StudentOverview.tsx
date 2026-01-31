@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
     FileText,
     Clock,
@@ -11,13 +12,14 @@ import {
     Bell,
     User,
     Building2,
-    Activity,
     Download
 } from "lucide-react";
 import { dashboardService, type DashboardData } from "../../services/dashboardService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { formatDuration } from "../../utils/attendanceCalculations";
 import Skeleton from "../../components/Skeleton";
+import { settingsService } from "../../services/settingsService";
+import { ProfilePhoto } from "../../components/LoadingStates/ProfilePhotoSkeleton";
 
 const defaultDashboardData: DashboardData = {
     student: {
@@ -62,7 +64,44 @@ const StudentOverview = () => {
         { ttl: 30000 } // 30 seconds cache
     );
 
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [isPhotoLoading, setIsPhotoLoading] = useState(true);
+
+    const loadProfilePhoto = async () => {
+        try {
+            setIsPhotoLoading(true);
+            const photo = await settingsService.getProfilePhoto();
+            setProfilePhoto(photo);
+        } catch (error) {
+            console.error("Error loading profile photo", error);
+        } finally {
+            setIsPhotoLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadProfilePhoto();
+
+        const handleUpdate = (e: any) => {
+            if (e.detail?.photoUrl) {
+                setProfilePhoto(e.detail.photoUrl);
+            } else {
+                loadProfilePhoto();
+            }
+        };
+
+        window.addEventListener("profilePhotoUpdated", handleUpdate);
+        return () => window.removeEventListener("profilePhotoUpdated", handleUpdate);
+    }, []);
+
     const data = fetchedData || defaultDashboardData;
+
+    const initials = (data.student.name || "Student")
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2);
 
     if (loading) {
         return (
@@ -162,8 +201,15 @@ const StudentOverview = () => {
                         )}
                     </div>
                     <div className="hidden lg:block">
-                        <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                            <Activity className="w-12 h-12 text-white animate-pulse" />
+                        <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-2 border border-white/20">
+                            <ProfilePhoto
+                                src={profilePhoto}
+                                alt={data.student.name}
+                                initials={initials}
+                                size="xl"
+                                loading={isPhotoLoading}
+                                className="!w-24 !h-24 shadow-2xl"
+                            />
                         </div>
                     </div>
                 </div>

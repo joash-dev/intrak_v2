@@ -46,6 +46,7 @@ const SupervisorLayout: React.FC = () => {
         return false;
     });
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [photoLoading, setPhotoLoading] = useState(true);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -107,11 +108,8 @@ const SupervisorLayout: React.FC = () => {
             }
         } catch (error) {
             console.log("No profile photo found");
-            setCurrentUser({
-                name: "Supervisor",
-                email: "supervisor@company.com",
-                initials: "SU",
-            });
+        } finally {
+            setPhotoLoading(false);
         }
     };
 
@@ -372,7 +370,9 @@ const SupervisorLayout: React.FC = () => {
                             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                {profilePhoto ? (
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? (
                                     <img
                                         src={profilePhoto}
                                         alt="Profile"
@@ -511,7 +511,9 @@ const SupervisorLayout: React.FC = () => {
                                 }`}
                         >
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                                {profilePhoto ? (
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? (
                                     <img
                                         src={profilePhoto}
                                         alt="Profile"

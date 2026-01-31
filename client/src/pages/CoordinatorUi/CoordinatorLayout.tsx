@@ -52,6 +52,7 @@ const CoordinatorLayout: React.FC = () => {
     const [loggingOut, setLoggingOut] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [photoLoading, setPhotoLoading] = useState(true);
 
     // Notifications data
     const {
@@ -80,8 +81,9 @@ const CoordinatorLayout: React.FC = () => {
     } | null>(null);
 
     // Load user data
-    const loadUserData = useCallback(() => {
+    const loadUserData = useCallback(async () => {
         try {
+            setPhotoLoading(true);
             const userData = localStorage.getItem("user");
             if (userData) {
                 const user = JSON.parse(userData);
@@ -101,17 +103,14 @@ const CoordinatorLayout: React.FC = () => {
                 });
             }
 
-            const loadProfilePhoto = async () => {
-                try {
-                    const serverPhoto = await settingsService.getProfilePhoto();
-                    if (serverPhoto) {
-                        setProfilePhoto(serverPhoto);
-                    }
-                } catch (error) {
-                    console.log("No profile photo found");
+            try {
+                const serverPhoto = await settingsService.getProfilePhoto();
+                if (serverPhoto) {
+                    setProfilePhoto(serverPhoto);
                 }
-            };
-            loadProfilePhoto();
+            } catch (error) {
+                console.log("No profile photo found");
+            }
         } catch (error) {
             console.error("Error loading user data:", error);
             setCurrentUser({
@@ -119,6 +118,8 @@ const CoordinatorLayout: React.FC = () => {
                 email: "",
                 initials: "CO",
             });
+        } finally {
+            setPhotoLoading(false);
         }
     }, []);
 
@@ -455,7 +456,9 @@ const CoordinatorLayout: React.FC = () => {
                             className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                                {profilePhoto ? (
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? (
                                     <img
                                         src={profilePhoto}
                                         alt="Profile"
@@ -594,7 +597,9 @@ const CoordinatorLayout: React.FC = () => {
                                 }`}
                         >
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                                {profilePhoto ? (
+                                {photoLoading ? (
+                                    <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
+                                ) : profilePhoto ? (
                                     <img
                                         src={profilePhoto}
                                         alt="Profile"
