@@ -386,6 +386,15 @@ const AdminUserManagement = () => {
   };
 
   const openDeleteModal = (user: AdminUser) => {
+    // Get current logged-in user from localStorage
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+    // Prevent admin from deleting their own account
+    if (user.id === currentUser.id) {
+      toast.error("You cannot delete your own account!");
+      return;
+    }
+
     setSelectedUser(user);
     setShowDeleteModal(true);
   };

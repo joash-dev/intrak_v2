@@ -225,6 +225,11 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Prevent admin from deleting their own account
+    if (req.user?.id === id) {
+      return res.status(403).json({ message: 'You cannot delete your own account' });
+    }
+
     // Get all documents and templates uploaded by this user to delete files
     const [userDocuments, userTemplates] = await Promise.all([
       prisma.document.findMany({
