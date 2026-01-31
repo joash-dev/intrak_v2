@@ -55,7 +55,7 @@ services:
     volumes:
       # NAS mount from host (RPi via Tailscale)
       - /mnt/nas:/mnt/nas
-      - /mnt/nas/uploads:/app/uploads
+      - /mnt/nas/intrak:/app/uploads
     depends_on:
       - db
     deploy:
