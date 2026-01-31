@@ -561,6 +561,60 @@ If you did not request a password reset, please ignore this email.
     });
   }
 
+  async sendVerificationEmail(
+    userEmail: string,
+    userName: string,
+    verificationUrl: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const subject = 'Verify Your Email - INTRAK System';
+
+    const content = `
+      <p>Hello ${userName}!</p>
+      <p>Please verify your email address to complete your account setup and enable security features like Two-Factor Authentication.</p>
+      
+      <div class="credentials-box" style="text-align: center;">
+        <p>Click the button below to verify your email:</p>
+        <a href="${verificationUrl}" class="login-button">Verify Email</a>
+        <p class="note">This link will expire in 24 hours.</p>
+      </div>
+
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${verificationUrl}</span></p>
+      
+      <p>If you did not create an account, please ignore this email.</p>
+      
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      'Email Verification',
+      'https://img.icons8.com/ios-filled/50/ffffff/checkmark.png'
+    );
+
+    const text = `
+Email Verification - INTRAK System
+
+Hello ${userName}!
+
+Please verify your email address to complete your account setup.
+
+Click the link below to verify your email:
+${verificationUrl}
+
+This link will expire in 24 hours.
+
+If you did not create an account, please ignore this email.
+    `;
+
+    return this.sendEmail({
+      to: userEmail,
+      subject,
+      html,
+      text
+    });
+  }
+
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     // Test Resend connection
     if (this.emailProvider === 'resend' && this.resend) {

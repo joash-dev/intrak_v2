@@ -190,7 +190,7 @@ If you did not attempt to log in, please change your password immediately.
         try {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: { id: true, role: true, twoFactorEnabled: true }
+                select: { id: true, role: true, twoFactorEnabled: true, emailVerified: true }
             });
 
             if (!user) {
@@ -199,6 +199,11 @@ If you did not attempt to log in, please change your password immediately.
 
             if (user.role !== 'ADMIN') {
                 return { success: false, error: 'Two-factor authentication is only available for administrators' };
+            }
+
+            // Require email verification before enabling 2FA
+            if (!user.emailVerified) {
+                return { success: false, error: 'Please verify your email address before enabling Two-Factor Authentication' };
             }
 
             if (user.twoFactorEnabled) {

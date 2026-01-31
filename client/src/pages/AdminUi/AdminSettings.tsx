@@ -36,6 +36,7 @@ import api from "../../services/api";
 import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
+import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 
 interface AdminProfile {
   id: string;
@@ -1317,6 +1318,9 @@ const AdminSettings = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Email Verification Section - Must verify email before enabling 2FA */}
+                <EmailVerificationSettings />
 
                 {/* Two-Factor Authentication Section */}
                 <TwoFactorSettings />

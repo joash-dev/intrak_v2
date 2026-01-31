@@ -41,4 +41,12 @@ router.post('/2fa/disable', authenticate, disable2FA);
 router.post('/2fa/request-code', request2FACode); // No auth - used during login
 router.post('/2fa/verify', verify2FACode); // No auth - used during login
 
+// Email Verification routes
+import { sendVerificationEmail, verifyEmail, getVerificationStatus, resendVerificationEmail } from '../controllers/emailVerification.controller';
+router.post('/email/send-verification', authenticate, sendVerificationEmail);
+router.post('/email/verify', verifyEmail); // No auth - uses token
+router.get('/email/status', authenticate, getVerificationStatus);
+router.post('/email/resend-verification', authenticate, resendVerificationEmail);
+
 export default router;
+

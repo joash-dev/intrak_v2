@@ -46,6 +46,7 @@ const AdminSettings = React.lazy(() => import("./pages/AdminUi/AdminSettings"));
 const AdminNotifications = React.lazy(() => import("./pages/AdminUi/AdminNotifications"));
 const MaintenancePage = React.lazy(() => import("./pages/MaintenancePage"));
 const ErrorPage = React.lazy(() => import("./pages/ErrorPage"));
+const VerifyEmail = React.lazy(() => import("./pages/VerifyEmail"));
 
 // Instructor Pages
 const InstructorLayout = React.lazy(() => import("./pages/InstructorUi/InstructorLayout"));
@@ -147,6 +148,7 @@ const App: React.FC = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
 
               <Route
                 path="/student"
