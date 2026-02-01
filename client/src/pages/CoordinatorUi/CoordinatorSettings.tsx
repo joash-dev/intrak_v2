@@ -45,6 +45,7 @@ import { useTranslation } from "react-i18next";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
+import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
 import { useCoordinatorContext } from "./CoordinatorLayout";
 
 const CoordinatorSettingsTab = () => {
@@ -821,10 +822,7 @@ const CoordinatorSettingsTab = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Must be at least 8 characters with uppercase, lowercase,
-                      and numbers
-                    </p>
+                    <PasswordStrengthMeter password={password.new} />
                   </div>
 
                   <div>

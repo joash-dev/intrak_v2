@@ -26,6 +26,7 @@ import { useOutletContext } from "react-router-dom";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
+import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
 import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
@@ -870,28 +871,7 @@ const StudentSettingsTab = () => {
                       </button>
                     </div>
                     {/* Password Strength Indicator */}
-                    {passwordData.newPassword && (
-                      <div className="space-y-2">
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4].map((level) => (
-                            <div
-                              key={level}
-                              className={`h-1 flex-1 rounded-full ${passwordData.newPassword.length >= level * 2
-                                ? passwordData.newPassword.length >= 8
-                                  ? "bg-green-500"
-                                  : "bg-yellow-500"
-                                : "bg-gray-200 dark:bg-gray-600"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          {passwordData.newPassword.length < 8
-                            ? "Password should be at least 8 characters"
-                            : "Strong password"}
-                        </p>
-                      </div>
-                    )}
+                    <PasswordStrengthMeter password={passwordData.newPassword} />
                   </div>
 
                   {/* Confirm Password */}

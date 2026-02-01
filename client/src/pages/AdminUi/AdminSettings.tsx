@@ -38,6 +38,7 @@ import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkele
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
+import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
 
 interface AdminProfile {
   id: string;
@@ -1265,10 +1266,7 @@ const AdminSettings = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Must be at least 8 characters with uppercase, lowercase,
-                      and numbers
-                    </p>
+                    <PasswordStrengthMeter password={passwordData.newPassword} />
                     {errors.newPassword && (
                       <p className="text-sm text-red-600 mt-1">
                         {errors.newPassword}
