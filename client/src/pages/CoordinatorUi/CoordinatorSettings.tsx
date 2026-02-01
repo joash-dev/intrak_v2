@@ -822,7 +822,7 @@ const CoordinatorSettingsTab = () => {
                         )}
                       </button>
                     </div>
-                    <PasswordStrengthMeter password={password.new} />
+                    <PasswordStrengthMeter password={passwordData.newPassword} />
                   </div>
 
                   <div>
