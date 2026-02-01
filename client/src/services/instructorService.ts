@@ -1,6 +1,7 @@
 import api from './api';
 import { calculateAttendanceStats } from '../utils/attendanceCalculations';
 import { announcementService, type Announcement } from './announcementService';
+import { devLog } from '../utils/devLog';
 
 // Types for instructor data
 export interface InstructorStats {
@@ -127,11 +128,11 @@ class InstructorService {
   // Get student attendance data
   async getStudentAttendance(studentId?: string): Promise<any[]> {
     try {
-      console.log('Fetching attendance data...');
+      devLog.log('Fetching attendance data...');
 
       const params = studentId ? { studentId } : {};
       const response = await api.get('/attendance', { params });
-      console.log('Attendance API response:', response.data);
+      devLog.log('Attendance API response:', response.data);
 
       return response.data.logs || response.data.attendance || [];
     } catch (error) {
@@ -143,7 +144,7 @@ class InstructorService {
   // Get student attendance statistics (using shared calculation logic)
   async getStudentAttendanceStats(studentId: string): Promise<any> {
     try {
-      console.log('Fetching attendance stats for student:', studentId);
+      devLog.log('Fetching attendance stats for student:', studentId);
 
       // Get attendance logs for the student
       const logs = await this.getStudentAttendance(studentId);
@@ -592,13 +593,13 @@ class InstructorService {
     criteria: Record<string, number>;
   }): Promise<boolean> {
     try {
-      console.log('Submitting evaluation for student:', studentId);
+      devLog.log('Submitting evaluation for student:', studentId);
       const response = await api.post('/evaluations', {
         studentId,
         ...evaluationData
       });
 
-      console.log('Evaluation submitted successfully:', response.data);
+      devLog.log('Evaluation submitted successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error submitting evaluation:', error);
@@ -631,12 +632,12 @@ class InstructorService {
   // Assign student to instructor
   async assignStudentToInstructor(studentId: string, instructorId: string): Promise<boolean> {
     try {
-      console.log('Assigning student to instructor:', { studentId, instructorId });
+      devLog.log('Assigning student to instructor:', { studentId, instructorId });
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId
       });
 
-      console.log('Student assigned successfully:', response.data);
+      devLog.log('Student assigned successfully:', response.data);
       return true;
     } catch (error: any) {
       console.error('Error assigning student to instructor:', error);
@@ -648,13 +649,13 @@ class InstructorService {
   // Bulk assign students to instructor
   async bulkAssignStudentsToInstructor(studentIds: string[], instructorId: string): Promise<boolean> {
     try {
-      console.log('Bulk assigning students to instructor:', { studentIds, instructorId });
+      devLog.log('Bulk assigning students to instructor:', { studentIds, instructorId });
       const response = await api.patch('/students/bulk-assign-instructor', {
         studentIds,
         instructorId
       });
 
-      console.log('Students bulk assigned successfully:', response.data);
+      devLog.log('Students bulk assigned successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error bulk assigning students to instructor:', error);
@@ -665,12 +666,12 @@ class InstructorService {
   // Remove student from instructor (unassign)
   async unassignStudentFromInstructor(studentId: string): Promise<boolean> {
     try {
-      console.log('Unassigning student from instructor:', { studentId });
+      devLog.log('Unassigning student from instructor:', { studentId });
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId: null
       });
 
-      console.log('Student unassigned successfully:', response.data);
+      devLog.log('Student unassigned successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error unassigning student from instructor:', error);
@@ -758,7 +759,7 @@ class InstructorService {
   // Preview a document (get document details)
   async getDocumentDetails(documentId: string): Promise<InstructorDocument | null> {
     try {
-      console.log('Getting document details:', documentId);
+      devLog.log('Getting document details:', documentId);
       const response = await api.get(`/documents/${documentId}`);
       const doc = response.data.document;
 
@@ -824,10 +825,10 @@ class InstructorService {
     let userId: string | null = null;
 
     try {
-      console.log('Creating student with data:', studentData);
+      devLog.log('Creating student with data:', studentData);
 
       // Check for student number conflicts before creating user account
-      console.log('Checking for existing student number...');
+      devLog.log('Checking for existing student number...');
       const studentExists = await this.checkStudentExists(studentData.studentNumber);
       if (studentExists) {
         throw new Error(`Student number "${studentData.studentNumber}" is already in use. Please use a different student number.`);
@@ -835,10 +836,10 @@ class InstructorService {
 
       // Generate secure password for the student
       const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
-      console.log('Generated password for student:', generatedPassword);
+      devLog.log('Generated password for student:', generatedPassword);
 
       // First, create a user account using the register endpoint
-      console.log('Creating user account...');
+      devLog.log('Creating user account...');
       let userResponse;
       try {
         userResponse = await api.post('/auth/register', {
@@ -847,7 +848,7 @@ class InstructorService {
           role: 'STUDENT',
           password: generatedPassword
         });
-        console.log('User created successfully:', userResponse.data);
+        devLog.log('User created successfully:', userResponse.data);
         userId = userResponse.data.user.id;
       } catch (userError: any) {
         console.error('Error creating user account:', userError);
@@ -861,7 +862,7 @@ class InstructorService {
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
 
       // Then create the student record
-      console.log('Creating student record...');
+      devLog.log('Creating student record...');
       let studentResponse;
       try {
         studentResponse = await api.post('/students', {
@@ -881,17 +882,17 @@ class InstructorService {
 
         // Clean up the user account that was created
         if (userId) {
-          console.log('Cleaning up created user account due to student creation failure...');
+          devLog.log('Cleaning up created user account due to student creation failure...');
           try {
             await api.delete(`/users/${userId}`);
-            console.log('User account cleaned up successfully');
+            devLog.log('User account cleaned up successfully');
 
             // Verify the user was actually deleted
             const userStillExists = await this.checkUserExists(studentData.email);
             if (userStillExists) {
               console.error('WARNING: User still exists after cleanup attempt!');
             } else {
-              console.log('Verification: User successfully deleted from database');
+              devLog.log('Verification: User successfully deleted from database');
             }
           } catch (cleanupError) {
             console.error('Failed to cleanup user account:', cleanupError);
@@ -904,7 +905,7 @@ class InstructorService {
         throw studentError;
       }
 
-      console.log('Student created successfully:', studentResponse.data);
+      devLog.log('Student created successfully:', studentResponse.data);
 
       // Send welcome email to student
       let emailSent = false;
@@ -916,7 +917,7 @@ class InstructorService {
           temporaryPassword: generatedPassword
         });
         emailSent = true;
-        console.log('Welcome email sent successfully');
+        devLog.log('Welcome email sent successfully');
       } catch (emailError) {
         console.warn('Failed to send welcome email:', emailError);
       }
@@ -966,10 +967,10 @@ class InstructorService {
   // Helper method to check if user exists in database
   async checkUserExists(email: string): Promise<boolean> {
     try {
-      console.log(`Checking if user with email ${email} exists...`);
+      devLog.log(`Checking if user with email ${email} exists...`);
       const response = await api.get(`/users?email=${email}`);
       const exists = response.data.users && response.data.users.length > 0;
-      console.log(`User ${email} exists:`, exists);
+      devLog.log(`User ${email} exists:`, exists);
       return exists;
     } catch (error) {
       console.error('Error checking user existence:', error);
@@ -980,11 +981,11 @@ class InstructorService {
   // Helper method to check if student exists in database
   async checkStudentExists(studentNumber: string): Promise<boolean> {
     try {
-      console.log(`Checking if student with number ${studentNumber} exists...`);
+      devLog.log(`Checking if student with number ${studentNumber} exists...`);
       const response = await api.get('/students');
       if (response.data.students) {
         const exists = response.data.students.some((student: any) => student.studentNumber === studentNumber);
-        console.log(`Student ${studentNumber} exists:`, exists);
+        devLog.log(`Student ${studentNumber} exists:`, exists);
         return exists;
       }
       return false;

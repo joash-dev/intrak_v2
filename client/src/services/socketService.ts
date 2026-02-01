@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { devLog } from '../utils/devLog';
 
 // Event types matching backend
 export const SOCKET_EVENTS = {
@@ -35,18 +36,18 @@ class SocketService {
 
     connect(token: string): Socket {
         if (this.socket?.connected) {
-            console.log('Socket already connected');
+            devLog.log('Socket already connected');
             return this.socket;
         }
 
         // Resolve server URL (same logic as API client)
         let serverUrl = import.meta.env.VITE_API_URL || '';
-        
+
         // Remove /api suffix if present (Socket.IO doesn't need it)
         if (serverUrl.endsWith('/api')) {
             serverUrl = serverUrl.replace('/api', '');
         }
-        
+
         // Runtime detection for production
         if (!serverUrl && typeof window !== 'undefined') {
             const hostname = window.location.hostname;
@@ -58,7 +59,7 @@ class SocketService {
                 serverUrl = 'http://localhost:5000';
             }
         }
-        
+
         if (!serverUrl) {
             serverUrl = 'http://localhost:5000';
         }
@@ -81,12 +82,12 @@ class SocketService {
         if (!this.socket) return;
 
         this.socket.on('connect', () => {
-            console.log('✅ Socket connected:', this.socket?.id);
+            devLog.log('✅ Socket connected:', this.socket?.id);
             this.reconnectAttempts = 0;
         });
 
         this.socket.on('disconnect', (reason) => {
-            console.log('❌ Socket disconnected:', reason);
+            devLog.log('❌ Socket disconnected:', reason);
         });
 
         this.socket.on('connect_error', (error) => {
@@ -99,7 +100,7 @@ class SocketService {
         });
 
         this.socket.on('reconnect', (attemptNumber) => {
-            console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
+            devLog.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
             this.reconnectAttempts = 0;
         });
 
@@ -112,7 +113,7 @@ class SocketService {
         if (this.socket) {
             this.socket.disconnect();
             this.socket = null;
-            console.log('Socket disconnected manually');
+            devLog.log('Socket disconnected manually');
         }
     }
 

@@ -2,6 +2,7 @@ import api from './api';
 import { companyService } from './companyService';
 import type { AxiosResponse } from 'axios';
 import type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorProvisionResult } from './companyService';
+import { devLog } from '../utils/devLog';
 
 export interface CoordinatorSettings {
   autoApproveDocuments: boolean;
@@ -91,9 +92,9 @@ class CoordinatorService {
   // Get all students for coordinator view
   async getAllStudents(): Promise<CoordinatorStudent[]> {
     try {
-      console.log('Fetching students from API...');
+      devLog.log('Fetching students from API...');
       const response = await api.get('/students');
-      console.log('Students API response:', response.data);
+      devLog.log('Students API response:', response.data);
       const students = response.data.students || [];
 
       // Transform the API response to match CoordinatorStudent interface
@@ -317,9 +318,9 @@ class CoordinatorService {
   // Get all instructors
   async getInstructors(): Promise<any[]> {
     try {
-      console.log('Fetching instructors from API...');
+      devLog.log('Fetching instructors from API...');
       const response = await api.get('/users?role=INSTRUCTOR');
-      console.log('Instructors API response:', response.data);
+      devLog.log('Instructors API response:', response.data);
       const instructors = response.data.users || [];
 
       // Transform the API response to include student count
@@ -437,15 +438,15 @@ class CoordinatorService {
     totalHours?: number;
   }): Promise<{ student: CoordinatorStudent; emailSent: boolean } | null> {
     try {
-      console.log('Creating student with data:', studentData);
-      console.log('API base URL:', api.defaults.baseURL);
+      devLog.log('Creating student with data:', studentData);
+      devLog.log('API base URL:', api.defaults.baseURL);
 
       // Generate secure password for the student
       const generatedPassword = this.generateStudentPassword(studentData.studentNumber, studentData.name);
-      console.log('Generated password for student:', generatedPassword);
+      devLog.log('Generated password for student:', generatedPassword);
 
       // First, create a user account using the register endpoint
-      console.log('Creating user account...');
+      devLog.log('Creating user account...');
       const userResponse = await api.post('/auth/register', {
         name: studentData.name,
         email: studentData.email,
@@ -453,7 +454,7 @@ class CoordinatorService {
         password: generatedPassword
       });
 
-      console.log('User created successfully:', userResponse.data);
+      devLog.log('User created successfully:', userResponse.data);
 
       const userId = userResponse.data.user.id;
 
@@ -461,7 +462,7 @@ class CoordinatorService {
       const yearNumber = parseInt(studentData.year.toString().replace(/\D/g, '')) || 4;
 
       // Then create the student record
-      console.log('Creating student record...');
+      devLog.log('Creating student record...');
       const studentResponse = await api.post('/students', {
         userId: userId,
         studentNumber: studentData.studentNumber,
@@ -506,7 +507,7 @@ class CoordinatorService {
       };
 
       // Send welcome email with temporary password
-      console.log('Sending welcome email...');
+      devLog.log('Sending welcome email...');
       let emailSent = false;
       try {
         const emailResponse = await api.post('/email/welcome', {
@@ -516,7 +517,7 @@ class CoordinatorService {
           temporaryPassword: generatedPassword
         });
         emailSent = emailResponse.data.emailSent;
-        console.log('Email sent successfully:', emailSent);
+        devLog.log('Email sent successfully:', emailSent);
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
         // Don't fail the student creation if email fails
@@ -558,12 +559,12 @@ class CoordinatorService {
   // Delete a student
   async deleteStudent(studentId: string): Promise<boolean> {
     try {
-      console.log('Deleting student with ID:', studentId);
+      devLog.log('Deleting student with ID:', studentId);
 
       // Delete the student record (this should cascade to delete the user as well)
       await api.delete(`/students/${studentId}`);
 
-      console.log('Student deleted successfully');
+      devLog.log('Student deleted successfully');
       return true;
     } catch (error: any) {
       console.error('Error deleting student:', error);
@@ -596,12 +597,12 @@ class CoordinatorService {
   // Assign student to instructor
   async assignStudentToInstructor(studentId: string, instructorId: string): Promise<boolean> {
     try {
-      console.log('Assigning student to instructor:', { studentId, instructorId });
+      devLog.log('Assigning student to instructor:', { studentId, instructorId });
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId
       });
 
-      console.log('Student assigned successfully:', response.data);
+      devLog.log('Student assigned successfully:', response.data);
       return true;
     } catch (error: any) {
       console.error('Error assigning student to instructor:', error);
@@ -613,12 +614,12 @@ class CoordinatorService {
   // Remove student from instructor (unassign)
   async unassignStudentFromInstructor(studentId: string): Promise<boolean> {
     try {
-      console.log('Unassigning student from instructor:', { studentId });
+      devLog.log('Unassigning student from instructor:', { studentId });
       const response = await api.patch(`/students/${studentId}/instructor`, {
         instructorId: null
       });
 
-      console.log('Student unassigned successfully:', response.data);
+      devLog.log('Student unassigned successfully:', response.data);
       return true;
     } catch (error) {
       console.error('Error unassigning student from instructor:', error);

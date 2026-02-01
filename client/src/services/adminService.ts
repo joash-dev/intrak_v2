@@ -1,5 +1,6 @@
 import api from './api';
 import { announcementService, type Announcement } from './announcementService';
+import { devLog } from '../utils/devLog';
 
 // Types
 export interface AdminUser {
@@ -247,12 +248,12 @@ class AdminService {
     newPassword: string;
   }): Promise<{ message: string }> {
     try {
-      console.log('🔐 AdminService: Attempting password change...');
-      console.log('🔐 AdminService: Current token exists:', !!localStorage.getItem('accessToken'));
-      console.log('🔐 AdminService: Refresh token exists:', !!localStorage.getItem('refreshToken'));
+      devLog.log('🔐 AdminService: Attempting password change...');
+      devLog.log('🔐 AdminService: Current token exists:', !!localStorage.getItem('accessToken'));
+      devLog.log('🔐 AdminService: Refresh token exists:', !!localStorage.getItem('refreshToken'));
 
       const response = await api.put('/admin/password', passwordData);
-      console.log('✅ AdminService: Password change successful:', response.data);
+      devLog.log('✅ AdminService: Password change successful:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('❌ AdminService: Error changing admin password:', error);
@@ -453,7 +454,7 @@ class AdminService {
           );
 
           if (Object.keys(cleanStudentData).length > 1) { // More than just userId
-            console.log('Creating student profile with data:', cleanStudentData);
+            devLog.log('Creating student profile with data:', cleanStudentData);
             await api.post('/students', cleanStudentData);
           }
         } catch (studentError: any) {
@@ -466,7 +467,7 @@ class AdminService {
       // Send welcome email to the user
       let emailSent = false;
       try {
-        console.log('Sending welcome email to user...');
+        devLog.log('Sending welcome email to user...');
 
         // Use the same approach as instructor service for consistency
         if (userData.role === 'STUDENT') {
@@ -494,7 +495,7 @@ class AdminService {
           emailSent = emailResponse.data.emailSent;
         }
 
-        console.log('Welcome email sent successfully:', emailSent);
+        devLog.log('Welcome email sent successfully:', emailSent);
       } catch (emailError: any) {
         console.warn('Failed to send welcome email:', emailError);
         console.warn('Email error response:', emailError.response?.data);
@@ -812,9 +813,9 @@ class AdminService {
   // Admin system information
   async getSystemInfo(): Promise<SystemInfo> {
     try {
-      console.log('Fetching system information...');
+      devLog.log('Fetching system information...');
       const response = await api.get('/admin/system-info');
-      console.log('System info API response:', response.data);
+      devLog.log('System info API response:', response.data);
       return response.data.systemInfo || response.data;
     } catch (error) {
       console.error('Error fetching system information:', error);

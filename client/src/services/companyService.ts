@@ -1,5 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import api from './api';
+import { devLog } from '../utils/devLog';
 
 // Types for Company and MOA
 export type Company = {
@@ -102,9 +103,9 @@ class CompanyService {
   // Get all companies
   async getAllCompanies(): Promise<Company[]> {
     try {
-      console.log('Fetching companies from API...');
+      devLog.log('Fetching companies from API...');
       const response = await api.get('/companies');
-      console.log('Companies API response:', response.data);
+      devLog.log('Companies API response:', response.data);
       return response.data.companies || [];
     } catch (error: any) {
       console.error('Error fetching companies:', error);
@@ -166,15 +167,15 @@ class CompanyService {
     expiring?: boolean;
   }): Promise<MOA[]> {
     try {
-      console.log('Fetching MOAs from API...');
+      devLog.log('Fetching MOAs from API...');
       const params = new URLSearchParams();
-      
+
       if (filters?.status) params.append('status', filters.status);
       if (filters?.companyId) params.append('companyId', filters.companyId);
       if (filters?.expiring) params.append('expiring', 'true');
 
       const response = await api.get(`/companies/moas/all?${params.toString()}`);
-      console.log('MOAs API response:', response.data);
+      devLog.log('MOAs API response:', response.data);
       return response.data.moas || [];
     } catch (error: any) {
       console.error('Error fetching MOAs:', error);
@@ -293,26 +294,26 @@ class CompanyService {
   getStatusInfo(status: string) {
     switch (status) {
       case "APPROVED":
-        return { 
-          color: "text-green-600 bg-green-100", 
+        return {
+          color: "text-green-600 bg-green-100",
           icon: "CheckCircle",
           label: "Approved"
         };
       case "PENDING":
-        return { 
-          color: "text-yellow-600 bg-yellow-100", 
+        return {
+          color: "text-yellow-600 bg-yellow-100",
           icon: "Clock",
           label: "Pending"
         };
       case "REJECTED":
-        return { 
-          color: "text-red-600 bg-red-100", 
+        return {
+          color: "text-red-600 bg-red-100",
           icon: "XCircle",
           label: "Rejected"
         };
       default:
-        return { 
-          color: "text-gray-600 bg-gray-100", 
+        return {
+          color: "text-gray-600 bg-gray-100",
           icon: "Clock",
           label: status
         };

@@ -1,4 +1,5 @@
 import api from './api';
+import { devLog } from '../utils/devLog';
 
 export interface UserProfile {
   id: string;
@@ -103,15 +104,15 @@ class SettingsService {
   // Change password
   async changePassword(passwordData: PasswordChangeData): Promise<void> {
     try {
-      console.log('🔐 SettingsService: Attempting password change...');
-      console.log('🔐 SettingsService: Current token exists:', !!localStorage.getItem('accessToken'));
+      devLog.log('🔐 SettingsService: Attempting password change...');
+      devLog.log('🔐 SettingsService: Current token exists:', !!localStorage.getItem('accessToken'));
 
       const response = await api.put('/users/password/change', {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
 
-      console.log('✅ SettingsService: Password change successful:', response.data);
+      devLog.log('✅ SettingsService: Password change successful:', response.data);
     } catch (error: any) {
       console.error('❌ SettingsService: Error changing password:', error);
       console.error('❌ SettingsService: Error response:', error.response);
@@ -277,21 +278,6 @@ class SettingsService {
 
   async deleteProfilePhoto(): Promise<void> {
     return this.removeProfilePhoto();
-  }
-
-  // Legacy methods for backward compatibility (now deprecated)
-  saveProfilePhoto(photoDataUrl: string): void {
-    console.warn('saveProfilePhoto with localStorage is deprecated. Use uploadProfilePhoto instead.');
-    localStorage.setItem('profilePhoto', photoDataUrl);
-  }
-
-  loadProfilePhoto(): string | null {
-    console.warn('loadProfilePhoto with localStorage is deprecated. Use getProfilePhoto instead.');
-    return localStorage.getItem('profilePhoto');
-  }
-
-  removeProfilePhotoLocal(): void {
-    localStorage.removeItem('profilePhoto');
   }
 }
 
