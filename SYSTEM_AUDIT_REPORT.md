@@ -13,6 +13,9 @@
 | Password Strength Meter | ✅ Done | Added to all 5 settings pages |
 | Constants File (Client) | ✅ Done | `client/src/constants/index.ts` |
 | Constants File (Server) | ✅ Done | `server/src/constants/index.ts` |
+| DevLog Utility | ✅ Done | `client/src/utils/devLog.ts` - Production-safe logging |
+| Remove console.log (services) | ✅ Done | All 6 service files cleaned |
+| Remove deprecated methods | ✅ Done | Removed from `settingsService.ts` |
 
 ---
 
