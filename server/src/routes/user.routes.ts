@@ -17,6 +17,9 @@ router.get('/profile-photo', userController.getCurrentUserProfilePhoto);
 router.post('/profile-photo/upload', profilePhotoUpload.single('photo'), userController.uploadProfilePhoto);
 router.delete('/profile-photo', userController.removeProfilePhoto);
 
+// Last login info route (must come before /:id routes)
+router.get('/last-login', userController.getLastLoginInfo);
+
 // User CRUD routes
 router.get('/', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), userController.getUsers);
 router.get('/:id', userController.getUserById);
@@ -24,9 +27,6 @@ router.put('/:id', userController.updateUser);
 router.delete('/:id', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), userController.deleteUser);
 
 // Password change route
-router.put('/password/change', authenticate, userController.changePassword);
-
-// Last login info route
-router.get('/last-login', userController.getLastLoginInfo);
+router.put('/password/change', userController.changePassword);
 
 export default router;
