@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { register, login, refresh, logout, testEndpoint, forgotPassword, resetPassword } from '../controllers/auth.controller';
-import { enable2FA, disable2FA, get2FAStatus, request2FACode, verify2FACode } from '../controllers/twoFactor.controller';
+import { enable2FA, disable2FA, get2FAStatus, request2FACode, verify2FACode, regenerateBackupCodes, verifyBackupCode } from '../controllers/twoFactor.controller';
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
@@ -40,6 +40,8 @@ router.post('/2fa/enable', authenticate, enable2FA);
 router.post('/2fa/disable', authenticate, disable2FA);
 router.post('/2fa/request-code', request2FACode); // No auth - used during login
 router.post('/2fa/verify', verify2FACode); // No auth - used during login
+router.post('/2fa/backup-codes/regenerate', authenticate, regenerateBackupCodes);
+router.post('/2fa/backup-codes/verify', verifyBackupCode); // No auth - used during login
 
 // Email Verification routes
 import { sendVerificationEmail, verifyEmail, getVerificationStatus, resendVerificationEmail } from '../controllers/emailVerification.controller';

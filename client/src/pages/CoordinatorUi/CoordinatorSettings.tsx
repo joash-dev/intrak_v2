@@ -44,6 +44,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
+import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import { useCoordinatorContext } from "./CoordinatorLayout";
 
 const CoordinatorSettingsTab = () => {
@@ -866,6 +867,7 @@ const CoordinatorSettingsTab = () => {
 
                 <EmailVerificationSettings />
                 <TwoFactorSettings />
+                <LastLoginInfo />
               </div>
             )}
 

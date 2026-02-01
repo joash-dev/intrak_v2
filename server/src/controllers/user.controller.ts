@@ -599,3 +599,37 @@ export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+// Get last login info for the current user
+export const getLastLoginInfo = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        lastLoginAt: true,
+        lastLoginIp: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      lastLoginAt: user.lastLoginAt,
+      lastLoginIp: user.lastLoginIp
+    });
+  } catch (error) {
+    console.error('Get last login info error:', error);
+    res.status(500).json({
+      message: 'Failed to get last login info',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};

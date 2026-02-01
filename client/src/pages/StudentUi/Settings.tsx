@@ -25,6 +25,7 @@ import {
 import { useOutletContext } from "react-router-dom";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
+import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import Skeleton from "../../components/Skeleton";
 import {
   settingsService,
@@ -972,6 +973,7 @@ const StudentSettingsTab = () => {
 
                 <EmailVerificationSettings />
                 <TwoFactorSettings />
+                <LastLoginInfo />
               </div>
             )}
 

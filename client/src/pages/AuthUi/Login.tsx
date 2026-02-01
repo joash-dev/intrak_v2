@@ -44,6 +44,8 @@ const Login: React.FC = () => {
   const [resendingCode, setResendingCode] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [trustDevice, setTrustDevice] = useState(false);
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
 
   useEffect(() => {
     const appPrefs = settingsService.loadAppPreferences();
@@ -260,9 +262,52 @@ const Login: React.FC = () => {
     setRequires2FA(false);
     setTwoFactorUserId(null);
     setOtpCode("");
+    setBackupCode("");
+    setUseBackupCode(false);
     setErrors({});
   };
 
+  // Handle backup code verification
+  const handleBackupCodeVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!backupCode.trim()) {
+      setErrors({ otp: "Please enter a backup code" });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response = await api.post("/auth/2fa/backup-codes/verify", {
+        userId: twoFactorUserId,
+        code: backupCode
+      });
+
+      const { accessToken, refreshToken, user } = response.data;
+
+      // Save tokens + user info
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      // Navigate based on user role
+      const roleRoutes: Record<string, string> = {
+        ADMIN: "/admin",
+        STUDENT: "/student",
+        INSTRUCTOR: "/instructor",
+        COORDINATOR: "/coordinator",
+        INDUSTRY_PARTNER: "/supervisor"
+      };
+      navigate(roleRoutes[user.role] || "/");
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || "Invalid backup code";
+      setErrors({ otp: errorMessage });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -320,98 +365,183 @@ const Login: React.FC = () => {
                   </div>
                 )}
 
-                {/* OTP Input */}
-                <div className="space-y-2">
-                  <label
-                    className="block text-sm font-medium text-gray-700 text-center"
-                    style={outfitFont}
-                  >
-                    Verification Code
-                  </label>
-                  <input
-                    type="text"
-                    value={otpCode}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setOtpCode(value);
-                      if (errors.otp) setErrors({});
-                    }}
-                    maxLength={6}
-                    className="w-full py-4 text-center text-3xl font-bold tracking-[0.5em] border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="000000"
-                    style={outfitFont}
-                    autoFocus
-                  />
-                  <p className="text-sm text-gray-500 text-center" style={outfitFont}>
-                    Enter the 6-digit code from your email
-                  </p>
-                </div>
+                {useBackupCode ? (
+                  /* Backup Code Input */
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        className="block text-sm font-medium text-gray-700 text-center"
+                        style={outfitFont}
+                      >
+                        Backup Code
+                      </label>
+                      <input
+                        type="text"
+                        value={backupCode}
+                        onChange={(e) => {
+                          setBackupCode(e.target.value.toUpperCase());
+                          if (errors.otp) setErrors({});
+                        }}
+                        maxLength={9}
+                        className="w-full py-4 text-center text-2xl font-bold tracking-widest border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="XXXX-XXXX"
+                        style={outfitFont}
+                        autoFocus
+                      />
+                      <p className="text-sm text-gray-500 text-center" style={outfitFont}>
+                        Enter one of your backup recovery codes
+                      </p>
+                    </div>
 
-                {/* Trust Device Checkbox */}
-                <div className="flex items-center space-x-2 px-1">
-                  <input
-                    type="checkbox"
-                    id="trustDevice"
-                    checked={trustDevice}
-                    onChange={(e) => setTrustDevice(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="trustDevice"
-                    className="text-sm text-gray-700 select-none cursor-pointer"
-                    style={outfitFont}
-                  >
-                    Trust this device for 30 days
-                  </label>
-                </div>
+                    {/* Verify Backup Code Button */}
+                    <button
+                      type="button"
+                      onClick={handleBackupCodeVerify}
+                      disabled={loading || backupCode.length < 8}
+                      className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                      style={outfitFont}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Verify Backup Code</span>
+                        </>
+                      )}
+                    </button>
 
-                {/* Verify Button */}
-                <button
-                  type="submit"
-                  disabled={loading || otpCode.length !== 6}
-                  className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
-                  style={outfitFont}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Verify Code</span>
-                    </>
-                  )}
-                </button>
+                    {/* Switch to OTP */}
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseBackupCode(false);
+                          setBackupCode("");
+                          setErrors({});
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        style={outfitFont}
+                      >
+                        Use email verification code instead
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* OTP Input */
+                  <>
+                    <div className="space-y-2">
+                      <label
+                        className="block text-sm font-medium text-gray-700 text-center"
+                        style={outfitFont}
+                      >
+                        Verification Code
+                      </label>
+                      <input
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                          setOtpCode(value);
+                          if (errors.otp) setErrors({});
+                        }}
+                        maxLength={6}
+                        className="w-full py-4 text-center text-3xl font-bold tracking-[0.5em] border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="000000"
+                        style={outfitFont}
+                        autoFocus
+                      />
+                      <p className="text-sm text-gray-500 text-center" style={outfitFont}>
+                        Enter the 6-digit code from your email
+                      </p>
+                    </div>
 
-                {/* Resend Code */}
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={handleResendCode}
-                    disabled={resendCooldown > 0 || resendingCode}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-1 mx-auto"
-                    style={outfitFont}
-                  >
-                    {resendingCode ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending...</span>
-                      </>
-                    ) : resendCooldown > 0 ? (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        <span>Resend code in {resendCooldown}s</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        <span>Resend verification code</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                    {/* Trust Device Checkbox */}
+                    <div className="flex items-center space-x-2 px-1">
+                      <input
+                        type="checkbox"
+                        id="trustDevice"
+                        checked={trustDevice}
+                        onChange={(e) => setTrustDevice(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor="trustDevice"
+                        className="text-sm text-gray-700 select-none cursor-pointer"
+                        style={outfitFont}
+                      >
+                        Trust this device for 30 days
+                      </label>
+                    </div>
+
+                    {/* Verify Button */}
+                    <button
+                      type="submit"
+                      disabled={loading || otpCode.length !== 6}
+                      className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                      style={outfitFont}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Verify Code</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Resend Code */}
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={resendCooldown > 0 || resendingCode}
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-1 mx-auto"
+                        style={outfitFont}
+                      >
+                        {resendingCode ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Sending...</span>
+                          </>
+                        ) : resendCooldown > 0 ? (
+                          <>
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Resend code in {resendCooldown}s</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Resend verification code</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Use Backup Code */}
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseBackupCode(true);
+                          setOtpCode("");
+                          setErrors({});
+                        }}
+                        className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                        style={outfitFont}
+                      >
+                        Use a backup code instead
+                      </button>
+                    </div>
+                  </>
+                )}
 
                 {/* Back to Login */}
                 <div className="text-center pt-2">

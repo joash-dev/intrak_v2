@@ -179,9 +179,9 @@ If you did not attempt to log in, please change your password immediately.
     }
 
     /**
-     * Enable 2FA for an admin user
+     * Enable 2FA for a user and generate backup codes
      */
-    async enable2FA(userId: string): Promise<{ success: boolean; error?: string }> {
+    async enable2FA(userId: string): Promise<{ success: boolean; error?: string; backupCodes?: string[] }> {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
@@ -201,16 +201,131 @@ If you did not attempt to log in, please change your password immediately.
                 return { success: false, error: 'Two-factor authentication is already enabled' };
             }
 
+            // Generate 10 backup codes
+            const backupCodes = this.generateBackupCodes(10);
+            const hashedCodes = await this.hashBackupCodes(backupCodes);
+
             await prisma.user.update({
                 where: { id: userId },
-                data: { twoFactorEnabled: true }
+                data: {
+                    twoFactorEnabled: true,
+                    twoFactorBackupCodes: hashedCodes
+                }
             });
 
-            console.log(`2FA enabled for admin user ${userId}`);
-            return { success: true };
+            console.log(`2FA enabled for user ${userId} with ${backupCodes.length} backup codes`);
+            return { success: true, backupCodes };
         } catch (error: any) {
             console.error('Error enabling 2FA:', error);
             return { success: false, error: error.message || 'Failed to enable 2FA' };
+        }
+    }
+
+    /**
+     * Generate random backup codes
+     */
+    generateBackupCodes(count: number): string[] {
+        const codes: string[] = [];
+        for (let i = 0; i < count; i++) {
+            // Generate 8-character alphanumeric code in format XXXX-XXXX
+            const part1 = crypto.randomBytes(2).toString('hex').toUpperCase();
+            const part2 = crypto.randomBytes(2).toString('hex').toUpperCase();
+            codes.push(`${part1}-${part2}`);
+        }
+        return codes;
+    }
+
+    /**
+     * Hash backup codes for storage
+     */
+    async hashBackupCodes(codes: string[]): Promise<string[]> {
+        const bcrypt = await import('bcrypt');
+        const hashedCodes: string[] = [];
+        for (const code of codes) {
+            const hashed = await bcrypt.hash(code.replace('-', '').toLowerCase(), 10);
+            hashedCodes.push(hashed);
+        }
+        return hashedCodes;
+    }
+
+    /**
+     * Verify a backup code
+     */
+    async verifyBackupCode(userId: string, code: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, twoFactorBackupCodes: true }
+            });
+
+            if (!user) {
+                return { success: false, error: 'User not found' };
+            }
+
+            if (!user.twoFactorBackupCodes || user.twoFactorBackupCodes.length === 0) {
+                return { success: false, error: 'No backup codes available' };
+            }
+
+            const bcrypt = await import('bcrypt');
+            const normalizedCode = code.replace('-', '').toLowerCase();
+
+            // Check each hashed code
+            for (let i = 0; i < user.twoFactorBackupCodes.length; i++) {
+                const isMatch = await bcrypt.compare(normalizedCode, user.twoFactorBackupCodes[i]);
+                if (isMatch) {
+                    // Remove the used code
+                    const updatedCodes = [...user.twoFactorBackupCodes];
+                    updatedCodes.splice(i, 1);
+
+                    await prisma.user.update({
+                        where: { id: userId },
+                        data: { twoFactorBackupCodes: updatedCodes }
+                    });
+
+                    console.log(`Backup code used for user ${userId}. Remaining: ${updatedCodes.length}`);
+                    return { success: true };
+                }
+            }
+
+            return { success: false, error: 'Invalid backup code' };
+        } catch (error: any) {
+            console.error('Error verifying backup code:', error);
+            return { success: false, error: error.message || 'Verification failed' };
+        }
+    }
+
+    /**
+     * Regenerate backup codes
+     */
+    async regenerateBackupCodes(userId: string): Promise<{ success: boolean; error?: string; backupCodes?: string[] }> {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { id: true, twoFactorEnabled: true }
+            });
+
+            if (!user) {
+                return { success: false, error: 'User not found' };
+            }
+
+            if (!user.twoFactorEnabled) {
+                return { success: false, error: '2FA is not enabled' };
+            }
+
+            // Generate new backup codes
+            const backupCodes = this.generateBackupCodes(10);
+            const hashedCodes = await this.hashBackupCodes(backupCodes);
+
+            await prisma.user.update({
+                where: { id: userId },
+                data: { twoFactorBackupCodes: hashedCodes }
+            });
+
+            console.log(`Regenerated backup codes for user ${userId}`);
+            return { success: true, backupCodes };
+        } catch (error: any) {
+            console.error('Error regenerating backup codes:', error);
+            return { success: false, error: error.message || 'Failed to regenerate codes' };
         }
     }
 

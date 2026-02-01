@@ -172,11 +172,16 @@ model User {
   supervisorFeedbacks     SupervisorFeedback[]   @relation("SupervisorFeedbacks")
   agencySelfEvaluations   AgencySelfEvaluation[] @relation("AgencySelfEvaluations")
 
-  // Two-Factor Authentication (Admin only)
+  // Two-Factor Authentication
   twoFactorEnabled  Boolean   @default(false)
   twoFactorCode     String?   // Temporary OTP code
   twoFactorExpires  DateTime? // OTP expiration time
+  twoFactorBackupCodes String[] // Backup recovery codes (hashed)
   trustedDevices    TrustedDevice[]
+
+  // Last login tracking
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
 
   @@map("users")
 }

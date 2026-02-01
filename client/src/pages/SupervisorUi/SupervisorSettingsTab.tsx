@@ -27,6 +27,7 @@ import {
 import { settingsService } from "../../services/settingsService";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
+import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import toast from "react-hot-toast";
 
 // External help links
@@ -844,6 +845,7 @@ const SupervisorSettings = () => {
 
                 <EmailVerificationSettings />
                 <TwoFactorSettings />
+                <LastLoginInfo />
               </div>
             )}
 

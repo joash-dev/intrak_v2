@@ -13,7 +13,7 @@ interface AuthRequest extends Request {
 }
 
 /**
- * Enable 2FA for the authenticated admin user
+ * Enable 2FA for the authenticated user
  */
 export const enable2FA = async (req: AuthRequest, res: Response) => {
     try {
@@ -29,7 +29,11 @@ export const enable2FA = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ message: result.error });
         }
 
-        res.json({ message: 'Two-factor authentication enabled successfully' });
+        // Return backup codes for user to save
+        res.json({
+            message: 'Two-factor authentication enabled successfully',
+            backupCodes: result.backupCodes
+        });
     } catch (error: any) {
         console.error('Error enabling 2FA:', error);
         res.status(500).json({ message: 'Failed to enable 2FA', error: error.message });
@@ -243,6 +247,130 @@ export const verify2FACode = async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         console.error('Error verifying 2FA code:', error);
+        res.status(500).json({ message: 'Verification failed', error: error.message });
+    }
+};
+
+/**
+ * Regenerate backup codes for the authenticated user
+ */
+export const regenerateBackupCodes = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { password } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        if (!password) {
+            return res.status(400).json({ message: 'Password is required' });
+        }
+
+        // Verify password before regenerating codes
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { passwordHash: true }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        if (!isValidPassword) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        const result = await twoFactorService.regenerateBackupCodes(userId);
+
+        if (!result.success) {
+            return res.status(400).json({ message: result.error });
+        }
+
+        res.json({
+            message: 'Backup codes regenerated successfully',
+            backupCodes: result.backupCodes
+        });
+    } catch (error: any) {
+        console.error('Error regenerating backup codes:', error);
+        res.status(500).json({ message: 'Failed to regenerate codes', error: error.message });
+    }
+};
+
+/**
+ * Verify backup code during login
+ */
+export const verifyBackupCode = async (req: Request, res: Response) => {
+    try {
+        const { userId, code } = req.body;
+
+        if (!userId || !code) {
+            return res.status(400).json({ message: 'User ID and backup code are required' });
+        }
+
+        const result = await twoFactorService.verifyBackupCode(userId, code);
+
+        if (!result.success) {
+            return res.status(401).json({ message: result.error || 'Invalid backup code' });
+        }
+
+        // Backup code verified - complete login
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                createdAt: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate tokens
+        const { generateTokens } = await import('../utils/jwt');
+        const { accessToken, refreshToken } = generateTokens(user);
+
+        // Save refresh token
+        await prisma.refreshToken.create({
+            data: {
+                token: refreshToken,
+                userId: user.id,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            }
+        });
+
+        // Log login activity
+        const { auditLog } = await import('../services/audit.service');
+        const { logActivity } = await import('./activity.controller');
+
+        await auditLog(user.id, 'USER_LOGIN', { email: user.email, backupCodeUsed: true }, req);
+        await logActivity({
+            type: 'LOGIN',
+            description: `${user.name} logged in using backup code`,
+            userId: user.id,
+            userName: user.name,
+            ipAddress: req.ip
+        });
+
+        res.json({
+            verified: true,
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error: any) {
+        console.error('Error verifying backup code:', error);
         res.status(500).json({ message: 'Verification failed', error: error.message });
     }
 };

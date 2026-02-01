@@ -296,6 +296,16 @@ export const login = async (req: Request, res: Response) => {
         };
     }
 
+    // Update last login info
+    const clientIp = req.headers['x-forwarded-for'] as string || req.ip || 'unknown';
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+        lastLoginIp: clientIp
+      }
+    });
+
     console.log('Sending response...');
     res.json({
       accessToken,

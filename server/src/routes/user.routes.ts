@@ -26,4 +26,7 @@ router.delete('/:id', authorize(['ADMIN', 'COORDINATOR', 'INSTRUCTOR']), userCon
 // Password change route
 router.put('/password/change', authenticate, userController.changePassword);
 
+// Last login info route
+router.get('/last-login', userController.getLastLoginInfo);
+
 export default router;

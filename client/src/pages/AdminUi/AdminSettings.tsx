@@ -37,6 +37,7 @@ import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
+import LastLoginInfo from "../../components/settings/LastLoginInfo";
 
 interface AdminProfile {
   id: string;
@@ -1324,6 +1325,9 @@ const AdminSettings = () => {
 
                 {/* Two-Factor Authentication Section */}
                 <TwoFactorSettings />
+
+                {/* Last Login Info Section */}
+                <LastLoginInfo />
 
                 {/* Disable 2FA Modal */}
 
