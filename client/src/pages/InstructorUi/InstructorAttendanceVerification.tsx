@@ -14,6 +14,7 @@ import { attendanceService } from "../../services/attendanceService";
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 interface AttendanceLog {
   id: string;
@@ -110,7 +111,7 @@ const InstructorAttendanceVerification: React.FC = () => {
 
       // If no data is found, show empty state instead of error
       if (transformedLogs.length === 0) {
-        console.log("No attendance data found for the selected date");
+        devLog.log("No attendance data found for the selected date");
         setAttendanceLogs([]);
       } else {
         setAttendanceLogs(transformedLogs);
@@ -209,8 +210,7 @@ const InstructorAttendanceVerification: React.FC = () => {
       );
 
       toast.success(
-        `Attendance ${
-          verifyAction === "approve" ? "verified" : "rejected"
+        `Attendance ${verifyAction === "approve" ? "verified" : "rejected"
         } successfully`
       );
 
@@ -508,10 +508,9 @@ const InstructorAttendanceVerification: React.FC = () => {
                     Verification
                   </p>
                   <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      getVerificationBadge(log.verificationType || "manual")
+                    className={`text-xs px-2 py-1 rounded-full ${getVerificationBadge(log.verificationType || "manual")
                         .color
-                    }`}
+                      }`}
                   >
                     {
                       getVerificationBadge(log.verificationType || "manual")
@@ -601,11 +600,10 @@ const InstructorAttendanceVerification: React.FC = () => {
               <button
                 onClick={submitVerification}
                 disabled={submitting}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${
-                  verifyAction === "approve"
+                className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 ${verifyAction === "approve"
                     ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
                     : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                } disabled:cursor-not-allowed`}
+                  } disabled:cursor-not-allowed`}
               >
                 {submitting ? (
                   <>

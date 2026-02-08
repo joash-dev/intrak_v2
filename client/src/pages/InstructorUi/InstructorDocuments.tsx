@@ -27,6 +27,7 @@ import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPan
 import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import { documentService } from "../../services/documentService";
 import PDFViewer from "../../components/document/PDFViewer";
+import { devLog } from "../../utils/devLog";
 
 // --- Types ---
 
@@ -113,7 +114,7 @@ const InstructorDocumentsTab = () => {
         instructorService.getDocumentsForReview(), // This fetches all documents for assigned students
       ]);
       setStudents(studentsData);
-      console.log('Fetched Documents:', documentsData);
+      devLog.log('Fetched Documents:', documentsData);
       setDocuments(documentsData);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -561,7 +562,7 @@ const InstructorDocumentsTab = () => {
                     const doc = studentDocs
                       .filter(d => {
                         const match = d.documentType === req.type;
-                        // console.log(`Checking req ${req.type} against doc ${d.documentType}: ${match}`);
+                        // devLog.log(`Checking req ${req.type} against doc ${d.documentType}: ${match}`);
                         return match;
                       })
                       .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime())[0];

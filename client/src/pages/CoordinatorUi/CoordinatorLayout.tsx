@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { formatDateTime } from "../../services/localeService";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
+import { devLog } from "../../utils/devLog";
 // Define the context type for shared data
 type CoordinatorContextType = {
     currentUser: {
@@ -109,10 +110,10 @@ const CoordinatorLayout: React.FC = () => {
                     setProfilePhoto(serverPhoto);
                 }
             } catch (error) {
-                console.log("No profile photo found");
+                devLog.log("No profile photo found");
             }
         } catch (error) {
-            console.error("Error loading user data:", error);
+            devLog.error("Error loading user data:", error);
             setCurrentUser({
                 name: "Coordinator",
                 email: "",
@@ -254,7 +255,7 @@ const CoordinatorLayout: React.FC = () => {
             }
             setShowNotifications(false);
         } catch (error) {
-            console.error("Error handling notification interaction", error);
+            devLog.error("Error handling notification interaction", error);
         }
     };
 
@@ -266,7 +267,7 @@ const CoordinatorLayout: React.FC = () => {
             );
             refreshNotifications();
         } catch (error) {
-            console.error("Failed to mark all notifications as read", error);
+            devLog.error("Failed to mark all notifications as read", error);
         }
     };
 
@@ -300,7 +301,7 @@ const CoordinatorLayout: React.FC = () => {
                 const parsed = JSON.parse(appPrefs);
                 settingsService.applyTheme(parsed.theme as "light" | "dark" | "system");
             } catch (error) {
-                console.error("Failed to re-apply theme during logout", error);
+                devLog.error("Failed to re-apply theme during logout", error);
             }
         }
 

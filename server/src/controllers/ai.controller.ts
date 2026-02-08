@@ -95,13 +95,13 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
 
     console.log(' AI remarks generated successfully, length:', remarks.length);
     res.json({ remarks });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating evaluation remarks:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error stack:', (error instanceof Error ? error.stack : undefined));
     res.status(500).json({
       message: 'Failed to generate remarks',
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: (error instanceof Error ? error.message : String(error)),
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
     });
   }
 };
@@ -153,11 +153,11 @@ export const generateDocumentFeedback = async (req: AuthRequest, res: Response) 
     });
 
     res.json({ feedback });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating document feedback:', error);
     res.status(500).json({
       message: 'Failed to generate feedback',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -218,11 +218,11 @@ export const generateAttendanceNote = async (req: AuthRequest, res: Response) =>
     });
 
     res.json({ note });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating attendance note:', error);
     res.status(500).json({
       message: 'Failed to generate note',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -251,12 +251,12 @@ export const generateWeeklyReportSummary = async (req: AuthRequest, res: Respons
     );
 
     res.json({ summary });
-  } catch (error: any) {
-    console.error('❌ Error generating weekly report summary:', error.message);
+  } catch (error) {
+    console.error('❌ Error generating weekly report summary:', (error instanceof Error ? error.message : String(error)));
     console.error('   Full error:', error);
     res.status(500).json({
       message: 'Failed to generate summary',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -323,11 +323,11 @@ export const generateOverallComments = async (req: AuthRequest, res: Response) =
     });
 
     res.json({ comments });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating overall comments:', error);
     res.status(500).json({
       message: 'Failed to generate comments',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -367,11 +367,11 @@ export const generateForm18Comments = async (req: AuthRequest, res: Response) =>
     });
 
     res.json({ comments });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating Form 18 comments:', error);
     res.status(500).json({
       message: 'Failed to generate comments',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -435,11 +435,11 @@ export const generateInstructorEvaluationComments = async (req: AuthRequest, res
     });
 
     res.json({ comments });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating instructor evaluation comments:', error);
     res.status(500).json({
       message: 'Failed to generate comments',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -503,11 +503,11 @@ export const generateImprovementSuggestions = async (req: AuthRequest, res: Resp
     });
 
     res.json({ suggestions });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating improvement suggestions:', error);
     res.status(500).json({
       message: 'Failed to generate suggestions',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -529,11 +529,11 @@ export const generateAnnouncementContent = async (req: AuthRequest, res: Respons
     });
 
     res.json({ content });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating announcement content:', error);
     res.status(500).json({
       message: 'Failed to generate content',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };
@@ -552,11 +552,11 @@ export const getAIConfig = async (req: AuthRequest, res: Response) => {
       temperature: config.temperature,
       hasApiKey: !!config.apiKey, // Just indicate if key exists, don't expose it
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error getting AI config:', error);
     res.status(500).json({
       message: 'Failed to get AI configuration',
-      error: error.message
+      error: (error instanceof Error ? error.message : String(error))
     });
   }
 };

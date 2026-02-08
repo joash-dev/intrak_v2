@@ -21,6 +21,7 @@ import { adminService, type AdminUser } from "../../services/adminService";
 import { instructorService } from "../../services/instructorService";
 import { UserTableSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 const AdminUserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,7 +80,7 @@ const AdminUserManagement = () => {
         const instructorsData = await adminService.getInstructors();
         setInstructors(instructorsData);
       } catch (error) {
-        console.error("Error fetching instructors:", error);
+        devLog.error("Error fetching instructors:", error);
         toast.error("Failed to load instructors");
       }
     };
@@ -126,7 +127,7 @@ const AdminUserManagement = () => {
         inactive: allUsers.filter((u) => !u.active).length,
       });
     } catch (error) {
-      console.error("Error fetching global user stats:", error);
+      devLog.error("Error fetching global user stats:", error);
     }
   }, []);
 
@@ -141,7 +142,7 @@ const AdminUserManagement = () => {
         await refetchUsers();
       } else {
         // Fallback: reload the page
-        console.warn("refetchUsers not available, reloading page");
+        devLog.warn("refetchUsers not available, reloading page");
         window.location.reload();
       }
 
@@ -152,10 +153,10 @@ const AdminUserManagement = () => {
         const instructorsData = await adminService.getInstructors();
         setInstructors(instructorsData);
       } catch (error) {
-        console.error("Error refreshing instructors:", error);
+        devLog.error("Error refreshing instructors:", error);
       }
     } catch (error) {
-      console.error("Error refreshing users list:", error);
+      devLog.error("Error refreshing users list:", error);
       // Final fallback: reload the page
       window.location.reload();
     }
@@ -227,7 +228,7 @@ const AdminUserManagement = () => {
       // Set loading state
       setIsAddingUser(true);
 
-      console.log("Creating user with data:", formData);
+      devLog.log("Creating user with data:", formData);
       await adminService.createUser(formData);
 
       toast.success(`✅ User created! Password sent to ${formData.email}`, {
@@ -248,7 +249,7 @@ const AdminUserManagement = () => {
       // Refresh the users list
       await refreshUsersList();
     } catch (error: any) {
-      console.error("Create user error:", error);
+      devLog.error("Create user error:", error);
       let errorMsg =
         error.response?.data?.message ||
         error.message ||
@@ -289,7 +290,7 @@ const AdminUserManagement = () => {
       // Refresh the users list
       await refreshUsersList();
     } catch (error: any) {
-      console.error("Update user error:", error);
+      devLog.error("Update user error:", error);
       const errorMsg =
         error.response?.data?.message ||
         error.message ||
@@ -314,7 +315,7 @@ const AdminUserManagement = () => {
       // Refresh the users list
       await refreshUsersList();
     } catch (error: any) {
-      console.error("Delete user error:", error);
+      devLog.error("Delete user error:", error);
       let errorMsg =
         error.response?.data?.message ||
         error.message ||

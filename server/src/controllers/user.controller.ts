@@ -202,7 +202,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     }, req);
 
     res.json({ message: 'Password changed successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({
       message: 'Failed to change password. Please try again.',
@@ -391,21 +391,22 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ message: 'User deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Delete user error:', error);
 
     // Handle specific database errors
-    if (error.code === 'P2003') {
+    const errorCode = (error as any)?.code;
+    if (errorCode === 'P2003') {
       return res.status(400).json({
         message: 'Cannot delete user. User has related data that must be handled first. Please contact support for assistance.'
       });
     }
 
-    if (error.code === 'P2025') {
+    if (errorCode === 'P2025') {
       return res.status(404).json({ message: 'User not found. The user may have already been deleted.' });
     }
 
-    if (error.code === 'P2002') {
+    if (errorCode === 'P2002') {
       return res.status(400).json({
         message: 'Cannot delete user due to unique constraint violation. Please contact support.'
       });
@@ -413,7 +414,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     // Provide more detailed error message in development
     const errorMessage = process.env.NODE_ENV === 'development'
-      ? `Failed to delete user: ${error.message}`
+      ? `Failed to delete user: ${(error instanceof Error ? error.message : String(error))}`
       : 'Failed to delete user. Please try again or contact support.';
 
     res.status(500).json({

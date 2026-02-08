@@ -30,6 +30,7 @@ import EmailVerificationSettings from "../../components/settings/EmailVerificati
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 // External help links
 const HELP_LINKS = {
@@ -117,7 +118,7 @@ const SupervisorSettings = () => {
       try {
         setPreferences(JSON.parse(savedPreferences));
       } catch (e) {
-        console.error("Error loading preferences:", e);
+        devLog.error("Error loading preferences:", e);
       }
     }
   };
@@ -152,7 +153,7 @@ const SupervisorSettings = () => {
         });
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
+      devLog.error("Error loading user data:", error);
       toast.error("Failed to load user data");
     } finally {
       setLoading(false);
@@ -164,7 +165,7 @@ const SupervisorSettings = () => {
       const photo = await settingsService.getProfilePhoto();
       setProfilePhoto(photo);
     } catch (error) {
-      console.log("No profile photo found");
+      devLog.log("No profile photo found");
     }
   };
 
@@ -215,7 +216,7 @@ const SupervisorSettings = () => {
       refreshUserData();
       setSaveSuccess(true);
     } catch (error) {
-      console.error("Error uploading photo:", error);
+      devLog.error("Error uploading photo:", error);
       setUploadingPhoto(false);
       setUploadProgress(0);
       toast.error("Failed to upload photo");
@@ -235,7 +236,7 @@ const SupervisorSettings = () => {
       refreshUserData();
       toast.success("Profile photo removed successfully");
     } catch (error) {
-      console.error("Error deleting photo:", error);
+      devLog.error("Error deleting photo:", error);
       toast.error("Failed to remove photo");
     }
   };
@@ -262,7 +263,7 @@ const SupervisorSettings = () => {
 
       setSaveSuccess(true);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      devLog.error("Error updating profile:", error);
       toast.error("Failed to update profile");
     } finally {
       setSaving(false);
@@ -294,7 +295,7 @@ const SupervisorSettings = () => {
         confirmPassword: "",
       });
     } catch (error: any) {
-      console.error("Error changing password:", error);
+      devLog.error("Error changing password:", error);
       toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setSaving(false);
@@ -307,7 +308,7 @@ const SupervisorSettings = () => {
       // Save notification preferences to backend (API endpoint pending)
       setSaveSuccess(true);
     } catch (error) {
-      console.error("Error saving notifications:", error);
+      devLog.error("Error saving notifications:", error);
       toast.error("Failed to save preferences");
     } finally {
       setSaving(false);

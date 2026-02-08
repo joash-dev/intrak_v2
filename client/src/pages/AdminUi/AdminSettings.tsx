@@ -39,6 +39,7 @@ import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
+import { devLog } from "../../utils/devLog";
 
 interface AdminProfile {
   id: string;
@@ -182,7 +183,7 @@ const AdminSettings = () => {
         setProfilePhoto(photoUrl);
       }
     } catch (error) {
-      console.log("No profile photo found");
+      devLog.log("No profile photo found");
     }
   };
 
@@ -218,7 +219,7 @@ const AdminSettings = () => {
     try {
       await adminService.updateAdminSettings({ theme: newTheme });
     } catch (error) {
-      console.error("Error saving theme to database:", error);
+      devLog.error("Error saving theme to database:", error);
       // Don't show error toast for theme changes as it's not critical
     }
 
@@ -252,11 +253,11 @@ const AdminSettings = () => {
           const photoUrl = await settingsService.getProfilePhoto();
           setProfilePhoto(photoUrl);
         } catch (error) {
-          console.log("No profile photo found");
+          devLog.log("No profile photo found");
         }
       }
     } catch (error) {
-      console.error("Error loading profile:", error);
+      devLog.error("Error loading profile:", error);
       toast.error("Failed to load profile");
     } finally {
       setLoading(false);
@@ -290,7 +291,7 @@ const AdminSettings = () => {
         setTheme(settings.theme as "light" | "dark" | "system");
       }
     } catch (error) {
-      console.error("Error loading system settings:", error);
+      devLog.error("Error loading system settings:", error);
       // Fallback to localStorage if API fails
       const savedSettings = localStorage.getItem("adminSystemSettings");
       if (savedSettings) {
@@ -301,7 +302,7 @@ const AdminSettings = () => {
 
   const loadSystemInfo = async () => {
     try {
-      console.log("Loading system information from API...");
+      devLog.log("Loading system information from API...");
       const systemInfoData = await adminService.getSystemInfo();
       setSystemInfo(systemInfoData);
 
@@ -333,9 +334,9 @@ const AdminSettings = () => {
       // Update alerts
       setSystemAlerts(systemInfoData.alerts || []);
 
-      console.log("System info loaded:", systemInfoData);
+      devLog.log("System info loaded:", systemInfoData);
     } catch (error) {
-      console.error("Error loading system information:", error);
+      devLog.error("Error loading system information:", error);
       // Keep the default state if API fails
     }
   };
@@ -411,7 +412,7 @@ const AdminSettings = () => {
       toast.success("Profile updated successfully");
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      devLog.error("Error updating profile:", error);
       toast.error(error.message || "Failed to update profile");
     } finally {
       setSaving(false);
@@ -462,7 +463,7 @@ const AdminSettings = () => {
       setSaving(true);
       setErrors({});
 
-      console.log("🔐 Attempting to change password...");
+      devLog.log("🔐 Attempting to change password...");
 
       // Change password using the admin service
       const response = await adminService.changeAdminPassword({
@@ -470,7 +471,7 @@ const AdminSettings = () => {
         newPassword: passwordData.newPassword,
       });
 
-      console.log("✅ Password change successful:", response);
+      devLog.log("✅ Password change successful:", response);
 
       setSaveSuccess(true);
       toast.success("Password changed successfully");
@@ -484,8 +485,8 @@ const AdminSettings = () => {
 
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
-      console.error("❌ Error changing password:", error);
-      console.error("Error details:", error);
+      devLog.error("❌ Error changing password:", error);
+      devLog.error("Error details:", error);
 
       // Handle specific error cases
       if (
@@ -544,7 +545,7 @@ const AdminSettings = () => {
       toast.success("System settings updated successfully");
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
-      console.error("Error updating system settings:", error);
+      devLog.error("Error updating system settings:", error);
       toast.error(error.message || "Failed to update system settings");
     } finally {
       setSaving(false);
@@ -591,7 +592,7 @@ const AdminSettings = () => {
           );
         }
       } catch (error: any) {
-        console.error("Error updating maintenance mode:", error);
+        devLog.error("Error updating maintenance mode:", error);
         toast.error("Failed to update maintenance mode. Please try again.");
 
         // Revert the setting on error
@@ -622,7 +623,7 @@ const AdminSettings = () => {
 
       toast.success("Settings exported successfully!", { id: toastId });
     } catch (error) {
-      console.error("Error exporting admin settings:", error);
+      devLog.error("Error exporting admin settings:", error);
       const message =
         error instanceof Error ? error.message : "Failed to export settings";
       toast.error(message, { id: toastId });
@@ -707,7 +708,7 @@ const AdminSettings = () => {
 
         toast.success("Settings imported successfully!", { id: toastId });
       } catch (error) {
-        console.error("Error importing admin settings:", error);
+        devLog.error("Error importing admin settings:", error);
         const message =
           error instanceof Error ? error.message : "Invalid JSON file format";
         toast.error(message, { id: toastId });
@@ -849,7 +850,7 @@ const AdminSettings = () => {
       // Reset the file input
       event.target.value = "";
     } catch (error) {
-      console.error("Error uploading photo:", error);
+      devLog.error("Error uploading photo:", error);
       toast.error("Failed to upload photo. Please try again.");
       // Clear photo on error
       setProfilePhoto(null);
@@ -874,7 +875,7 @@ const AdminSettings = () => {
       toast.success("Notification preferences updated");
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
-      console.error("Error updating notification settings:", error);
+      devLog.error("Error updating notification settings:", error);
       toast.error(error.message || "Failed to update notification settings");
     } finally {
       setSaving(false);
@@ -896,7 +897,7 @@ const AdminSettings = () => {
 
       toast.success("Profile photo removed successfully");
     } catch (error) {
-      console.error("Error removing photo:", error);
+      devLog.error("Error removing photo:", error);
       toast.error("Failed to remove profile photo");
     } finally {
       setSaving(false);

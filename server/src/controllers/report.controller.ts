@@ -87,9 +87,8 @@ export const getAttendanceReport = async (req: AuthRequest, res: Response) => {
 
     const dateRangeLabel =
       dateFrom || dateTo
-        ? `Coverage: ${dateFrom ? dateFrom.toLocaleDateString() : 'Start'} - ${
-            dateTo ? dateTo.toLocaleDateString() : 'Present'
-          }`
+        ? `Coverage: ${dateFrom ? dateFrom.toLocaleDateString() : 'Start'} - ${dateTo ? dateTo.toLocaleDateString() : 'Present'
+        }`
         : 'Coverage: Entire internship history';
 
     if (format === 'json') {
@@ -137,11 +136,11 @@ export const getAttendanceReport = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({
       message: `Unsupported format "${format}". Allowed values: pdf, excel, json.`,
     });
-  } catch (error: any) {
-    const statusCode = error?.statusCode || 500;
+  } catch (error) {
+    const statusCode = (error as any)?.statusCode || 500;
     res.status(statusCode).json({
       message: 'Report generation failed',
-      error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : undefined) : undefined,
     });
   }
 };
@@ -179,10 +178,10 @@ export const getComplianceReport = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({
       message: `Unsupported format "${format}". Allowed values: excel, json.`,
     });
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({
       message: 'Report generation failed',
-      error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : undefined) : undefined,
     });
   }
 };

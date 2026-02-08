@@ -15,6 +15,7 @@ import { dashboardService } from "../../services/dashboardService";
 import { supervisorService, type EvaluationExportPayload } from "../../services/supervisorService";
 import { toast } from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
+import { devLog } from "../../utils/devLog";
 
 interface TerminationData {
   lackOfWork?: boolean;
@@ -84,11 +85,11 @@ const StudentEvaluationsTab: React.FC = () => {
       let form18Feedback = null;
       try {
         if (studentProfile?.id) {
-          console.log("Fetching Form 18 feedback for student ID:", studentProfile.id);
+          devLog.log("Fetching Form 18 feedback for student ID:", studentProfile.id);
           const feedback = await supervisorService.getSupervisorFeedback(studentProfile.id);
           if (feedback && feedback.id) {
             form18Feedback = feedback;
-            console.log("✅ Form 18 feedback found:", {
+            devLog.log("✅ Form 18 feedback found:", {
               id: feedback.id,
               supervisor: feedback.supervisor?.name,
               ratings: {
@@ -98,17 +99,17 @@ const StudentEvaluationsTab: React.FC = () => {
               }
             });
           } else {
-            console.log("⚠️ Form 18 feedback API returned null or missing ID - feedback may not exist yet");
+            devLog.log("⚠️ Form 18 feedback API returned null or missing ID - feedback may not exist yet");
           }
         } else {
-          console.warn("⚠️ Student profile ID not found:", studentProfile);
+          devLog.warn("⚠️ Student profile ID not found:", studentProfile);
         }
       } catch (error: any) {
         // Only log if it's not a 404 (which means no feedback exists yet)
         if (error?.response?.status !== 404) {
-          console.error("❌ Error fetching Form 18 feedback:", error);
+          devLog.error("❌ Error fetching Form 18 feedback:", error);
         } else {
-          console.log("ℹ️ Form 18 feedback not found (404) - supervisor hasn't submitted feedback yet for this student");
+          devLog.log("ℹ️ Form 18 feedback not found (404) - supervisor hasn't submitted feedback yet for this student");
         }
       }
 
@@ -118,7 +119,7 @@ const StudentEvaluationsTab: React.FC = () => {
         const evaluation = await supervisorService.getAgencySelfEvaluation();
         if (evaluation && evaluation.id) {
           form19bEvaluation = evaluation;
-          console.log("✅ Form 19b evaluation found:", {
+          devLog.log("✅ Form 19b evaluation found:", {
             id: evaluation.id,
             supervisor: evaluation.supervisor?.name,
           });
@@ -126,9 +127,9 @@ const StudentEvaluationsTab: React.FC = () => {
       } catch (error: any) {
         // Only log if it's not a 404 (which means no evaluation exists yet)
         if (error?.response?.status !== 404) {
-          console.error("❌ Error fetching Form 19b evaluation:", error);
+          devLog.error("❌ Error fetching Form 19b evaluation:", error);
         } else {
-          console.log("ℹ️ Form 19b evaluation not found (404) - supervisor hasn't submitted it yet");
+          devLog.log("ℹ️ Form 19b evaluation not found (404) - supervisor hasn't submitted it yet");
         }
       }
 
@@ -236,7 +237,7 @@ const StudentEvaluationsTab: React.FC = () => {
 
       // Debug: Log Form 18 evaluation status
       const form18 = forms.find(f => f.id === "form-18");
-      console.log("Form 18 evaluation status:", {
+      devLog.log("Form 18 evaluation status:", {
         hasFeedback: !!form18Feedback,
         hasEvaluation: !!form18?.evaluation,
         feedback: form18Feedback,
@@ -245,7 +246,7 @@ const StudentEvaluationsTab: React.FC = () => {
 
       setEvaluationForms(forms);
     } catch (error) {
-      console.error("Error fetching evaluation forms:", error);
+      devLog.error("Error fetching evaluation forms:", error);
       toast.error("Failed to load evaluation forms");
     } finally {
       setLoading(false);
@@ -277,7 +278,7 @@ const StudentEvaluationsTab: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       setPreviewUrl(url);
     } catch (error) {
-      console.error("Error previewing document:", error);
+      devLog.error("Error previewing document:", error);
       toast.error("Failed to preview document");
     } finally {
       setPreviewLoading(false);
@@ -337,7 +338,7 @@ const StudentEvaluationsTab: React.FC = () => {
         await supervisorService.exportEvaluation(exportPayload);
         toast.success("Evaluation exported successfully");
       } catch (error) {
-        console.error("Error exporting evaluation:", error);
+        devLog.error("Error exporting evaluation:", error);
         toast.error("Failed to export evaluation");
       }
       return;
@@ -350,7 +351,7 @@ const StudentEvaluationsTab: React.FC = () => {
         await supervisorService.exportSupervisorFeedback(studentProfile.id);
         toast.success("Feedback exported successfully");
       } catch (error) {
-        console.error("Error exporting feedback:", error);
+        devLog.error("Error exporting feedback:", error);
         toast.error("Failed to export feedback");
       }
       return;
@@ -362,7 +363,7 @@ const StudentEvaluationsTab: React.FC = () => {
         await supervisorService.exportAgencySelfEvaluation();
         toast.success("Form 19b exported successfully");
       } catch (error) {
-        console.error("Error exporting Form 19b:", error);
+        devLog.error("Error exporting Form 19b:", error);
         toast.error("Failed to export Form 19b");
       }
       return;
@@ -386,7 +387,7 @@ const StudentEvaluationsTab: React.FC = () => {
       window.URL.revokeObjectURL(url);
       toast.success("Document downloaded successfully");
     } catch (error) {
-      console.error("Error downloading document:", error);
+      devLog.error("Error downloading document:", error);
       toast.error("Failed to download document");
     }
   };

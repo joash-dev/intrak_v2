@@ -19,6 +19,7 @@ import {
 import { instructorService } from "../../services/instructorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { calculateAttendanceTrend } from "../../utils/attendanceCalculations";
+import { devLog } from "../../utils/devLog";
 
 interface Student {
   id: string;
@@ -57,7 +58,7 @@ const InstructorMonitoringTab = () => {
   // Optimized data fetching with caching
   const { data: studentsData, loading: studentsLoading } = useOptimizedData(
     async () => {
-      console.log("Loading students for monitoring...");
+      devLog.log("Loading students for monitoring...");
 
       // Fetch students from API
       const studentsData = await instructorService.getAssignedStudents();
@@ -106,7 +107,7 @@ const InstructorMonitoringTab = () => {
         })
       );
 
-      console.log("Students loaded:", transformedStudents.length);
+      devLog.log("Students loaded:", transformedStudents.length);
       return transformedStudents;
     },
     [],
@@ -442,10 +443,10 @@ const InstructorMonitoringTab = () => {
                 </p>
                 {student.startDate && (
                   <p className="text-xs text-gray-600 dark:text-gray-400 ml-5">
-                    Start Date: {new Date(student.startDate).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    Start Date: {new Date(student.startDate).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
                     })}
                   </p>
                 )}
@@ -464,10 +465,10 @@ const InstructorMonitoringTab = () => {
                     <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${student.attendanceRate >= 90
-                            ? "bg-green-500"
-                            : student.attendanceRate >= 75
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
+                          ? "bg-green-500"
+                          : student.attendanceRate >= 75
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
                           }`}
                         style={{ width: `${student.attendanceRate}%` }}
                       />
@@ -522,11 +523,10 @@ const InstructorMonitoringTab = () => {
                           {[...Array(5)].map((_, i) => (
                             <div
                               key={i}
-                              className={`w-2 h-2 rounded-full ${
-                                i < Math.round(student.lastEvaluation || 0)
+                              className={`w-2 h-2 rounded-full ${i < Math.round(student.lastEvaluation || 0)
                                   ? "bg-gray-600 dark:bg-gray-400"
                                   : "bg-gray-300 dark:bg-gray-600"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>

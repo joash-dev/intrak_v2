@@ -34,9 +34,9 @@ export const enable2FA = async (req: AuthRequest, res: Response) => {
             message: 'Two-factor authentication enabled successfully',
             backupCodes: result.backupCodes
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error enabling 2FA:', error);
-        res.status(500).json({ message: 'Failed to enable 2FA', error: error.message });
+        res.status(500).json({ message: 'Failed to enable 2FA', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -78,9 +78,9 @@ export const disable2FA = async (req: AuthRequest, res: Response) => {
         }
 
         res.json({ message: 'Two-factor authentication disabled successfully' });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error disabling 2FA:', error);
-        res.status(500).json({ message: 'Failed to disable 2FA', error: error.message });
+        res.status(500).json({ message: 'Failed to disable 2FA', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -112,9 +112,9 @@ export const get2FAStatus = async (req: AuthRequest, res: Response) => {
             available: isAvailable,
             enabled: isEnabled
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error getting 2FA status:', error);
-        res.status(500).json({ message: 'Failed to get 2FA status', error: error.message });
+        res.status(500).json({ message: 'Failed to get 2FA status', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -136,9 +136,9 @@ export const request2FACode = async (req: Request, res: Response) => {
         }
 
         res.json({ message: 'Verification code sent to your email' });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error requesting 2FA code:', error);
-        res.status(500).json({ message: 'Failed to send verification code', error: error.message });
+        res.status(500).json({ message: 'Failed to send verification code', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -245,9 +245,9 @@ export const verify2FACode = async (req: Request, res: Response) => {
                 createdAt: user.createdAt
             }
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error verifying 2FA code:', error);
-        res.status(500).json({ message: 'Verification failed', error: error.message });
+        res.status(500).json({ message: 'Verification failed', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -292,9 +292,9 @@ export const regenerateBackupCodes = async (req: AuthRequest, res: Response) => 
             message: 'Backup codes regenerated successfully',
             backupCodes: result.backupCodes
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error regenerating backup codes:', error);
-        res.status(500).json({ message: 'Failed to regenerate codes', error: error.message });
+        res.status(500).json({ message: 'Failed to regenerate codes', error: (error instanceof Error ? error.message : String(error)) });
     }
 };
 
@@ -369,8 +369,8 @@ export const verifyBackupCode = async (req: Request, res: Response) => {
                 createdAt: user.createdAt
             }
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error verifying backup code:', error);
-        res.status(500).json({ message: 'Verification failed', error: error.message });
+        res.status(500).json({ message: 'Verification failed', error: (error instanceof Error ? error.message : String(error)) });
     }
 };

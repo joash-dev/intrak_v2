@@ -25,6 +25,7 @@ import type { Document } from "../../services/documentService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
+import { devLog } from "../../utils/devLog";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -97,7 +98,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
         const response = await api.get("/company-applications?status=PENDING");
         setCompanyApplications(response.data.applications || []);
       } catch (error) {
-        console.error("Error loading company applications:", error);
+        devLog.error("Error loading company applications:", error);
         setCompanyApplications([]);
       }
     };
@@ -319,7 +320,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
     studentsLoading || instructorsLoading || companiesLoading;
 
   // Debug logging
-  console.log("CoordinatorStudentManagement render:", {
+  devLog.log("CoordinatorStudentManagement render:", {
     students: students?.length || 0,
     instructors: instructors?.length || 0,
     studentsLoading,
@@ -1222,7 +1223,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       const preDeploymentDocs = allDocs.filter((doc: Document) => preDeploymentDocTypes.includes(doc.type));
       setDocuments(preDeploymentDocs);
     } catch (error) {
-      console.error("Error loading partnership documents:", error);
+      devLog.error("Error loading partnership documents:", error);
       toast.error("Failed to load documents");
     } finally {
       setLoading(false);
@@ -1236,7 +1237,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       const url = window.URL.createObjectURL(blob);
       setPreviewUrl(url);
     } catch (error) {
-      console.error("Error previewing document:", error);
+      devLog.error("Error previewing document:", error);
       toast.error("Failed to preview document");
     }
   };
@@ -1255,7 +1256,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       }
       await loadDocuments();
     } catch (error: any) {
-      console.error("Error approving document:", error);
+      devLog.error("Error approving document:", error);
       toast.error(error.response?.data?.message || "Failed to approve document");
     }
   };
@@ -1274,7 +1275,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       }
       await loadDocuments();
     } catch (error: any) {
-      console.error("Error rejecting document:", error);
+      devLog.error("Error rejecting document:", error);
       toast.error(error.response?.data?.message || "Failed to reject document");
     }
   };

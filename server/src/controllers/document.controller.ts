@@ -276,7 +276,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
         console.error('Database error fetching student:', dbError);
         return res.status(500).json({
           message: 'Failed to fetch student record',
-          error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          error: process.env.NODE_ENV === 'development' ? (dbError instanceof Error ? dbError.message : String(dbError)) : undefined
         });
       }
 
@@ -415,11 +415,11 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
         pages: Math.ceil((total || 0) / Number(limit))
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get documents error:', error);
     res.status(500).json({
       message: 'Failed to fetch documents',
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     });
   }
 };
@@ -453,7 +453,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       console.error('Database error fetching student:', dbError);
       return res.status(500).json({
         message: 'Failed to fetch student record',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (dbError instanceof Error ? dbError.message : String(dbError)) : undefined
       });
     }
 
@@ -498,11 +498,11 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
     }));
 
     res.json({ documents: formattedDocuments });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Get student documents error:', error);
     res.status(500).json({
       message: 'Failed to fetch documents',
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     });
   }
 };

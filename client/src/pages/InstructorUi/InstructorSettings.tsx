@@ -35,6 +35,7 @@ import EmailVerificationSettings from "../../components/settings/EmailVerificati
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 interface InstructorProfile {
   id: string;
@@ -215,7 +216,7 @@ const InstructorSettings = () => {
           setProfilePhoto(photoUrl);
         }
       } catch (error) {
-        console.log("No profile photo found");
+        devLog.log("No profile photo found");
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -306,7 +307,7 @@ const InstructorSettings = () => {
           setProfilePhoto(photoUrl);
         }
       } catch (photoError) {
-        console.log("No profile photo found");
+        devLog.log("No profile photo found");
       }
 
       setSaveSuccess(true);

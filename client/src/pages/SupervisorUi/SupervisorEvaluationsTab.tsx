@@ -21,6 +21,7 @@ import type {
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 type CompetencyConfig = {
   id: string;
@@ -381,7 +382,7 @@ const SupervisorEvaluation = () => {
         });
       }
     } catch (error) {
-      console.log("No existing Form 19b data found");
+      devLog.log("No existing Form 19b data found");
     } finally {
       setForm19bLoading(false);
     }
@@ -415,7 +416,7 @@ const SupervisorEvaluation = () => {
       });
       setStudentFeedbackStatus(feedbackStatus);
     } catch (error) {
-      console.error("Error fetching interns:", error);
+      devLog.error("Error fetching interns:", error);
       toast.error("Failed to load interns");
     } finally {
       setLoading(false);
@@ -502,7 +503,7 @@ const SupervisorEvaluation = () => {
       // Refetch all data from backend to get updated evaluation status
       await fetchInterns();
     } catch (error) {
-      console.error("Error submitting evaluation:", error);
+      devLog.error("Error submitting evaluation:", error);
       toast.error("Failed to submit evaluation");
     } finally {
       setSubmitting(false);
@@ -544,7 +545,7 @@ const SupervisorEvaluation = () => {
       });
       toast.success("Official evaluation form downloaded.");
     } catch (error) {
-      console.error("Error exporting official form:", error);
+      devLog.error("Error exporting official form:", error);
       toast.error("Failed to export official form.");
     } finally {
       setExporting(false);
@@ -582,7 +583,7 @@ const SupervisorEvaluation = () => {
         setForm18Comments("");
       }
     } catch (error) {
-      console.error("Error loading feedback:", error);
+      devLog.error("Error loading feedback:", error);
       toast.error("Failed to load existing feedback");
     } finally {
       setForm18Loading(false);
@@ -619,7 +620,7 @@ const SupervisorEvaluation = () => {
       // Refetch data to ensure everything is in sync
       await fetchInterns();
     } catch (error: any) {
-      console.error("Error submitting feedback:", error);
+      devLog.error("Error submitting feedback:", error);
       toast.error(error.response?.data?.message || "Failed to submit feedback");
     } finally {
       setForm18Submitting(false);
@@ -640,7 +641,7 @@ const SupervisorEvaluation = () => {
       await supervisorService.exportSupervisorFeedback(selectedIntern.id);
       toast.success("Supervisor feedback exported successfully!");
     } catch (error: any) {
-      console.error("Error exporting feedback:", error);
+      devLog.error("Error exporting feedback:", error);
       toast.error(error.response?.data?.message || "Failed to export feedback");
     } finally {
       setForm18Exporting(false);
@@ -668,7 +669,7 @@ const SupervisorEvaluation = () => {
 
       // Don't reset form - keep data for potential edits
     } catch (error: any) {
-      console.error("Error submitting Form 19b:", error);
+      devLog.error("Error submitting Form 19b:", error);
       toast.error(error.response?.data?.message || "Failed to submit Form 19b");
     } finally {
       setForm19bSubmitting(false);
@@ -687,7 +688,7 @@ const SupervisorEvaluation = () => {
       await supervisorService.exportAgencySelfEvaluation();
       toast.success("Form 19b exported successfully!");
     } catch (error: any) {
-      console.error("Error exporting Form 19b:", error);
+      devLog.error("Error exporting Form 19b:", error);
       toast.error(error.response?.data?.message || "Failed to export Form 19b");
     } finally {
       setForm19bExporting(false);

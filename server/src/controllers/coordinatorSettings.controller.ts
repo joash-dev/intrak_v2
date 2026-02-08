@@ -45,11 +45,11 @@ export const getCoordinatorSettings = async (req: AuthRequest, res: Response) =>
     }
 
     res.json({ settings });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching coordinator settings:', error);
     res.status(500).json({
       message: 'Failed to fetch coordinator settings',
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
     });
   }
 };
@@ -149,11 +149,11 @@ export const updateCoordinatorSettings = async (req: AuthRequest, res: Response)
     });
 
     res.json({ settings });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating coordinator settings:', error);
     res.status(500).json({
       message: 'Failed to update coordinator settings',
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
     });
   }
 };

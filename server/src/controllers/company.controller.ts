@@ -221,23 +221,23 @@ export const getAllCompanies = async (req: AuthRequest, res: Response) => {
     }));
 
     res.json({ companies: serializedCompanies });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching companies:', error);
-    console.error('Error stack:', error?.stack);
-    console.error('Error code:', error?.code);
-    console.error('Error meta:', error?.meta);
-    const errorMessage = error?.message || 'Failed to fetch companies';
-    const errorDetails = process.env.NODE_ENV === 'development' 
-      ? { 
-          message: errorMessage,
-          code: error?.code,
-          meta: error?.meta,
-        }
+    console.error('Error stack:', error instanceof Error ? error.stack : undefined);
+    console.error('Error code:', (error as any)?.code);
+    console.error('Error meta:', (error as any)?.meta);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch companies';
+    const errorDetails = process.env.NODE_ENV === 'development'
+      ? {
+        message: errorMessage,
+        code: (error as any)?.code,
+        meta: (error as any)?.meta,
+      }
       : { message: errorMessage };
-    
-    res.status(500).json({ 
-      message: 'Failed to fetch companies', 
-      error: errorDetails 
+
+    res.status(500).json({
+      message: 'Failed to fetch companies',
+      error: errorDetails
     });
   }
 };
@@ -273,9 +273,9 @@ export const getCompanyById = async (req: AuthRequest, res: Response) => {
     }
 
     res.json({ company });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching company:', error);
-    res.status(500).json({ message: 'Failed to fetch company', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch company', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -298,8 +298,8 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
 
     // Validate required fields
     if (!name || !address || !contactPerson || !contactEmail || !contactNumber) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: name, address, contactPerson, contactEmail, contactNumber' 
+      return res.status(400).json({
+        message: 'Missing required fields: name, address, contactPerson, contactEmail, contactNumber'
       });
     }
 
@@ -329,8 +329,8 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
     const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const invalidDays = finalWorkingDays.filter(day => !validDays.includes(day));
     if (invalidDays.length > 0) {
-      return res.status(400).json({ 
-        message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}` 
+      return res.status(400).json({
+        message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}`
       });
     }
 
@@ -373,9 +373,9 @@ export const createCompany = async (req: AuthRequest, res: Response) => {
     });
 
     res.status(201).json({ company });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating company:', error);
-    res.status(500).json({ message: 'Failed to create company', error: error.message });
+    res.status(500).json({ message: 'Failed to create company', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -409,7 +409,7 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
     // Check if email is being changed and if it already exists
     if (contactEmail && contactEmail !== existingCompany.contactEmail) {
       const emailExists = await prisma.company.findFirst({
-        where: { 
+        where: {
           contactEmail,
           id: { not: id }
         }
@@ -444,13 +444,13 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
       const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       const invalidDays = workingDays.filter(day => !validDays.includes(day));
       if (invalidDays.length > 0) {
-        return res.status(400).json({ 
-          message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}` 
+        return res.status(400).json({
+          message: `Invalid working days: ${invalidDays.join(', ')}. Valid days are: ${validDays.join(', ')}`
         });
       }
       if (workingDays.length === 0) {
-        return res.status(400).json({ 
-          message: 'At least one working day must be selected' 
+        return res.status(400).json({
+          message: 'At least one working day must be selected'
         });
       }
       updateData.workingDays = workingDays;
@@ -484,9 +484,9 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ company });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating company:', error);
-    res.status(500).json({ message: 'Failed to update company', error: error.message });
+    res.status(500).json({ message: 'Failed to update company', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -513,8 +513,8 @@ export const deleteCompany = async (req: AuthRequest, res: Response) => {
 
     // Check if company has assigned students
     if (company._count.students > 0) {
-      return res.status(400).json({ 
-        message: 'Cannot delete company with assigned students. Please unassign students first.' 
+      return res.status(400).json({
+        message: 'Cannot delete company with assigned students. Please unassign students first.'
       });
     }
 
@@ -534,9 +534,9 @@ export const deleteCompany = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ message: 'Company deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting company:', error);
-    res.status(500).json({ message: 'Failed to delete company', error: error.message });
+    res.status(500).json({ message: 'Failed to delete company', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -566,7 +566,7 @@ export const getAllMOAs = async (req: AuthRequest, res: Response) => {
     if (expiring === 'true') {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      
+
       // For MOA documents, we'll use the createdAt date as a proxy for expiry
       // In a real implementation, you'd want to add an expiry date field
       whereClause.createdAt = {
@@ -605,9 +605,9 @@ export const getAllMOAs = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ moas });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching MOAs:', error);
-    res.status(500).json({ message: 'Failed to fetch MOAs', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch MOAs', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -617,7 +617,7 @@ export const getMOAById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const moa = await prisma.document.findFirst({
-      where: { 
+      where: {
         id,
         type: 'MOA'
       },
@@ -654,9 +654,9 @@ export const getMOAById = async (req: AuthRequest, res: Response) => {
     }
 
     res.json({ moa });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching MOA:', error);
-    res.status(500).json({ message: 'Failed to fetch MOA', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch MOA', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -668,7 +668,7 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
 
     // Check if MOA exists
     const moa = await prisma.document.findFirst({
-      where: { 
+      where: {
         id,
         type: 'MOA'
       },
@@ -780,7 +780,7 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
       data: {
         userId: req.user?.id || 'system',
         action: 'APPROVE_MOA',
-        meta: { 
+        meta: {
           moaId: moa.id,
           companyName: moa.student?.company?.name,
           studentName: moa.student?.user?.name
@@ -791,9 +791,9 @@ export const approveMOA = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ moa: refreshedMOA, supervisorAccount: null });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error approving MOA:', error);
-    res.status(500).json({ message: 'Failed to approve MOA', error: error.message });
+    res.status(500).json({ message: 'Failed to approve MOA', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -809,7 +809,7 @@ export const rejectMOA = async (req: AuthRequest, res: Response) => {
 
     // Check if MOA exists
     const moa = await prisma.document.findFirst({
-      where: { 
+      where: {
         id,
         type: 'MOA'
       },
@@ -863,7 +863,7 @@ export const rejectMOA = async (req: AuthRequest, res: Response) => {
       data: {
         userId: req.user?.id || 'system',
         action: 'REJECT_MOA',
-        meta: { 
+        meta: {
           moaId: moa.id,
           companyName: moa.student?.company?.name,
           studentName: moa.student?.user?.name,
@@ -875,9 +875,9 @@ export const rejectMOA = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ moa: updatedMOA });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error rejecting MOA:', error);
-    res.status(500).json({ message: 'Failed to reject MOA', error: error.message });
+    res.status(500).json({ message: 'Failed to reject MOA', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -903,7 +903,7 @@ export const createSupervisorAccount = async (req: AuthRequest, res: Response) =
     try {
       if (created && temporaryPassword) {
         const subject = `INTRAK: Supervisor Account Created for ${companyName}`;
-        
+
         const content = `
       <p>Hello ${supervisorDisplayName}!</p>
       <p>Your Supervisor account has been successfully created in the INTRAK OJT Management System.</p>
@@ -958,13 +958,12 @@ Please change this password immediately after your first login. If you did not e
           : `Supervisor account created, but failed to send credentials email to ${supervisorUser.email}. ${emailResult.error || ''}`;
       } else {
         const subject = `INTRAK: Supervisor Account Linked to ${companyName}`;
-        
+
         const content = `
       <p>Hello ${supervisorDisplayName}!</p>
       <p>Your email <strong>${supervisorUser.email}</strong> is now linked as the official supervisor for <strong>${companyName}</strong> in the INTRAK system.</p>
-      ${
-        temporaryPassword
-          ? `<div class="credentials-box">
+      ${temporaryPassword
+            ? `<div class="credentials-box">
               <p><strong>Account Credentials:</strong></p>
               <p><strong>Email:</strong> ${supervisorUser.email}</p>
               <p><strong>Temporary Password:</strong> ${temporaryPassword}</p>
@@ -972,8 +971,8 @@ Please change this password immediately after your first login. If you did not e
               <p><strong>Company:</strong> ${companyName}</p>
             </div>
             <p><strong>Important:</strong> This is a temporary password that you must change on your first login for security purposes.</p>`
-          : `<p>You can sign in using your existing INTRAK credentials.</p>`
-      }
+            : `<p>You can sign in using your existing INTRAK credentials.</p>`
+          }
       
       <a href="${loginUrl}" class="login-button">Login to INTRAK</a>
       
@@ -993,18 +992,17 @@ Please change this password immediately after your first login. If you did not e
         const text = `Supervisor Account Linked
  
  Your email ${supervisorUser.email} is now linked as the supervisor for ${companyName}.
- ${
-   temporaryPassword
-     ? `Sign in using the temporary password below (change it immediately after logging in).
+ ${temporaryPassword
+            ? `Sign in using the temporary password below (change it immediately after logging in).
 
 Temporary Password: ${temporaryPassword}
 
 `
-     : ''
- }Sign in${temporaryPassword ? ' at' : ' with your existing credentials at'} ${loginUrl}.
+            : ''
+          }Sign in${temporaryPassword ? ' at' : ' with your existing credentials at'} ${loginUrl}.
  
  This is an automated message. Please do not reply to this email.`;
- 
+
         const emailResult = await emailService.sendEmail({
           to: supervisorUser.email,
           subject,
@@ -1047,11 +1045,11 @@ Temporary Password: ${temporaryPassword}
       emailSent,
       emailMessage,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating supervisor account:', error);
     res.status(500).json({
       message: 'Failed to create supervisor account',
-      error: error.message,
+      error: (error instanceof Error ? error.message : String(error)),
     });
   }
 };
@@ -1062,33 +1060,33 @@ export const getMOAStats = async (req: AuthRequest, res: Response) => {
     const totalMOAs = await prisma.document.count({
       where: { type: 'MOA' }
     });
-    
-    const approvedMOAs = await prisma.document.count({ 
-      where: { 
+
+    const approvedMOAs = await prisma.document.count({
+      where: {
         type: 'MOA',
-        status: 'APPROVED' 
-      } 
+        status: 'APPROVED'
+      }
     });
-    
-    const pendingMOAs = await prisma.document.count({ 
-      where: { 
+
+    const pendingMOAs = await prisma.document.count({
+      where: {
         type: 'MOA',
-        status: 'PENDING' 
-      } 
+        status: 'PENDING'
+      }
     });
-    
-    const rejectedMOAs = await prisma.document.count({ 
-      where: { 
+
+    const rejectedMOAs = await prisma.document.count({
+      where: {
         type: 'MOA',
-        status: 'REJECTED' 
-      } 
+        status: 'REJECTED'
+      }
     });
 
     // For expiring MOAs, we'll use a simple date-based approach
     // In a real implementation, you'd want to add proper expiry tracking
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     const expiringMOAs = await prisma.document.count({
       where: {
         type: 'MOA',
@@ -1108,8 +1106,8 @@ export const getMOAStats = async (req: AuthRequest, res: Response) => {
         expiring: expiringMOAs
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching MOA stats:', error);
-    res.status(500).json({ message: 'Failed to fetch MOA statistics', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch MOA statistics', error: (error instanceof Error ? error.message : String(error)) });
   }
 };

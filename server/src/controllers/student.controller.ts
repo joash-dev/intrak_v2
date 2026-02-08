@@ -5,6 +5,7 @@ import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
 import { calculateExpectedWorkingDays } from '../utils/attendanceUtils';
 import { prisma } from '../config/database';
+import { getErrorMessage } from '../utils/errorHandler';
 
 export const getStudents = async (req: AuthRequest, res: Response) => {
   try {
@@ -114,14 +115,14 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
         pages: Math.ceil(total / Number(limit))
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching students:', error);
-    const errorMessage = error?.message || 'Failed to fetch students';
+    const errorMessage = getErrorMessage(error);
     const errorDetails = process.env.NODE_ENV === 'development'
       ? {
         message: errorMessage,
-        code: error?.code,
-        meta: error?.meta,
+        code: (error as any)?.code,
+        meta: (error as any)?.meta,
       }
       : { message: errorMessage };
 
@@ -147,11 +148,11 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
         where: { id: userId },
         select: { id: true, name: true, email: true, role: true }
       });
-    } catch (dbError: any) {
+    } catch (dbError) {
       console.error('Database error fetching user:', dbError);
       return res.status(500).json({
         message: 'Failed to fetch user record',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        error: process.env.NODE_ENV === 'development' ? getErrorMessage(dbError) : undefined
       });
     }
 
@@ -175,11 +176,11 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
           company: true
         }
       });
-    } catch (dbError: any) {
+    } catch (dbError) {
       console.error('Database error fetching student:', dbError);
       return res.status(500).json({
         message: 'Failed to fetch student profile',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        error: process.env.NODE_ENV === 'development' ? getErrorMessage(dbError) : undefined
       });
     }
 
@@ -240,10 +241,10 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       companyType: companyType,
       workingDays: workingDays
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching student profile:', error);
-    const errorMessage = error?.message || 'Unknown error occurred';
-    const errorStack = process.env.NODE_ENV === 'development' ? error?.stack : undefined;
+    const errorMessage = getErrorMessage(error);
+    const errorStack = process.env.NODE_ENV === 'development' ? (error as Error)?.stack : undefined;
     res.status(500).json({
       message: 'Failed to fetch student profile',
       error: process.env.NODE_ENV === 'development' ? errorMessage : 'Internal server error',
@@ -389,18 +390,18 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
     }
 
     res.status(201).json({ student });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating student:', error);
 
     // Provide more specific error messages
-    if (error.code === 'P2002') {
+    if (((error as any)?.code) === 'P2002') {
       // Unique constraint violation
-      const field = error.meta?.target?.[0] || 'field';
+      const field = ((error as any)?.meta)?.target?.[0] || 'field';
       res.status(400).json({
         message: `Student with this ${field} already exists`,
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
-    } else if (error.code === 'P2003') {
+    } else if (((error as any)?.code) === 'P2003') {
       // Foreign key constraint violation
       res.status(400).json({
         message: 'Invalid user ID provided',
@@ -561,30 +562,30 @@ export const assignInstructor = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ student });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error assigning instructor:', error);
     console.error('Error details:', {
-      code: error.code,
-      message: error.message,
-      meta: error.meta,
-      stack: error.stack
+      code: ((error as any)?.code),
+      message: (error instanceof Error ? error.message : String(error)),
+      meta: ((error as any)?.meta),
+      stack: (error instanceof Error ? error.stack : undefined)
     });
 
     // Provide more specific error messages
-    if (error.code === 'P2025') {
+    if (((error as any)?.code) === 'P2025') {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    if (error.code === 'P2003') {
+    if (((error as any)?.code) === 'P2003') {
       return res.status(400).json({ message: 'Invalid instructor ID' });
     }
 
     res.status(500).json({
       message: 'Failed to assign instructor',
       error: process.env.NODE_ENV === 'development' ? {
-        message: error.message,
-        code: error.code,
-        meta: error.meta
+        message: (error instanceof Error ? error.message : String(error)),
+        code: ((error as any)?.code),
+        meta: ((error as any)?.meta)
       } : undefined
     });
   }
@@ -658,7 +659,7 @@ export const bulkAssignInstructor = async (req: AuthRequest, res: Response) => {
         email: instructor.email
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error bulk assigning instructor:', error);
     res.status(500).json({ message: 'Failed to bulk assign instructor', error });
   }
@@ -804,9 +805,9 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         }),
         prisma.student.count({ where })
       ]);
-    } catch (error: any) {
+    } catch (error) {
       // Handle missing worksOnSaturday column error
-      if (error.code === 'P2022' && error.meta?.column?.includes('worksOnSaturday')) {
+      if (((error as any)?.code) === 'P2022' && ((error as any)?.meta)?.column?.includes('worksOnSaturday')) {
         console.warn('⚠️ worksOnSaturday column not found in database. Using fallback query.');
         // Fallback: Use $queryRaw to explicitly exclude the column
         const studentIds = await prisma.student.findMany({
@@ -1316,11 +1317,11 @@ export const getPartnershipMessages = async (req: AuthRequest, res: Response) =>
     }));
 
     res.json({ messages: formattedMessages });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching partnership messages:', error);
     res.status(500).json({
       message: 'Failed to fetch messages',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
     });
   }
 };
@@ -1462,19 +1463,19 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
         createdAt: message.createdAt.toISOString()
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error sending partnership message:', error);
     console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta
+      message: (error instanceof Error ? error.message : String(error)),
+      code: ((error as any)?.code),
+      meta: ((error as any)?.meta)
     });
     res.status(500).json({
       message: 'Failed to send message',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
       details: process.env.NODE_ENV === 'development' ? {
-        code: error.code,
-        meta: error.meta
+        code: ((error as any)?.code),
+        meta: ((error as any)?.meta)
       } : undefined
     });
   }
@@ -1586,8 +1587,8 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
         worksOnSaturday: (updatedStudent as any).worksOnSaturday
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating Saturday preference:', error);
-    res.status(500).json({ message: 'Failed to update Saturday preference', error: error.message });
+    res.status(500).json({ message: 'Failed to update Saturday preference', error: (error instanceof Error ? error.message : String(error)) });
   }
 };

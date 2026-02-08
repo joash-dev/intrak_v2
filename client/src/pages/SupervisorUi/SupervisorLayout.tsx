@@ -18,6 +18,7 @@ import {
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import api from "../../services/api";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
+import { devLog } from "../../utils/devLog";
 
 // Define the context type for shared data
 type SupervisorContextType = {
@@ -107,7 +108,7 @@ const SupervisorLayout: React.FC = () => {
                 setProfilePhoto(photoUrl);
             }
         } catch (error) {
-            console.log("No profile photo found");
+            devLog.log("No profile photo found");
         } finally {
             setPhotoLoading(false);
         }
@@ -182,7 +183,7 @@ const SupervisorLayout: React.FC = () => {
                 await api.post("/auth/logout", { refreshToken });
             }
         } catch (error) {
-            console.error("Logout API call failed:", error);
+            devLog.error("Logout API call failed:", error);
         } finally {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
@@ -211,7 +212,7 @@ const SupervisorLayout: React.FC = () => {
             }
             setShowNotifications(false);
         } catch (error) {
-            console.error("Error handling notification interaction", error);
+            devLog.error("Error handling notification interaction", error);
         }
     };
 
@@ -223,7 +224,7 @@ const SupervisorLayout: React.FC = () => {
             );
             refreshNotifications();
         } catch (error) {
-            console.error("Failed to mark all notifications as read", error);
+            devLog.error("Failed to mark all notifications as read", error);
         }
     };
 

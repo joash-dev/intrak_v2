@@ -7,6 +7,7 @@ import {
   LogOut,
 } from "lucide-react";
 import api from "../services/api";
+import { devLog } from "../utils/devLog";
 
 const MaintenancePage: React.FC = () => {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
@@ -24,7 +25,7 @@ const MaintenancePage: React.FC = () => {
         const userData = JSON.parse(userString);
         setUser(userData);
       } catch (error) {
-        console.error("Error parsing user data:", error);
+        devLog.error("Error parsing user data:", error);
       }
     }
   }, []);
@@ -42,7 +43,7 @@ const MaintenancePage: React.FC = () => {
 
       setLastChecked(new Date());
     } catch (error) {
-      console.error("Error checking maintenance status:", error);
+      devLog.error("Error checking maintenance status:", error);
     } finally {
       setIsChecking(false);
     }
@@ -50,7 +51,7 @@ const MaintenancePage: React.FC = () => {
 
   const handleLogout = () => {
     try {
-      console.log("Logging out user...");
+      devLog.log("Logging out user...");
 
       // Clear all localStorage items
       localStorage.removeItem("accessToken");
@@ -60,12 +61,12 @@ const MaintenancePage: React.FC = () => {
       // Clear any other potential auth-related items
       localStorage.clear();
 
-      console.log("User logged out successfully");
+      devLog.log("User logged out successfully");
 
       // Force redirect to login page
       window.location.replace("/login");
     } catch (error) {
-      console.error("Error during logout:", error);
+      devLog.error("Error during logout:", error);
       // Fallback: still try to redirect
       window.location.replace("/login");
     }

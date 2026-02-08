@@ -46,9 +46,9 @@ export const getAllApplications = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ applications });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching applications:', error);
-    res.status(500).json({ message: 'Failed to fetch applications', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch applications', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -71,7 +71,7 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
       console.error('Database error fetching student:', dbError);
       return res.status(500).json({
         message: 'Failed to fetch student record',
-        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        error: process.env.NODE_ENV === 'development' ? (dbError instanceof Error ? dbError.message : String(dbError)) : undefined
       });
     }
 
@@ -130,11 +130,11 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
     }));
 
     res.json({ applications: formattedApplications });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching my applications:', error);
     res.status(500).json({
       message: 'Failed to fetch applications',
-      error: process.env.NODE_ENV === 'development' ? (error?.message || 'Unknown error') : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined
     });
   }
 };
@@ -272,9 +272,9 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
       application,
       message: 'Application submitted successfully'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error applying to company:', error);
-    res.status(500).json({ message: 'Failed to submit application', error: error.message });
+    res.status(500).json({ message: 'Failed to submit application', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -388,9 +388,9 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       application: result,
       message: 'Application approved and student assigned to company successfully'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error approving application:', error);
-    res.status(500).json({ message: 'Failed to approve application', error: error.message });
+    res.status(500).json({ message: 'Failed to approve application', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -464,9 +464,9 @@ export const rejectApplication = async (req: AuthRequest, res: Response) => {
       application: updatedApplication,
       message: 'Application rejected successfully'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error rejecting application:', error);
-    res.status(500).json({ message: 'Failed to reject application', error: error.message });
+    res.status(500).json({ message: 'Failed to reject application', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -530,9 +530,9 @@ export const withdrawApplication = async (req: AuthRequest, res: Response) => {
       application: updatedApplication,
       message: 'Application withdrawn successfully'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error withdrawing application:', error);
-    res.status(500).json({ message: 'Failed to withdraw application', error: error.message });
+    res.status(500).json({ message: 'Failed to withdraw application', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 

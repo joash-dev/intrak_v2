@@ -137,13 +137,13 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
         linebreaks: true,
         delimiters: { start: '${', end: '}' },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating Docxtemplater instance:', error);
       return res.status(500).json({
         message: 'Failed to process template',
         details: {
-          message: error.message,
-          properties: error.properties,
+          message: (error instanceof Error ? error.message : String(error)),
+          properties: (error as any)?.properties,
         },
       });
     }
@@ -192,13 +192,13 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
     try {
       doc.setData(placeholderValues);
       doc.render();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error rendering template:', error);
       return res.status(500).json({
         message: 'Failed to render template',
         details: {
-          message: error.message,
-          properties: error.properties,
+          message: (error instanceof Error ? error.message : String(error)),
+          properties: (error as any)?.properties,
         },
       });
     }
@@ -220,11 +220,11 @@ export const exportWeeklyReport = async (req: AuthRequest, res: Response) => {
     );
 
     res.send(buffer);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error exporting weekly report:', error);
     res.status(500).json({
       message: 'Failed to export weekly report',
-      details: { message: error.message },
+      details: { message: (error instanceof Error ? error.message : String(error)) },
     });
   }
 };

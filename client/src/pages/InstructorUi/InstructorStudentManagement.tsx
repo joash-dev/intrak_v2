@@ -21,6 +21,7 @@ import {
 } from "../../services/instructorService";
 import PartnershipMessageThread from "../../components/PartnershipMessageThread";
 import toast from "react-hot-toast";
+import { devLog } from "../../utils/devLog";
 
 // Utility function to format student ID
 const formatStudentId = (studentNumber: string) => {
@@ -199,7 +200,7 @@ const InstructorStudentManagement: React.FC = () => {
       status: "active",
       emailSent: false,
     });
-    console.log("Add student modal opened - cleared all validation errors");
+    devLog.log("Add student modal opened - cleared all validation errors");
   };
 
   const clearValidationError = (field: string) => {
@@ -248,16 +249,16 @@ const InstructorStudentManagement: React.FC = () => {
   };
 
   const handleCreateStudent = async () => {
-    console.log("Form validation starting...");
+    devLog.log("Form validation starting...");
     if (!validateForm()) {
-      console.log("Form validation failed:", fieldErrors);
+      devLog.log("Form validation failed:", fieldErrors);
       return;
     }
-    console.log("Form validation passed");
+    devLog.log("Form validation passed");
 
     // Prevent multiple submissions
     if (isCreating) {
-      console.log(
+      devLog.log(
         "Student creation already in progress, ignoring duplicate request"
       );
       return;
@@ -267,7 +268,7 @@ const InstructorStudentManagement: React.FC = () => {
       setIsCreating(true);
       setCreateError(null);
 
-      console.log("Starting student creation process with data:", {
+      devLog.log("Starting student creation process with data:", {
         studentNumber: newStudent.studentNumber,
         name: newStudent.name,
         email: newStudent.email,
@@ -313,7 +314,7 @@ const InstructorStudentManagement: React.FC = () => {
         errorMessage = error.response.data.message;
       }
 
-      console.log("Displaying error message:", errorMessage);
+      devLog.log("Displaying error message:", errorMessage);
       setCreateError(errorMessage);
       toast.error(errorMessage);
     } finally {

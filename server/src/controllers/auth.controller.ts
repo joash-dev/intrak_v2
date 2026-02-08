@@ -65,9 +65,9 @@ export const testEndpoint = async (req: Request, res: Response) => {
   try {
     console.log('Test endpoint called');
     res.json({ message: 'Server is working', timestamp: new Date().toISOString() });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Test endpoint error:', error);
-    res.status(500).json({ message: 'Test endpoint failed', error: error.message });
+    res.status(500).json({ message: 'Test endpoint failed', error: (error instanceof Error ? error.message : String(error)) });
   }
 };
 
@@ -324,16 +324,16 @@ export const login = async (req: Request, res: Response) => {
         companyContactNumber: companyInfo?.contactNumber || null
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Login error:', error);
     console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+      message: (error instanceof Error ? error.message : String(error)),
+      stack: (error instanceof Error ? error.stack : undefined),
+      name: error instanceof Error ? error.name : undefined
     });
     res.status(500).json({
       message: 'Login failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : 'Internal server error'
     });
   }
 };

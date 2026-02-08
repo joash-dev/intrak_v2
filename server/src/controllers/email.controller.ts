@@ -3,22 +3,22 @@ import { emailService } from '../services/email.service';
 
 export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
   try {
-    const { 
-      userEmail, 
-      userName, 
-      userRole, 
-      temporaryPassword, 
-      additionalInfo 
+    const {
+      userEmail,
+      userName,
+      userRole,
+      temporaryPassword,
+      additionalInfo
     } = req.body;
 
     if (!userEmail || !userName || !userRole || !temporaryPassword) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: userEmail, userName, userRole, temporaryPassword' 
+      return res.status(400).json({
+        message: 'Missing required fields: userEmail, userName, userRole, temporaryPassword'
       });
     }
 
     console.log('📧 Email controller: Attempting to send welcome email to:', userEmail);
-    
+
     const result = await emailService.sendUserWelcomeEmail(
       userEmail,
       userName,
@@ -36,17 +36,17 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       emailSent: result.success,
       error: result.error
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error sending welcome email:', error);
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      response: error?.response
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      response: (error as any)?.response
     });
-    res.status(500).json({ 
-      message: 'Failed to send welcome email', 
+    res.status(500).json({
+      message: 'Failed to send welcome email',
       emailSent: false,
-      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
     });
   }
 };
@@ -56,13 +56,13 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
     const { studentEmail, studentName, studentNumber, temporaryPassword } = req.body;
 
     if (!studentEmail || !studentName || !studentNumber || !temporaryPassword) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: studentEmail, studentName, studentNumber, temporaryPassword' 
+      return res.status(400).json({
+        message: 'Missing required fields: studentEmail, studentName, studentNumber, temporaryPassword'
       });
     }
 
     console.log('📧 Email controller: Attempting to send student welcome email to:', studentEmail);
-    
+
     const result = await emailService.sendStudentWelcomeEmail(
       studentEmail,
       studentName,
@@ -79,17 +79,17 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       emailSent: result.success,
       error: result.error
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error sending welcome email:', error);
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      response: error?.response
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      response: (error as any)?.response
     });
-    res.status(500).json({ 
-      message: 'Failed to send welcome email', 
+    res.status(500).json({
+      message: 'Failed to send welcome email',
       emailSent: false,
-      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined 
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
     });
   }
 };
@@ -98,35 +98,35 @@ export const testEmailConnection = async (req: Request, res: Response) => {
   try {
     console.log('📧 Email controller: Testing email connection...');
     const result = await emailService.testConnection();
-    
+
     console.log('📧 Email controller: Connection test result:', result);
-    
+
     if (result.success) {
-      res.json({ 
+      res.json({
         message: 'Email service connection successful',
-        connected: true 
+        connected: true
       });
     } else {
       // Return 200 with connected: false and error message
-      res.status(200).json({ 
+      res.status(200).json({
         message: result.error || 'Email service connection failed. Check server logs for details.',
         connected: false,
         error: result.error
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error testing email connection:', error);
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       code: (error as any)?.code
     });
-    
+
     // Return 200 with error details instead of 500
-    res.status(200).json({ 
-      message: `Email connection test failed: ${error?.message || 'Unknown error'}`,
+    res.status(200).json({
+      message: `Email connection test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       connected: false,
-      error: error?.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 };
@@ -136,8 +136,8 @@ export const sendTestEmail = async (req: Request, res: Response) => {
     const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({ 
-        message: 'Email address is required' 
+      return res.status(400).json({
+        message: 'Email address is required'
       });
     }
 
@@ -153,31 +153,31 @@ export const sendTestEmail = async (req: Request, res: Response) => {
     console.log('📧 Email controller: Test email send result:', result);
 
     if (result.success) {
-      res.json({ 
+      res.json({
         message: 'Test email sent successfully',
-        emailSent: true 
+        emailSent: true
       });
     } else {
       // Return 200 with emailSent: false and error message
-      res.status(200).json({ 
+      res.status(200).json({
         message: result.error || 'Failed to send test email. Check server logs for details.',
         emailSent: false,
         error: result.error
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Error sending test email:', error);
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       code: (error as any)?.code
     });
-    
+
     // Return 200 with error details instead of 500
-    res.status(200).json({ 
-      message: `Failed to send test email: ${error?.message || 'Unknown error'}`,
+    res.status(200).json({
+      message: `Failed to send test email: ${error instanceof Error ? error.message : 'Unknown error'}`,
       emailSent: false,
-      error: error?.message || 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 };
