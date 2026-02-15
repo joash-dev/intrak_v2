@@ -210,6 +210,7 @@ model RefreshToken {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("refresh_tokens")
 }
 
@@ -244,6 +245,8 @@ model Student {
   partnershipMessages PartnershipMessage[] @relation("PartnershipMessages")
   supervisorFeedbacks SupervisorFeedback[]
 
+  @@index([companyId])
+  @@index([instructorId])
   @@map("students")
 }
 
@@ -300,6 +303,8 @@ model CompanyApplication {
   reviewer User?   @relation("ApplicationReviewer", fields: [reviewedBy], references: [id])
 
   @@unique([studentId, companyId]) // A student can only apply once to a company
+  @@index([status])
+  @@index([companyId])
   @@map("company_applications")
 }
 
@@ -327,6 +332,10 @@ model Document {
   uploadedBy User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
   feedback   DocumentFeedback[]
 
+  @@index([studentId])
+  @@index([status])
+  @@index([uploadedById])
+  @@index([studentId, status])
   @@map("documents")
 }
 
@@ -347,6 +356,9 @@ model AttendanceLog {
   // Relations
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  @@index([studentId])
+  @@index([date])
+  @@index([studentId, date])
   @@map("attendance_logs")
 }
 
@@ -359,6 +371,7 @@ model QRToken {
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([studentId])
   @@map("qr_tokens")
 }
 
@@ -376,6 +389,8 @@ model Evaluation {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   evaluator User    @relation("Evaluator", fields: [evaluatorId], references: [id])
 
+  @@index([studentId])
+  @@index([evaluatorId])
   @@map("evaluations")
 }
 
@@ -393,6 +408,8 @@ model Announcement {
   // Relations
   createdBy User @relation(fields: [createdById], references: [id])
 
+  @@index([audience])
+  @@index([createdAt])
   @@map("announcements")
 }
 
@@ -408,6 +425,7 @@ model DocumentFeedback {
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
   author   User     @relation("DocumentFeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
+  @@index([documentId])
   @@map("document_feedback")
 }
 
@@ -424,6 +442,9 @@ model Notification {
 
   user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
@@ -439,6 +460,8 @@ model AuditLog {
   // Relations
   user User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 
@@ -529,6 +552,8 @@ model Activity {
   ipAddress   String?
   createdAt   DateTime     @default(now())
 
+  @@index([createdAt])
+  @@index([type])
   @@map("activities")
 }
 
@@ -543,6 +568,7 @@ model PartnershipMessage {
   student Student @relation("PartnershipMessages", fields: [studentId], references: [id], onDelete: Cascade)
   sender  User    @relation("PartnershipMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@index([studentId])
   @@map("partnership_messages")
 }
 
@@ -570,6 +596,8 @@ model SupervisorFeedback {
   student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   supervisor User    @relation("SupervisorFeedbacks", fields: [supervisorId], references: [id])
 
+  @@index([studentId])
+  @@index([supervisorId])
   @@map("supervisor_feedbacks")
 }
 
