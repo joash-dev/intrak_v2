@@ -40,7 +40,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - AI_MAX_TOKENS=${AI_MAX_TOKENS}
       - AI_TEMPERATURE=${AI_TEMPERATURE}
-    command: [ "bash", "scripts/rpi-start.sh" ]
+    command: [ "bash", "scripts/aws-start.sh" ]
     volumes:
       # DIRECT Local NAS Mount
       # Ensure you run: sudo mount -t cifs ... /mnt/nas-intrak on the Host Pi first!
