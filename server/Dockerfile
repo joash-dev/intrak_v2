@@ -1,15 +1,11 @@
-FROM node:22
+FROM node:22-slim
 
 WORKDIR /app
 
-# Install system dependencies as root
+# Switch to root for system setup
 USER root
 RUN apt-get update && \
-    apt-get install -y curl cifs-utils ca-certificates gnupg && \
-    curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
-    curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list >/dev/null && \
-    apt-get update && \
-    apt-get install -y tailscale || echo "⚠️ Tailscale installation failed - will continue without it" && \
+    apt-get install -y curl ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
     chown -R node:node /app
 
@@ -34,17 +30,13 @@ RUN npx tsc -p tsconfig.build.json
 # Copy templates to dist folder (templates are needed at runtime)
 RUN mkdir -p dist/templates && cp -r src/templates/* dist/templates/
 
-# Copy startup scripts (switch to root for mounting, but keep app owned by node)
+# Copy startup script
 USER root
-COPY scripts/*.sh /app/scripts/
-RUN chmod +x /app/scripts/*.sh
+COPY scripts/aws-start.sh /app/scripts/aws-start.sh
+RUN chmod +x /app/scripts/aws-start.sh
 
 # Expose port
 EXPOSE 5000
 
-# Run as root to allow mounting (container is isolated, so this is safe)
-USER root
-
-# Use startup script (Fly.io version)
-CMD ["bash", "scripts/fly-start.sh"]
-
+# Start the server
+CMD ["bash", "scripts/aws-start.sh"]
