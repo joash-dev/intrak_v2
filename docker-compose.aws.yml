@@ -37,8 +37,8 @@ services:
       - PORT=5000
       - CORS_ORIGIN=${CORS_ORIGIN}
       - CLIENT_URL=${CLIENT_URL}
-      # NAS Storage - uses .env USE_NAS value (defaults to false if not set)
-      - USE_NAS=${USE_NAS:-false}
+      # NAS Storage (primary) - falls back to local storage if NAS is down
+      - USE_NAS=${USE_NAS:-true}
       - NAS_PATH=/app/uploads
       - UPLOAD_PATH=/app/uploads
       # Email & AI
@@ -53,12 +53,20 @@ services:
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
-      # Default: use Docker named volume (always works, even without NAS)
-      - uploads_data:/app/uploads
       # NAS mount from host (RPi via Tailscale)
-      # Uncomment the lines below AND comment out uploads_data above when NAS is mounted on host:
-      # - /mnt/nas:/mnt/nas
-      # - /mnt/nas/intrak:/app/uploads
+      # create_host_path: true ensures Docker creates the directory if NAS isn't mounted
+      # When NAS is mounted on host → container uses NAS storage (primary)
+      # When NAS is down → empty dir is created → server uses local storage (fallback)
+      - type: bind
+        source: /mnt/nas
+        target: /mnt/nas
+        bind:
+          create_host_path: true
+      - type: bind
+        source: /mnt/nas/intrak
+        target: /app/uploads
+        bind:
+          create_host_path: true
     depends_on:
       - db
     deploy:
