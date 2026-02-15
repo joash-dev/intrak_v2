@@ -31,15 +31,13 @@ interface AboutUsSectionProps {
 }
 
 const defaultDeveloper: Developer = {
-    name: "John Doe",
-    role: "Full Stack Developer",
-    bio: "Computer Science Student • Passionate about creating impactful solutions",
-    initials: "JD",
+    name: "Joash Irvin M. Santos",
+    role: "Cloud Infrastructure Engineer • Full Stack Developer",
+    bio: "A Cloud and Full Stack Developer focused on designing and deploying secure, scalable web applications using AWS and containerized architectures.",
+    initials: "JS",
     socialLinks: {
-        github: "https://github.com",
-        linkedin: "https://linkedin.com",
-        portfolio: "https://portfolio.com",
-        email: "developer@example.com",
+        github: "https://github.com/joash-dev",
+        linkedin: "https://www.linkedin.com/in/joash-irvin-santos-b0b63728b",
     },
 };
 
@@ -48,9 +46,12 @@ const defaultTechnologies = [
     "TypeScript",
     "Node.js",
     "Express",
-    "MongoDB",
+    "PostgreSQL",
+    "Prisma",
     "TailwindCSS",
+    "Socket.IO",
     "Docker",
+    "AWS EC2",
 ];
 
 const AboutUsSection = ({

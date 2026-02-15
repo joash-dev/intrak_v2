@@ -11,7 +11,22 @@ jobs:
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
-    
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: intrak_test
+          POSTGRES_PASSWORD: intrak_test_pass
+          POSTGRES_DB: intrak_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U intrak_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,16 +42,34 @@ jobs:
         working-directory: ./server
         run: npm ci
 
+      - name: Generate Prisma Client
+        working-directory: ./server
+        run: npx prisma generate
+
+      - name: Run Database Migrations
+        working-directory: ./server
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_test
+
+      - name: Seed Test Database
+        working-directory: ./server
+        run: npx prisma db seed || echo "Seed skipped or failed (non-critical)"
+        env:
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_test
+
       - name: Run Tests
         working-directory: ./server
         run: npm run test:coverage
         env:
           NODE_ENV: test
-          JWT_SECRET: test-secret-key
-          JWT_REFRESH_SECRET: test-refresh-secret
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_test
+          JWT_SECRET: test-secret-key-ci
+          JWT_REFRESH_SECRET: test-refresh-secret-ci
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
+        if: always()
         with:
           files: ./server/coverage/lcov.info
           flags: backend
@@ -46,13 +79,22 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: backend-tests # Run after backend tests pass
-    
+    needs: backend-tests
+
     services:
-      mongodb:
-        image: mongo:6
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: intrak_test
+          POSTGRES_PASSWORD: intrak_test_pass
+          POSTGRES_DB: intrak_e2e
         ports:
-          - 27017:27017
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U intrak_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout
@@ -68,24 +110,49 @@ jobs:
         working-directory: ./server
         run: npm ci
 
+      # Setup database for E2E
+      - name: Setup Database
+        working-directory: ./server
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+          npx prisma db seed || echo "Seed skipped"
+        env:
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_e2e
+
       # Install client dependencies
       - name: Install Client Dependencies
         working-directory: ./client
         run: npm ci
 
+      # Build server for production-like E2E testing
+      - name: Build Server
+        working-directory: ./server
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_e2e
+
       # Start server in background
       - name: Start Server
         working-directory: ./server
-        run: npm run dev &
+        run: node dist/src/index.js &
         env:
           NODE_ENV: test
-          DATABASE_URL: mongodb://localhost:27017/intrak_test
-          JWT_SECRET: test-secret-key
-          PORT: 3000
+          DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_e2e
+          JWT_SECRET: test-secret-key-ci
+          JWT_REFRESH_SECRET: test-refresh-secret-ci
+          PORT: 5000
+          CORS_ORIGIN: http://localhost:5173
+          USE_NAS: "false"
 
       # Wait for server to be ready
       - name: Wait for Server
-        run: npx wait-on http://localhost:3000/api/health --timeout 60000 || true
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:5000/health && break
+            echo "Waiting for server... ($i/30)"
+            sleep 2
+          done
 
       # Run Cypress tests
       - name: Run Cypress Tests
@@ -112,11 +179,11 @@ jobs:
           name: cypress-videos
           path: client/cypress/videos
 
-  # Lint Check
+  # Code Quality
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
