@@ -23,7 +23,9 @@ import {
   EyeOff,
   AlertCircle,
   Book,
+  Info,
 } from "lucide-react";
+import AboutUsSection from "../../components/settings/AboutUsSection";
 import { settingsService } from "../../services/settingsService";
 import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
@@ -45,7 +47,7 @@ import { useSupervisorContext } from "./SupervisorLayout";
 const SupervisorSettings = () => {
   const { refreshUserData } = useSupervisorContext();
   const [activeTab, setActiveTab] = useState<
-    "profile" | "password" | "appearance" | "notifications" | "preferences" | "supervisor" | "help"
+    "profile" | "password" | "appearance" | "notifications" | "preferences" | "supervisor" | "help" | "about"
   >("profile");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -427,6 +429,16 @@ const SupervisorSettings = () => {
               >
                 <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Help & Support</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("about")}
+                className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-md sm:rounded-lg transition-colors text-sm sm:text-base ${activeTab === "about"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+              >
+                <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>About Us</span>
               </button>
             </nav>
           </div>
@@ -1278,6 +1290,9 @@ const SupervisorSettings = () => {
                 </div>
               </div>
             )}
+
+            {/* About Us Section */}
+            {activeTab === "about" && <AboutUsSection />}
 
             {/* Help Modal */}
             {helpModal && (

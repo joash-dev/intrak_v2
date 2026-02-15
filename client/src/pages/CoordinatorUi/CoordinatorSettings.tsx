@@ -28,7 +28,9 @@ import {
   Megaphone,
   SlidersHorizontal,
   X,
+  Info,
 } from "lucide-react";
+import AboutUsSection from "../../components/settings/AboutUsSection";
 import {
   settingsService,
   type UserProfile,
@@ -435,6 +437,7 @@ const CoordinatorSettingsTab = () => {
     { id: "preferences", label: t("navigation.preferences"), icon: Globe },
     { id: "coordinator", label: t("navigation.coordinator"), icon: Settings },
     { id: "help", label: t("navigation.help"), icon: HelpCircle },
+    { id: "about", label: "About Us", icon: Info },
   ];
 
   if (loading) {
@@ -1553,6 +1556,9 @@ const CoordinatorSettingsTab = () => {
                 </div>
               </div>
             )}
+
+            {/* About Us Section */}
+            {activeSection === "about" && <AboutUsSection />}
           </div>
         </div>
       </div>

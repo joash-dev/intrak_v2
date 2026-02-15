@@ -37,8 +37,8 @@ services:
       - PORT=5000
       - CORS_ORIGIN=${CORS_ORIGIN}
       - CLIENT_URL=${CLIENT_URL}
-      # NAS Enabled via Tailscale (RPi NAS)
-      - USE_NAS=true
+      # NAS Storage - uses .env USE_NAS value (defaults to false if not set)
+      - USE_NAS=${USE_NAS:-false}
       - NAS_PATH=/app/uploads
       - UPLOAD_PATH=/app/uploads
       # Email & AI
@@ -53,9 +53,12 @@ services:
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
+      # Default: use Docker named volume (always works, even without NAS)
+      - uploads_data:/app/uploads
       # NAS mount from host (RPi via Tailscale)
-      - /mnt/nas:/mnt/nas
-      - /mnt/nas/intrak:/app/uploads
+      # Uncomment the lines below AND comment out uploads_data above when NAS is mounted on host:
+      # - /mnt/nas:/mnt/nas
+      # - /mnt/nas/intrak:/app/uploads
     depends_on:
       - db
     deploy:

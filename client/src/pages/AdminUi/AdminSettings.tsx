@@ -39,6 +39,7 @@ import TwoFactorSettings from "../../components/settings/TwoFactorSettings";
 import EmailVerificationSettings from "../../components/settings/EmailVerificationSettings";
 import LastLoginInfo from "../../components/settings/LastLoginInfo";
 import PasswordStrengthMeter from "../../components/settings/PasswordStrengthMeter";
+import AboutUsSection from "../../components/settings/AboutUsSection";
 import { devLog } from "../../utils/devLog";
 
 interface AdminProfile {
@@ -159,6 +160,7 @@ const AdminSettings = () => {
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "about", label: "About Us", icon: Info },
   ];
 
   useEffect(() => {
@@ -2595,6 +2597,9 @@ const AdminSettings = () => {
                 </div>
               </div>
             )}
+
+            {/* About Us Section */}
+            {activeSection === "about" && <AboutUsSection />}
           </div>
         </div>
       </div>

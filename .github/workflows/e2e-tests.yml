@@ -1,0 +1,143 @@
+name: CI/CD Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Backend Unit & Integration Tests
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run Tests
+        working-directory: ./server
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key
+          JWT_REFRESH_SECRET: test-refresh-secret
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./server/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+
+  # Frontend E2E Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: backend-tests # Run after backend tests pass
+    
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install server dependencies
+      - name: Install Server Dependencies
+        working-directory: ./server
+        run: npm ci
+
+      # Install client dependencies
+      - name: Install Client Dependencies
+        working-directory: ./client
+        run: npm ci
+
+      # Start server in background
+      - name: Start Server
+        working-directory: ./server
+        run: npm run dev &
+        env:
+          NODE_ENV: test
+          DATABASE_URL: mongodb://localhost:27017/intrak_test
+          JWT_SECRET: test-secret-key
+          PORT: 3000
+
+      # Wait for server to be ready
+      - name: Wait for Server
+        run: npx wait-on http://localhost:3000/api/health --timeout 60000 || true
+
+      # Run Cypress tests
+      - name: Run Cypress Tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./client
+          start: npm run dev
+          wait-on: 'http://localhost:5173'
+          wait-on-timeout: 120
+          browser: chrome
+
+      # Upload test artifacts on failure
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: client/cypress/screenshots
+
+      - name: Upload Videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: client/cypress/videos
+
+  # Lint Check
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Server Dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Install Client Dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Lint Server
+        working-directory: ./server
+        run: npm run lint || true
+
+      - name: Lint Client
+        working-directory: ./client
+        run: npm run lint || true

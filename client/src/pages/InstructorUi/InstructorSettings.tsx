@@ -21,7 +21,9 @@ import {
   Shield,
   Book,
   X as CloseIcon,
+  Info,
 } from "lucide-react";
+import AboutUsSection from "../../components/settings/AboutUsSection";
 // External help links (update these to your live URLs when available)
 const HELP_LINKS = {
   faq: "https://intrak.site/faq",
@@ -74,7 +76,7 @@ const InstructorSettings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "profile" | "password" | "notifications" | "appearance" | "preferences" | "instructor" | "help"
+    "profile" | "password" | "notifications" | "appearance" | "preferences" | "instructor" | "help" | "about"
   >("profile");
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -109,7 +111,8 @@ const InstructorSettings = () => {
     { id: "notifications", label: "Notifications", icon: AlertCircle },
     { id: "preferences", label: "Preferences", icon: Monitor },
     { id: "instructor", label: "Instructor", icon: SlidersHorizontal },
-    { id: "help", label: "Help & Support", icon: AlertCircle },
+    { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "about", label: "About Us", icon: Info },
   ];
 
   useEffect(() => {
@@ -1544,6 +1547,9 @@ const InstructorSettings = () => {
                 </div>
               </div>
             )}
+
+            {/* About Us Section */}
+            {activeTab === "about" && <AboutUsSection />}
 
             {/* Help Modals */}
             {helpModal && (
