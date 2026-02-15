@@ -61,12 +61,11 @@ export const authenticate = async (
   try {
     // Get token from Authorization header
     const token = req.headers.authorization?.replace('Bearer ', '');
-    
-    console.log('🔍 Checking auth - Token present:', !!token);
-    console.log('🔍 Authorization header:', req.headers.authorization);
-    
+
+
+
     if (!token) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         message: 'No token provided',
         hint: 'Include Authorization: Bearer <token> header'
       });
@@ -74,7 +73,7 @@ export const authenticate = async (
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    
+
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -89,12 +88,12 @@ export const authenticate = async (
     if (!req.path.startsWith('/admin') && !req.path.startsWith('/auth')) {
       const sessionCheck = await checkSessionTimeout(user.id);
       if (!sessionCheck.valid) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           message: 'Session expired due to inactivity',
           code: 'SESSION_TIMEOUT'
         });
       }
-      
+
       // Add remaining time to response header for frontend
       if (sessionCheck.remaining !== undefined) {
         res.setHeader('X-Session-Remaining', sessionCheck.remaining.toString());
@@ -107,20 +106,20 @@ export const authenticate = async (
       role: user.role,
       name: user.name
     };
-    console.log('✅ User authenticated:', user.email);
-    
+
+
     next();
   } catch (error: any) {
     console.error('❌ Auth error:', error.message);
-    
+
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token expired' });
     }
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Invalid token' });
     }
-    
+
     res.status(401).json({ message: 'Authentication failed', error: error.message });
   }
 };
