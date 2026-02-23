@@ -20,7 +20,6 @@ const StudentCompanySelection = React.lazy(() => import("./pages/StudentUi/Stude
 const StudentCompanyPartnershipAssistance = React.lazy(() => import("./pages/StudentUi/StudentCompanyPartnershipAssistance"));
 const StudentAttendanceTab = React.lazy(() => import("./pages/StudentUi/StudentAttendance"));
 const StudentEvaluationsTab = React.lazy(() => import("./pages/StudentUi/StudentEvaluation"));
-const StudentReportsTab = React.lazy(() => import("./pages/StudentUi/StudentReport"));
 const StudentSettings = React.lazy(() => import("./pages/StudentUi/Settings"));
 const StudentNotifications = React.lazy(() => import("./pages/StudentUi/StudentNotifications"));
 const CoordinatorLayout = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorLayout"));

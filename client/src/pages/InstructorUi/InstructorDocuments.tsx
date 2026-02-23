@@ -15,7 +15,7 @@ import {
   Loader2,
   Printer,
 } from "lucide-react";
-import api from "../../services/api";
+// api import removed (unused)
 import { PDFDocument } from "pdf-lib";
 import {
   instructorService,
@@ -421,7 +421,7 @@ const InstructorDocumentsTab = () => {
 
       // Save merged PDF and open for printing
       const mergedBytes = await mergedPdf.save();
-      const mergedBlob = new Blob([mergedBytes], { type: 'application/pdf' });
+      const mergedBlob = new Blob([mergedBytes as unknown as BlobPart], { type: 'application/pdf' });
       const mergedUrl = URL.createObjectURL(mergedBlob);
 
       const printWindow = window.open(mergedUrl, '_blank');

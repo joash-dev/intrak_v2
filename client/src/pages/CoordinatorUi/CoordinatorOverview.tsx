@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
     Users,
     Building2,
-    Award,
     Search,
     BarChart3,
     Activity,
@@ -17,15 +16,13 @@ import {
     Megaphone,
     ArrowRight,
     ClipboardList,
-    RefreshCw,
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import { coordinatorService, type CoordinatorStudent } from "../../services/coordinatorService";
-import { announcementService, type Announcement } from "../../services/announcementService";
-import { formatDateTime } from "../../services/localeService";
+import { coordinatorService } from "../../services/coordinatorService";
+import { announcementService } from "../../services/announcementService";
 import Skeleton from "../../components/Skeleton";
 import { formatStudentId } from "../../utils/formatStudentId";
 
@@ -106,7 +103,6 @@ const CoordinatorOverview: React.FC = () => {
     // Stat values
     const totalStudents = students.length;
     const activeStudents = students.filter(s => s.status === 'active').length;
-    const pendingStudents = students.filter(s => s.status === 'pending').length;
     const completedStudents = students.filter(s => s.status === 'completed').length;
 
     const getStatusColor = (status: string) => {

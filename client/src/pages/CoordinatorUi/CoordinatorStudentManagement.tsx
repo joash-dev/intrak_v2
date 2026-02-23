@@ -14,7 +14,6 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
-  Clock,
   AlertCircle,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";

@@ -5,7 +5,6 @@ import {
   Search,
   Users,
   Calendar,
-  FileText,
   AlertCircle,
   CheckCircle,
   ArrowLeft,
@@ -682,7 +681,6 @@ const InstructorReportsTab: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredStudents.map((student) => {
-                  const pct = student.requiredHours > 0 ? (student.hoursCompleted / student.requiredHours) * 100 : 0;
                   return (
                     <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <td className="px-4 py-3">

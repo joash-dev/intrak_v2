@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  User,
   Filter,
 } from "lucide-react";
 import { documentService } from "../../services/documentService";

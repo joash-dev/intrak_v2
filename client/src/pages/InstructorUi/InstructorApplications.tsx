@@ -236,17 +236,6 @@ const InstructorApplications: React.FC = () => {
     });
   };
 
-  const formatDateTime = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">

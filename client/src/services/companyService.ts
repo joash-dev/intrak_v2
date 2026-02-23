@@ -62,6 +62,7 @@ export type MOA = {
     name: string;
     email: string;
   };
+  uploadedAt?: string;
 };
 
 export type MOAStats = {

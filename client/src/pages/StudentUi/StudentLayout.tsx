@@ -6,7 +6,6 @@ import {
     Search,
     Clock,
     Star,
-    TrendingUp,
     Bell,
     Menu,
     LogOut,

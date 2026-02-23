@@ -268,7 +268,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
   };
 
   // Check if MOA is expiring soon (within 30 days) - using uploadedAt as proxy
-  const isExpiringSoon = (uploadedAt: string) => {
+  const isExpiringSoon = (uploadedAt?: string) => {
+    if (!uploadedAt) return false;
     const uploaded = new Date(uploadedAt);
     const now = new Date();
     const diffTime = now.getTime() - uploaded.getTime();
@@ -277,7 +278,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
   };
 
   // Check if MOA is expired - using uploadedAt as proxy
-  const isExpired = (uploadedAt: string) => {
+  const isExpired = (uploadedAt?: string) => {
+    if (!uploadedAt) return false;
     const uploaded = new Date(uploadedAt);
     const now = new Date();
     const diffTime = now.getTime() - uploaded.getTime();
@@ -867,7 +869,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             {isExpired(moa.uploadedAt) ? "Expired" : "Expiring soon"} · Uploaded{" "}
-                            {formatDate(moa.uploadedAt)}
+                            {moa.uploadedAt ? formatDate(moa.uploadedAt) : 'N/A'}
                           </p>
                         </div>
                         <div className="flex space-x-2">
@@ -1109,7 +1111,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               const StatusIcon = statusInfo.icon;
                               const isExpiring = isExpiringSoon(moa.createdAt);
                               const isExpiredMOA = isExpired(moa.createdAt);
-                              const isValidMOA = !isExpired(moa.createdAt) && moa.status === 'APPROVED';
                               return (
                                 <div
                                   key={moa.id}
@@ -1146,7 +1147,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                         {moa.title}
                                       </p>
                                       <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
-                                        {formatDate(moa.uploadedAt)}
+                                        {moa.uploadedAt ? formatDate(moa.uploadedAt) : formatDate(moa.createdAt)}
                                       </p>
                                     </div>
                                     <div className="flex items-center space-x-1 sm:space-x-1.5">
@@ -1583,7 +1584,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             </h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               Uploaded:{" "}
-                              {formatDate(moa.uploadedAt)}
+                              {moa.uploadedAt ? formatDate(moa.uploadedAt) : formatDate(moa.createdAt)}
                             </p>
                             <div className="mt-2 flex items-center space-x-2">
                               <span
@@ -1705,7 +1706,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               <span className="text-gray-600 dark:text-gray-400">
                                 Uploaded:{" "}
                                 <span className="font-medium text-gray-900 dark:text-white">
-                                  {formatDate(selectedMOA.uploadedAt)}
+                                  {selectedMOA.uploadedAt ? formatDate(selectedMOA.uploadedAt) : formatDate(selectedMOA.createdAt)}
                                 </span>
                               </span>
                             </p>

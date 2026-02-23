@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Save, Download, Loader2, Plus, Trash2, ArrowLeft, CheckCircle, Send } from "lucide-react";
+import { FileText, Save, Download, Loader2, Plus, Trash2, ArrowLeft, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../services/api";
 import Skeleton from "../../components/Skeleton";
