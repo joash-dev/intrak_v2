@@ -315,82 +315,26 @@ const InstructorAttendanceVerification: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total Students
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.totalStudents}
-              </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {[
+          { label: "Total Students", value: stats.totalStudents, icon: Users, bg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-300" },
+          { label: "Present", value: stats.present, icon: CheckCircle, bg: "bg-green-100 dark:bg-green-900/30", iconColor: "text-green-600 dark:text-green-300" },
+          { label: "Late", value: stats.late, icon: Clock, bg: "bg-amber-100 dark:bg-amber-900/30", iconColor: "text-amber-600 dark:text-amber-300" },
+          { label: "Absent", value: stats.absent, icon: XCircle, bg: "bg-red-100 dark:bg-red-900/30", iconColor: "text-red-600 dark:text-red-300" },
+          { label: "Pending", value: stats.pendingVerification, icon: AlertCircle, bg: "bg-purple-100 dark:bg-purple-900/30", iconColor: "text-purple-600 dark:text-purple-300" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className={`p-2 ${stat.bg} rounded-lg w-fit mb-2`}>
+              <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
             </div>
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+              {stat.label}
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {stat.value}
+            </p>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Present
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.present}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Late</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.late}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Absent</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.absent}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Pending
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.pendingVerification}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Search and Filters */}

@@ -173,7 +173,13 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
               role: true
             }
           },
-          company: true
+          company: {
+            include: {
+              supervisor: {
+                select: { id: true, name: true }
+              }
+            }
+          }
         }
       });
     } catch (dbError) {
@@ -223,6 +229,10 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     const companyType = company && (company as any).companyType ? (company as any).companyType : null;
     const workingDays = company && (company as any).workingDays ? (company as any).workingDays : null;
 
+    // Resolve supervisor name: use student.supervisorName first, then fall back to company's linked supervisor account name
+    const companySupervisor = (company as any)?.supervisor;
+    const resolvedSupervisor = student.supervisorName || companySupervisor?.name || '';
+
     res.json({
       id: student.id,
       name: student.user?.name || user.name || '',
@@ -232,7 +242,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       year: student.year || null,
       section: student.section || '',
       company: company?.name || '',
-      supervisor: student.supervisorName || '',
+      supervisor: resolvedSupervisor,
       totalHours: student.totalHours || 0,
       completedHours: completedHours,
       startDate: student.startDate ? student.startDate.toISOString() : null,
@@ -262,7 +272,7 @@ export const getStudentById = async (req: AuthRequest, res: Response) => {
       include: {
         user: { select: { name: true, email: true } },
         company: true,
-        documents: { orderBy: { uploadedAt: 'desc' }, take: 10 },
+        documents: { orderBy: { createdAt: 'desc' }, take: 10 },
         attendanceLogs: { orderBy: { date: 'desc' }, take: 10 },
         evaluations: { include: { evaluator: { select: { name: true } } } }
       }
@@ -1590,5 +1600,170 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
   } catch (error) {
     console.error('Error updating Saturday preference:', error);
     res.status(500).json({ message: 'Failed to update Saturday preference', error: (error instanceof Error ? error.message : String(error)) });
+  }
+};
+
+// Send attendance reminder notification to a student
+export const sendAttendanceReminder = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const { message: customMessage } = req.body;
+
+    // Verify instructor is assigned to this student
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: { user: { select: { id: true, name: true } } }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    if (student.instructorId !== req.user!.id) {
+      return res.status(403).json({ message: 'You are not assigned to this student' });
+    }
+
+    const reminderMessage = customMessage ||
+      `Your instructor ${req.user!.name} is reminding you to log your attendance. Please check in as soon as possible.`;
+
+    await notificationService.createNotification({
+      userId: student.userId,
+      title: 'Attendance Reminder from Instructor',
+      message: reminderMessage,
+      link: '/student/attendance',
+      type: NotificationType.ATTENDANCE,
+    });
+
+    await auditLog(req.user!.id, 'SEND_ATTENDANCE_REMINDER', {
+      studentId,
+      studentName: student.user.name,
+    }, req);
+
+    res.json({ message: 'Reminder sent successfully' });
+  } catch (error) {
+    console.error('Error sending attendance reminder:', error);
+    res.status(500).json({ message: 'Failed to send reminder' });
+  }
+};
+
+// Get recent activity timeline for a specific student
+export const getStudentTimeline = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    // Verify the student exists and instructor is assigned
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: { user: { select: { id: true, name: true } } }
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Fetch attendance logs
+    const attendanceLogs = await prisma.attendanceLog.findMany({
+      where: { studentId },
+      orderBy: { date: 'desc' },
+      take: limit,
+    });
+
+    // Fetch document submissions
+    const documents = await prisma.document.findMany({
+      where: { studentId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        createdAt: true,
+        reviewedAt: true,
+      },
+    });
+
+    // Fetch audit logs for this student
+    const auditLogs = await prisma.auditLog.findMany({
+      where: { userId: student.userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        action: true,
+        meta: true,
+        createdAt: true,
+      },
+    });
+
+    // Build unified timeline
+    const timeline: Array<{
+      id: string;
+      type: 'attendance' | 'document' | 'action';
+      title: string;
+      description: string;
+      timestamp: string;
+      icon: string;
+    }> = [];
+
+    // Attendance entries
+    for (const log of attendanceLogs) {
+      if (log.timeIn) {
+        timeline.push({
+          id: `att-in-${log.id}`,
+          type: 'attendance',
+          title: 'Time In',
+          description: `Logged time-in at ${new Date(log.timeIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`,
+          timestamp: log.timeIn.toISOString(),
+          icon: 'clock',
+        });
+      }
+      if (log.timeOut) {
+        const duration = log.durationMinutes ? `${Math.floor(log.durationMinutes / 60)}h ${log.durationMinutes % 60}m` : '';
+        timeline.push({
+          id: `att-out-${log.id}`,
+          type: 'attendance',
+          title: 'Time Out',
+          description: `Logged time-out${duration ? ` (${duration})` : ''}`,
+          timestamp: log.timeOut.toISOString(),
+          icon: 'clock',
+        });
+      }
+    }
+
+    // Document entries
+    for (const doc of documents) {
+      const docName = doc.type.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+      timeline.push({
+        id: `doc-${doc.id}`,
+        type: 'document',
+        title: `Document ${doc.status === 'APPROVED' ? 'Approved' : doc.status === 'REJECTED' ? 'Rejected' : 'Submitted'}`,
+        description: docName,
+        timestamp: (doc.reviewedAt || doc.createdAt)?.toISOString() || new Date().toISOString(),
+        icon: 'file',
+      });
+    }
+
+    // Audit log entries (filtered to relevant actions)
+    const relevantActions = ['ATTENDANCE_LOGGED', 'DOCUMENT_UPLOAD', 'COMPANY_APPLICATION', 'LOGIN'];
+    for (const log of auditLogs) {
+      if (relevantActions.includes(log.action)) continue; // skip duplicates already captured
+      timeline.push({
+        id: `audit-${log.id}`,
+        type: 'action',
+        title: log.action.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+        description: (log.meta as any)?.description || '',
+        timestamp: log.createdAt.toISOString(),
+        icon: 'activity',
+      });
+    }
+
+    // Sort by timestamp descending
+    timeline.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    res.json({ timeline: timeline.slice(0, limit) });
+  } catch (error) {
+    console.error('Error fetching student timeline:', error);
+    res.status(500).json({ message: 'Failed to fetch timeline' });
   }
 };

@@ -14,6 +14,7 @@ const ResetPassword = React.lazy(() => import("./pages/AuthUi/ResetPassword"));
 const StudentLayout = React.lazy(() => import("./pages/StudentUi/StudentLayout"));
 const StudentOverview = React.lazy(() => import("./pages/StudentUi/StudentOverview"));
 const StudentDocumentsTab = React.lazy(() => import("./pages/StudentUi/StudentDocumentsTab"));
+const DocumentFormPage = React.lazy(() => import("./pages/StudentUi/DocumentFormPage"));
 const StudentTemplates = React.lazy(() => import("./pages/StudentUi/StudentTemplates"));
 const StudentCompanySelection = React.lazy(() => import("./pages/StudentUi/StudentCompanySelection"));
 const StudentCompanyPartnershipAssistance = React.lazy(() => import("./pages/StudentUi/StudentCompanyPartnershipAssistance"));
@@ -54,9 +55,7 @@ const InstructorOverview = React.lazy(() => import("./pages/InstructorUi/Instruc
 const InstructorDocumentsTab = React.lazy(() => import("./pages/InstructorUi/InstructorDocuments"));
 const InstructorStudentManagement = React.lazy(() => import("./pages/InstructorUi/InstructorStudentManagement"));
 const InstructorApplications = React.lazy(() => import("./pages/InstructorUi/InstructorApplications"));
-const InstructorTemplateManagement = React.lazy(() => import("./pages/InstructorUi/InstructorTemplateManagement"));
 const DocumentChecklistTab = React.lazy(() => import("./pages/InstructorUi/InstructorDocumentChecklist"));
-const InstructorMonitoringTab = React.lazy(() => import("./pages/InstructorUi/InstructorStudent"));
 const InstructorReportsTab = React.lazy(() => import("./pages/InstructorUi/InstructorReportsTab"));
 const InstructorSettings = React.lazy(() => import("./pages/InstructorUi/InstructorSettings"));
 const InstructorNotifications = React.lazy(() => import("./pages/InstructorUi/InstructorNotifications"));
@@ -163,12 +162,13 @@ const App: React.FC = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<StudentOverview />} />
                 <Route path="documents" element={<StudentDocumentsTab />} />
+                <Route path="documents/form/:type" element={<DocumentFormPage />} />
                 <Route path="templates" element={<StudentTemplates />} />
                 <Route path="companies" element={<StudentCompanySelection />} />
                 <Route path="partnership-assistance" element={<StudentCompanyPartnershipAssistance />} />
                 <Route path="attendance" element={<StudentAttendanceTab />} />
                 <Route path="evaluations" element={<StudentEvaluationsTab />} />
-                <Route path="reports" element={<StudentReportsTab />} />
+                <Route path="reports" element={<Navigate to="/student/documents" replace />} />
                 <Route path="settings" element={<StudentSettings />} />
                 <Route path="notifications" element={<StudentNotifications />} />
               </Route>
@@ -209,9 +209,8 @@ const App: React.FC = () => {
                 <Route path="students" element={<InstructorStudentManagement />} />
                 <Route path="documents" element={<InstructorDocumentsTab />} />
                 <Route path="applications" element={<InstructorApplications />} />
-                <Route path="templates" element={<InstructorTemplateManagement />} />
                 <Route path="checklist" element={<DocumentChecklistTab />} />
-                <Route path="monitoring" element={<InstructorMonitoringTab />} />
+                <Route path="monitoring" element={<Navigate to="/instructor/students" replace />} />
                 <Route path="reports" element={<InstructorReportsTab />} />
                 <Route path="settings" element={<InstructorSettings />} />
                 <Route path="notifications" element={<InstructorNotifications />} />

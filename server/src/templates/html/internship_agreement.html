@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Internship Agreement - FM-AA-INT-10</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 10mm 12mm;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      color: #000;
+      background: #888;
+      line-height: 1.4;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 5mm auto;
+      padding: 8mm 15mm;
+      background: white;
+      position: relative;
+    }
+
+    .page + .page {
+      page-break-before: always;
+    }
+
+    /* Form Code top-right */
+    .form-code {
+      text-align: right;
+      font-size: 8pt;
+      font-style: italic;
+      line-height: 1.3;
+      margin-bottom: 3mm;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 8mm;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 1mm;
+    }
+
+    .header h2 {
+      font-size: 10pt;
+      font-weight: normal;
+    }
+
+    .header-logo {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
+    .header-logo img {
+      width: 20mm;
+      height: 20mm;
+    }
+
+    /* Variables */
+    .var {
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* Underline blanks */
+    .blank {
+      display: inline-block;
+      border-bottom: 1px solid #000;
+      min-width: 30mm;
+      text-align: center;
+      padding-bottom: 0.3mm;
+    }
+
+    .blank-sm { min-width: 15mm; }
+    .blank-md { min-width: 30mm; }
+    .blank-lg { min-width: 50mm; }
+    .blank-xl { min-width: 70mm; }
+
+    /* Body text */
+    .body-text {
+      text-align: justify;
+      margin-bottom: 3mm;
+      line-height: 1.5;
+    }
+
+    .section-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 12pt;
+      margin: 6mm 0 4mm;
+    }
+
+    .know-all {
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 5mm;
+      font-size: 11pt;
+    }
+
+    /* Indent label */
+    .field-label-below {
+      font-size: 8pt;
+      font-style: italic;
+      text-align: center;
+      display: inline-block;
+    }
+
+    /* Numbered conditions */
+    .conditions {
+      margin: 4mm 0;
+      padding-left: 8mm;
+    }
+
+    .conditions > li {
+      margin-bottom: 3mm;
+      text-align: justify;
+      line-height: 1.5;
+    }
+
+    .conditions > li > ul {
+      margin-top: 2mm;
+      margin-left: 5mm;
+      list-style-type: disc;
+    }
+
+    .conditions > li > ul > li {
+      margin-bottom: 1.5mm;
+      text-align: justify;
+      line-height: 1.5;
+    }
+
+    /* Signature grid */
+    .sig-grid {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8mm;
+    }
+
+    .sig-col {
+      width: 45%;
+    }
+
+    .sig-block {
+      margin-bottom: 8mm;
+      text-align: left;
+    }
+
+    .sig-block-center {
+      margin-bottom: 8mm;
+      text-align: center;
+    }
+
+    .sig-name-line {
+      border-bottom: 1px solid #000;
+      min-height: 6mm;
+      margin-bottom: 1mm;
+      font-weight: bold;
+    }
+
+    .sig-name-above {
+      font-weight: bold;
+      margin-bottom: 1mm;
+      min-height: 5mm;
+    }
+
+    .sig-line {
+      border-bottom: 1px solid #000;
+      width: 80%;
+      margin-bottom: 1mm;
+    }
+
+    .sig-title {
+      font-size: 8.5pt;
+      font-style: italic;
+    }
+
+    /* Witness section */
+    .witness-text {
+      text-align: center;
+      font-weight: bold;
+      font-size: 11pt;
+      margin: 8mm 0 5mm;
+    }
+
+    .presence-section {
+      margin-top: 6mm;
+    }
+
+    .presence-title {
+      font-weight: bold;
+      margin-bottom: 4mm;
+    }
+
+    /* Acknowledgment */
+    .ack-divider {
+      margin: 8mm 0 0;
+      text-align: center;
+      font-size: 8pt;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    .ack-title {
+      font-weight: bold;
+      font-size: 12pt;
+      text-align: center;
+      margin: 2mm 0 4mm;
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+      padding: 1.5mm 0;
+    }
+
+    .ack-header {
+      font-weight: bold;
+      margin-bottom: 1mm;
+      font-size: 11pt;
+    }
+
+    .ack-text {
+      text-indent: 10mm;
+      text-align: justify;
+      margin-bottom: 4mm;
+      line-height: 1.5;
+    }
+
+    /* Residence Certificate Table */
+    .cert-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 4mm 0;
+    }
+
+    .cert-table th {
+      font-weight: bold;
+      font-size: 8.5pt;
+      padding: 1.5mm 2mm;
+      text-align: center;
+      border-bottom: 1px solid #000;
+      vertical-align: bottom;
+    }
+
+    .cert-table td {
+      padding: 3mm 2mm 1mm;
+      text-align: center;
+      font-size: 9pt;
+      height: 8mm;
+      vertical-align: bottom;
+    }
+
+    .cert-table tr.cert-data td {
+      border-bottom: 1px solid #000;
+    }
+
+    .cert-table tr.cert-label td {
+      border-bottom: none;
+      padding: 0.5mm 2mm 4mm;
+    }
+
+    .cert-table td.cert-name {
+      text-align: left;
+      font-style: italic;
+      font-size: 8pt;
+      padding-top: 0.5mm;
+    }
+
+    .doc-info {
+      margin-top: 8mm;
+      font-size: 10pt;
+    }
+
+    .doc-info-row {
+      display: flex;
+      margin-bottom: 2mm;
+    }
+
+    .doc-info-label {
+      font-weight: bold;
+      width: 22mm;
+    }
+
+    .doc-info-value {
+      border-bottom: 1px solid #000;
+      min-width: 25mm;
+    }
+
+    /* Print */
+    @media print {
+      body { background: none; }
+      .page {
+        margin: 0;
+        width: auto;
+        min-height: auto;
+        padding: 0 10mm;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page">
+    <div class="form-code">FM-AA-INT-10<br>Rev. 03<br>14-Oct-2024</div>
+
+    <div class="header">
+      <h1>INTERNSHIP AGREEMENT</h1>
+      <h2>PANGASINAN STATE UNIVERSITY</h2>
+      <div class="header-logo">
+        <img src="assets/psu_logo.png" alt="PSU Logo">
+      </div>
+    </div>
+
+    <p class="know-all">KNOW ALL MEN THIS PRESENTS:</p>
+
+    <p class="body-text">
+      This <strong>Internship Agreement</strong> is entered between <strong>Pangasinan State University,</strong>
+      <span class="blank blank-md"><span class="var">${campus}</span></span>,
+      <span class="blank blank-md"><span class="var">${campus}</span></span>, Pangasinan represented by
+      <span class="blank blank-lg"><span class="var">${campus_exec_director}</span></span> in his capacity as
+      Campus Executive Director, herein referred to as <strong>Campus</strong>;
+    </p>
+
+    <p class="body-text" style="text-indent: 10mm;">
+      <span class="blank blank-xl"><span class="var">${student_name}</span></span>, a 4<sup>th</sup> year student major in
+      <span class="blank blank-xl"><span class="var">${course}</span></span>
+    </p>
+    <div style="display:flex;justify-content:space-between;margin:-2mm 0 3mm;">
+      <span class="field-label-below" style="width:50%;">Name of student-intern</span>
+      <span class="field-label-below" style="width:40%;">Course</span>
+    </div>
+
+    <p class="body-text">
+      of the <strong>Pangasinan State University,</strong>
+      <span class="blank blank-lg"><span class="var">${campus}</span></span> and a
+      resident of <span class="blank blank-xl"><span class="var">${student_address}</span></span>
+      herein referred to as the <strong>Student-Intern</strong>;
+      and a duly recognized existing business institution with
+    </p>
+
+    <p class="body-text" style="text-indent: 10mm;">
+      <span class="blank blank-xl"><span class="var">${company_name}</span></span> represented herein by
+      <span class="blank blank-lg"><span class="var">${company_representative}</span></span> in
+    </p>
+    <div style="text-align:center;margin:-2mm 0 3mm;">
+      <span class="field-label-below">Name of agency/ company</span>
+    </div>
+
+    <p class="body-text" style="text-indent: 10mm;">
+      <span class="blank blank-xl"><span class="var">${company_address}</span></span>
+      his/her capacity as <span class="blank blank-lg"><span class="var">${representative_position}</span></span>
+      herein referred to as the Host Company.
+    </p>
+    <div style="text-indent:10mm;margin:-2mm 0 3mm;">
+      <span class="field-label-below">Office Address</span>
+    </div>
+
+    <div class="section-title">WITNESSETH</div>
+
+    <p class="body-text">
+      That the <strong>PARTIES</strong> concerned hereby entered this Internship Agreement under the following conditions:
+    </p>
+
+    <ol class="conditions">
+      <li>
+        That the <strong>Campus</strong> hereby certifies that the <strong>Student-Intern</strong> is a bonafide student and at the
+        same time has completed all the requirements/prerequisites to his/her Internship /Practicum activity;
+      </li>
+      <li>
+        That the <strong>Student-Intern</strong> will undergo Internship/Practicum in any company/corporation for not
+        less than <strong><span class="var">${total_hours}</span> hours</strong> in line with his/her major field of specialization;
+      </li>
+      <li>
+        That the student intern is not required to report to his/her internship site during calamities,
+        health problems or in case of emergencies.
+      </li>
+      <li>
+        That the <strong>Student-Intern</strong> understands and must strictly follow the <strong>Campus / College</strong>
+        Internship program and <strong>Host Training Establishment (HTE)</strong> policies, rules and regulations
+        during the specified period of training;
+      </li>
+      <li>
+        That the <strong>Student-Intern</strong> understands that he/she will not be entitled to any compensation
+        from the <strong>Host Training Establishment (HTE)</strong> unless the Company will voluntarily give the
+        Student-Internship travelling allowances and other expenses;
+      </li>
+      <li>
+        That the campus shall look for a <strong>Host Training Establishment (HTE)</strong> that provides relevant
+        industry-based exposure, supervise the conduct of internship training accordingly with the
+        Student-Intern major field of specialization and shall give necessary performance
+        assessment/evaluation upon completion of his/her training
+      </li>
+      <li>
+        That the Internship /Practicum of the Student-Intern shall be discontinued on reasonable
+        grounds upon written notice to the Internship Coordinator concerned. The reasonable
+        grounds that may terminate the Student-Trainee's training shall include not limited to the
+        following:
+        <ul>
+          <li>Habitual absenteeism from the training/practicum and related theoretical instruction;</li>
+          <li>Willful disobedience of the company rules or insubordination to lawful order of the superior;</li>
+          <li>Poor physical condition, permanent disability or prolonged illness which incapacitates the trainee from working</li>
+          <li>Theft or malicious destruction of company property and/or equipment.</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page">
+    <div class="form-code">FM-AA-INT-10<br>Rev. 03<br>14-Oct-2024</div>
+
+    <ul style="list-style-type:disc;margin-left:15mm;margin-bottom:5mm;">
+      <li style="margin-bottom:2mm;text-align:justify;line-height:1.5;">
+        Poor efficiency of performance on Internship or in the center training for a prolonged
+        period despite warnings duly given to the trainee; and
+      </li>
+      <li style="margin-bottom:2mm;text-align:justify;line-height:1.5;">
+        Engaging in violence or other forms of gross misconduct inside the company premise.
+      </li>
+      <li style="margin-bottom:2mm;text-align:justify;line-height:1.5;">
+        Other analogous cases.
+      </li>
+    </ul>
+
+    <p class="witness-text">IN WITNESS, WHEREOF, the parties</p>
+
+    <!-- Signature Section -->
+    <div class="sig-grid">
+      <div class="sig-col">
+        <div class="sig-block">
+          <p style="font-weight:bold;">PANGASINAN STATE UNIVERSITY-</p>
+          <p><span class="blank blank-md"><span class="var">${campus}</span></span>Campus</p>
+        </div>
+        <div class="sig-block" style="margin-top:6mm;">
+          <div class="sig-name-above"><span class="var">${campus_exec_director}</span></div>
+          <div class="sig-line"></div>
+          <div class="sig-title">Campus Executive Director</div>
+        </div>
+        <div class="sig-block" style="margin-top:6mm;">
+          <div class="sig-name-above"><span class="var">${student_name}</span></div>
+          <div class="sig-line"></div>
+          <div class="sig-title">Student-Intern</div>
+        </div>
+      </div>
+
+      <div class="sig-col">
+        <div class="sig-block">
+          <div class="sig-name-above"><span class="var">${company_name}</span></div>
+          <div class="sig-line"></div>
+          <div class="sig-title"><em>Name of Company/Agency</em></div>
+        </div>
+        <div class="sig-block" style="margin-top:6mm;">
+          <div class="sig-name-above"><span class="var">${company_representative}</span></div>
+          <div class="sig-line"></div>
+          <div class="sig-title">Host Training Establishment Head or Representative</div>
+        </div>
+        <div class="sig-block" style="margin-top:6mm;">
+          <div class="sig-name-above">&nbsp;</div>
+          <div class="sig-line"></div>
+          <div class="sig-title"><em>With Parent/Guardian/Spouse Consent, Endorsement and Approval</em></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="body-text" style="margin-top:5mm;">
+      hereunto affixed their signatures this <span class="blank blank-sm"><span class="var">${signed_day}</span></span> day
+      of <span class="blank blank-md"><span class="var">${signed_month}</span></span>, <span class="blank blank-sm"><span class="var">${signed_year}</span></span>.
+    </p>
+
+    <!-- Instructor / Company In-Charge -->
+    <div class="sig-grid" style="margin-top:10mm;">
+      <div class="sig-col">
+        <div class="sig-name-above"><span class="var">${instructor_name}</span></div>
+        <div class="sig-line"></div>
+        <div class="sig-title"><em>Internship /Practicum Subject Instructor</em></div>
+      </div>
+      <div class="sig-col">
+        <div class="sig-name-above"><span class="var">${company_incharge}</span></div>
+        <div class="sig-line"></div>
+        <div class="sig-title"><em>Company/Agency Internship In-Charge</em></div>
+      </div>
+    </div>
+
+    <p style="font-weight:bold;margin-top:5mm;text-align:right;">SIGNED IN THE</p>
+
+    <div class="presence-section">
+      <p class="presence-title">PRESENCE OF:</p>
+      <div style="text-align:center;width:50%;margin-bottom:3mm;">
+        <div class="sig-name-above"><span class="var">${coordinator_name}</span></div>
+        <div class="sig-line" style="width:100%;"></div>
+        <div class="sig-title"><em>Campus Internship and Placement Coordinator</em></div>
+      </div>
+      <div style="width:50%;margin-top:5mm;">
+        <div class="sig-line" style="width:100%;"></div>
+      </div>
+    </div>
+
+    <!-- Acknowledgment Section -->
+    <div class="ack-divider">. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .</div>
+    <div class="ack-title">ACKNOWLEDGMENT</div>
+
+    <p class="ack-header">REPUBLIC OF THE PHILIPPINES</p>
+    <p class="ack-header">PROVINCE OF PANGASINAN</p>
+    <p class="ack-header" style="margin-bottom:4mm;">MUNICIPALITY OF LINGAYEN</p>
+
+    <p class="ack-text">
+      SUBSCRIBED AND SWORN to before me this <span class="blank blank-sm"><span class="var">${sworn_day}</span></span>
+      day of <span class="blank blank-md"><span class="var">${sworn_month}</span></span>, <span class="blank blank-sm"><span class="var">${sworn_year}</span></span>,
+      exhibiting to me their Residence Certificate Number
+    </p>
+
+    <table class="cert-table">
+      <thead>
+        <tr>
+          <th style="width:35%;">Name of Issue</th>
+          <th style="width:22%;">Residence<br>Certificate No.</th>
+          <th style="width:22%;">Date Issued</th>
+          <th style="width:21%;">Place</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="cert-data">
+          <td><span class="var">${cert_name_1}</span></td>
+          <td><span class="var">${cert_no_1}</span></td>
+          <td><span class="var">${cert_date_1}</span></td>
+          <td><span class="var">${cert_place_1}</span></td>
+        </tr>
+        <tr class="cert-label">
+          <td class="cert-name"><em>Campus Executive Director</em></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr class="cert-data">
+          <td><span class="var">${cert_name_2}</span></td>
+          <td><span class="var">${cert_no_2}</span></td>
+          <td><span class="var">${cert_date_2}</span></td>
+          <td><span class="var">${cert_place_2}</span></td>
+        </tr>
+        <tr class="cert-label">
+          <td class="cert-name"><em>Head or Representative of the<br>Host Training Establishment</em></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr class="cert-data">
+          <td><span class="var">${cert_name_3}</span></td>
+          <td><span class="var">${cert_no_3}</span></td>
+          <td><span class="var">${cert_date_3}</span></td>
+          <td><span class="var">${cert_place_3}</span></td>
+        </tr>
+        <tr class="cert-label">
+          <td class="cert-name"><em>Student-Intern</em></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="body-text" style="margin-top:4mm;">
+      Known to me and to be the same person who executed the foregoing instrument and acknowledge
+      the same to be their free and voluntary act and that of the institution they represent.
+    </p>
+
+    <p style="font-weight:bold;margin-top:6mm;font-size:10pt;">
+      WITNESS MY HAND SEAL ON THE DATE AT THE PLACE FIRST ABOVE WRITTEN
+    </p>
+
+    <div class="doc-info">
+      <div class="doc-info-row">
+        <span class="doc-info-label">Doc</span>
+        <span class="doc-info-value"><span class="var">${doc_no}</span></span>
+      </div>
+      <div class="doc-info-row">
+        <span class="doc-info-label">Page No.</span>
+        <span class="doc-info-value"><span class="var">${page_no}</span></span>
+      </div>
+      <div class="doc-info-row">
+        <span class="doc-info-label">Book No.</span>
+        <span class="doc-info-value"><span class="var">${book_no}</span></span>
+      </div>
+      <div class="doc-info-row">
+        <span class="doc-info-label">Series of</span>
+        <span class="doc-info-value"><span class="var">${series_of}</span></span>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+</html>

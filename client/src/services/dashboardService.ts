@@ -44,7 +44,7 @@ export interface Document {
   type: string;
   filename: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  uploadedAt: string | null;
+  createdAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;
   fileSize?: string;

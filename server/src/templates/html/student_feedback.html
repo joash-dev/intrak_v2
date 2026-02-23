@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Student-Intern's Feedback Form - FM-AA-INT-17</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 6mm 8mm;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #000;
+      background: #888;
+      line-height: 1.2;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 5mm auto;
+      padding: 3mm 6mm;
+      background: white;
+      position: relative;
+    }
+
+    /* Form Code top-right */
+    .form-code {
+      text-align: right;
+      font-size: 7pt;
+      font-style: italic;
+      line-height: 1.3;
+      margin-bottom: 1mm;
+    }
+
+    /* ===== MAIN TABLE ===== */
+    .main-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5pt solid #000;
+    }
+
+    .main-table > tbody > tr > td {
+      border: 1pt solid #000;
+      padding: 0;
+      vertical-align: top;
+    }
+
+    /* Header */
+    .header-cell-logo {
+      width: 22mm;
+      text-align: center;
+      vertical-align: middle;
+      padding: 3mm !important;
+    }
+
+    .header-cell-logo img {
+      width: 18mm;
+      height: 18mm;
+    }
+
+    .header-cell-text {
+      text-align: center;
+      vertical-align: middle;
+      padding: 3mm !important;
+    }
+
+    .header-cell-text h1 {
+      font-size: 13pt;
+      font-weight: bold;
+      margin-bottom: 0.5mm;
+    }
+
+    .header-cell-text h2 {
+      font-size: 10pt;
+      font-weight: normal;
+      margin-bottom: 0.5mm;
+    }
+
+    .header-cell-text h3 {
+      font-size: 9pt;
+      font-weight: normal;
+    }
+
+    /* Info rows */
+    .info-row td {
+      padding: 1.5mm 3mm !important;
+      font-size: 9pt;
+    }
+
+    .info-label {
+      font-weight: bold;
+      width: 30mm;
+      white-space: nowrap;
+    }
+
+    .info-value {
+      font-weight: normal;
+    }
+
+    /* Variables */
+    .var {
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* Criteria table */
+    .criteria-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .criteria-table th,
+    .criteria-table td {
+      border: 1pt solid #000;
+      padding: 1.5mm 2mm;
+      font-size: 8.5pt;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .criteria-table th {
+      font-weight: bold;
+      font-size: 8pt;
+      background: #f5f5f5;
+    }
+
+    .criteria-table th.criteria-header {
+      text-align: center;
+      width: auto;
+    }
+
+    .criteria-table th.scale-header {
+      width: 14%;
+      font-size: 7.5pt;
+    }
+
+    .criteria-table td.criteria-text {
+      text-align: left;
+      font-size: 8.5pt;
+      font-style: italic;
+      padding: 2mm 3mm;
+    }
+
+    .criteria-table td.scale-cell {
+      width: 14%;
+    }
+
+    /* Checkmark for selected rating */
+    .checkmark {
+      font-size: 11pt;
+      font-weight: bold;
+    }
+
+    /* Text area sections */
+    .text-section {
+      padding: 3mm !important;
+      min-height: 30mm;
+    }
+
+    .text-section-label {
+      font-weight: bold;
+      font-size: 9pt;
+      margin-bottom: 2mm;
+    }
+
+    .text-section-content {
+      font-size: 9pt;
+      line-height: 1.5;
+      min-height: 22mm;
+      white-space: pre-wrap;
+    }
+
+    /* Signature section */
+    .sig-section {
+      padding: 5mm 3mm !important;
+      text-align: center;
+      min-height: 25mm;
+    }
+
+    .sig-name {
+      font-weight: bold;
+      font-size: 10pt;
+      margin-bottom: 1mm;
+    }
+
+    .sig-line {
+      border-top: 1px solid #000;
+      width: 50%;
+      margin: 0 auto 1mm;
+    }
+
+    .sig-label {
+      font-size: 8.5pt;
+      font-style: italic;
+    }
+
+    .date-line {
+      margin-top: 4mm;
+      font-size: 9pt;
+    }
+
+    .date-line .date-label {
+      font-weight: bold;
+    }
+
+    /* Print */
+    @media print {
+      body {
+        background: none;
+      }
+
+      .page {
+        margin: 0;
+        width: auto;
+        min-height: auto;
+        padding: 0 4mm;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <!-- Form Code -->
+    <div class="form-code">FM-AA-INT-17<br>Rev. 1<br>14-Oct-2024</div>
+
+    <table class="main-table">
+      <tbody>
+        <!-- Header Row -->
+        <tr>
+          <td class="header-cell-logo" colspan="1" rowspan="1">
+            <img src="assets/psu_logo.png" alt="PSU Logo">
+          </td>
+          <td class="header-cell-text" colspan="6">
+            <h1>STUDENT-INTERN'S FEEDBACK FORM</h1>
+            <h2>PANGASINAN STATE UNIVERSITY</h2>
+            <h3><span class="var">${campus}</span> Campus</h3>
+          </td>
+        </tr>
+
+        <!-- Student Info Rows -->
+        <tr class="info-row">
+          <td class="info-label" colspan="2">NAME OF STUDENT-INTERN</td>
+          <td class="info-value" colspan="5"><span class="var">${student_name}</span></td>
+        </tr>
+        <tr class="info-row">
+          <td class="info-label" colspan="2">COURSE</td>
+          <td class="info-value" colspan="5"><span class="var">${course}</span></td>
+        </tr>
+        <tr class="info-row">
+          <td class="info-label" colspan="2">DEPARTMENT</td>
+          <td class="info-value" colspan="5"><span class="var">${department}</span></td>
+        </tr>
+        <tr class="info-row">
+          <td class="info-label" colspan="2">COMPANY NAME</td>
+          <td class="info-value" colspan="5"><span class="var">${company_name}</span></td>
+        </tr>
+
+        <!-- Criteria Table -->
+        <tr>
+          <td colspan="7" style="padding:0 !important;">
+            <table class="criteria-table">
+              <thead>
+                <tr>
+                  <th class="criteria-header" style="width:auto;">CRITERIA</th>
+                  <th class="scale-header">Strongly Agree</th>
+                  <th class="scale-header">Agree</th>
+                  <th class="scale-header">Neither Agree nor Disagree</th>
+                  <th class="scale-header">Disagree</th>
+                  <th class="scale-header">Strongly Disagree</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="criteria-text">My training is aligned with my field of specialization</td>
+                  <td class="scale-cell"><span class="checkmark">${c1_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c1_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c1_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c1_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c1_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">My training is challenging.</td>
+                  <td class="scale-cell"><span class="checkmark">${c2_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c2_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c2_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c2_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c2_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">I have opportunities for learning.</td>
+                  <td class="scale-cell"><span class="checkmark">${c3_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c3_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c3_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c3_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c3_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">I am aware of the policies of the company.</td>
+                  <td class="scale-cell"><span class="checkmark">${c4_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c4_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c4_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c4_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c4_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">I have a positive working relationship with my supervisor and other employees of the company.</td>
+                  <td class="scale-cell"><span class="checkmark">${c5_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c5_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c5_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c5_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c5_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">I am aware of the risks and hazards of my working environment.</td>
+                  <td class="scale-cell"><span class="checkmark">${c6_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c6_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c6_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c6_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c6_1}</span></td>
+                </tr>
+                <tr>
+                  <td class="criteria-text">My department is committed to ensuring the health and safety of its student-interns.</td>
+                  <td class="scale-cell"><span class="checkmark">${c7_5}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c7_4}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c7_3}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c7_2}</span></td>
+                  <td class="scale-cell"><span class="checkmark">${c7_1}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Problems Met -->
+        <tr>
+          <td colspan="7" class="text-section">
+            <div class="text-section-label">PROBLEMS MET:</div>
+            <div class="text-section-content"><span class="var">${problems_met}</span></div>
+          </td>
+        </tr>
+
+        <!-- Other Concerns -->
+        <tr>
+          <td colspan="7" class="text-section">
+            <div class="text-section-label">OTHER CONCERNS:</div>
+            <div class="text-section-content"><span class="var">${other_concerns}</span></div>
+          </td>
+        </tr>
+
+        <!-- Signature -->
+        <tr>
+          <td colspan="7" class="sig-section">
+            <div class="sig-name"><span class="var">${student_name}</span></div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Signature of Student-Intern</div>
+            <div class="date-line">
+              <span class="date-label">Date:</span> <span class="var">${date}</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+
+</html>

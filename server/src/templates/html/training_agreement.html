@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Training Agreement and Liability Waiver Form - Overtime Form - FM-AA-INT-15</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 10mm 12mm;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      color: #000;
+      background: #888;
+      line-height: 1.4;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 5mm auto;
+      padding: 8mm 15mm;
+      background: white;
+      position: relative;
+    }
+
+    .page + .page {
+      page-break-before: always;
+    }
+
+    /* Form Code top-right */
+    .form-code {
+      text-align: right;
+      font-size: 8pt;
+      font-style: italic;
+      line-height: 1.3;
+      margin-bottom: 3mm;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 10mm;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 14pt;
+      font-weight: bold;
+      line-height: 1.3;
+      margin-bottom: 1mm;
+    }
+
+    .header h2 {
+      font-size: 10pt;
+      font-weight: normal;
+    }
+
+    .header-logo {
+      position: absolute;
+      right: 30mm;
+      top: 0;
+    }
+
+    .header-logo img {
+      width: 18mm;
+      height: 18mm;
+    }
+
+    /* Variables */
+    .var {
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* Underline blanks */
+    .blank {
+      display: inline-block;
+      border-bottom: 1px solid #000;
+      min-width: 30mm;
+      text-align: center;
+      padding-bottom: 0.3mm;
+    }
+
+    .blank-sm { min-width: 15mm; }
+    .blank-md { min-width: 30mm; }
+    .blank-lg { min-width: 50mm; }
+    .blank-xl { min-width: 70mm; }
+
+    /* Body text */
+    .body-text {
+      text-align: justify;
+      margin-bottom: 4mm;
+      line-height: 1.6;
+    }
+
+    /* Conditions list */
+    .conditions {
+      margin: 4mm 0 6mm 5mm;
+      list-style-type: lower-alpha;
+      padding-left: 8mm;
+    }
+
+    .conditions > li {
+      margin-bottom: 3mm;
+      text-align: justify;
+      line-height: 1.6;
+    }
+
+    /* Signature blocks */
+    .sig-block {
+      margin-top: 10mm;
+      width: 50%;
+    }
+
+    .sig-line {
+      border-bottom: 1px solid #000;
+      width: 70%;
+      margin-bottom: 1mm;
+    }
+
+    .sig-title {
+      font-size: 9pt;
+      font-style: italic;
+    }
+
+    /* Cert info */
+    .cert-info {
+      margin-top: 6mm;
+      font-size: 10pt;
+      line-height: 1.8;
+    }
+
+    .cert-info-line {
+      display: flex;
+      align-items: baseline;
+    }
+
+    .cert-label {
+      width: 28mm;
+    }
+
+    .cert-value {
+      border-bottom: 1px solid #000;
+      min-width: 40mm;
+      display: inline-block;
+    }
+
+    /* Two column signature grid */
+    .sig-grid {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10mm;
+    }
+
+    .sig-col {
+      width: 45%;
+    }
+
+    .sig-col .sig-line {
+      width: 100%;
+    }
+
+    .consent-text {
+      margin-top: 12mm;
+      margin-bottom: 8mm;
+      font-size: 11pt;
+    }
+
+    /* Sworn section */
+    .sworn-section {
+      margin-top: 15mm;
+      font-size: 11pt;
+      line-height: 1.8;
+    }
+
+    /* Print */
+    @media print {
+      body { background: none; }
+      .page {
+        margin: 0;
+        width: auto;
+        min-height: auto;
+        padding: 0 10mm;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page">
+    <div class="form-code">FM-AA-INT-15<br>Rev. 1<br>14-Oct-2024</div>
+
+    <div class="header">
+      <h1>TRAINING AGREEMENT AND<br>LIABILITY WAIVER FORM<br>OVERTIME FORM</h1>
+      <div class="header-logo">
+        <img src="assets/psu_logo.png" alt="PSU Logo">
+      </div>
+      <h2>PANGASINAN STATE UNIVERSITY</h2>
+    </div>
+
+    <p class="body-text" style="margin-top:10mm;">
+      I, <span class="blank blank-lg"><span class="var">${student_name}</span></span>, a student of Pangasinan State University,
+      hereby voluntarily agree to undergo overtime training in my Internship Training at
+      <span class="blank blank-lg"><span class="var">${company_name}</span></span> under the
+      following terms and conditions:
+    </p>
+
+    <ol class="conditions">
+      <li>
+        That I have consent from my parents/guardians for the said overtime.
+      </li>
+      <li>
+        That the company/establishment where I am undergoing my training has knowledge of the overtime.
+      </li>
+      <li>
+        That I fully understand that the Pangasinan State University and <span class="blank blank-lg"><span class="var">${company_name}</span></span>
+        is no longer responsible/liable for any injury or incident that may occur during the said overtime.
+      </li>
+    </ol>
+
+    <!-- Student-Intern Signature -->
+    <div class="sig-block" style="margin-top:15mm;">
+      <div class="sig-line"></div>
+      <div class="sig-title">Student-Intern</div>
+    </div>
+
+    <!-- Student Cert Info -->
+    <div class="cert-info">
+      <div class="cert-info-line">
+        <span class="cert-label">Res. Cert No.:</span>
+        <span class="cert-value"><span class="var">${student_cert_no}</span></span>
+      </div>
+      <div class="cert-info-line">
+        <span class="cert-label">Issued on:</span>
+        <span class="cert-value"><span class="var">${student_cert_issued_on}</span></span>
+      </div>
+      <div class="cert-info-line">
+        <span class="cert-label">Issued at:</span>
+        <span class="cert-value"><span class="var">${student_cert_issued_at}</span></span>
+      </div>
+    </div>
+
+    <!-- Consent Section -->
+    <p class="consent-text">With our consent and approval:</p>
+
+    <!-- Two Column Signatures -->
+    <div class="sig-grid">
+      <div class="sig-col">
+        <div class="sig-line"></div>
+        <div class="sig-title">Parent/Guardian</div>
+
+        <div class="cert-info" style="margin-top:8mm;">
+          <div class="cert-info-line">
+            <span class="cert-label">Res. Cert No.:</span>
+            <span class="cert-value"><span class="var">${parent_cert_no}</span></span>
+          </div>
+          <div class="cert-info-line">
+            <span class="cert-label">Issued on:</span>
+            <span class="cert-value"><span class="var">${parent_cert_issued_on}</span></span>
+          </div>
+          <div class="cert-info-line">
+            <span class="cert-label">Issued at:</span>
+            <span class="cert-value"><span class="var">${parent_cert_issued_at}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-col">
+        <div class="sig-line"></div>
+        <div class="sig-title">Company Representative</div>
+
+        <div class="cert-info" style="margin-top:8mm;">
+          <div class="cert-info-line">
+            <span class="cert-label">Res. Cert No.:</span>
+            <span class="cert-value"><span class="var">${company_cert_no}</span></span>
+          </div>
+          <div class="cert-info-line">
+            <span class="cert-label">Issued on:</span>
+            <span class="cert-value"><span class="var">${company_cert_issued_on}</span></span>
+          </div>
+          <div class="cert-info-line">
+            <span class="cert-label">Issued at:</span>
+            <span class="cert-value"><span class="var">${company_cert_issued_at}</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscribed and Sworn -->
+    <div class="sworn-section">
+      <p>
+        SUBSCRIBED AND SWORN BEFORE ME this <span class="blank blank-sm"><span class="var">${sworn_day}</span></span>
+        day of <span class="blank blank-md"><span class="var">${sworn_month}</span></span>, <span class="blank blank-sm"><span class="var">${sworn_year}</span></span> at
+      </p>
+      <p>
+        <span class="blank blank-lg"><span class="var">${sworn_place}</span></span>, Philippines.
+      </p>
+    </div>
+  </div>
+
+</body>
+
+</html>

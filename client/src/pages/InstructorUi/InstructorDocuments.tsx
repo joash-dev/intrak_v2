@@ -12,19 +12,17 @@ import {
   AlertCircle,
   LayoutGrid,
   List,
-  Settings,
-  Sparkles,
   Loader2,
+  Printer,
 } from "lucide-react";
 import api from "../../services/api";
+import { PDFDocument } from "pdf-lib";
 import {
   instructorService,
   type InstructorStudent,
   type InstructorDocument,
 } from "../../services/instructorService";
 import toast from "react-hot-toast";
-import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
-import InstructorTemplateManagement from "./InstructorTemplateManagement";
 import { documentService } from "../../services/documentService";
 import PDFViewer from "../../components/document/PDFViewer";
 import { devLog } from "../../utils/devLog";
@@ -72,7 +70,6 @@ const DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
 
 const InstructorDocumentsTab = () => {
   // --- State ---
-  const [activeTab, setActiveTab] = useState<"students" | "templates">("students");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedStudent, setSelectedStudent] = useState<InstructorStudent | null>(null);
 
@@ -88,8 +85,7 @@ const InstructorDocumentsTab = () => {
   const [previewType, setPreviewType] = useState<string>("");
   const [reviewRemarks, setReviewRemarks] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [feedbackRefreshKey, setFeedbackRefreshKey] = useState(0);
+  const [printingAll, setPrintingAll] = useState(false);
 
   // --- Effects ---
 
@@ -127,7 +123,8 @@ const InstructorDocumentsTab = () => {
   // --- Helpers ---
 
   const getStudentDocuments = (studentId: string) => {
-    return documents.filter(d => d.studentId === studentId);
+    const result = documents.filter(d => d.studentId === studentId);
+    return result;
   };
 
   const getStudentProgress = (studentId: string) => {
@@ -136,7 +133,10 @@ const InstructorDocumentsTab = () => {
 
     // Count unique required documents that are approved
     const approvedCount = DOCUMENT_REQUIREMENTS.filter(req => {
-      const doc = studentDocs.find(d => d.documentType === req.type);
+      let doc = studentDocs.find(d => d.documentType === req.type);
+      if (!doc && req.type === 'ENDORSEMENT_LETTER') {
+        doc = studentDocs.find(d => d.documentType === 'ENDORSEMENT_LETTER_MULTI');
+      }
       return doc?.status === "APPROVED";
     }).length;
 
@@ -179,28 +179,6 @@ const InstructorDocumentsTab = () => {
   };
 
   // --- Handlers ---
-
-  const handleGenerateAIFeedback = async (type: 'approve' | 'request_changes') => {
-    if (!selectedDoc) return;
-
-    try {
-      setIsGeneratingAI(true);
-      const response = await api.post('/ai/document-feedback', {
-        documentId: selectedDoc.id,
-        action: type
-      });
-
-      if (response.data && response.data.feedback) {
-        setReviewRemarks(response.data.feedback);
-        toast.success("AI feedback generated!");
-      }
-    } catch (error) {
-      console.error("AI Generation error:", error);
-      toast.error("Failed to generate AI feedback");
-    } finally {
-      setIsGeneratingAI(false);
-    }
-  };
 
   const loadDocumentPreview = async (doc: InstructorDocument) => {
     try {
@@ -257,9 +235,6 @@ const InstructorDocumentsTab = () => {
         });
         toast.success("Changes requested");
       }
-
-      // Refresh feedback panel
-      setFeedbackRefreshKey(prev => prev + 1);
 
       // Refresh documents list to get updated status from server
       const updatedDocs = await instructorService.getDocumentsForReview();
@@ -326,6 +301,144 @@ const InstructorDocumentsTab = () => {
       }
     } catch (error) {
       toast.error("Failed to download document");
+    }
+  };
+
+  const handlePrint = async (doc: InstructorDocument) => {
+    try {
+      const blob = await instructorService.downloadDocument(doc.id);
+      if (!blob) {
+        toast.error("Failed to load document for printing");
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error("Please allow pop-ups to print documents");
+        window.URL.revokeObjectURL(url);
+        return;
+      }
+
+      if (blob.type === 'application/pdf') {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head><title>Print - ${doc.fileName}</title></head>
+          <body style="margin:0;padding:0;">
+            <iframe src="${url}" style="width:100%;height:100vh;border:none;" onload="setTimeout(()=>{this.contentWindow.print();},500)"></iframe>
+          </body>
+          </html>
+        `);
+      } else if (blob.type.startsWith('image/')) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Print - ${doc.fileName}</title>
+            <style>
+              @media print { body { margin: 0; } img { max-width: 100%; height: auto; } }
+              body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+              img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
+            </style>
+          </head>
+          <body>
+            <img src="${url}" onload="setTimeout(()=>window.print(),300)" />
+          </body>
+          </html>
+        `);
+      } else {
+        // For other file types, just open the file
+        printWindow.location.href = url;
+      }
+      printWindow.document.close();
+    } catch (error) {
+      toast.error("Failed to print document");
+    }
+  };
+
+  const handlePrintAll = async (studentId: string) => {
+    const studentDocs = getStudentDocuments(studentId);
+    const approvedOrPendingDocs = studentDocs.filter(d => d.status === 'APPROVED' || d.status === 'PENDING');
+
+    if (approvedOrPendingDocs.length === 0) {
+      toast.error("No documents to print");
+      return;
+    }
+
+    setPrintingAll(true);
+    toast(`Merging ${approvedOrPendingDocs.length} document(s) into one PDF...`, { icon: '🖨️' });
+
+    try {
+      // Fetch all document blobs in parallel
+      const blobResults = await Promise.all(
+        approvedOrPendingDocs.map(async (doc) => {
+          const blob = await instructorService.downloadDocument(doc.id);
+          return { doc, blob };
+        })
+      );
+
+      const validResults = blobResults.filter(r => r.blob !== null);
+
+      if (validResults.length === 0) {
+        toast.error("Failed to load any documents");
+        return;
+      }
+
+      // Merge all PDFs into one using pdf-lib
+      const mergedPdf = await PDFDocument.create();
+
+      for (const { doc, blob } of validResults) {
+        if (!blob) continue;
+
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+
+          if (blob.type === 'application/pdf') {
+            const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+            const pages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+            pages.forEach(page => mergedPdf.addPage(page));
+          } else if (blob.type.startsWith('image/')) {
+            // Convert image to a PDF page
+            let img;
+            if (blob.type === 'image/png') {
+              img = await mergedPdf.embedPng(arrayBuffer);
+            } else {
+              img = await mergedPdf.embedJpg(arrayBuffer);
+            }
+            const page = mergedPdf.addPage([img.width, img.height]);
+            page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+          }
+        } catch (err) {
+          console.warn(`Skipped "${doc.fileName}" — could not merge:`, err);
+        }
+      }
+
+      if (mergedPdf.getPageCount() === 0) {
+        toast.error("Could not merge any documents");
+        return;
+      }
+
+      // Save merged PDF and open for printing
+      const mergedBytes = await mergedPdf.save();
+      const mergedBlob = new Blob([mergedBytes], { type: 'application/pdf' });
+      const mergedUrl = URL.createObjectURL(mergedBlob);
+
+      const printWindow = window.open(mergedUrl, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          setTimeout(() => printWindow.print(), 700);
+        });
+      } else {
+        toast.error("Please allow pop-ups to print");
+      }
+
+      toast.success(`${mergedPdf.getPageCount()} pages ready to print`);
+    } catch (error) {
+      console.error("Print all error:", error);
+      toast.error("Failed to prepare documents for printing");
+    } finally {
+      setPrintingAll(false);
     }
   };
 
@@ -525,19 +638,34 @@ const InstructorDocumentsTab = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-4 rounded-xl">
-              <div className="text-center px-2 sm:px-4 border-r border-gray-200 dark:border-gray-700">
-                <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{progress.percentage}%</div>
-                <div className="text-xs text-gray-500">Completion</div>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 sm:p-4 rounded-xl">
+                <div className="text-center px-2 sm:px-4 border-r border-gray-200 dark:border-gray-700">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{progress.percentage}%</div>
+                  <div className="text-xs text-gray-500">Completion</div>
+                </div>
+                <div className="text-center px-2 sm:px-4 border-r border-gray-200 dark:border-gray-700">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{progress.approved}</div>
+                  <div className="text-xs text-gray-500">Approved</div>
+                </div>
+                <div className="text-center px-2 sm:px-4">
+                  <div className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">{progress.pending}</div>
+                  <div className="text-xs text-gray-500">Pending</div>
+                </div>
               </div>
-              <div className="text-center px-2 sm:px-4 border-r border-gray-200 dark:border-gray-700">
-                <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{progress.approved}</div>
-                <div className="text-xs text-gray-500">Approved</div>
-              </div>
-              <div className="text-center px-2 sm:px-4">
-                <div className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400">{progress.pending}</div>
-                <div className="text-xs text-gray-500">Pending</div>
-              </div>
+              <button
+                onClick={() => handlePrintAll(selectedStudent.id)}
+                disabled={printingAll}
+                className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm transition-colors shadow-sm shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Print all submitted documents"
+              >
+                {printingAll ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Printer className="w-5 h-5" />
+                )}
+                <span className="hidden sm:inline">Print All</span>
+              </button>
             </div>
           </div>
         </div>
@@ -561,8 +689,11 @@ const InstructorDocumentsTab = () => {
                     // Find the latest document for this requirement
                     const doc = studentDocs
                       .filter(d => {
-                        const match = d.documentType === req.type;
-                        // devLog.log(`Checking req ${req.type} against doc ${d.documentType}: ${match}`);
+                        let match = d.documentType === req.type;
+                        // Also match ENDORSEMENT_LETTER_MULTI for ENDORSEMENT_LETTER requirement
+                        if (!match && req.type === 'ENDORSEMENT_LETTER') {
+                          match = d.documentType === 'ENDORSEMENT_LETTER_MULTI';
+                        }
                         return match;
                       })
                       .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime())[0];
@@ -599,6 +730,14 @@ const InstructorDocumentsTab = () => {
                           <div className="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
                             {doc ? (
                               <>
+                                <button
+                                  onClick={() => handlePrint(doc)}
+                                  className="p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-lg transition-colors touch-manipulation"
+                                  title="Print"
+                                  aria-label="Print document"
+                                >
+                                  <Printer className="w-5 h-5" />
+                                </button>
                                 <button
                                   onClick={() => handleDownload(doc)}
                                   className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
@@ -646,23 +785,6 @@ const InstructorDocumentsTab = () => {
   };
 
   // --- Main Render ---
-
-  if (activeTab === "templates") {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setActiveTab("students")}
-            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Student Progress</span>
-          </button>
-        </div>
-        <InstructorTemplateManagement />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 min-h-screen dark:bg-[#19191c]">
@@ -718,13 +840,6 @@ const InstructorDocumentsTab = () => {
               </button>
             </div>
 
-            <button
-              onClick={() => setActiveTab("templates")}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Manage Requirements</span>
-            </button>
           </div>
         </div>
       )}
@@ -757,6 +872,14 @@ const InstructorDocumentsTab = () => {
                     </h3>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => handlePrint(selectedDoc)}
+                      className="p-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-lg transition-colors text-gray-600 dark:text-gray-400"
+                      title="Print"
+                      aria-label="Print document"
+                    >
+                      <Printer className="w-5 h-5" />
+                    </button>
                     <button
                       onClick={() => handleDownload(selectedDoc)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-400"
@@ -832,6 +955,14 @@ const InstructorDocumentsTab = () => {
                   {/* Action Icons */}
                   <div className="flex items-center gap-1">
                     <button
+                      onClick={() => handlePrint(selectedDoc)}
+                      className="p-2 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-lg transition-colors text-gray-600 dark:text-gray-400"
+                      title="Print document"
+                      aria-label="Print document"
+                    >
+                      <Printer className="w-5 h-5" />
+                    </button>
+                    <button
                       onClick={() => handleDownload(selectedDoc)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                       title="Download document"
@@ -856,7 +987,7 @@ const InstructorDocumentsTab = () => {
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-gray-50 dark:bg-[#0f0f11]">
+            <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-[#0f0f11]">
               {/* Document Preview Area */}
               <div className="flex-1 overflow-hidden flex flex-col relative min-h-0">
                 {/* Document Preview Toolbar */}
@@ -911,42 +1042,22 @@ const InstructorDocumentsTab = () => {
                 </div>
               </div>
 
-              {/* Feedback Panel */}
-              <div className="w-full lg:w-96 h-auto lg:h-auto border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19191c] flex flex-col shadow-lg lg:shadow-none">
-                <div className="flex-1 overflow-y-auto min-h-0 max-h-[40vh] lg:max-h-full bg-white dark:bg-[#19191c]">
-                  <DocumentFeedbackPanel
-                    key={feedbackRefreshKey}
-                    documentId={selectedDoc.id}
-                    className="h-full border-0 shadow-none bg-transparent"
-                    compact={true}
-                    allowFeedback={false}
-                    onFeedbackAdded={async () => {
-                      const updatedDocs = await instructorService.getDocumentsForReview();
-                      setDocuments(updatedDocs);
-                      const updatedDoc = updatedDocs.find(d => d.id === selectedDoc.id);
-                      if (updatedDoc) setSelectedDoc(updatedDoc);
-                      setFeedbackRefreshKey(prev => prev + 1);
-                    }}
-                  />
-                </div>
-
-                {/* Review Actions Section - Fixed at bottom for mobile */}
-                {selectedDoc.status === 'PENDING' && (
-                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c]">
-                    <div className="mb-3">
-                      <textarea
-                        value={reviewRemarks}
-                        onChange={(e) => setReviewRemarks(e.target.value)}
-                        placeholder="Add remarks (required for reject)..."
-                        className="w-full p-3 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="flex gap-2">
+              {/* Review Actions - Bottom Bar */}
+              {selectedDoc.status === 'PENDING' && (
+                <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] px-4 py-3">
+                  <div className="flex items-center gap-3 max-w-4xl mx-auto">
+                    <textarea
+                      value={reviewRemarks}
+                      onChange={(e) => setReviewRemarks(e.target.value)}
+                      placeholder="Add remarks (required for reject)..."
+                      className="flex-1 p-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={1}
+                    />
+                    <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={() => handleReviewAction('approve')}
                         disabled={isSubmittingReview}
-                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                        className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
                       >
                         {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                         Approve
@@ -954,7 +1065,7 @@ const InstructorDocumentsTab = () => {
                       <button
                         onClick={() => handleReviewAction('request_changes')}
                         disabled={isSubmittingReview}
-                        className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
                       >
                         {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
                         Changes
@@ -962,43 +1073,26 @@ const InstructorDocumentsTab = () => {
                       <button
                         onClick={() => handleReviewAction('reject')}
                         disabled={isSubmittingReview}
-                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2"
+                        className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
                       >
                         {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                         Reject
                       </button>
                     </div>
-                    {/* AI Buttons - Compact */}
-                    <div className="flex justify-end gap-3 mt-3">
-                      <button
-                        onClick={() => handleGenerateAIFeedback('approve')}
-                        disabled={isGeneratingAI || isSubmittingReview}
-                        className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3 h-3" /> AI Approve
-                      </button>
-                      <button
-                        onClick={() => handleGenerateAIFeedback('request_changes')}
-                        disabled={isGeneratingAI || isSubmittingReview}
-                        className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3 h-3" /> AI Feedback
-                      </button>
-                    </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {selectedDoc.status !== 'PENDING' && (
-                  <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c]">
-                    <div className={`p-3 rounded-lg text-center font-medium ${selectedDoc.status === 'APPROVED' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
-                      selectedDoc.status === 'REJECTED' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
-                        'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
-                      }`}>
-                      Document {selectedDoc.status === 'APPROVED' ? 'Approved' : selectedDoc.status === 'REJECTED' ? 'Rejected' : 'Changes Requested'}
-                    </div>
+              {selectedDoc.status !== 'PENDING' && (
+                <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#19191c] px-4 py-3">
+                  <div className={`p-3 rounded-lg text-center font-medium max-w-md mx-auto ${selectedDoc.status === 'APPROVED' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
+                    selectedDoc.status === 'REJECTED' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
+                      'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
+                    }`}>
+                    Document {selectedDoc.status === 'APPROVED' ? 'Approved' : selectedDoc.status === 'REJECTED' ? 'Rejected' : 'Changes Requested'}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

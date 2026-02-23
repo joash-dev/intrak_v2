@@ -41,7 +41,7 @@ export type MOA = {
   filepath: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   remarks?: string;
-  uploadedAt: string;
+  createdAt: string;
   reviewedAt?: string;
   student?: {
     id: string;

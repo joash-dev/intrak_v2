@@ -39,6 +39,10 @@ router.get('/supervisor-feedback/export/:studentId', authorize(['INDUSTRY_PARTNE
 router.post('/agency-self-evaluation', authorize(['INDUSTRY_PARTNER']), agencySelfEvaluationController.submitAgencySelfEvaluation);
 router.get('/agency-self-evaluation', authorize(['INDUSTRY_PARTNER', 'STUDENT']), agencySelfEvaluationController.getAgencySelfEvaluation);
 router.get('/agency-self-evaluation/export', authorize(['INDUSTRY_PARTNER', 'STUDENT']), agencySelfEvaluationController.exportAgencySelfEvaluation);
+// Attendance reminder & activity timeline (must come before /:id)
+router.post('/:studentId/send-reminder', authorize(['INSTRUCTOR']), studentController.sendAttendanceReminder);
+router.get('/:studentId/timeline', authorize(['INSTRUCTOR', 'COORDINATOR', 'ADMIN']), studentController.getStudentTimeline);
+
 // Parameterized routes - must come after specific routes
 router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);

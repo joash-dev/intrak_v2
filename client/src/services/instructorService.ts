@@ -64,6 +64,15 @@ export interface InstructorAlert {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface TimelineEntry {
+  id: string;
+  type: 'attendance' | 'document' | 'action';
+  title: string;
+  description: string;
+  timestamp: string;
+  icon: string;
+}
+
 export interface InstructorDocument {
   id: string;
   studentId: string; // UUID
@@ -212,7 +221,7 @@ class InstructorService {
               studentName: student.name,
               action: `Submitted ${this.getDocumentTypeDisplay(doc.type)}`,
               type: 'submission',
-              timestamp: doc.uploadedAt || doc.createdAt
+              timestamp: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
             });
           }
         }
@@ -691,7 +700,7 @@ class InstructorService {
       }
 
       // Fetch documents (backend will automatically filter by instructor's assigned students)
-      const response = await api.get('/documents');
+      const response = await api.get('/documents', { params: { limit: 200 } });
 
       const documents = response.data.documents || [];
 
@@ -707,7 +716,7 @@ class InstructorService {
         fileName: doc.filename || 'Unknown File',
         fileSize: this.formatFileSize(doc.fileSize || 0),
         fileSizeBytes: doc.fileSize || 0,
-        submittedDate: this.formatTimestamp(doc.uploadedAt),
+        submittedDate: this.formatTimestamp(doc.uploadedAt || doc.createdAt),
         dueDate: doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : undefined,
         status: doc.status || 'PENDING',
         description: doc.description || '',
@@ -776,7 +785,7 @@ class InstructorService {
         fileName: doc.filename || 'Unknown File',
         fileSize: this.formatFileSize(doc.fileSize || 0),
         fileSizeBytes: doc.fileSize || 0,
-        submittedDate: this.formatTimestamp(doc.uploadedAt),
+        submittedDate: this.formatTimestamp(doc.uploadedAt || doc.createdAt),
         dueDate: doc.dueDate ? new Date(doc.dueDate).toLocaleDateString() : undefined,
         status: doc.status || 'PENDING',
         description: doc.description || '',
@@ -1011,6 +1020,28 @@ class InstructorService {
     } catch (error) {
       console.error('Error updating student:', error);
       return false;
+    }
+  }
+
+  // Send attendance reminder notification to a student
+  async sendAttendanceReminder(studentId: string, message?: string): Promise<boolean> {
+    try {
+      await api.post(`/students/${studentId}/send-reminder`, { message });
+      return true;
+    } catch (error) {
+      console.error('Error sending reminder:', error);
+      return false;
+    }
+  }
+
+  // Get student activity timeline
+  async getStudentTimeline(studentId: string, limit: number = 20): Promise<TimelineEntry[]> {
+    try {
+      const response = await api.get(`/students/${studentId}/timeline`, { params: { limit } });
+      return response.data.timeline || [];
+    } catch (error) {
+      console.error('Error fetching timeline:', error);
+      return [];
     }
   }
 

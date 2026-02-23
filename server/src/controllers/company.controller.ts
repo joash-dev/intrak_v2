@@ -601,7 +601,7 @@ export const getAllMOAs = async (req: AuthRequest, res: Response) => {
           }
         }
       },
-      orderBy: { uploadedAt: 'desc' }
+      orderBy: { createdAt: 'desc' }
     });
 
     res.json({ moas });
@@ -895,7 +895,7 @@ export const createSupervisorAccount = async (req: AuthRequest, res: Response) =
 
     const supervisorDisplayName =
       supervisorUser.name || contactPerson || `${companyName} Supervisor`;
-    const loginUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/login`;
+    const loginUrl = `${process.env.CLIENT_URL || "https://intrak.site"}/login`;
 
     let emailSent = false;
     let emailMessage = "";
@@ -1091,7 +1091,7 @@ export const getMOAStats = async (req: AuthRequest, res: Response) => {
       where: {
         type: 'MOA',
         status: 'APPROVED',
-        uploadedAt: {
+        createdAt: {
           lte: thirtyDaysAgo
         }
       }

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Internship Release Form - FM-AA-INT-12</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 6mm 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #000;
+            background: #888;
+            line-height: 1.4;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 5mm auto;
+            padding: 5mm 12mm;
+            background: white;
+            position: relative;
+        }
+
+        /* Form Code top-right */
+        .form-code {
+            text-align: right;
+            font-size: 8pt;
+            font-style: italic;
+            line-height: 1.3;
+            margin-bottom: 3mm;
+        }
+
+        /* Header area */
+        .header {
+            position: relative;
+            text-align: center;
+            margin-top: 5mm;
+            margin-bottom: 8mm;
+        }
+
+        .header-text {
+            text-align: center;
+        }
+
+        .header-text h1 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 1mm;
+        }
+
+        .header-text p {
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        .header-logo {
+            position: absolute;
+            right: 15mm;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .header-logo img {
+            width: 22mm;
+            height: 22mm;
+        }
+
+        /* Underline blanks */
+        .blank {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 30mm;
+            text-align: center;
+            padding-bottom: 0.3mm;
+        }
+
+        .blank-sm {
+            min-width: 12mm;
+        }
+
+        .blank-md {
+            min-width: 25mm;
+        }
+
+        .blank-lg {
+            min-width: 40mm;
+        }
+
+        .blank-xl {
+            min-width: 55mm;
+        }
+
+        .blank-full {
+            min-width: 80%;
+        }
+
+        /* Variables */
+        .var {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* Field lines */
+        .field-group {
+            margin-bottom: 5mm;
+        }
+
+        .field-line {
+            border-bottom: 1px solid #000;
+            min-height: 6mm;
+            margin-bottom: 1mm;
+            width: 45%;
+        }
+
+        .field-label-below {
+            font-size: 8pt;
+            font-style: italic;
+            margin-bottom: 4mm;
+            text-align: center;
+            width: 45%;
+        }
+
+        .field-row {
+            margin-bottom: 3mm;
+            font-size: 10pt;
+        }
+
+        .field-row .label {
+            font-weight: bold;
+        }
+
+        /* Body text */
+        .body-text {
+            margin-bottom: 4mm;
+            text-align: justify;
+            line-height: 1.5;
+        }
+
+        /* Signatures */
+        .sig-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15mm;
+        }
+
+        .sig-block {
+            width: 45%;
+            text-align: center;
+        }
+
+        .sig-name {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 1mm;
+            min-height: 5mm;
+        }
+
+        .sig-line-block {
+            border-top: 1px solid #000;
+            width: 80%;
+            margin: 0 auto 1mm;
+        }
+
+        .sig-label {
+            font-size: 8.5pt;
+            font-style: italic;
+        }
+
+        .noted-section {
+            margin-top: 12mm;
+        }
+
+        .noted-title {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 15mm;
+        }
+
+        .noted-sig {
+            width: 45%;
+            text-align: center;
+        }
+
+        .noted-sig .sig-line-block {
+            margin: 0 auto 1mm;
+        }
+
+        .noted-sig .sig-label {
+            text-align: center;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0 8mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Form Code -->
+        <div class="form-code">FM-AA-INT-12<br>Rev: 1<br>14-Oct-2024</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-text">
+                <h1>INTERNSHIP RELEASE FORM</h1>
+                <p>PANGASINAN STATE UNIVERSITY</p>
+                <p><span class="blank blank-md"><span class="var">${campus}</span></span> Campus</p>
+            </div>
+            <div class="header-logo">
+                <img src="assets/psu_logo.png" alt="PSU Logo" style="width:22mm;height:22mm;">
+            </div>
+        </div>
+
+        <!-- Date -->
+        <div class="field-group">
+            <div class="field-line"><span class="var">${date}</span></div>
+            <div class="field-label-below">Date</div>
+        </div>
+
+        <!-- Student Name (3 lines) -->
+        <div class="field-group">
+            <div class="field-line"><span class="var">${surname}</span></div>
+            <div class="field-line"><span class="var">${given_name}</span></div>
+            <div class="field-line"><span class="var">${middle_name}</span></div>
+        </div>
+
+        <!-- Course & Major -->
+        <div class="field-row">
+            <span class="label">Course:</span>
+            <span class="blank blank-lg"><span class="var">${course}</span></span>
+        </div>
+        <div class="field-row" style="margin-bottom:6mm;">
+            <span class="label">Major:</span>&nbsp;&nbsp;
+            <span class="blank blank-lg"><span class="var">${major}</span></span>
+        </div>
+
+        <!-- Release paragraph -->
+        <p class="body-text">
+            Upon completion and submission of all your required documents for your Internship / Practicum activity, you
+            are hereby released to undergo <span class="blank blank-sm"><span class="var">${total_hours}</span></span>
+            hours Internship / Practicum at
+        </p>
+
+        <!-- Company info -->
+        <div class="field-row">
+            <span class="label">Cooperating Company/Agency/Firm:</span>
+            <span class="blank blank-xl"><span class="var">${company_name}</span></span>
+        </div>
+        <div class="field-row" style="margin-bottom:5mm;">
+            <span class="label">Company/Agency/Firm Address:</span>
+            <span class="blank blank-xl"><span class="var">${company_address}</span></span>
+        </div>
+
+        <!-- From / To -->
+        <div class="field-row" style="margin-bottom:8mm;">
+            From <span class="blank blank-md"><span class="var">${start_month}</span></span>,
+            <span class="blank blank-md"><span class="var">${start_year}</span></span>
+            to <span class="blank blank-md"><span class="var">${end_month}</span></span>,
+            <span class="blank blank-md"><span class="var">${end_year}</span></span>.
+        </div>
+
+        <!-- Guidance text -->
+        <p class="body-text">
+            Please be guided with the school and company Internship / Practicum policies and guidelines throughout the
+            duration of your Internship / Practicum Activity
+        </p>
+
+        <!-- Signatures: Instructor & Coordinator -->
+        <div class="sig-row">
+            <div class="sig-block">
+                <div class="sig-name"><span class="var">${instructor_name}</span></div>
+                <div class="sig-line-block"></div>
+                <div class="sig-label">Internship / Practicum Subject Instructor</div>
+            </div>
+            <div class="sig-block">
+                <div class="sig-name"><span class="var">${coordinator_name}</span></div>
+                <div class="sig-line-block"></div>
+                <div class="sig-label">Campus Internship Coordinator</div>
+            </div>
+        </div>
+
+        <!-- Noted -->
+        <div class="noted-section">
+            <div class="noted-title">Noted:</div>
+            <div class="noted-sig">
+                <div class="sig-name"><span class="var">${campus_exec_director}</span></div>
+                <div class="sig-line-block"></div>
+                <div class="sig-label" style="text-align:center;">Campus Executive Director</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

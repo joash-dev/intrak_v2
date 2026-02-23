@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import app from '../index';
 
 const attendanceLogFindMany = jest.fn();
+const attendanceLogFindFirst = jest.fn();
 const attendanceLogCreate = jest.fn();
+const attendanceLogUpdate = jest.fn();
 const companyFindMany = jest.fn() as jest.Mock;
 const studentFindUnique = jest.fn();
 const studentFindFirst = jest.fn();
@@ -14,7 +16,9 @@ jest.mock('@prisma/client', () => {
     PrismaClient: jest.fn(() => ({
       attendanceLog: {
         findMany: (...args: any[]) => attendanceLogFindMany(...args),
+        findFirst: (...args: any[]) => attendanceLogFindFirst(...args),
         create: (...args: any[]) => attendanceLogCreate(...args),
+        update: (...args: any[]) => attendanceLogUpdate(...args),
       },
       student: {
         findUnique: (...args: any[]) => studentFindUnique(...args),
@@ -120,6 +124,8 @@ describe('Attendance routes', () => {
         longitude: 1,
       },
     }));
+    // No open attendance log → will create a new one (login action)
+    attendanceLogFindFirst.mockImplementation(async () => null);
     attendanceLogCreate.mockImplementation(async () => ({ id: 'log-123' }));
     qRTokenUpdate.mockImplementation(async () => ({}));
 

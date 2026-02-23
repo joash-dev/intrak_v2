@@ -16,6 +16,11 @@ import {
   X,
   Send,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
 } from "lucide-react";
 import {
   announcementService,
@@ -37,6 +42,16 @@ interface CoordinatorAnnouncementsTabProps {
   defaultAudience?: AudienceOption;
 }
 
+const ITEMS_PER_PAGE = 10;
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  ALL: "All Users",
+  STUDENTS: "Students",
+  COORDINATORS: "Coordinators",
+  INSTRUCTORS: "Instructors",
+  INDUSTRY_PARTNERS: "Industry Partners",
+};
+
 const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = ({
   defaultAudience = "ALL",
 }) => {
@@ -46,8 +61,13 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterAudience, setFilterAudience] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<Announcement | null>(null);
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     content: "",
@@ -96,22 +116,11 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     }
   }, [defaultAudience, showCreateModal]);
 
-  // Track views for all announcements when they are loaded
-  useEffect(() => {
-    if (announcements.length > 0) {
-      // Track views for all announcements (coordinator viewing all announcements)
-      announcements.forEach((announcement) => {
-        trackAnnouncementView(announcement.id);
-      });
-    }
-  }, [announcements]);
-
-  // Track view when announcement is displayed
+  // Track view only when a user expands / views an announcement (not bulk)
   const trackAnnouncementView = async (announcementId: string) => {
     try {
       await announcementService.trackView(announcementId);
     } catch (error) {
-      // Silently fail for view tracking to not disrupt user experience
       console.warn("Failed to track view:", error);
     }
   };
@@ -120,13 +129,13 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      info: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-500",
+      info: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-500",
       warning:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 border-yellow-500",
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-500",
       success:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-500",
+        "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-500",
       urgent:
-        "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-500",
+        "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-500",
     };
     return colors[type] || colors.info;
   };
@@ -148,7 +157,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
   const handleCreate = async () => {
     if (!newAnnouncement.title || !newAnnouncement.content) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -162,10 +171,9 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
         isPinned: newAnnouncement.isPinned,
       });
 
-      // Refresh announcements
+      toast.success("Announcement posted successfully!");
       await fetchAnnouncements();
 
-      // Reset form and close modal
       setNewAnnouncement({
         title: "",
         content: "",
@@ -177,7 +185,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
       setShowCreateModal(false);
     } catch (err: any) {
       console.error("Error creating announcement:", err);
-      alert(err.response?.data?.message || "Failed to create announcement");
+      toast.error(err.response?.data?.message || "Failed to create announcement");
     } finally {
       setSubmitting(false);
     }
@@ -225,15 +233,23 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     }
   };
 
-  const handleDelete = async (announcement: Announcement) => {
-    if (confirm(`Are you sure you want to delete "${announcement.title}"?`)) {
-      try {
-        await announcementService.deleteAnnouncement(announcement.id);
-        await fetchAnnouncements();
-      } catch (err: any) {
-        console.error("Error deleting announcement:", err);
-        alert(err.response?.data?.message || "Failed to delete announcement");
-      }
+  const confirmDelete = (announcement: Announcement) => {
+    setDeletingAnnouncement(announcement);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingAnnouncement) return;
+    try {
+      await announcementService.deleteAnnouncement(deletingAnnouncement.id);
+      toast.success("Announcement deleted successfully");
+      await fetchAnnouncements();
+    } catch (err: any) {
+      console.error("Error deleting announcement:", err);
+      toast.error(err.response?.data?.message || "Failed to delete announcement");
+    } finally {
+      setShowDeleteModal(false);
+      setDeletingAnnouncement(null);
     }
   };
 
@@ -253,6 +269,21 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
     }
   };
 
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        // Track view when user actively reads the announcement
+        trackAnnouncementView(id);
+      }
+      return next;
+    });
+  };
+
+  // ---------- Filtering & Pagination ----------
   const filteredAnnouncements = announcements.filter((announcement) => {
     const matchesSearch =
       announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -261,18 +292,145 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
         .includes(searchQuery.toLowerCase());
     const matchesType =
       filterType === "all" || (announcement.type || "info") === filterType;
-    return matchesSearch && matchesType;
+    const matchesAudience =
+      filterAudience === "all" || announcement.audience === filterAudience;
+    return matchesSearch && matchesType && matchesAudience;
   });
 
   const pinnedAnnouncements = filteredAnnouncements.filter((a) => a.isPinned);
   const regularAnnouncements = filteredAnnouncements.filter((a) => !a.isPinned);
 
-  // Loading state
-  // Loading state
+  const totalPages = Math.max(1, Math.ceil(regularAnnouncements.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedRegular = regularAnnouncements.slice(
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE
+  );
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterType, filterAudience]);
+
+  // ---------- Render helpers ----------
+  const renderAnnouncementCard = (announcement: Announcement, isPinnedSection: boolean) => {
+    const isExpanded = expandedIds.has(announcement.id);
+    const contentText = announcement.content || announcement.message || "";
+    const isLong = contentText.length > 200;
+
+    return (
+      <div
+        key={announcement.id}
+        className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+      >
+        <div className="p-5 sm:p-6">
+          {/* Top row */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start space-x-3 flex-1 min-w-0">
+              <div
+                className={`p-2.5 rounded-xl shrink-0 ${getTypeColor(announcement.type || "info")}`}
+              >
+                {getTypeIcon(announcement.type || "info")}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                    {announcement.title}
+                  </h3>
+                  {isPinnedSection && (
+                    <Pin className="w-3.5 h-3.5 text-blue-500 fill-current shrink-0" />
+                  )}
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase shrink-0 ${getTypeColor(
+                      announcement.type || "info"
+                    )}`}
+                  >
+                    {announcement.type || "info"}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 shrink-0">
+                    {AUDIENCE_LABELS[announcement.audience] || announcement.audience}
+                  </span>
+                </div>
+                {/* Content with expand/collapse */}
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 whitespace-pre-line">
+                  {isLong && !isExpanded
+                    ? contentText.slice(0, 200) + "..."
+                    : contentText}
+                </p>
+                {isLong && (
+                  <button
+                    onClick={() => toggleExpand(announcement.id)}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 mb-2"
+                  >
+                    {isExpanded ? (
+                      <>
+                        Show less <ChevronUp className="w-3 h-3" />
+                      </>
+                    ) : (
+                      <>
+                        Read more <ChevronDown className="w-3 h-3" />
+                      </>
+                    )}
+                  </button>
+                )}
+                {/* Meta row */}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {announcementService.formatDate(
+                      announcement.createdAt || announcement.createdDate || ""
+                    )}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {announcement.createdBy?.name || "Unknown"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {announcement.views} {announcement.views === 1 ? "view" : "views"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-end space-x-1.5 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={() => handleTogglePin(announcement)}
+              className={`p-2 rounded-lg transition-colors ${
+                announcement.isPinned
+                  ? "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+              title={announcement.isPinned ? "Unpin" : "Pin"}
+            >
+              <Pin className={`w-4 h-4 ${announcement.isPinned ? "fill-current" : ""}`} />
+            </button>
+            <button
+              onClick={() => handleEdit(announcement)}
+              className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => confirmDelete(announcement)}
+              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ---------- Loading state ----------
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* Header Skeleton */}
         <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -282,54 +440,30 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
             <Skeleton className="h-10 w-32 rounded-xl" />
           </div>
         </div>
-
-        {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl p-5 border border-gray-200 dark:border-gray-700">
               <div className="space-y-3">
-                <Skeleton className="w-8 h-8 rounded" />
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                </div>
+                <Skeleton className="w-10 h-10 rounded-xl" />
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-8 w-16" />
               </div>
             </div>
           ))}
         </div>
-
-        {/* Search/Filter Skeleton */}
-        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <Skeleton className="h-10 flex-1 rounded-lg" />
-            <Skeleton className="h-10 w-40 rounded-lg" />
-          </div>
-        </div>
-
-        {/* Announcements List Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Skeleton className="w-10 h-10 rounded-lg" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-5 w-48" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="w-10 h-10 rounded-lg" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-3 w-32" />
                   </div>
-                  <Skeleton className="h-6 w-20 rounded-full" />
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-4 w-32" />
-                  <div className="flex space-x-2">
-                    <Skeleton className="w-8 h-8 rounded-lg" />
-                    <Skeleton className="w-8 h-8 rounded-lg" />
-                  </div>
-                </div>
               </div>
             </div>
           ))}
@@ -359,82 +493,112 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 gap-3 sm:gap-0">
-        <div className="flex-1">
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-            Announcements
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
-            Create and manage announcements for students
-          </p>
+      {/* Header */}
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+            <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                Announcements
+              </h1>
+              {stats.total > 0 && (
+                <span className="text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                  {stats.total}
+                </span>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+              Create and manage announcements for your audience
+            </p>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            setNewAnnouncement((prev) => ({
-              ...prev,
-              audience: defaultAudience,
-            }));
-            setShowCreateModal(true);
-          }}
-          className="inline-flex items-center justify-center space-x-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg sm:rounded-xl transition-colors font-medium shadow-sm text-sm sm:text-base w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>New Announcement</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchAnnouncements}
+            className="p-2.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              setNewAnnouncement((prev) => ({
+                ...prev,
+                audience: defaultAudience,
+              }));
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-purple-600 text-white hover:bg-purple-700 rounded-lg sm:rounded-xl transition-colors font-medium shadow-sm text-sm sm:text-base"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>New Announcement</span>
+          </button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-purple-100 dark:border-purple-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <MessageSquare className="w-8 h-8 text-purple-500" />
+      {/* Stats Cards — soft pastel */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+              <MessageSquare className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Total Announcements
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
+                Total
               </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.total}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-blue-100 dark:border-blue-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <Pin className="w-8 h-8 text-blue-500" />
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+              <Pin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                 Pinned
               </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.pinned}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-green-100 dark:border-green-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <Calendar className="w-8 h-8 text-green-500" />
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-xl">
+              <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                 This Week
               </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.thisWeek}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-orange-100 dark:border-orange-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <Eye className="w-8 h-8 text-orange-500" />
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+              <Eye className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium">
                 Avg. Views
               </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {stats.avgViews}
               </p>
             </div>
@@ -443,22 +607,22 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-[#212124] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white dark:bg-[#212124] rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
               placeholder="Search announcements..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Types</option>
             <option value="info">Info</option>
@@ -466,101 +630,30 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
             <option value="success">Success</option>
             <option value="urgent">Urgent</option>
           </select>
+          <select
+            value={filterAudience}
+            onChange={(e) => setFilterAudience(e.target.value)}
+            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All Audiences</option>
+            <option value="ALL">All Users</option>
+            <option value="STUDENTS">Students</option>
+            <option value="COORDINATORS">Coordinators</option>
+            <option value="INSTRUCTORS">Instructors</option>
+            <option value="INDUSTRY_PARTNERS">Industry Partners</option>
+          </select>
         </div>
       </div>
 
       {/* Pinned Announcements */}
       {pinnedAnnouncements.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-            <Pin className="w-5 h-5 mr-2 text-blue-600" />
-            Pinned Announcements
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Pin className="w-4 h-4 text-blue-500" />
+            Pinned ({pinnedAnnouncements.length})
           </h2>
-          <div className="space-y-4">
-            {pinnedAnnouncements.map((announcement) => (
-              <div
-                key={announcement.id}
-                className={`bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
-                  announcement.type || "info"
-                )}`}
-              >
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div
-                        className={`p-3 rounded-xl ${getTypeColor(
-                          announcement.type || "info"
-                        )}`}
-                      >
-                        {getTypeIcon(announcement.type || "info")}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {announcement.title}
-                          </h3>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full font-medium uppercase ${getTypeColor(
-                              announcement.type || "info"
-                            )}`}
-                          >
-                            {announcement.type || "info"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                          {announcement.content || announcement.message}
-                        </p>
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>
-                              {announcementService.formatDate(
-                                announcement.createdAt ||
-                                announcement.createdDate ||
-                                ""
-                              )}
-                            </span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Users className="w-3 h-3" />
-                            <span>
-                              {announcement.createdBy?.name || "Unknown"}
-                            </span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Eye className="w-3 h-3" />
-                            <span>{announcement.views} views</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={() => handleTogglePin(announcement)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"
-                      title="Unpin"
-                    >
-                      <Pin className="w-4 h-4 fill-current" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(announcement)}
-                      className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(announcement)}
-                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {pinnedAnnouncements.map((a) => renderAnnouncementCard(a, true))}
           </div>
         </div>
       )}
@@ -568,144 +661,126 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
       {/* Regular Announcements */}
       <div>
         {pinnedAnnouncements.length > 0 && (
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            All Announcements
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+            All Announcements ({regularAnnouncements.length})
           </h2>
         )}
-        <div className="space-y-4">
-          {regularAnnouncements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className={`bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden border-l-4 ${getTypeColor(
-                announcement.type || "info"
-              )}`}
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start space-x-4 flex-1">
-                    <div
-                      className={`p-3 rounded-xl ${getTypeColor(
-                        announcement.type || "info"
-                      )}`}
-                    >
-                      {getTypeIcon(announcement.type || "info")}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {announcement.title}
-                        </h3>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full font-medium uppercase ${getTypeColor(
-                            announcement.type || "info"
-                          )}`}
-                        >
-                          {announcement.type || "info"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                        {announcement.content || announcement.message}
-                      </p>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>
-                            {announcementService.formatDate(
-                              announcement.createdAt ||
-                              announcement.createdDate ||
-                              ""
-                            )}
-                          </span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <Users className="w-3 h-3" />
-                          <span>
-                            {announcement.createdBy?.name || "Unknown"}
-                          </span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <Eye className="w-3 h-3" />
-                          <span>{announcement.views} views</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-end space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => handleTogglePin(announcement)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                    title="Pin"
-                  >
-                    <Pin className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(announcement)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(announcement)}
-                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="space-y-3">
+          {paginatedRegular.map((a) => renderAnnouncementCard(a, false))}
         </div>
       </div>
 
+      {/* Empty state */}
       {filteredAnnouncements.length === 0 && (
         <div className="bg-white dark:bg-[#212124] rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
-          <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
+          <MessageSquare className="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-500 dark:text-gray-400 font-medium">
             No announcements found
+          </p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+            {searchQuery || filterType !== "all" || filterAudience !== "all"
+              ? "Try adjusting your filters"
+              : "Create your first announcement to get started"}
           </p>
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white dark:bg-[#212124] rounded-2xl px-4 py-3 border border-gray-100 dark:border-gray-700 shadow-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Showing {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+            {Math.min(safePage * ITEMS_PER_PAGE, regularAnnouncements.length)} of{" "}
+            {regularAnnouncements.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="p-1.5 rounded-lg disabled:opacity-30 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (p) =>
+                  p === 1 ||
+                  p === totalPages ||
+                  Math.abs(p - safePage) <= 1
+              )
+              .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                typeof p === "string" ? (
+                  <span key={`e${i}`} className="px-1 text-gray-400 text-xs">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-8 h-8 text-xs rounded-lg font-medium transition-colors ${
+                      p === safePage
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="p-1.5 rounded-lg disabled:opacity-30 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* =================== Create Modal =================== */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+        <div
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: 0 }}
+          onClick={(e) => e.target === e.currentTarget && setShowCreateModal(false)}
+        >
           <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Create Announcement
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={newAnnouncement.title}
                   onChange={(e) =>
-                    setNewAnnouncement({
-                      ...newAnnouncement,
-                      title: e.target.value,
-                    })
+                    setNewAnnouncement({ ...newAnnouncement, title: e.target.value })
                   }
                   placeholder="Enter announcement title"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Message <span className="text-red-500">*</span>
                   </label>
@@ -719,11 +794,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         });
                       }}
                       onSuccess={(generatedText) => {
-                        setNewAnnouncement({
-                          ...newAnnouncement,
-                          content: generatedText,
-                        });
-                        toast.success('Announcement content generated successfully');
+                        setNewAnnouncement({ ...newAnnouncement, content: generatedText });
+                        toast.success("Content generated successfully");
                       }}
                       disabled={!newAnnouncement.title || !newAnnouncement.audience}
                       size="sm"
@@ -734,31 +806,25 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                 <textarea
                   value={newAnnouncement.content}
                   onChange={(e) =>
-                    setNewAnnouncement({
-                      ...newAnnouncement,
-                      content: e.target.value,
-                    })
+                    setNewAnnouncement({ ...newAnnouncement, content: e.target.value })
                   }
                   placeholder="Enter announcement message"
-                  rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                  rows={5}
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Type
                   </label>
                   <select
                     value={newAnnouncement.type}
                     onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        type: e.target.value as any,
-                      })
+                      setNewAnnouncement({ ...newAnnouncement, type: e.target.value as any })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="info">Info</option>
                     <option value="warning">Warning</option>
@@ -768,61 +834,51 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Target Audience
                   </label>
                   <select
                     value={newAnnouncement.audience}
                     onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        audience: e.target.value as any,
-                      })
+                      setNewAnnouncement({ ...newAnnouncement, audience: e.target.value as any })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="ALL">All Users</option>
                     <option value="STUDENTS">Students Only</option>
                     <option value="COORDINATORS">Coordinators Only</option>
                     <option value="INSTRUCTORS">Instructors Only</option>
-                    <option value="INDUSTRY_PARTNERS">
-                      Industry Partners Only
-                    </option>
+                    <option value="INDUSTRY_PARTNERS">Industry Partners Only</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={newAnnouncement.isPinned}
-                    onChange={(e) =>
-                      setNewAnnouncement({
-                        ...newAnnouncement,
-                        isPinned: e.target.checked,
-                      })
-                    }
-                    className="rounded text-purple-600"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Pin this announcement
-                  </span>
-                </label>
-              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newAnnouncement.isPinned}
+                  onChange={(e) =>
+                    setNewAnnouncement({ ...newAnnouncement, isPinned: e.target.checked })
+                  }
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Pin this announcement
+                </span>
+              </label>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-end gap-3 mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                className="px-5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={submitting}
-                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium"
+                className="flex items-center gap-2 px-5 py-2 bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium text-sm"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -836,12 +892,16 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* =================== Edit Modal =================== */}
       {showEditModal && editingAnnouncement && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
+        <div
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: 0 }}
+          onClick={(e) => e.target === e.currentTarget && (setShowEditModal(false), setEditingAnnouncement(null))}
+        >
           <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 Edit Announcement
               </h3>
               <button
@@ -849,33 +909,30 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                   setShowEditModal(false);
                   setEditingAnnouncement(null);
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={editingAnnouncement.title}
                   onChange={(e) =>
-                    setEditingAnnouncement({
-                      ...editingAnnouncement,
-                      title: e.target.value,
-                    })
+                    setEditingAnnouncement({ ...editingAnnouncement, title: e.target.value })
                   }
                   placeholder="Enter announcement title"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 />
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Message <span className="text-red-500">*</span>
                   </label>
@@ -889,11 +946,8 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         });
                       }}
                       onSuccess={(generatedText) => {
-                        setEditingAnnouncement({
-                          ...editingAnnouncement,
-                          content: generatedText,
-                        });
-                        toast.success('Announcement content generated successfully');
+                        setEditingAnnouncement({ ...editingAnnouncement, content: generatedText });
+                        toast.success("Content generated successfully");
                       }}
                       disabled={!editingAnnouncement.title || !editingAnnouncement.audience}
                       size="sm"
@@ -904,20 +958,17 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                 <textarea
                   value={editingAnnouncement.content}
                   onChange={(e) =>
-                    setEditingAnnouncement({
-                      ...editingAnnouncement,
-                      content: e.target.value,
-                    })
+                    setEditingAnnouncement({ ...editingAnnouncement, content: e.target.value })
                   }
                   placeholder="Enter announcement message"
-                  rows={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                  rows={5}
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Type
                   </label>
                   <select
@@ -928,7 +979,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         type: e.target.value as "info" | "warning" | "success" | "urgent",
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="info">Info</option>
                     <option value="warning">Warning</option>
@@ -938,7 +989,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Target Audience
                   </label>
                   <select
@@ -949,53 +1000,49 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                         audience: e.target.value as AudienceOption,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-[#2a2a2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="ALL">All Users</option>
                     <option value="STUDENTS">Students Only</option>
                     <option value="COORDINATORS">Coordinators Only</option>
                     <option value="INSTRUCTORS">Instructors Only</option>
-                    <option value="INDUSTRY_PARTNERS">
-                      Industry Partners Only
-                    </option>
+                    <option value="INDUSTRY_PARTNERS">Industry Partners Only</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={editingAnnouncement.isPinned}
-                    onChange={(e) =>
-                      setEditingAnnouncement({
-                        ...editingAnnouncement,
-                        isPinned: e.target.checked,
-                      })
-                    }
-                    className="rounded text-purple-600"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Pin this announcement
-                  </span>
-                </label>
-              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editingAnnouncement.isPinned}
+                  onChange={(e) =>
+                    setEditingAnnouncement({
+                      ...editingAnnouncement,
+                      isPinned: e.target.checked,
+                    })
+                  }
+                  className="rounded text-purple-600 focus:ring-purple-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Pin this announcement
+                </span>
+              </label>
             </div>
 
-            <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-end gap-3 mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingAnnouncement(null);
                 }}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                className="px-5 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={submitting}
-                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium"
+                className="flex items-center gap-2 px-5 py-2 bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors font-medium text-sm"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1009,6 +1056,49 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
         </div>
       )}
 
+      {/* =================== Delete Confirmation Modal =================== */}
+      {showDeleteModal && deletingAnnouncement && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: 0 }}
+          onClick={(e) => e.target === e.currentTarget && (setShowDeleteModal(false), setDeletingAnnouncement(null))}
+        >
+          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-md w-full p-6 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Delete Announcement
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                "{deletingAnnouncement.title}"
+              </span>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingAnnouncement(null);
+                }}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-xl transition-colors font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

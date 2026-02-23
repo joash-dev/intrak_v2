@@ -534,70 +534,25 @@ const DocumentChecklistTab = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Students
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.total}
-              </p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total Students", value: stats.total, icon: User, bg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-300" },
+          { label: "Complete", value: stats.complete, icon: CheckCircle, bg: "bg-green-100 dark:bg-green-900/30", iconColor: "text-green-600 dark:text-green-300" },
+          { label: "High Progress", value: stats.highProgress, icon: CheckSquare, bg: "bg-amber-100 dark:bg-amber-900/30", iconColor: "text-amber-600 dark:text-amber-300" },
+          { label: "Low Progress", value: stats.lowProgress, icon: AlertCircle, bg: "bg-red-100 dark:bg-red-900/30", iconColor: "text-red-600 dark:text-red-300" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className={`p-2 ${stat.bg} rounded-lg w-fit mb-2`}>
+              <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <User className="w-6 h-6 text-white" />
-            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+              {stat.label}
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {stat.value}
+            </p>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Complete
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.complete}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-              <CheckCircle className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                High Progress
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.highProgress}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-              <CheckSquare className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-[#212124] rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Low Progress
-              </p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                {stats.lowProgress}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-              <AlertCircle className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Search and Filters */}

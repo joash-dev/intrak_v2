@@ -71,6 +71,7 @@ jobs:
         uses: codecov/codecov-action@v4
         if: always()
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./server/coverage/lcov.info
           flags: backend
           name: backend-coverage
@@ -110,13 +111,13 @@ jobs:
         working-directory: ./server
         run: npm ci
 
-      # Setup database for E2E
+      # Setup database for E2E (seed MUST succeed — Cypress tests need seeded accounts)
       - name: Setup Database
         working-directory: ./server
         run: |
           npx prisma generate
           npx prisma migrate deploy
-          npx prisma db seed || echo "Seed skipped"
+          npx prisma db seed
         env:
           DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_e2e
 
@@ -125,10 +126,10 @@ jobs:
         working-directory: ./client
         run: npm ci
 
-      # Build server for production-like E2E testing
+      # Build server for production-like E2E testing (prisma generate already done above)
       - name: Build Server
         working-directory: ./server
-        run: npm run build
+        run: npx tsc
         env:
           DATABASE_URL: postgresql://intrak_test:intrak_test_pass@localhost:5432/intrak_e2e
 
@@ -145,14 +146,16 @@ jobs:
           CORS_ORIGIN: http://localhost:5173
           USE_NAS: "false"
 
-      # Wait for server to be ready
+      # Wait for server to be ready (fail if server doesn't start)
       - name: Wait for Server
         run: |
           for i in $(seq 1 30); do
-            curl -s http://localhost:5000/health && break
+            curl -sf http://localhost:5000/health && echo "Server is ready!" && exit 0
             echo "Waiting for server... ($i/30)"
             sleep 2
           done
+          echo "ERROR: Server failed to start within 60 seconds"
+          exit 1
 
       # Run Cypress tests
       - name: Run Cypress Tests
@@ -163,6 +166,8 @@ jobs:
           wait-on: 'http://localhost:5173'
           wait-on-timeout: 120
           browser: chrome
+        env:
+          VITE_API_URL: http://localhost:5000
 
       # Upload test artifacts on failure
       - name: Upload Screenshots
@@ -203,8 +208,8 @@ jobs:
 
       - name: Lint Server
         working-directory: ./server
-        run: npm run lint || true
+        run: npm run lint
 
       - name: Lint Client
         working-directory: ./client
-        run: npm run lint || true
+        run: npm run lint

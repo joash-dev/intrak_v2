@@ -427,7 +427,7 @@ const InstructorOverview: React.FC = () => {
                                 </span>
                                 <span>Recent Activities</span>
                             </h3>
-                            <button onClick={() => navigate("/instructor/monitoring")} className="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700" aria-label="View all activities">View all</button>
+                            <button onClick={() => navigate("/instructor/students")} className="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-700" aria-label="View all activities">View all</button>
                         </div>
                         <div className="space-y-3">
                             {compactActivityFeed.length > 0 ? (

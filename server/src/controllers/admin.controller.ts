@@ -87,9 +87,9 @@ export const getAdminProfile = async (req: AuthRequest, res: Response) => {
     res.json({ user });
   } catch (error) {
     console.error('Get admin profile error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch admin profile', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch admin profile',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -149,19 +149,19 @@ export const updateAdminProfile = async (req: AuthRequest, res: Response) => {
     });
 
     // Log the profile update
-    await auditLog(userId, 'ADMIN_PROFILE_UPDATED', { 
-      updatedFields: Object.keys(updateData) 
+    await auditLog(userId, 'ADMIN_PROFILE_UPDATED', {
+      updatedFields: Object.keys(updateData)
     }, req);
 
-    res.json({ 
+    res.json({
       message: 'Admin profile updated successfully',
-      user: updatedUser 
+      user: updatedUser
     });
   } catch (error) {
     console.error('Update admin profile error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update admin profile', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to update admin profile',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -172,7 +172,7 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
     console.log('🔐 Password change request received');
     console.log('🔐 User from request:', req.user);
     console.log('🔐 Request body:', { currentPassword: '***', newPassword: '***' });
-    
+
     const userId = req.user!.id;
     const { currentPassword, newPassword } = req.body;
 
@@ -207,11 +207,11 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
     // Verify current password
     console.log('🔐 Verifying current password for user:', user.email);
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
-    
+
     if (!isCurrentPasswordValid) {
       console.log('❌ Current password verification failed for user:', user.email);
-      return res.status(400).json({ 
-        message: 'Current password is incorrect. Please enter your current password correctly.' 
+      return res.status(400).json({
+        message: 'Current password is incorrect. Please enter your current password correctly.'
       });
     }
 
@@ -219,16 +219,16 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
 
     // Validate new password
     if (newPassword.length < 8) {
-      return res.status(400).json({ 
-        message: 'New password must be at least 8 characters long' 
+      return res.status(400).json({
+        message: 'New password must be at least 8 characters long'
       });
     }
 
     // Check if new password is the same as current password
     const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
     if (isSamePassword) {
-      return res.status(400).json({ 
-        message: 'New password must be different from your current password' 
+      return res.status(400).json({
+        message: 'New password must be different from your current password'
       });
     }
 
@@ -244,20 +244,20 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
     console.log('✅ Password updated successfully for user:', user.email);
 
     // Log the password change
-    await auditLog(userId, 'ADMIN_PASSWORD_CHANGED', { 
+    await auditLog(userId, 'ADMIN_PASSWORD_CHANGED', {
       userEmail: user.email,
       timestamp: new Date().toISOString()
     }, req);
 
-    res.json({ 
+    res.json({
       message: 'Password changed successfully',
       success: true
     });
   } catch (error) {
     console.error('Change admin password error:', error);
-    res.status(500).json({ 
-      message: 'Failed to change password. Please try again.', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to change password. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -282,9 +282,9 @@ export const getAdminSettings = async (req: AuthRequest, res: Response) => {
     res.json({ adminSettings: sanitizeAdminSettings(adminSettings) });
   } catch (error) {
     console.error('Get admin settings error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch admin settings', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch admin settings',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -366,19 +366,19 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
     });
 
     // Log the settings update
-    await auditLog(userId, 'ADMIN_SETTINGS_UPDATED', { 
-      updatedFields: Object.keys(updateData) 
+    await auditLog(userId, 'ADMIN_SETTINGS_UPDATED', {
+      updatedFields: Object.keys(updateData)
     }, req);
 
-    res.json({ 
+    res.json({
       message: 'Admin settings updated successfully',
       adminSettings: sanitizeAdminSettings(adminSettings)
     });
   } catch (error) {
     console.error('Update admin settings error:', error);
-    res.status(500).json({ 
-      message: 'Failed to update admin settings', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to update admin settings',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -574,15 +574,15 @@ export const importAdminSettingsFile = async (req: AuthRequest, res: Response) =
 
       let updatedProfile = null as
         | {
-            id: string;
-            name: string;
-            email: string;
-            phone: string | null;
-            department: string | null;
-            office: string | null;
-            role: string;
-            profilePhoto: string | null;
-          }
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          department: string | null;
+          office: string | null;
+          role: string;
+          profilePhoto: string | null;
+        }
         | null;
 
       if (profile && typeof profile === 'object') {
@@ -640,12 +640,12 @@ export const importAdminSettingsFile = async (req: AuthRequest, res: Response) =
       message: 'Settings imported successfully',
       adminSettings: sanitizeAdminSettings(result.adminSettings),
       profile: result.profile,
-        notifications: {
-          emailSystemAlerts: result.adminSettings.emailSystemAlerts,
-          emailUserActivity: result.adminSettings.emailUserActivity,
-          emailMaintenance: result.adminSettings.emailMaintenance,
-          pushNotifications: result.adminSettings.pushNotifications,
-        },
+      notifications: {
+        emailSystemAlerts: result.adminSettings.emailSystemAlerts,
+        emailUserActivity: result.adminSettings.emailUserActivity,
+        emailMaintenance: result.adminSettings.emailMaintenance,
+        pushNotifications: result.adminSettings.pushNotifications,
+      },
     });
   } catch (error) {
     console.error('Import admin settings error:', error);
@@ -673,7 +673,7 @@ export const getInstructors = async (req: AuthRequest, res: Response) => {
 
     // Get all active instructors
     const instructors = await prisma.user.findMany({
-      where: { 
+      where: {
         role: 'INSTRUCTOR',
         active: true
       },
@@ -776,9 +776,9 @@ export const getAdminDashboard = async (req: AuthRequest, res: Response) => {
     res.json(dashboardData);
   } catch (error) {
     console.error('Get admin dashboard error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch admin dashboard data', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch admin dashboard data',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -818,7 +818,7 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     // Get NAS storage metrics (preferred) or local storage fallback
     const nasMetrics = await getNASStorageMetrics();
     const localMetrics = await getLocalStorageMetrics();
-    
+
     // Use NAS storage if available, otherwise use local storage, fallback to root filesystem
     let storageMetrics = nasMetrics;
     let diskUsage = 0;
@@ -888,8 +888,8 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     const dbSizeBytes = Number(actualDbSize);
     const dbSizeMB = Math.round((dbSizeBytes / 1024 / 1024) * 100) / 100;
     const dbSizeGB = Math.round((dbSizeBytes / 1024 / 1024 / 1024) * 100) / 100;
-    const dbSizeFormatted = dbSizeGB >= 1 
-      ? `${dbSizeGB} GB` 
+    const dbSizeFormatted = dbSizeGB >= 1
+      ? `${dbSizeGB} GB`
       : `${dbSizeMB} MB`;
 
     // Get server load (simplified)
@@ -910,7 +910,7 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
 
     // Get storage alerts
     const storageAlerts = await getAllStorageAlerts();
-    
+
     // Check for database alerts
     const alerts: StorageAlert[] = [...storageAlerts];
     if (databaseStatus === 'offline') {
@@ -963,9 +963,9 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     res.json({ systemInfo });
   } catch (error) {
     console.error('Get system info error:', error);
-    res.status(500).json({ 
-      message: 'Failed to fetch system information', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to fetch system information',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -987,16 +987,16 @@ export const checkMaintenanceStatus = async (req: Request, res: Response) => {
 
     res.json({
       maintenanceMode: isMaintenanceMode,
-      message: isMaintenanceMode 
-        ? 'System is currently under maintenance' 
+      message: isMaintenanceMode
+        ? 'System is currently under maintenance'
         : 'System is operational',
       lastUpdated: adminSettings?.updatedAt || null
     });
   } catch (error) {
     console.error('Error checking maintenance status:', error);
-    res.status(500).json({ 
-      message: 'Failed to check maintenance status', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to check maintenance status',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -1005,7 +1005,7 @@ export const checkMaintenanceStatus = async (req: Request, res: Response) => {
 export const emergencyDisableMaintenance = async (req: Request, res: Response) => {
   try {
     console.log('🚨 Emergency maintenance mode disable requested');
-    
+
     // Update all admin settings to disable maintenance mode
     await prisma.adminSettings.updateMany({
       where: {
@@ -1023,9 +1023,9 @@ export const emergencyDisableMaintenance = async (req: Request, res: Response) =
     });
   } catch (error) {
     console.error('Error disabling maintenance mode:', error);
-    res.status(500).json({ 
-      message: 'Failed to disable maintenance mode', 
-      error: process.env.NODE_ENV === 'development' ? error : undefined 
+    res.status(500).json({
+      message: 'Failed to disable maintenance mode',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 };
@@ -1080,7 +1080,7 @@ export const createSystemBackup = async (req: AuthRequest, res: Response) => {
           status: true,
           studentId: true,
           uploadedById: true,
-          uploadedAt: true,
+          createdAt: true,
           reviewedAt: true,
         },
       }),

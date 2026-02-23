@@ -5,16 +5,16 @@ export interface Announcement {
   title: string;
   content: string;
   audience: 'ALL' | 'STUDENTS' | 'COORDINATORS' | 'INSTRUCTORS' | 'INDUSTRY_PARTNERS';
+  type: 'info' | 'warning' | 'success' | 'urgent';
   createdAt: string;
   updatedAt: string;
   createdBy?: {
     name: string;
     role: string;
   };
-  // Additional fields for display
-  type?: 'info' | 'warning' | 'success' | 'urgent';
-  isPinned?: boolean;
-  views?: number;
+  isPinned: boolean;
+  views: number;
+  // Compat aliases
   createdDate?: string;
   message?: string;
 }
@@ -64,15 +64,15 @@ class AnnouncementService {
     await api.delete(`/announcements/${id}`);
   }
 
-  // Transform API data to match display format
+  // Transform API data to match display format (type now from DB)
   transformAnnouncement(announcement: any): Announcement {
     return {
       ...announcement,
       message: announcement.content,
       createdDate: announcement.createdAt,
-      type: this.determineTypeFromContent(announcement.content, announcement.title),
+      type: announcement.type || 'info',
       isPinned: announcement.isPinned || false,
-      views: announcement.views || 0, // Real views count from database
+      views: announcement.views ?? 0,
     };
   }
 
@@ -81,31 +81,15 @@ class AnnouncementService {
     try {
       await api.post(`/announcements/${announcementId}/view`);
     } catch (error) {
-      // Don't throw error for view tracking failures to avoid disrupting user experience
+      // Don't throw for view tracking failures
       console.warn('Failed to track announcement view:', error);
     }
-  }
-
-  // Determine announcement type based on content and title
-  private determineTypeFromContent(content: string, title: string): 'info' | 'warning' | 'success' | 'urgent' {
-    const text = (title + ' ' + content).toLowerCase();
-
-    if (text.includes('urgent') || text.includes('emergency') || text.includes('immediate')) {
-      return 'urgent';
-    }
-    if (text.includes('warning') || text.includes('deadline') || text.includes('late')) {
-      return 'warning';
-    }
-    if (text.includes('congratulations') || text.includes('success') || text.includes('completed')) {
-      return 'success';
-    }
-    return 'info';
   }
 
   // Calculate announcement stats
   calculateStats(announcements: Announcement[]): AnnouncementStats {
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 1000);
 
     const thisWeek = announcements.filter(a =>
       new Date(a.createdAt) >= weekAgo
@@ -123,14 +107,26 @@ class AnnouncementService {
     };
   }
 
-  // Format date for display
+  // Format date for display — e.g. "Feb 23, 2026"
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   }
 
   // Format date and time for display
   formatDateTime(dateString: string): string {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   }
 }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect, Suspense } from "react";
 import {
     Users,
-    TrendingUp,
     Building2,
     Bell,
     Menu,
@@ -46,7 +45,6 @@ const InstructorLayout = () => {
         if (path.includes("/instructor/students")) return "students";
         if (path.includes("/instructor/documents")) return "documents";
         if (path.includes("/instructor/applications")) return "applications";
-        if (path.includes("/instructor/monitoring")) return "monitoring";
         if (path.includes("/instructor/reports")) return "reports";
         if (path.includes("/instructor/settings")) return "settings";
         if (path.includes("/instructor/notifications")) return "notifications";
@@ -168,8 +166,7 @@ const InstructorLayout = () => {
         { id: "notifications", icon: Bell, label: "Notifications", path: "/instructor/notifications" },
         { id: "documents", icon: FileCheck, label: "Student Documents", path: "/instructor/documents" },
         { id: "applications", icon: Building2, label: "Company Applications", path: "/instructor/applications" },
-        { id: "monitoring", icon: TrendingUp, label: "Student Monitoring", path: "/instructor/monitoring" },
-        { id: "students", icon: Users, label: "Student Management", path: "/instructor/students" },
+        { id: "students", icon: Users, label: "Students", path: "/instructor/students" },
         { id: "reports", icon: BarChart3, label: "Reports", path: "/instructor/reports" },
     ];
 

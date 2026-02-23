@@ -1,4 +1,6 @@
 import { Response } from 'express';
+import { formDefinitions, hasFormTemplate, FormDefinition } from '../constants/formDefinitions';
+import { generatePreviewHtml, generatePdf } from '../services/pdfGenerator.service';
 import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
@@ -8,8 +10,44 @@ import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
+// generateDTRPDF no longer used — TIME_FRAMES now uses the HTML template pipeline
 // Note: uploadPath is now determined dynamically with fallback in uploadDocument
 const uploadPath = getStoragePath(); // Fallback for other uses
+
+/**
+ * For RECORD_FILE documents, compute the checklist status values
+ * by querying which document types the student has already submitted (any status).
+ * Returns an object like { status_APPLICATION_INTERNSHIP: '✔', status_MOA: '', ... }
+ */
+const computeRecordFileStatuses = async (studentId: string): Promise<Record<string, string>> => {
+  const submittedDocs = await prisma.document.findMany({
+    where: { studentId },
+    select: { type: true },
+  });
+
+  const submittedTypes = new Set(submittedDocs.map(d => d.type));
+
+  const allDocTypes = [
+    'RECORD_FILE', 'APPLICATION_INTERNSHIP', 'MEDICAL_CERTIFICATE',
+    'CERTIFICATION_UNITS', 'INTERNSHIP_RESUME', 'CONSENT_FORM',
+    'ENDORSEMENT_LETTER', 'INTERNSHIP_RELEASE', 'MOA',
+    'INTERNSHIP_AGREEMENT', 'TRAINING_AGREEMENT', 'INTERNSHIP_EVALUATION',
+    'CERTIFICATE_COMPLETION', 'NARRATIVE_REPORT', 'DTR_PHOTOCOPY',
+    'TIME_FRAMES', 'WEEKLY_REPORTS', 'STUDENT_FEEDBACK',
+    'SUPERVISOR_FEEDBACK', 'AGENCY_SELF_EVALUATION', 'INTERNSHIP_EVALUATION_AGENCY'
+  ];
+
+  const statuses: Record<string, string> = {};
+  allDocTypes.forEach(docType => {
+    let hasDoc = submittedTypes.has(docType as any);
+    // Also count ENDORSEMENT_LETTER_MULTI as fulfilling ENDORSEMENT_LETTER
+    if (!hasDoc && docType === 'ENDORSEMENT_LETTER') {
+      hasDoc = submittedTypes.has('ENDORSEMENT_LETTER_MULTI' as any);
+    }
+    statuses[`status_${docType}`] = hasDoc ? '✔' : '';
+  });
+  return statuses;
+};
 
 const getStudentIdForUser = async (userId: string): Promise<string | null> => {
   const student = await prisma.student.findFirst({
@@ -236,7 +274,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         studentName: student.user?.name || 'Student',
         documentType: type,
         fileName: req.file.originalname,
-        uploadedAt: document.uploadedAt.toISOString(),
+        createdAt: document.createdAt.toISOString(),
       });
     }
 
@@ -364,7 +402,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
           },
           skip,
           take: Number(limit),
-          orderBy: { uploadedAt: 'desc' }
+          orderBy: { createdAt: 'desc' }
         }),
         prisma.document.count({ where })
       ]);
@@ -388,7 +426,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       type: doc.type || '',
       filename: doc.filename || '',
       status: doc.status || 'PENDING',
-      uploadedAt: doc.uploadedAt ? doc.uploadedAt.toISOString() : null,
+      uploadedAt: doc.createdAt ? doc.createdAt.toISOString() : null,
       reviewedAt: doc.reviewedAt ? doc.reviewedAt.toISOString() : null,
       remarks: doc.remarks || null,
       fileSize: doc.fileSize || 0,
@@ -475,7 +513,10 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
     try {
       documents = await prisma.document.findMany({
         where: { studentId: student.id },
-        orderBy: { uploadedAt: 'desc' }
+        include: {
+          uploadedBy: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'desc' }
       });
     } catch (docError: any) {
       console.error('Error fetching documents:', docError);
@@ -491,10 +532,13 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       type: doc.type || '',
       filename: doc.filename || '',
       status: doc.status || 'PENDING',
-      uploadedAt: doc.uploadedAt ? doc.uploadedAt.toISOString().split('T')[0] : null,
+      uploadedAt: doc.createdAt ? doc.createdAt.toISOString().split('T')[0] : null,
       reviewedAt: doc.reviewedAt ? doc.reviewedAt.toISOString().split('T')[0] : null,
       remarks: doc.remarks || null,
-      fileSize: doc.fileSize || 0
+      fileSize: doc.fileSize || 0,
+      sharedStatus: doc.sharedStatus || null,
+      parentDocumentId: doc.parentDocumentId || null,
+      uploadedBy: doc.uploadedBy ? { name: doc.uploadedBy.name } : undefined,
     }));
 
     res.json({ documents: formattedDocuments });
@@ -872,6 +916,13 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
       }
     }
 
+    // Block download for documents still awaiting PDF generation
+    if (document.filepath === 'PENDING_PDF_GENERATION') {
+      return res.status(400).json({
+        message: 'This document is still waiting for all students to accept. The PDF has not been generated yet.',
+      });
+    }
+
     // Resolve filepath - checks both NAS and local storage
     const filepath = resolveFilePath(document.filepath);
 
@@ -944,16 +995,1085 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Delete file from filesystem
-    const fs = require('fs');
-    if (fs.existsSync(document.filepath)) {
-      fs.unlinkSync(document.filepath);
+    // If this is a parent document (submitter's record), cascade-delete all child records too
+    const childDocs = await prisma.document.findMany({
+      where: { parentDocumentId: id },
+    });
+    if (childDocs.length > 0) {
+      await prisma.document.deleteMany({ where: { parentDocumentId: id } });
     }
 
+    // Only delete the physical file if no other document records share the same filepath
+    // (multi-student endorsement letters share a single PDF across multiple students)
+    // Don't try to delete placeholder filepath
+    const realFilepath = document.filepath !== 'PENDING_PDF_GENERATION' ? document.filepath : null;
+    const otherRefsCount = realFilepath ? await prisma.document.count({
+      where: { filepath: realFilepath, id: { not: id } }
+    }) : 0;
+
     await prisma.document.delete({ where: { id } });
+
+    if (realFilepath && otherRefsCount === 0 && fs.existsSync(realFilepath)) {
+      fs.unlinkSync(realFilepath);
+    }
 
     res.json({ message: 'Document deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete document', error });
+  }
+};
+
+/**
+ * POST /documents/:id/accept-shared
+ * Student accepts a shared endorsement letter.
+ * After acceptance, checks if ALL students have accepted.
+ * If so, generates the PDF and updates all linked document records.
+ */
+export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const document = await prisma.document.findUnique({ where: { id } });
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Verify this student owns this document
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: { user: { select: { name: true } } },
+    });
+    if (!student || student.id !== document.studentId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (document.sharedStatus !== 'PENDING_ACCEPTANCE') {
+      return res.status(400).json({ message: 'This document is not pending acceptance' });
+    }
+
+    // Mark this student's document as accepted
+    await prisma.document.update({
+      where: { id },
+      data: { sharedStatus: 'ACCEPTED' },
+    });
+
+    // Check if ALL students in this group have now accepted
+    const parentDocId = document.parentDocumentId;
+    if (parentDocId) {
+      const allChildren = await prisma.document.findMany({
+        where: { parentDocumentId: parentDocId },
+      });
+
+      const allAccepted = allChildren.every(c =>
+        c.id === id ? true : c.sharedStatus === 'ACCEPTED'
+      );
+
+      if (allAccepted) {
+        // 🎉 All students accepted — time to generate the PDF!
+        console.log(`✅ All ${allChildren.length} student(s) accepted. Generating PDF...`);
+
+        // Get the parent (submitter's) document with saved form data
+        const parentDoc = await prisma.document.findUnique({
+          where: { id: parentDocId },
+          include: {
+            student: { include: { user: { select: { id: true, name: true } } } },
+          },
+        });
+
+        if (!parentDoc || !parentDoc.formData) {
+          console.error('Parent document or formData not found for PDF generation');
+          return res.json({ message: 'Endorsement letter accepted successfully', allAccepted: true, pdfGenerated: false });
+        }
+
+        // Rebuild the student list from the actual accepted students
+        const acceptedChildren = await prisma.document.findMany({
+          where: { parentDocumentId: parentDocId, sharedStatus: 'ACCEPTED' },
+          include: { student: { include: { user: { select: { name: true } } } } },
+        });
+
+        const submitterName = parentDoc.student.user.name || 'Unknown';
+        const allNames = [submitterName, ...acceptedChildren.map(c => c.student.user.name || 'Unknown')];
+
+        // Rebuild template data from saved form data
+        let templateData = { ...(parentDoc.formData as Record<string, any>) };
+        templateData.selected_students = JSON.stringify(allNames);
+        templateData.student_list_html = buildStudentListHtml(JSON.stringify(allNames));
+
+        // Format date fields
+        templateData = formatDateFieldsForDisplay(parentDoc.type, templateData);
+
+        // Get form definition
+        const definition = formDefinitions[parentDoc.type];
+        if (!definition) {
+          console.error('Form definition not found for', parentDoc.type);
+          return res.json({ message: 'Endorsement letter accepted successfully', allAccepted: true, pdfGenerated: false });
+        }
+
+        // Generate the PDF
+        const { filepath, filename, buffer } = await generatePdf(
+          definition.templateFile,
+          templateData,
+          parentDoc.type,
+          parentDoc.studentId
+        );
+
+        // Update ALL document records (parent + children) with the real PDF filepath
+        await prisma.document.update({
+          where: { id: parentDocId },
+          data: {
+            filepath,
+            fileSize: buffer.length,
+            sharedStatus: null, // No longer waiting
+          },
+        });
+
+        await prisma.document.updateMany({
+          where: { parentDocumentId: parentDocId },
+          data: {
+            filepath,
+            fileSize: buffer.length,
+            sharedStatus: null, // No longer pending
+          },
+        });
+
+        // Notify the submitter that all students accepted and the PDF is ready
+        await prisma.notification.create({
+          data: {
+            userId: parentDoc.student.user.id,
+            title: 'Endorsement Letter — PDF Generated!',
+            message: `All students have accepted your multi-student endorsement letter. The PDF has been generated and submitted for review.`,
+            type: 'DOCUMENT',
+            link: '/documents',
+          },
+        });
+
+        // Emit real-time events for all students
+        emitDocumentUploaded({
+          documentId: parentDocId,
+          studentId: parentDoc.student.user.id,
+          studentName: submitterName,
+          documentType: 'ENDORSEMENT_LETTER_MULTI',
+          fileName: filename,
+          createdAt: new Date().toISOString(),
+        });
+
+        console.log(`✅ PDF generated and all ${allChildren.length + 1} document records updated.`);
+
+        return res.json({ message: 'Endorsement letter accepted! All students have accepted — PDF generated.', allAccepted: true, pdfGenerated: true });
+      }
+    }
+
+    res.json({ message: 'Endorsement letter accepted successfully', allAccepted: false });
+  } catch (error) {
+    console.error('Error accepting shared document:', error);
+    res.status(500).json({ message: 'Failed to accept document' });
+  }
+};
+
+/**
+ * POST /documents/:id/decline-shared
+ * Student declines a shared endorsement letter — removes the document record.
+ * Notifies the submitter about the decline. Then checks if remaining students
+ * have all accepted (if so, generates the PDF without the declined student).
+ */
+export const declineSharedDocument = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const document = await prisma.document.findUnique({
+      where: { id },
+      include: { student: { include: { user: { select: { name: true } } } } },
+    });
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Verify this student owns this document
+    const student = await prisma.student.findUnique({ where: { userId: req.user!.id } });
+    if (!student || student.id !== document.studentId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if (document.sharedStatus !== 'PENDING_ACCEPTANCE') {
+      return res.status(400).json({ message: 'This document is not pending acceptance' });
+    }
+
+    const parentDocId = document.parentDocumentId;
+    const declinedStudentName = document.student.user.name || 'A student';
+
+    // Delete this child document record
+    await prisma.document.delete({ where: { id } });
+
+    // Notify the submitter about the decline
+    if (parentDocId) {
+      const parentDoc = await prisma.document.findUnique({
+        where: { id: parentDocId },
+        include: { student: { include: { user: { select: { id: true, name: true } } } } },
+      });
+
+      if (parentDoc) {
+        await prisma.notification.create({
+          data: {
+            userId: parentDoc.student.user.id,
+            title: 'Endorsement Letter — Student Declined',
+            message: `${declinedStudentName} has declined the multi-student endorsement letter. They will not be included in the final document.`,
+            type: 'DOCUMENT',
+            link: '/documents',
+          },
+        });
+
+        // Check if remaining children have ALL accepted
+        const remainingChildren = await prisma.document.findMany({
+          where: { parentDocumentId: parentDocId },
+        });
+
+        if (remainingChildren.length === 0) {
+          // No more children — cancel the whole endorsement letter
+          // Delete the parent doc since there are no other students
+          await prisma.document.delete({ where: { id: parentDocId } });
+          console.log('⚠️ All students declined. Parent endorsement letter deleted.');
+        } else {
+          const allAccepted = remainingChildren.every(c => c.sharedStatus === 'ACCEPTED');
+          if (allAccepted) {
+            // All remaining students accepted — generate PDF without declined student
+            console.log(`✅ Remaining ${remainingChildren.length} student(s) have all accepted after decline. Generating PDF...`);
+
+            const acceptedChildren = await prisma.document.findMany({
+              where: { parentDocumentId: parentDocId, sharedStatus: 'ACCEPTED' },
+              include: { student: { include: { user: { select: { name: true } } } } },
+            });
+
+            const submitterName = parentDoc.student.user.name || 'Unknown';
+            const allNames = [submitterName, ...acceptedChildren.map(c => c.student.user.name || 'Unknown')];
+
+            let templateData = { ...(parentDoc.formData as Record<string, any>) };
+            templateData.selected_students = JSON.stringify(allNames);
+            templateData.student_list_html = buildStudentListHtml(JSON.stringify(allNames));
+            templateData = formatDateFieldsForDisplay(parentDoc.type, templateData);
+
+            const definition = formDefinitions[parentDoc.type];
+            if (definition) {
+              const { filepath, filename, buffer } = await generatePdf(
+                definition.templateFile,
+                templateData,
+                parentDoc.type,
+                parentDoc.studentId
+              );
+
+              // Update all records with the real PDF
+              await prisma.document.update({
+                where: { id: parentDocId },
+                data: { filepath, fileSize: buffer.length, sharedStatus: null },
+              });
+
+              await prisma.document.updateMany({
+                where: { parentDocumentId: parentDocId },
+                data: { filepath, fileSize: buffer.length, sharedStatus: null },
+              });
+
+              await prisma.notification.create({
+                data: {
+                  userId: parentDoc.student.user.id,
+                  title: 'Endorsement Letter — PDF Generated!',
+                  message: `All remaining students have accepted. The PDF has been generated and submitted for review (without ${declinedStudentName}).`,
+                  type: 'DOCUMENT',
+                  link: '/documents',
+                },
+              });
+
+              console.log(`✅ PDF generated after decline — ${allNames.length} students included.`);
+            }
+          }
+        }
+      }
+    }
+
+    res.json({ message: 'Endorsement letter declined' });
+  } catch (error) {
+    console.error('Error declining shared document:', error);
+    res.status(500).json({ message: 'Failed to decline document' });
+  }
+};
+
+// ========== MULTI-STUDENT ENDORSEMENT LETTER HELPERS ==========
+
+/**
+ * Build the HTML for a numbered student list (vertical two-column layout) from a JSON array of student names.
+ * Items 1-5 go in the left column, 6-10 in the right column (top-to-bottom, then next column).
+ * Used by ENDORSEMENT_LETTER_MULTI template.
+ */
+const buildStudentListHtml = (selectedStudentsJson: string): string => {
+  let names: string[] = [];
+  try {
+    names = JSON.parse(selectedStudentsJson);
+    if (!Array.isArray(names)) names = [];
+  } catch {
+    // If it's not JSON, treat it as a comma-separated list
+    names = selectedStudentsJson.split(',').map(n => n.trim()).filter(Boolean);
+  }
+
+  if (names.length === 0) {
+    return '<p style="font-style: italic; color: #999;">No students selected</p>';
+  }
+
+  const ROWS_PER_COL = 5; // 1-5 left column, 6-10 right column
+  const leftCol = names.slice(0, ROWS_PER_COL);
+  const rightCol = names.slice(ROWS_PER_COL, ROWS_PER_COL * 2);
+
+  let html = '<div class="student-list-container"><div class="student-list-grid">';
+
+  // Left column (items 1-5)
+  html += '<div class="student-col">';
+  leftCol.forEach((name, i) => {
+    html += `<div class="student-item"><span class="student-num">${i + 1}.</span><span class="student-name">${name}</span></div>`;
+  });
+  html += '</div>';
+
+  // Right column (items 6-10) — only render if there are more than 5
+  if (rightCol.length > 0) {
+    html += '<div class="student-col">';
+    rightCol.forEach((name, i) => {
+      html += `<div class="student-item"><span class="student-num">${ROWS_PER_COL + i + 1}.</span><span class="student-name">${name}</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+};
+
+// ========== FORM-BASED DOCUMENT GENERATION ==========
+
+/**
+ * GET /documents/student-picker
+ * Returns a lightweight list of all students for the multi-student endorsement letter picker.
+ * Query: ?search=... (optional search term)
+ */
+export const getStudentPickerList = async (req: AuthRequest, res: Response) => {
+  try {
+    const { search } = req.query;
+
+    const where: any = {};
+
+    // Exclude the current logged-in student so they can't add themselves twice
+    if (req.user?.id) {
+      where.NOT = { userId: req.user.id };
+    }
+
+    if (search && typeof search === 'string' && search.trim()) {
+      where.OR = [
+        { studentNumber: { contains: search.trim() } },
+        { user: { name: { contains: search.trim(), mode: 'insensitive' } } },
+      ];
+    }
+
+    const students = await prisma.student.findMany({
+      where,
+      select: {
+        id: true,
+        studentNumber: true,
+        program: true,
+        year: true,
+        section: true,
+        user: { select: { name: true } },
+        company: { select: { name: true } },
+      },
+      orderBy: { user: { name: 'asc' } },
+      take: 50,
+    });
+
+    res.json({
+      students: students.map((s) => ({
+        id: s.id,
+        name: s.user?.name || 'Unknown',
+        studentNumber: s.studentNumber,
+        program: s.program,
+        year: s.year,
+        section: s.section,
+        company: s.company?.name || null,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching student picker list:', error);
+    res.status(500).json({ message: 'Failed to fetch students' });
+  }
+};
+
+/**
+ * GET /documents/form-definition/:type
+ * Returns form field definitions and auto-filled values for a document type.
+ */
+export const getFormDefinition = async (req: AuthRequest, res: Response) => {
+  try {
+    const { type } = req.params;
+
+    if (!hasFormTemplate(type)) {
+      return res.status(404).json({ message: 'No form template available for this document type' });
+    }
+
+    const definition = formDefinitions[type];
+    if (!definition) {
+      return res.status(404).json({ message: 'Form definition not found' });
+    }
+
+    // Get student data for auto-fill
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: {
+        user: { select: { name: true, email: true } },
+        company: { select: { name: true, address: true } },
+        instructor: { select: { name: true } },
+      },
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // Parse name into parts
+    const nameParts = (student.user.name || '').split(' ');
+    const surname = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0] || '';
+    const givenName = nameParts.length > 1 ? nameParts[0] : '';
+    const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+
+    // Build auto-fill values
+    const autoFillValues: Record<string, string> = {
+      student_name: student.user.name || '',
+      surname,
+      given_name: givenName,
+      middle_name: middleName,
+      campus: 'Urdaneta City',
+      course: student.program || '',
+      total_hours: String(student.totalHours || 240),
+      company_name: student.company?.name || '',
+      company_address: student.company?.address || '',
+      email: student.user.email || '',
+      student_number: student.studentNumber || '',
+      year_level: String(student.year || ''),
+      section: student.section || '',
+      year_section: `${student.year || ''}-${student.section || ''}`,
+      supervisor_name: student.supervisorName || '',
+      date: new Date().toISOString().split('T')[0],
+      start_date: student.startDate ? new Date(student.startDate).toISOString().split('T')[0] : '',
+      end_date: student.endDate ? new Date(student.endDate).toISOString().split('T')[0] : '',
+      start_month: student.startDate ? new Date(student.startDate).toLocaleDateString('en-US', { month: 'long' }) : '',
+      start_year: student.startDate ? new Date(student.startDate).getFullYear().toString() : '',
+      end_month: student.endDate ? new Date(student.endDate).toLocaleDateString('en-US', { month: 'long' }) : '',
+      end_year: student.endDate ? new Date(student.endDate).getFullYear().toString() : '',
+      instructor_name: student.instructor?.name || '',
+    };
+
+    // Auto-fill coordinator name (find active coordinator)
+    const coordinator = await prisma.user.findFirst({
+      where: { role: 'COORDINATOR', active: true },
+      select: { name: true },
+    });
+    if (coordinator) {
+      autoFillValues.coordinator_name = coordinator.name || '';
+    }
+
+    // Try to find parent/guardian info from APPLICATION_INTERNSHIP form
+    const internshipApp = await prisma.document.findFirst({
+      where: {
+        studentId: student.id,
+        type: 'APPLICATION_INTERNSHIP',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (internshipApp && internshipApp.formData) {
+      const formData = internshipApp.formData as any;
+      autoFillValues.parent_guardian = formData.parent_guardian || '';
+      autoFillValues.parent_contact = formData.parent_contact || '';
+      autoFillValues.parent_address = formData.parent_address || '';
+      autoFillValues.home_address = formData.home_address || '';
+      autoFillValues.company_contact = formData.company_contact || '';
+      autoFillValues.company_head = formData.company_head || '';
+      autoFillValues.company_head_title = formData.company_head_title || '';
+      autoFillValues.campus_exec_director = formData.campus_exec_director || '';
+    }
+
+    // Special logic for RECORD_FILE: Auto-fill checklist statuses
+    if (type === 'RECORD_FILE') {
+      const statuses = await computeRecordFileStatuses(student.id);
+      Object.assign(autoFillValues, statuses);
+    }
+
+    res.json({
+      definition,
+      autoFillValues,
+    });
+  } catch (error) {
+    console.error('Error getting form definition:', error);
+    res.status(500).json({ message: 'Failed to get form definition' });
+  }
+};
+
+/**
+ * Convert YYYY-MM-DD date values to display format (e.g., "11 February 2026") for PDF templates.
+ * Only converts fields defined as type 'date' in the form definition.
+ */
+const formatDateFieldsForDisplay = (type: string, data: Record<string, string>): Record<string, string> => {
+  const definition = formDefinitions[type];
+  if (!definition) return data;
+
+  const formatted = { ...data };
+  for (const field of definition.fields) {
+    if (field.type === 'date' && formatted[field.name]) {
+      const d = new Date(formatted[field.name] + 'T00:00:00');
+      if (!isNaN(d.getTime())) {
+        formatted[field.name] = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // For signed_date, also split into signed_day, signed_month, signed_year for templates
+        if (field.name === 'signed_date') {
+          formatted['signed_day'] = d.toLocaleDateString('en-GB', { day: 'numeric' });
+          formatted['signed_month'] = d.toLocaleDateString('en-GB', { month: 'long' });
+          formatted['signed_year'] = d.getFullYear().toString().slice(-2); // last 2 digits for "20__" format
+        }
+      }
+    }
+  }
+  return formatted;
+};
+
+/**
+ * For STUDENT_FEEDBACK forms, expand criteria_N (value 1-5) into individual
+ * cell variables c{N}_{rating} with checkmarks for the selected rating.
+ */
+const expandLikertScaleData = (formData: Record<string, string>): Record<string, string> => {
+  const expanded: Record<string, string> = { ...formData };
+  for (let c = 1; c <= 7; c++) {
+    const selectedValue = formData[`criteria_${c}`] || '';
+    for (let r = 1; r <= 5; r++) {
+      expanded[`c${c}_${r}`] = selectedValue === String(r) ? '✓' : '';
+    }
+  }
+  return expanded;
+};
+
+/**
+ * POST /documents/preview
+ * Returns rendered HTML string for preview.
+ * Body: { type, formData }
+ */
+export const previewDocument = async (req: AuthRequest, res: Response) => {
+  try {
+    const { type, formData } = req.body;
+
+    if (!type || !formData) {
+      return res.status(400).json({ message: 'Type and formData are required' });
+    }
+
+    if (!hasFormTemplate(type)) {
+      return res.status(404).json({ message: 'No form template for this document type' });
+    }
+
+    const definition = formDefinitions[type];
+    if (!definition) {
+      return res.status(404).json({ message: 'Form definition not found' });
+    }
+
+    // For RECORD_FILE, inject checklist statuses into the template data
+    let templateData = { ...formData };
+    if (type === 'RECORD_FILE') {
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user!.id },
+        select: { id: true },
+      });
+      if (student) {
+        const statuses = await computeRecordFileStatuses(student.id);
+        templateData = { ...templateData, ...statuses };
+      }
+    }
+
+    // For STUDENT_FEEDBACK, expand Likert scale criteria into checkmark variables
+    if (type === 'STUDENT_FEEDBACK') {
+      templateData = expandLikertScaleData(templateData);
+    }
+
+    // For ENDORSEMENT_LETTER_MULTI, build the student list HTML
+    if (type === 'ENDORSEMENT_LETTER_MULTI' && templateData.selected_students) {
+      templateData.student_list_html = buildStudentListHtml(templateData.selected_students);
+    }
+
+    // Format date fields (YYYY-MM-DD → display format) for the template
+    templateData = formatDateFieldsForDisplay(type, templateData);
+
+    const html = generatePreviewHtml(definition.templateFile, templateData);
+
+    res.json({ html });
+  } catch (error) {
+    console.error('Error generating preview:', error);
+    res.status(500).json({ message: 'Failed to generate preview' });
+  }
+};
+
+/**
+ * POST /documents/finalize
+ * Generates PDF from form data and creates Document record.
+ * Body: { type, formData }
+ */
+export const finalizeDocument = async (req: AuthRequest, res: Response) => {
+  try {
+    const { type, formData } = req.body;
+
+    if (!type || !formData) {
+      return res.status(400).json({ message: 'Type and formData are required' });
+    }
+
+    if (!hasFormTemplate(type)) {
+      return res.status(404).json({ message: 'No form template for this document type' });
+    }
+
+    const definition = formDefinitions[type];
+    if (!definition) {
+      return res.status(404).json({ message: 'Form definition not found' });
+    }
+
+    // Get student
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: {
+        user: { select: { name: true } },
+      },
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    // For RECORD_FILE, inject checklist statuses into the template data
+    let templateData = { ...formData };
+    if (type === 'RECORD_FILE') {
+      const statuses = await computeRecordFileStatuses(student.id);
+      templateData = { ...templateData, ...statuses };
+    }
+
+    // For STUDENT_FEEDBACK, expand Likert scale criteria into checkmark variables
+    if (type === 'STUDENT_FEEDBACK') {
+      templateData = expandLikertScaleData(templateData);
+    }
+
+    // ====== ENDORSEMENT_LETTER_MULTI: Deferred PDF generation ======
+    // For multi-student endorsement letters, we do NOT generate the PDF now.
+    // Instead, we save the form data and wait for ALL included students to accept.
+    // The PDF is generated only after every student has accepted.
+    if (type === 'ENDORSEMENT_LETTER_MULTI') {
+      // Save the raw form data (before student_list_html injection) for later PDF generation
+      const savedFormData = { ...templateData };
+
+      const document = await prisma.document.create({
+        data: {
+          studentId: student.id,
+          type,
+          filename: `${definition.title.replace(/\s+/g, '_')}_Multi.pdf`,
+          filepath: 'PENDING_PDF_GENERATION', // No PDF yet
+          mimeType: 'application/pdf',
+          uploadedById: req.user!.id,
+          status: 'PENDING',
+          fileSize: 0,
+          sharedStatus: 'WAITING_FOR_ACCEPTANCE',
+          formData: savedFormData, // Store form data for later PDF generation
+        },
+      });
+
+      await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
+        documentId: document.id,
+        type,
+        studentId: student.id,
+        method: 'form_generated_deferred',
+      }, req);
+
+      // Create records for other included students
+      if (templateData.selected_student_ids) {
+        try {
+          let otherStudentIds: string[] = [];
+          try {
+            otherStudentIds = JSON.parse(templateData.selected_student_ids);
+            if (!Array.isArray(otherStudentIds)) otherStudentIds = [];
+          } catch { otherStudentIds = []; }
+
+          otherStudentIds = otherStudentIds.filter((id: string) => id !== student.id);
+
+          if (otherStudentIds.length > 0) {
+            const otherStudents = await prisma.student.findMany({
+              where: { id: { in: otherStudentIds } },
+              include: { user: { select: { id: true, name: true } } },
+            });
+
+            for (const otherStudent of otherStudents) {
+              const sharedDoc = await prisma.document.create({
+                data: {
+                  studentId: otherStudent.id,
+                  type: 'ENDORSEMENT_LETTER_MULTI',
+                  filename: `${definition.title.replace(/\s+/g, '_')}_${otherStudent.user.name?.replace(/\s+/g, '_')}.pdf`,
+                  filepath: 'PENDING_PDF_GENERATION', // No PDF yet
+                  mimeType: 'application/pdf',
+                  uploadedById: req.user!.id,
+                  status: 'PENDING',
+                  fileSize: 0,
+                  sharedStatus: 'PENDING_ACCEPTANCE',
+                  parentDocumentId: document.id, // Link to the submitter's document
+                },
+              });
+
+              // Notify the included student
+              await prisma.notification.create({
+                data: {
+                  userId: otherStudent.user.id,
+                  title: 'Endorsement Letter — Action Required',
+                  message: `${student.user.name} has included you in a multi-student endorsement letter. Please review and accept or decline it in your Documents tab.`,
+                  type: 'DOCUMENT',
+                  link: '/documents',
+                },
+              });
+
+              // Emit real-time event
+              emitDocumentUploaded({
+                documentId: sharedDoc.id,
+                studentId: otherStudent.user.id,
+                studentName: otherStudent.user?.name || 'Student',
+                documentType: 'ENDORSEMENT_LETTER_MULTI',
+                fileName: document.filename,
+                createdAt: sharedDoc.createdAt.toISOString(),
+              });
+            }
+
+            console.log(`✅ Created pending endorsement letter records for ${otherStudents.length} student(s). Waiting for acceptance.`);
+          }
+        } catch (err) {
+          console.error('Warning: Failed to create shared endorsement letter records:', err);
+        }
+      }
+
+      return res.status(201).json({
+        document: {
+          ...document,
+          fileSizeMB: '0 MB',
+          waitingForAcceptance: true,
+        },
+      });
+    }
+
+    // ====== Normal document flow (non-multi-endorsement) ======
+
+    // For ENDORSEMENT_LETTER_MULTI is handled above; this handles all other types
+    // For regular types, build student list HTML if needed (shouldn't happen but safety)
+    if (templateData.selected_students) {
+      templateData.student_list_html = buildStudentListHtml(templateData.selected_students);
+    }
+
+    // Format date fields (YYYY-MM-DD → display format) for the template
+    templateData = formatDateFieldsForDisplay(type, templateData);
+
+    // Generate PDF
+    const { filepath, filename, buffer } = await generatePdf(
+      definition.templateFile,
+      templateData,
+      type,
+      student.id
+    );
+
+    // Create Document record for the submitting student
+    const document = await prisma.document.create({
+      data: {
+        studentId: student.id,
+        type,
+        filename: `${definition.title.replace(/\s+/g, '_')}_${student.user.name?.replace(/\s+/g, '_')}.pdf`,
+        filepath,
+        mimeType: 'application/pdf',
+        uploadedById: req.user!.id,
+        status: 'PENDING',
+        fileSize: buffer.length,
+      },
+    });
+
+    await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
+      documentId: document.id,
+      type,
+      studentId: student.id,
+      filename,
+      method: 'form_generated',
+    }, req);
+
+    // Emit real-time event
+    emitDocumentUploaded({
+      documentId: document.id,
+      studentId: student.userId,
+      studentName: student.user?.name || 'Student',
+      documentType: type,
+      fileName: filename,
+      createdAt: document.createdAt.toISOString(),
+    });
+
+    res.status(201).json({
+      document: {
+        ...document,
+        fileSizeMB: (buffer.length / (1024 * 1024)).toFixed(2) + ' MB',
+      },
+    });
+  } catch (error) {
+    console.error('Error finalizing document:', error);
+    res.status(500).json({
+      message: 'Failed to generate document',
+      error: process.env.NODE_ENV === 'development' ? error : undefined,
+    });
+  }
+};
+
+/**
+ * Document types that can be auto-generated from existing system data.
+ */
+const AUTO_GENERATE_TYPES = ['TIME_FRAMES', 'WEEKLY_REPORTS'] as const;
+
+export const canAutoGenerate = (type: string): boolean => {
+  return (AUTO_GENERATE_TYPES as readonly string[]).includes(type);
+};
+
+/**
+ * POST /documents/generate-auto
+ * Auto-generates a document from existing system data (e.g. attendance → Time Frames PDF).
+ * Body: { type }
+ */
+export const autoGenerateDocument = async (req: AuthRequest, res: Response) => {
+  try {
+    const { type } = req.body;
+
+    if (!type) {
+      return res.status(400).json({ message: 'Document type is required' });
+    }
+
+    if (!canAutoGenerate(type)) {
+      return res.status(400).json({ message: `Document type "${type}" does not support auto-generation` });
+    }
+
+    // Get student with full data needed for template
+    const student = await prisma.student.findUnique({
+      where: { userId: req.user!.id },
+      include: {
+        user: { select: { name: true } },
+        company: { select: { name: true, address: true } },
+        instructor: { select: { name: true } },
+      },
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    let templateFile: string;
+    let templateData: Record<string, string>;
+    let docTitle: string;
+
+    if (type === 'TIME_FRAMES') {
+      // Fetch ALL attendance logs for this student (not just one month)
+      const logs = await prisma.attendanceLog.findMany({
+        where: { studentId: student.id },
+        orderBy: { date: 'asc' },
+      });
+
+      // Round to official time (30-minute increments)
+      const roundToOfficialTime = (minutes: number): number => {
+        if (minutes < 30) return 0;
+        return Math.floor(minutes / 30) * 30;
+      };
+
+      // Group logs by date and sum hours for same-day entries
+      const groupedByDate = new Map<string, { date: Date; totalMinutes: number }>();
+      logs.forEach(log => {
+        const logDate = log.date instanceof Date ? log.date : new Date(log.date);
+        const dateKey = logDate.toISOString().split('T')[0];
+        if (groupedByDate.has(dateKey)) {
+          const existing = groupedByDate.get(dateKey)!;
+          existing.totalMinutes += roundToOfficialTime(log.durationMinutes || 0);
+        } else {
+          groupedByDate.set(dateKey, {
+            date: logDate,
+            totalMinutes: roundToOfficialTime(log.durationMinutes || 0),
+          });
+        }
+      });
+
+      // Build attendance row HTML
+      const sortedEntries = Array.from(groupedByDate.values())
+        .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      const formatDateStr = (d: Date) => d.toLocaleDateString('en-US', {
+        month: 'long', day: 'numeric', year: 'numeric',
+      }).toUpperCase();
+      const getDayOfWeek = (d: Date) => {
+        const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        return days[d.getDay()];
+      };
+      const formatHoursStr = (hoursDecimal: number) => {
+        const totalMins = Math.round(hoursDecimal * 60);
+        const hrs = Math.floor(totalMins / 60);
+        const mins = totalMins % 60;
+        return mins === 0 ? `${hrs} HOURS` : `${hrs} HOURS ${mins} MINUTES`;
+      };
+
+      let attendanceRowsHtml = sortedEntries.map(({ date, totalMinutes }) => {
+        const hoursDecimal = totalMinutes / 60;
+        return `<tr>
+          <td class="date-col">${formatDateStr(date)}</td>
+          <td class="day-col">${getDayOfWeek(date)}</td>
+          <td class="hours-col">${formatHoursStr(hoursDecimal)}</td>
+        </tr>`;
+      }).join('\n');
+
+      // Add empty rows to fill table (27 rows to match original form)
+      const minRows = 27;
+      const emptyRowsNeeded = Math.max(0, minRows - sortedEntries.length);
+      for (let i = 0; i < emptyRowsNeeded; i++) {
+        attendanceRowsHtml += `<tr><td class="date-col">&nbsp;</td><td class="day-col">&nbsp;</td><td class="hours-col">&nbsp;</td></tr>\n`;
+      }
+
+      // Calculate total hours
+      const totalMinutes = sortedEntries.reduce((sum, e) => sum + e.totalMinutes, 0);
+      const totalHours = totalMinutes / 60;
+
+      // Year suffix
+      const getOrdinalSuffix = (num: number): string => {
+        const j = num % 10; const k = num % 100;
+        if (j === 1 && k !== 11) return 'st';
+        if (j === 2 && k !== 12) return 'nd';
+        if (j === 3 && k !== 13) return 'rd';
+        return 'th';
+      };
+      const yearSuffix = getOrdinalSuffix(student.year || 1);
+
+      templateFile = 'internship_timeframe.html';
+      docTitle = 'Internship_Time_Frames';
+      templateData = {
+        campus: 'Urdaneta',
+        student_name: (student.user.name || 'N/A').toUpperCase(),
+        year_and_course: `${(student.program || 'N/A').toUpperCase()} – ${student.year || 1}${yearSuffix} YEAR`,
+        company_name: (student.company?.name || 'N/A').toUpperCase(),
+        company_address: (student.company?.address || 'N/A').toUpperCase(),
+        number_of_hours: `${Math.round(totalHours)} HOURS`,
+        attendance_rows: attendanceRowsHtml,
+        total_hours: formatHoursStr(totalHours),
+        instructor_name: (student.instructor?.name || '').toUpperCase(),
+      };
+    } else if (type === 'WEEKLY_REPORTS') {
+      // Weekly report data is stored as JSON in student.weeklyReportData (saved from Reports tab)
+      interface WeekEntry {
+        weekNumber: number;
+        dateRange: string;
+        tasksAccomplished: string;
+        knowledgeSkillsValues: string;
+      }
+
+      const weeks: WeekEntry[] = (student as any).weeklyReportData
+        ? (((student as any).weeklyReportData as any).weeks || [])
+        : [];
+
+      if (weeks.length === 0) {
+        return res.status(400).json({
+          message: 'No weekly report data found. Please fill out the weekly report in the Reports tab first.',
+        });
+      }
+
+      // Format date helper
+      const formatDateValue = (value?: Date | string | null): string => {
+        if (!value) return 'N/A';
+        const date = typeof value === 'string' ? new Date(value) : value;
+        if (Number.isNaN(date.getTime())) return 'N/A';
+        return date.toLocaleDateString('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric',
+        }).toUpperCase();
+      };
+
+      // Helper: convert newline-separated text into bullet HTML list
+      const toBulletHtml = (text: string): string => {
+        if (!text || !text.trim()) return '';
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return '';
+        return '<ul>' + lines.map(l => `<li>${l}</li>`).join('') + '</ul>';
+      };
+
+      // Build 3-column table rows for each week (DATE | TASKS | KNOWLEDGE)
+      const weekRowsHtml = weeks
+        .sort((a, b) => a.weekNumber - b.weekNumber)
+        .map((week) => {
+          const dateLabel = `Week ${week.weekNumber}${week.dateRange ? '<br>(' + week.dateRange + ')' : ''}`;
+          const tasksHtml = toBulletHtml(week.tasksAccomplished);
+          const knowledgeHtml = toBulletHtml(week.knowledgeSkillsValues);
+          return `<tr>
+            <td class="date-col">${dateLabel}</td>
+            <td class="tasks-col">${tasksHtml}</td>
+            <td class="knowledge-col">${knowledgeHtml}</td>
+          </tr>`;
+        })
+        .join('\n');
+
+      templateFile = 'weekly_report.html';
+      docTitle = 'Weekly_Reports';
+      templateData = {
+        campus: 'Urdaneta',
+        student_name: (student.user.name || 'N/A').toUpperCase(),
+        instructor_name: (student.instructor?.name || 'N/A').toUpperCase(),
+        company_name: (student.company?.name || 'N/A').toUpperCase(),
+        job_description: ((student as any).jobDescription || 'N/A').toUpperCase(),
+        start_date: formatDateValue((student as any).startDate),
+        end_date: formatDateValue((student as any).endDate),
+        total_hours: `${(student as any).totalHours || 240} HOURS`,
+        week_rows: weekRowsHtml,
+      };
+    } else {
+      return res.status(400).json({ message: `Unsupported auto-generate type: ${type}` });
+    }
+
+    // Generate PDF via Puppeteer (same pipeline as all other forms)
+    const { filepath, filename, buffer } = await generatePdf(
+      templateFile,
+      templateData,
+      type,
+      student.id,
+    );
+
+    // Create Document record
+    const document = await prisma.document.create({
+      data: {
+        studentId: student.id,
+        type,
+        filename: `${docTitle}_${student.user.name?.replace(/\s+/g, '_')}.pdf`,
+        filepath,
+        mimeType: 'application/pdf',
+        uploadedById: req.user!.id,
+        status: 'PENDING',
+        fileSize: buffer.length,
+      },
+    });
+
+    await auditLog(req.user!.id, 'DOCUMENT_UPLOADED', {
+      documentId: document.id,
+      type,
+      filename,
+      method: 'auto_generated',
+    }, req);
+
+    // Emit real-time event
+    emitDocumentUploaded({
+      documentId: document.id,
+      studentId: student.userId,
+      studentName: student.user?.name || 'Student',
+      documentType: type,
+      fileName: filename,
+      createdAt: document.createdAt.toISOString(),
+    });
+
+    res.status(201).json({
+      document: {
+        ...document,
+        fileSizeMB: (buffer.length / (1024 * 1024)).toFixed(2) + ' MB',
+      },
+    });
+  } catch (error) {
+    console.error('Error auto-generating document:', error);
+    res.status(500).json({
+      message: 'Failed to auto-generate document',
+      error: process.env.NODE_ENV === 'development' ? error : undefined,
+    });
   }
 };

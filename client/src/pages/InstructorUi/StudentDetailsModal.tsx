@@ -2,6 +2,7 @@ import React from "react";
 import { X, Award, Activity, Clock } from "lucide-react";
 import { type InstructorStudent } from "../../services/instructorService";
 import PartnershipMessageThread from "../../components/PartnershipMessageThread";
+import { formatStudentId } from "../../utils/formatStudentId";
 
 interface StudentDetailsModalProps {
     selectedStudent: InstructorStudent;
@@ -14,22 +15,6 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     onClose,
     onViewDocuments,
 }) => {
-    // Utility function to format student ID
-    const formatStudentId = (studentNumber: string) => {
-        if (/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) return studentNumber;
-        if (/^\d{4}-\d{5}$/.test(studentNumber)) {
-            const year = studentNumber.substring(2, 4);
-            const number = studentNumber.substring(5, 9);
-            return `${year}-UR-${number}`;
-        }
-        if (/^\d{4}-\d{4}$/.test(studentNumber)) {
-            const year = studentNumber.substring(2, 4);
-            const number = studentNumber.substring(5);
-            return `${year}-UR-${number}`;
-        }
-        return studentNumber || "22-UR-0592";
-    };
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">

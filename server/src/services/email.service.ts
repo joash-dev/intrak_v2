@@ -261,7 +261,7 @@ class EmailService {
   }
 
   public generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
-    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
     const logoUrl = `${clientUrl}/logo_intrak.png`;
 
     return `
@@ -422,7 +422,7 @@ class EmailService {
 
     const roleDisplayName = roleDisplayNames[userRole] || userRole;
     const subject = `Welcome to INTRAK - Your ${roleDisplayName} Account Credentials`;
-    const clientUrl = process.env.CLIENT_URL || 'https://intrak-v2.onrender.com';
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
 
     const additionalInfoHtml = additionalInfo ? `
       ${additionalInfo.studentNumber ? `<p><strong>Student Number:</strong> ${additionalInfo.studentNumber}</p>` : ''}

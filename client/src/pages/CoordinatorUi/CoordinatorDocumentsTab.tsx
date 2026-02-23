@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FileCheck,
   Eye,
@@ -12,17 +12,60 @@ import {
   Building2,
   FileText,
   Loader2,
-  MessageSquare,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  User,
+  Filter,
 } from "lucide-react";
-// Import document service
 import { documentService } from "../../services/documentService";
-import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import { formatDate, formatDateTime } from "../../services/localeService";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 import PDFViewer from "../../components/document/PDFViewer";
+
+// ── Document type → human-readable label ──────────────────────────────
+const DOC_TYPE_LABELS: Record<string, string> = {
+  RECORD_FILE: "Record File",
+  APPLICATION_INTERNSHIP: "Application for Internship",
+  MEDICAL_CERTIFICATE: "Medical Certificate & Psych Test",
+  CERTIFICATION_UNITS: "Certification of Units Earned",
+  INTERNSHIP_RESUME: "Internship Resume",
+  CONSENT_FORM: "Consent Form",
+  ENDORSEMENT_LETTER: "Endorsement Letter",
+  ENDORSEMENT_LETTER_MULTI: "Endorsement Letter (Multiple Students)",
+  INTERNSHIP_RELEASE: "Internship Release Form",
+  MOA: "Memorandum of Agreement",
+  INTERNSHIP_AGREEMENT: "Internship Agreement",
+  TRAINING_AGREEMENT: "Training Agreement & Liability Waiver",
+  INTERNSHIP_EVALUATION: "Internship Evaluation Form",
+  CERTIFICATE_COMPLETION: "Certificate of Training Completion",
+  NARRATIVE_REPORT: "Internship Narrative Report",
+  DTR_PHOTOCOPY: "Daily Time Record Photocopy",
+  TIME_FRAMES: "Internship Time Frames",
+  WEEKLY_REPORTS: "Practicum/Internship Weekly Reports",
+  STUDENT_FEEDBACK: "Student-Trainees Feedback Form",
+  SUPERVISOR_FEEDBACK: "Training Supervisor Feedback Form",
+  AGENCY_SELF_EVALUATION: "Agency Self Evaluation",
+  AGENCY_STUDENT_EVALUATION: "Agency Student Evaluation",
+};
+
+const getDocTypeLabel = (type: string): string =>
+  DOC_TYPE_LABELS[type] || type.replace(/_/g, " ");
+
+// ── Document category helper ──────────────────────────────────────────
+const getDocCategory = (type: string): string => {
+  const pre = [
+    "RECORD_FILE", "APPLICATION_INTERNSHIP", "MEDICAL_CERTIFICATE",
+    "CERTIFICATION_UNITS", "INTERNSHIP_RESUME", "CONSENT_FORM",
+    "ENDORSEMENT_LETTER", "INTERNSHIP_RELEASE",
+  ];
+  const upon = ["MOA", "INTERNSHIP_AGREEMENT", "TRAINING_AGREEMENT"];
+  if (pre.includes(type)) return "Pre-Deployment";
+  if (upon.includes(type)) return "Upon Approval";
+  return "Post-OJT";
+};
 
 interface Document {
   id: string;
@@ -32,102 +75,98 @@ interface Document {
   uploadedAt: string | null;
   reviewedAt: string | null;
   remarks: string | null;
+  fileSize?: number;
   fileSizeMB?: string;
   student?: {
+    id?: string;
     studentNumber: string;
-    user: {
-      name: string;
-    };
+    user: { name: string } | null;
+    company?: { name: string } | null;
   };
-  uploadedBy?: {
-    name: string;
-    email: string;
-  };
-  // Additional fields for display
+  uploadedBy?: { name: string; email: string };
+  // Computed display fields
   studentName?: string;
   studentId?: string;
   studentAvatar?: string;
   company?: string;
   documentType?: string;
+  documentLabel?: string;
+  category?: string;
   fileName?: string;
   fileType?: "pdf" | "doc" | "image" | "excel";
   submittedDate?: string;
-  dueDate?: string;
-  priority?: "high" | "medium" | "low";
-  description?: string;
   reviewedBy?: string;
   reviewedDate?: string;
 }
+
+type SortKey = "date" | "name" | "type" | "status";
+type SortDir = "asc" | "desc";
+
+const ITEMS_PER_PAGE = 10;
 
 const CoordinatorDocumentsTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [filterStudent, setFilterStudent] = useState("all");
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(
-    null
-  );
+  const [reviewAction, setReviewAction] = useState<
+    "approve" | "reject" | null
+  >(null);
   const [remarks, setRemarks] = useState("");
-  const [feedbackDoc, setFeedbackDoc] = useState<Document | null>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  // State for API data
+  // Data
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch documents on component mount
+  // Pagination & sorting
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
   useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        window.URL.revokeObjectURL(previewUrl);
-      }
+      if (previewUrl) window.URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
 
+  // ── Fetch ─────────────────────────────────────────────────────────
   const fetchDocuments = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch documents using the document service
       const response = await documentService.getDocuments();
-      const documentsData = response.documents || [];
+      const docs = response.documents || [];
 
-      // Transform API data to match our display format
-      const transformedDocuments = documentsData.map((doc: any) => ({
+      const transformed = docs.map((doc: any) => ({
         ...doc,
         studentName: doc.student?.user?.name || "Unknown Student",
         studentId: doc.student?.studentNumber || "N/A",
         studentAvatar: generateAvatar(doc.student?.user?.name || "Unknown"),
-        company: "Company Not Available", // This would need to come from student data
+        company: doc.student?.company?.name || "No Company Assigned",
         documentType: doc.type,
+        documentLabel: getDocTypeLabel(doc.type),
+        category: getDocCategory(doc.type),
         fileName: doc.filename,
-        fileSize: doc.fileSizeMB || "Unknown",
         fileType: getFileTypeFromFilename(doc.filename),
-        submittedDate: doc.uploadedAt
-          ? formatDateTime(doc.uploadedAt)
-          : "Not available",
-        dueDate: "Not Set", // This would need to be added to the API
-        priority: getPriorityFromType(doc.type),
-        description: `${doc.type} submitted by student`,
+        submittedDate: formatDate(doc.uploadedAt || doc.createdAt),
         reviewedBy: doc.uploadedBy?.name,
         reviewedDate: doc.reviewedAt
           ? formatDateTime(doc.reviewedAt)
-          : "Pending",
+          : undefined,
       }));
 
-      setDocuments(transformedDocuments);
+      setDocuments(transformed);
     } catch (err: any) {
       console.error("Error fetching documents:", err);
       setError(err.message || "Failed to fetch documents");
@@ -136,20 +175,19 @@ const CoordinatorDocumentsTab: React.FC = () => {
     }
   };
 
-  // Helper functions
-  const generateAvatar = (name: string): string => {
-    return name
+  // ── Helpers ───────────────────────────────────────────────────────
+  const generateAvatar = (name: string): string =>
+    name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()
       .substring(0, 2);
-  };
 
   const getFileTypeFromFilename = (
     filename: string
   ): "pdf" | "doc" | "image" | "excel" => {
-    const ext = filename.split(".").pop()?.toLowerCase();
+    const ext = filename?.split(".").pop()?.toLowerCase();
     switch (ext) {
       case "pdf":
         return "pdf";
@@ -169,72 +207,150 @@ const CoordinatorDocumentsTab: React.FC = () => {
     }
   };
 
-  const getPriorityFromType = (type: string): "high" | "medium" | "low" => {
-    const highPriority = [
-      "Weekly Report",
-      "Accomplishment Report",
-      "Medical Certificate",
-    ];
-    const mediumPriority = ["Timesheet", "Leave Request"];
-
-    if (highPriority.some((t) => type.includes(t))) return "high";
-    if (mediumPriority.some((t) => type.includes(t))) return "medium";
-    return "low";
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes || bytes === 0) return "—";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
-  const stats = {
-    pending: documents.filter(
-      (d) => d.status === "PENDING" || d.status === "RESUBMISSION_REQUESTED"
-    ).length,
-    approved: documents.filter((d) => d.status === "APPROVED").length,
-    rejected: documents.filter((d) => d.status === "REJECTED").length,
-    total: documents.length,
-  };
+  // ── Stats ─────────────────────────────────────────────────────────
+  const stats = useMemo(
+    () => ({
+      pending: documents.filter(
+        (d) =>
+          d.status === "PENDING" || d.status === "RESUBMISSION_REQUESTED"
+      ).length,
+      approved: documents.filter((d) => d.status === "APPROVED").length,
+      rejected: documents.filter((d) => d.status === "REJECTED").length,
+      total: documents.length,
+    }),
+    [documents]
+  );
 
+  // ── Status helpers ────────────────────────────────────────────────
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      PENDING:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      APPROVED:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      REJECTED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-      pending:
-        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      approved:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-      resubmission_required:
-        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+    const map: Record<string, string> = {
+      PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+      APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
       RESUBMISSION_REQUESTED:
-        "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
     };
-    return colors[status] || colors.PENDING;
+    return map[status] || map.PENDING;
   };
 
-  const getPriorityColor = (priority: string) => {
-    const colors: Record<string, string> = {
-      high: "text-red-600 bg-red-50 dark:bg-red-900/20",
-      medium: "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20",
-      low: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      PENDING: "Pending",
+      APPROVED: "Approved",
+      REJECTED: "Rejected",
+      RESUBMISSION_REQUESTED: "Resubmission",
     };
-    return colors[priority] || colors.medium;
+    return map[status] || status;
   };
 
   const getFileIcon = (fileType: string) => {
-    switch (fileType) {
-      case "pdf":
-        return <FileText className="w-5 h-5 text-red-600" />;
-      case "excel":
-        return <FileText className="w-5 h-5 text-green-600" />;
-      case "doc":
-        return <FileText className="w-5 h-5 text-blue-600" />;
-      case "image":
-        return <FileText className="w-5 h-5 text-purple-600" />;
-      default:
-        return <FileText className="w-5 h-5 text-gray-600" />;
+    const colors: Record<string, string> = {
+      pdf: "text-red-500",
+      doc: "text-blue-500",
+      image: "text-purple-500",
+      excel: "text-green-500",
+    };
+    return (
+      <FileText
+        className={`w-4 h-4 sm:w-5 sm:h-5 ${colors[fileType] || "text-gray-500"}`}
+      />
+    );
+  };
+
+  // ── Filter, sort, paginate ────────────────────────────────────────
+  const filteredDocuments = useMemo(() => {
+    let result = documents.filter((doc) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        !q ||
+        (doc.studentName || "").toLowerCase().includes(q) ||
+        (doc.documentLabel || "").toLowerCase().includes(q) ||
+        (doc.fileName || doc.filename || "").toLowerCase().includes(q) ||
+        (doc.company || "").toLowerCase().includes(q);
+
+      const matchesStatus =
+        filterStatus === "all" ||
+        (filterStatus === "pending" &&
+          (doc.status === "PENDING" ||
+            doc.status === "RESUBMISSION_REQUESTED")) ||
+        (filterStatus === "approved" && doc.status === "APPROVED") ||
+        (filterStatus === "rejected" && doc.status === "REJECTED");
+
+      const matchesType =
+        filterType === "all" || doc.type === filterType;
+
+      const matchesStudent =
+        filterStudent === "all" || doc.studentName === filterStudent;
+
+      return matchesSearch && matchesStatus && matchesType && matchesStudent;
+    });
+
+    // Sort
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "date":
+          cmp =
+            new Date(a.uploadedAt || 0).getTime() -
+            new Date(b.uploadedAt || 0).getTime();
+          break;
+        case "name":
+          cmp = (a.studentName || "").localeCompare(b.studentName || "");
+          break;
+        case "type":
+          cmp = (a.documentLabel || "").localeCompare(b.documentLabel || "");
+          break;
+        case "status":
+          cmp = (a.status || "").localeCompare(b.status || "");
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return result;
+  }, [documents, searchQuery, filterStatus, filterType, filterStudent, sortKey, sortDir]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredDocuments.length / ITEMS_PER_PAGE));
+  const paginatedDocuments = filteredDocuments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, filterType, filterStudent, sortKey, sortDir]);
+
+  const documentTypes = useMemo(
+    () => [...new Set(documents.map((d) => d.type))],
+    [documents]
+  );
+
+  const studentNames = useMemo(
+    () =>
+      [...new Set(documents.map((d) => d.studentName || "Unknown Student"))].sort(),
+    [documents]
+  );
+
+  // ── Toggle sort ───────────────────────────────────────────────────
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
     }
   };
 
+  // ── Actions ───────────────────────────────────────────────────────
   const handleReview = (doc: Document, action: "approve" | "reject") => {
     setSelectedDoc(doc);
     setReviewAction(action);
@@ -242,35 +358,25 @@ const CoordinatorDocumentsTab: React.FC = () => {
     setRemarks("");
   };
 
-  const openFeedbackModal = (doc: Document) => {
-    setFeedbackDoc(doc);
-    setShowFeedbackModal(true);
-  };
-
   const submitReview = async () => {
     if (!selectedDoc || !reviewAction) return;
-
     try {
       setSubmitting(true);
-
-      // Call the appropriate API endpoint based on action
       if (reviewAction === "approve") {
         await documentService.approveDocument(selectedDoc.id, remarks);
+        toast.success("Document approved successfully");
       } else {
         await documentService.rejectDocument(selectedDoc.id, remarks);
+        toast.success("Document rejected");
       }
-
-      // Refresh the documents list
       await fetchDocuments();
-
-      // Close modal and reset state
       setShowReviewModal(false);
       setSelectedDoc(null);
       setReviewAction(null);
       setRemarks("");
     } catch (err: any) {
       console.error("Error reviewing document:", err);
-      setError(err.message || "Failed to review document");
+      toast.error(err.message || "Failed to review document");
     } finally {
       setSubmitting(false);
     }
@@ -287,9 +393,10 @@ const CoordinatorDocumentsTab: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      toast.success("Download started");
     } catch (err: any) {
       console.error("Error downloading document:", err);
-      setError(err.message || "Failed to download document");
+      toast.error(err.message || "Failed to download document");
     }
   };
 
@@ -302,7 +409,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       setPreviewUrl(url);
     } catch (err: any) {
       console.error("Error previewing document:", err);
-      setError(err.message || "Failed to preview document");
+      toast.error(err.message || "Failed to preview document");
       setPreviewDoc(null);
     } finally {
       setPreviewLoading(false);
@@ -310,78 +417,37 @@ const CoordinatorDocumentsTab: React.FC = () => {
   };
 
   const closePreview = () => {
-    if (previewUrl) {
-      window.URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) window.URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setPreviewDoc(null);
     setPreviewLoading(false);
   };
 
-  const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch =
-      (doc.studentName || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      (doc.documentType || doc.type || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      (doc.fileName || doc.filename || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "pending" && doc.status === "PENDING") ||
-      (filterStatus === "pending" && doc.status === "RESUBMISSION_REQUESTED") ||
-      (filterStatus === "approved" && doc.status === "APPROVED") ||
-      (filterStatus === "rejected" && doc.status === "REJECTED");
-
-    const matchesType =
-      filterType === "all" || (doc.documentType || doc.type) === filterType;
-
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  const documentTypes = [
-    ...new Set(documents.map((d) => d.documentType || d.type)),
-  ];
-
-  // Show loading state
-  // Show loading state
+  // ── Loading skeleton ──────────────────────────────────────────────
   if (loading) {
     return (
       <div className="space-y-6">
-        {/* Header Skeleton */}
-        <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
+        <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
             <div className="space-y-2">
               <Skeleton className="h-7 w-48" />
               <Skeleton className="h-4 w-64" />
             </div>
-            <div className="flex items-center space-x-2">
-              <Skeleton className="w-4 h-4 rounded" />
-              <Skeleton className="h-4 w-24" />
-            </div>
+            <Skeleton className="h-4 w-24" />
           </div>
         </div>
-
-        {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
-              <div className="space-y-3">
-                <Skeleton className="w-8 h-8 rounded" />
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                </div>
-              </div>
+            <div
+              key={i}
+              className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+            >
+              <Skeleton className="w-9 h-9 rounded-lg mb-3" />
+              <Skeleton className="h-3 w-20 mb-2" />
+              <Skeleton className="h-7 w-12" />
             </div>
           ))}
         </div>
-
-        {/* Filters Skeleton */}
         <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <Skeleton className="h-10 flex-1 rounded-lg" />
@@ -389,24 +455,19 @@ const CoordinatorDocumentsTab: React.FC = () => {
             <Skeleton className="h-10 w-32 rounded-lg" />
           </div>
         </div>
-
-        {/* Documents List Skeleton */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 flex-1">
-                  <Skeleton className="w-12 h-12 rounded-lg" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
+            <div
+              key={i}
+              className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
+            >
+              <div className="flex items-center space-x-4">
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="w-8 h-8 rounded-lg" />
-                  <Skeleton className="w-8 h-8 rounded-lg" />
-                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
               </div>
             </div>
           ))}
@@ -415,29 +476,29 @@ const CoordinatorDocumentsTab: React.FC = () => {
     );
   }
 
-  // Show error state
+  // ── Error state ───────────────────────────────────────────────────
   if (error) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
             Review Documents
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
             Review and approve student document submissions
           </p>
         </div>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mb-2">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <span className="text-red-800 dark:text-red-200 font-medium">
               Error loading documents
             </span>
           </div>
-          <p className="text-red-700 dark:text-red-300 mt-1">{error}</p>
+          <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
           <button
             onClick={fetchDocuments}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm font-medium"
           >
             Try Again
           </button>
@@ -446,356 +507,330 @@ const CoordinatorDocumentsTab: React.FC = () => {
     );
   }
 
+  // ── Main render ───────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-        <div>
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-            Review Documents
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
-            Review and approve student document submissions
-          </p>
-        </div>
-        <div className="flex items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 space-x-2">
-          <FileCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>{stats.total} documents</span>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
-        {/* Desktop View - Hidden on Mobile */}
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-yellow-100 dark:border-yellow-800 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <Clock className="w-8 h-8 text-yellow-500" />
+    <div className="space-y-5">
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <FileCheck className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+            </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Pending Review
-              </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {stats.pending}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-green-100 dark:border-green-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <CheckCircle className="w-8 h-8 text-green-500" />
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Approved
-              </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {stats.approved}
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                Review Documents
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Review and approve student document submissions
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-red-100 dark:border-red-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <XCircle className="w-8 h-8 text-red-500" />
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Rejected
-              </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {stats.rejected}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="hidden md:block relative overflow-hidden rounded-2xl bg-white dark:bg-[#212124] border border-purple-100 dark:border-purple-900 shadow-sm">
-          <div className="relative p-5 space-y-3">
-            <FileCheck className="w-8 h-8 text-purple-500" />
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Total Documents
-              </p>
-              <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                {stats.total}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile View - Hidden on Desktop */}
-        <div className="md:hidden space-y-3">
-          {/* Pending Review Card */}
-          <div className="rounded-xl bg-white dark:bg-[#212124] border border-yellow-500 dark:border-yellow-600 shadow-sm">
-            <div className="p-4 flex items-center space-x-4">
-              <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
-                  Pending Review
-                </p>
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                  {stats.pending}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Approved Card */}
-          <div className="rounded-xl bg-white dark:bg-[#212124] border border-green-500 dark:border-green-600 shadow-sm">
-            <div className="p-4 flex items-center space-x-4">
-              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
-                  Approved
-                </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {stats.approved}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Rejected Card */}
-          <div className="rounded-xl bg-white dark:bg-[#212124] border border-red-500 dark:border-red-600 shadow-sm">
-            <div className="p-4 flex items-center space-x-4">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <XCircle className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
-                  Rejected
-                </p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {stats.rejected}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Documents Card */}
-          <div className="rounded-xl bg-white dark:bg-[#212124] border border-purple-500 dark:border-purple-600 shadow-sm">
-            <div className="p-4 flex items-center space-x-4">
-              <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <FileCheck className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-medium mb-1">
-                  Total Documents
-                </p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {stats.total}
-                </p>
-              </div>
-            </div>
+          <div className="flex items-center space-x-3">
+            {stats.pending > 0 && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                {stats.pending} pending
+              </span>
+            )}
+            <button
+              onClick={fetchDocuments}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* ── Stats Cards (Soft Pastel) ───────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          {
+            label: "Pending Review",
+            value: stats.pending,
+            icon: Clock,
+            bg: "bg-amber-100 dark:bg-amber-900/30",
+            iconColor: "text-amber-600 dark:text-amber-300",
+          },
+          {
+            label: "Approved",
+            value: stats.approved,
+            icon: CheckCircle,
+            bg: "bg-green-100 dark:bg-green-900/30",
+            iconColor: "text-green-600 dark:text-green-300",
+          },
+          {
+            label: "Rejected",
+            value: stats.rejected,
+            icon: XCircle,
+            bg: "bg-red-100 dark:bg-red-900/30",
+            iconColor: "text-red-600 dark:text-red-300",
+          },
+          {
+            label: "Total Documents",
+            value: stats.total,
+            icon: FileCheck,
+            bg: "bg-purple-100 dark:bg-purple-900/30",
+            iconColor: "text-purple-600 dark:text-purple-300",
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+          >
+            <div className={`p-2 ${card.bg} rounded-lg w-fit mb-2`}>
+              <card.icon
+                className={`w-4 h-4 sm:w-5 sm:h-5 ${card.iconColor}`}
+              />
+            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+              {card.label}
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {card.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search, Filters & Sort ──────────────────────────────── */}
       <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
+        <div className="flex flex-col md:flex-row gap-3">
+          {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by student name, document type, or filename..."
+              placeholder="Search student, document, company…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
+
+          {/* Status filter */}
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
+
+          {/* Type filter */}
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 sm:px-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
           >
             <option value="all">All Types</option>
             {documentTypes.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {getDocTypeLabel(type)}
+              </option>
+            ))}
+          </select>
+
+          {/* Student filter */}
+          <select
+            value={filterStudent}
+            onChange={(e) => setFilterStudent(e.target.value)}
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+          >
+            <option value="all">All Students</option>
+            {studentNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
               </option>
             ))}
           </select>
         </div>
+
+        {/* Sort chips */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <Filter className="w-3 h-3" /> Sort by:
+          </span>
+          {(
+            [
+              { key: "date" as SortKey, label: "Date" },
+              { key: "name" as SortKey, label: "Student" },
+              { key: "type" as SortKey, label: "Type" },
+              { key: "status" as SortKey, label: "Status" },
+            ] as const
+          ).map((s) => (
+            <button
+              key={s.key}
+              onClick={() => toggleSort(s.key)}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors ${
+                sortKey === s.key
+                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              {s.label}
+              {sortKey === s.key && (
+                <ArrowUpDown className="w-3 h-3" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Documents List */}
-      <div className="space-y-4">
-        {filteredDocuments.map((doc) => (
+      {/* ── Documents List ──────────────────────────────────────── */}
+      <div className="space-y-3">
+        {paginatedDocuments.map((doc) => (
           <div
             key={doc.id}
             className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
           >
-            <div className="p-4 sm:p-6">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3 sm:mb-4">
-                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
+
+            <div className="p-4 sm:p-5">
+              {/* Top row: student info + status badge */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start space-x-3 flex-1 min-w-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                     {doc.studentAvatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
                         {doc.studentName}
                       </h3>
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        ({doc.studentId})
-                      </span>
-                      <span
-                        className={`text-[10px] sm:text-xs px-2 py-0.5 sm:py-1 rounded-full ${getPriorityColor(
-                          doc.priority || "medium"
-                        )}`}
-                      >
-                        {doc.priority || "medium"} priority
+                      <span className="text-[10px] sm:text-xs text-gray-400">
+                        {doc.studentId}
                       </span>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                      <span className="flex items-center space-x-1">
-                        <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="truncate">{doc.company}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span>
-                          Due: {doc.dueDate ? formatDate(doc.dueDate) : "Not Set"}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate max-w-[160px]">
+                          {doc.company}
                         </span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 flex-shrink-0" />
+                        {doc.submittedDate}
                       </span>
                     </div>
                   </div>
                 </div>
                 <span
-                  className={`text-[10px] sm:text-xs px-2 sm:px-3 py-1 rounded-full font-medium flex-shrink-0 ml-2 ${getStatusColor(
+                  className={`text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full font-medium flex-shrink-0 ml-2 ${getStatusColor(
                     doc.status
                   )}`}
                 >
-                  {doc.status.replace(/_/g, " ")}
+                  {getStatusLabel(doc.status)}
                 </span>
               </div>
 
-              {/* Document Info */}
-              <div className="bg-gray-50 dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
-                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
-                    <div className="flex-shrink-0 [&_svg]:w-4 [&_svg]:h-4 sm:[&_svg]:w-5 sm:[&_svg]:h-5">
-                      {getFileIcon(doc.fileType || "pdf")}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm">
-                        {doc.documentType}
+              {/* Document info card */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 mb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center space-x-2 flex-1 min-w-0">
+                    {getFileIcon(doc.fileType || "pdf")}
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {doc.documentLabel}
                       </p>
-                      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-1 break-all">
-                        {doc.fileName} • {doc.fileSizeMB}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 mt-2">
-                        {doc.description}
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {doc.fileName}{" "}
+                        {doc.fileSize
+                          ? `• ${formatFileSize(doc.fileSize)}`
+                          : doc.fileSizeMB
+                          ? `• ${doc.fileSizeMB}`
+                          : ""}
                       </p>
                     </div>
                   </div>
-                  <div className="text-left sm:text-right flex-shrink-0">
-                    <p className="text-[10px] sm:text-xs text-gray-500">Submitted</p>
-                    <p className="text-[10px] sm:text-xs font-medium text-gray-900 dark:text-white">
-                      {doc.submittedDate}
-                    </p>
-                  </div>
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                    {doc.category}
+                  </span>
                 </div>
               </div>
 
-              {/* Review Info (if reviewed) */}
+              {/* Review remarks (if reviewed) */}
               {(doc.status === "APPROVED" || doc.status === "REJECTED") &&
                 doc.remarks && (
                   <div
-                    className={`rounded-lg sm:rounded-2xl border p-3 sm:p-4 mb-3 sm:mb-4 ${doc.status === "APPROVED"
-                      ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
-                      : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
-                      }`}
+                    className={`rounded-lg border p-3 mb-3 ${
+                      doc.status === "APPROVED"
+                        ? "border-green-200 bg-green-50/80 dark:border-green-700/60 dark:bg-green-900/20"
+                        : "border-red-200 bg-red-50/80 dark:border-red-700/60 dark:bg-red-900/20"
+                    }`}
                   >
-                    <div className="flex items-start space-x-2 sm:space-x-3">
+                    <div className="flex items-start space-x-2">
                       {doc.status === "APPROVED" ? (
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                       ) : (
-                        <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                        <XCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white mb-0.5">
                           Review Remarks
                         </p>
-                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                        <p className="text-xs text-gray-700 dark:text-gray-300">
                           {doc.remarks}
                         </p>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 mt-2 text-[10px] sm:text-xs text-gray-500">
-                          <span>Reviewed by: {doc.reviewedBy}</span>
-                          <span className="hidden sm:inline">•</span>
-                          <span>{doc.reviewedDate}</span>
-                        </div>
+                        {(doc.reviewedBy || doc.reviewedDate) && (
+                          <p className="text-[10px] text-gray-500 mt-1.5">
+                            {doc.reviewedBy && (
+                              <span>By {doc.reviewedBy}</span>
+                            )}
+                            {doc.reviewedBy && doc.reviewedDate && " • "}
+                            {doc.reviewedDate && (
+                              <span>{doc.reviewedDate}</span>
+                            )}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700 gap-3 sm:gap-0">
-                <div className="flex items-center space-x-2 flex-wrap">
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-gray-100 dark:border-gray-700 gap-2 sm:gap-0">
+                <div className="flex items-center space-x-1">
                   <button
                     onClick={() => handlePreview(doc)}
-                    disabled={previewLoading}
-                    className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={previewLoading && previewDoc?.id === doc.id}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-xs sm:text-sm disabled:opacity-50"
                   >
                     {previewLoading && previewDoc?.id === doc.id ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                        <span>Loading...</span>
-                      </>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <>
-                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span>Preview</span>
-                      </>
+                      <Eye className="w-3.5 h-3.5" />
                     )}
+                    <span>Preview</span>
                   </button>
                   <button
                     onClick={() => handleDownload(doc)}
-                    className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-xs sm:text-sm"
                   >
-                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Download className="w-3.5 h-3.5" />
                     <span>Download</span>
-                  </button>
-                  <button
-                    onClick={() => openFeedbackModal(doc)}
-                    className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span>Feedback</span>
                   </button>
                 </div>
 
-                {doc.status === "PENDING" && (
+                {(doc.status === "PENDING" ||
+                  doc.status === "RESUBMISSION_REQUESTED") && (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleReview(doc, "reject")}
-                      className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 rounded-lg sm:rounded-xl transition-colors font-medium text-xs sm:text-sm"
+                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800/30 rounded-lg transition-colors font-medium text-xs sm:text-sm"
                     >
-                      <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <XCircle className="w-3.5 h-3.5" />
                       <span>Reject</span>
                     </button>
                     <button
                       onClick={() => handleReview(doc, "approve")}
-                      className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg sm:rounded-xl transition-colors font-medium text-xs sm:text-sm"
+                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
                     >
-                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <CheckCircle className="w-3.5 h-3.5" />
                       <span>Approve</span>
                     </button>
                   </div>
@@ -806,140 +841,215 @@ const CoordinatorDocumentsTab: React.FC = () => {
         ))}
       </div>
 
+      {/* ── Empty State ─────────────────────────────────────────── */}
       {filteredDocuments.length === 0 && (
-        <div className="bg-white dark:bg-[#212124] rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-700">
-          <FileCheck className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl p-10 sm:p-12 text-center border border-gray-100 dark:border-gray-700">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <FileCheck className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">
             No documents found
           </p>
-          <p className="text-sm text-gray-500">
-            Try adjusting your search or filters
+          <p className="text-sm text-gray-500 dark:text-gray-500">
+            {searchQuery || filterStatus !== "all" || filterType !== "all"
+              ? "Try adjusting your search or filters"
+              : "Student documents will appear here once submitted"}
           </p>
         </div>
       )}
 
-      {/* Review Modal */}
+      {/* ── Pagination ──────────────────────────────────────────── */}
+      {filteredDocuments.length > ITEMS_PER_PAGE && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Showing{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+            </span>
+            –
+            <span className="font-medium text-gray-900 dark:text-white">
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredDocuments.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {filteredDocuments.length}
+            </span>{" "}
+            documents
+          </p>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 sm:p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (p) =>
+                  p === 1 ||
+                  p === totalPages ||
+                  Math.abs(p - currentPage) <= 1
+              )
+              .reduce<(number | "ellipsis")[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1)
+                  acc.push("ellipsis");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === "ellipsis" ? (
+                  <span
+                    key={`e-${idx}`}
+                    className="px-1 text-gray-400 text-xs"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p as number)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      currentPage === p
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="p-1.5 sm:p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Review Modal ────────────────────────────────────────── */}
       {showReviewModal && selectedDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {reviewAction === "approve"
-                  ? "Approve Document"
-                  : "Reject Document"}
-              </h3>
+        <div
+          className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: 0 }}
+          onClick={() => setShowReviewModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-gray-100 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`p-2 rounded-lg ${
+                    reviewAction === "approve"
+                      ? "bg-green-100 dark:bg-green-900/30"
+                      : "bg-red-100 dark:bg-red-900/30"
+                  }`}
+                >
+                  {reviewAction === "approve" ? (
+                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {reviewAction === "approve"
+                    ? "Approve Document"
+                    : "Reject Document"}
+                </h3>
+              </div>
               <button
                 onClick={() => setShowReviewModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <XCircle className="w-6 h-6" />
+                <XCircle className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Document Summary */}
-            <div className="bg-gray-50 dark:bg-[#212124] rounded-xl p-4 mb-6">
-              <div className="flex items-start space-x-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+            {/* Document summary */}
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-5">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs">
                   {selectedDoc.studentAvatar}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
                     {selectedDoc.studentName}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {selectedDoc.company}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2 mb-2">
+              <div className="flex items-center space-x-2">
                 {getFileIcon(selectedDoc.fileType || "pdf")}
-                <p className="font-medium text-gray-900 dark:text-white text-sm">
-                  {selectedDoc.documentType}
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {selectedDoc.documentLabel}
                 </p>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {selectedDoc.fileName}
-              </p>
             </div>
 
-            <DocumentFeedbackPanel
-              documentId={selectedDoc.id}
-              className="mb-6"
-              allowFeedback={false}
-              hideHeader
-              compact
-            />
-
-            {/* Remarks Input */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {reviewAction === "approve"
-                    ? "Approval Comments (Optional)"
-                    : "Rejection Reason (Required)"}
-                </label>
-                {selectedDoc && reviewAction && (
-                  <AIGenerateButton
-                    onGenerate={async () => {
-                      return aiService.generateDocumentFeedback({
-                        documentId: selectedDoc.id,
-                        action: reviewAction,
-                      });
-                    }}
-                    onSuccess={(generatedText) => {
-                      setRemarks(generatedText);
-                      toast.success('Feedback generated successfully');
-                    }}
-                    size="sm"
-                    variant="outline"
-                  />
-                )}
-              </div>
+            {/* Remarks */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {reviewAction === "approve"
+                  ? "Comments (Optional)"
+                  : "Rejection Reason (Required)"}
+              </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder={
                   reviewAction === "approve"
-                    ? "Add any additional comments..."
-                    : "Please provide a reason for rejection..."
+                    ? "Add any additional comments…"
+                    : "Please provide a reason for rejection…"
                 }
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 resize-none"
+                rows={3}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={() => setShowReviewModal(false)}
-                className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={submitReview}
                 disabled={
-                  submitting || (reviewAction === "reject" && !remarks.trim())
+                  submitting ||
+                  (reviewAction === "reject" && !remarks.trim())
                 }
-                className={`px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 ${reviewAction === "approve"
-                  ? "bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
-                  : "bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-400"
-                  } disabled:cursor-not-allowed`}
+                className={`px-5 py-2 rounded-xl font-medium text-sm transition-colors flex items-center space-x-2 ${
+                  reviewAction === "approve"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
+                    <span>Processing…</span>
                   </>
                 ) : reviewAction === "approve" ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
-                    <span>Approve Document</span>
+                    <span>Approve</span>
                   </>
                 ) : (
                   <>
                     <XCircle className="w-4 h-4" />
-                    <span>Reject Document</span>
+                    <span>Reject</span>
                   </>
                 )}
               </button>
@@ -948,53 +1058,11 @@ const CoordinatorDocumentsTab: React.FC = () => {
         </div>
       )}
 
-      {showFeedbackModal && feedbackDoc && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-3xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                    {feedbackDoc.studentAvatar}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      Feedback for {feedbackDoc.studentName}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {feedbackDoc.documentType} • {feedbackDoc.fileName}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowFeedbackModal(false);
-                  setFeedbackDoc(null);
-                }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <DocumentFeedbackPanel
-                documentId={feedbackDoc.id}
-                allowFeedback
-                onFeedbackAdded={() => {
-                  fetchDocuments();
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Modal */}
+      {/* ── Preview Modal ───────────────────────────────────────── */}
       {previewDoc && previewUrl && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3 sm:p-4"
-          style={{ margin: "0" }}
+          className="fixed inset-0 bg-black/75 z-[70] flex items-center justify-center p-3 sm:p-4"
+          style={{ margin: 0 }}
           onClick={closePreview}
         >
           <div
@@ -1002,51 +1070,50 @@ const CoordinatorDocumentsTab: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm sm:text-base flex-shrink-0">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0">
                   {previewDoc.studentAvatar}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900 dark:text-white truncate">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
                     {previewDoc.studentName}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {previewDoc.documentType} • {previewDoc.fileName || previewDoc.filename}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {previewDoc.documentLabel} •{" "}
+                    {previewDoc.fileName || previewDoc.filename}
                   </p>
                 </div>
               </div>
               <button
                 onClick={closePreview}
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
-                title="Close Preview"
               >
-                <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                <XCircle className="w-5 h-5" />
               </button>
             </div>
 
             {/* PDF Viewer */}
-            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+            <div className="flex-1 min-h-0 overflow-auto bg-gray-100 dark:bg-gray-900">
               {previewLoading ? (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-full min-h-[400px]">
                   <div className="text-center">
-                    <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 animate-spin text-purple-600 dark:text-purple-400 mx-auto mb-4" />
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                      Loading document...
+                    <Loader2 className="w-8 h-8 animate-spin text-purple-600 dark:text-purple-400 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Loading document…
                     </p>
                   </div>
                 </div>
+              ) : previewDoc.fileType === "pdf" ||
+                previewDoc.filename?.endsWith(".pdf") ? (
+                <PDFViewer url={previewUrl} />
               ) : (
-                previewDoc.fileType === "pdf" || previewDoc.type === "pdf" ? (
-                  <PDFViewer url={previewUrl} />
-                ) : (
-                  <iframe
-                    src={previewUrl}
-                    className="w-full h-full border-0"
-                    title={`Preview of ${previewDoc.fileName || previewDoc.filename}`}
-                    style={{ minHeight: "500px" }}
-                  />
-                )
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full border-0"
+                  title={`Preview of ${previewDoc.fileName || previewDoc.filename}`}
+                  style={{ minHeight: "500px" }}
+                />
               )}
             </div>
           </div>

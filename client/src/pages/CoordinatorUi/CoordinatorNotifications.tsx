@@ -74,7 +74,12 @@ const CoordinatorNotifications: React.FC = () => {
                         }
                         navigate(normalizedLink);
                     } else {
-                        navigate(normalizedLink);
+                        // Translate generic document links to coordinator-specific route
+                        let finalLink = normalizedLink;
+                        if (normalizedLink.startsWith("/documents")) {
+                            finalLink = "/coordinator/documents";
+                        }
+                        navigate(finalLink);
                     }
                 }
             }

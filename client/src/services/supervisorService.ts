@@ -56,7 +56,7 @@ export interface StudentDocument {
   filename: string;
   mimeType: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  uploadedAt: string;
+  createdAt: string;
   remarks: string | null;
 }
 
@@ -226,7 +226,7 @@ class SupervisorService {
         filename: doc.filename,
         mimeType: doc.mimeType,
         status: doc.status,
-        uploadedAt: doc.uploadedAt,
+        createdAt: doc.createdAt,
         remarks: doc.remarks,
       }));
     } catch (error) {

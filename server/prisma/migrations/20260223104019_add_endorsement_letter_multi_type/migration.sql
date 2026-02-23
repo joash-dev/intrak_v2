@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "DocumentType" ADD VALUE 'ENDORSEMENT_LETTER_MULTI';

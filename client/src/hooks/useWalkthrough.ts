@@ -50,8 +50,7 @@ export const useWalkthrough = (role: WalkthroughRole) => {
                     sidebarStep,
                     { element: '#tour-nav-dashboard', popover: { title: 'Dashboard', description: 'Overview of your assigned students.' } },
                     { element: '#tour-nav-documents', popover: { title: 'Student Documents', description: 'Review and approve student submissions.' } },
-                    { element: '#tour-nav-monitoring', popover: { title: 'Monitoring', description: 'Monitor student attendance and activities.' } },
-                    { element: '#tour-nav-students', popover: { title: 'My Students', description: 'Manage your student list.' } },
+                    { element: '#tour-nav-students', popover: { title: 'Students', description: 'Manage, monitor, and track your students.' } },
                     { element: '#tour-nav-reports', popover: { title: 'Reports', description: 'Generate performance reports.' } },
                     userMenuStep
                 ];
@@ -105,27 +104,14 @@ export const useWalkthrough = (role: WalkthroughRole) => {
 
     const startWalkthrough = () => {
         const hasSeen = localStorage.getItem(`hasSeenWalkthrough_${role}`);
-        const userString = localStorage.getItem('user');
 
-        if (!userString) return;
-
-        try {
-            const user = JSON.parse(userString);
-            // If user has no createdAt (old login) or is older than 24 hours, do not show
-            if (!user.createdAt) return;
-
-            const createdTime = new Date(user.createdAt).getTime();
-            const now = Date.now();
-            const hoursSinceCreation = (now - createdTime) / (1000 * 60 * 60);
-
-            if (!hasSeen && hoursSinceCreation < 24) {
-                // Slight delay to ensure DOM is ready, especially on mobile
-                setTimeout(() => {
-                    driverObj.current?.drive();
-                }, 500);
-            }
-        } catch (e) {
-            console.error("Error parsing user data for walkthrough", e);
+        // Show the walkthrough only once — ever. Mark as seen immediately.
+        if (!hasSeen) {
+            localStorage.setItem(`hasSeenWalkthrough_${role}`, 'true');
+            // Slight delay to ensure DOM is ready, especially on mobile
+            setTimeout(() => {
+                driverObj.current?.drive();
+            }, 500);
         }
     };
 

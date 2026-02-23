@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Certification of Units Earned - FM-AA-INT-02</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 4mm 6mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8pt;
+            color: #000;
+            background: #888;
+            line-height: 1.1;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 5mm auto;
+            padding: 1mm 4mm;
+            background: white;
+            position: relative;
+        }
+
+        .form-code {
+            text-align: right;
+            font-size: 6pt;
+            font-style: italic;
+            line-height: 1.2;
+            margin-bottom: 0.5mm;
+        }
+
+        /* ===== MAIN TABLE ===== */
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5pt solid #000;
+        }
+
+        .main-table>tbody>tr>td {
+            border: 1pt solid #000;
+            padding: 0;
+            vertical-align: top;
+        }
+
+        /* Header */
+        .header-cell-logo {
+            width: 18mm;
+            text-align: center;
+            vertical-align: middle;
+            padding: 1mm !important;
+        }
+
+        .header-cell-logo svg {
+            width: 14mm;
+            height: 14mm;
+        }
+
+        .header-cell-text {
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.5mm 1mm !important;
+        }
+
+        .header-cell-text h1 {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 0.2mm;
+        }
+
+        .header-cell-text h2 {
+            font-size: 9pt;
+            font-weight: normal;
+            margin-bottom: 0.2mm;
+        }
+
+        .header-cell-text h3 {
+            font-size: 8pt;
+            font-weight: normal;
+        }
+
+        /* Section header rows */
+        .section-row td {
+            font-weight: bold;
+            font-size: 8pt;
+            padding: 0.5mm 2mm !important;
+        }
+
+        /* Inner tables */
+        .inner-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inner-table td,
+        .inner-table th {
+            border: 0.5pt solid #000;
+            padding: 0.3mm 1mm;
+            font-size: 7.5pt;
+            height: 4.5mm;
+            vertical-align: middle;
+        }
+
+        .inner-table th {
+            font-weight: bold;
+            text-align: center;
+            font-size: 7pt;
+            padding: 0.3mm 0.5mm;
+        }
+
+        .inner-table tr td:first-child {
+            border-left: none;
+        }
+
+        .inner-table tr td:last-child {
+            border-right: none;
+        }
+
+        .inner-table tr th:first-child {
+            border-left: none;
+        }
+
+        .inner-table tr th:last-child {
+            border-right: none;
+        }
+
+        .inner-table.no-top-border tr:first-child td,
+        .inner-table.no-top-border tr:first-child th {
+            border-top: none;
+        }
+
+        .inner-table .label {
+            font-weight: bold;
+            font-size: 7.5pt;
+            white-space: nowrap;
+        }
+
+        /* Courses table */
+        .courses-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .courses-table td,
+        .courses-table th {
+            border: 0.5pt solid #000;
+            padding: 0.4mm 1.2mm;
+            font-size: 7.5pt;
+            height: 4.5mm;
+            vertical-align: middle;
+        }
+
+        .courses-table th {
+            font-weight: bold;
+            text-align: center;
+            font-size: 7.5pt;
+            padding: 0.2mm 0.5mm;
+        }
+
+        .courses-table tr td:first-child {
+            border-left: none;
+        }
+
+        .courses-table tr td:last-child {
+            border-right: none;
+        }
+
+        .courses-table tr th:first-child {
+            border-left: none;
+        }
+
+        .courses-table tr th:last-child {
+            border-right: none;
+        }
+
+        /* Year level cell (rotated / vertical span) */
+        .year-level-cell {
+            font-weight: bold;
+            font-size: 8pt;
+            text-align: center;
+            padding: 0.2mm !important;
+            width: 13%;
+        }
+
+        /* Units column */
+        .units-col {
+            text-align: center;
+            width: 5%;
+        }
+
+        .total-col {
+            text-align: center;
+            width: 6%;
+            font-weight: bold;
+        }
+
+        .summer-col {
+            text-align: center;
+            width: 7%;
+        }
+
+        /* Subject columns */
+        .sem1-col {
+            width: 25%;
+        }
+
+        .sem2-col {
+            width: 25%;
+        }
+
+        /* Signature */
+        .sig-block {
+            text-align: center;
+            padding: 1mm;
+        }
+
+        .sig-line {
+            border-top: 1px solid #000;
+            display: inline-block;
+            min-width: 35%;
+            padding-top: 0.2mm;
+            font-style: italic;
+            font-size: 7pt;
+        }
+
+        /* Variables */
+        .var {
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Uppercase only for the header info section (NAME, COURSE, MAJOR) */
+        .header-info .var {
+            text-transform: uppercase;
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0 3mm;
+                overflow: hidden;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Form Code -->
+        <div class="form-code">FM-AA-INT-02<br>Rev: 1<br>14-Oct-2024</div>
+
+        <table class="main-table">
+            <tbody>
+                <!-- HEADER -->
+                <tr>
+                    <td class="header-cell-logo" colspan="1">
+                        <img src="assets/psu_logo.png" alt="PSU Logo" style="width:14mm;height:14mm;">
+                    </td>
+                    <td class="header-cell-text" colspan="8">
+                        <h1>CERTIFICATION OF UNITS EARNED FOR PRACTICUM/INTERNSHIP</h1>
+                        <h2>PANGASINAN STATE UNIVERSITY</h2>
+                        <h3><u>Urdaneta Campus</u></h3>
+                    </td>
+                </tr>
+
+                <!-- NAME -->
+                <tr>
+                    <td colspan="9" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border header-info">
+                            <tr>
+                                <td class="label" style="width:10%;">NAME</td>
+                                <td style="width:30%;text-align:center;"><span class="var">${surname}</span><br><span
+                                        style="font-size:5.5pt;font-style:italic;font-weight:normal;">Surname</span></td>
+                                <td style="width:30%;text-align:center;"><span class="var">${given_name}</span><br><span
+                                        style="font-size:5.5pt;font-style:italic;font-weight:normal;">Given Name</span></td>
+                                <td style="width:30%;text-align:center;"><span class="var">${middle_name}</span><br><span
+                                        style="font-size:5.5pt;font-style:italic;font-weight:normal;">Middle Name</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">COURSE</td>
+                                <td colspan="3"><span class="var">${course}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">MAJOR</td>
+                                <td colspan="3"><span class="var">${major}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- COURSES EARNED header -->
+                <tr class="section-row">
+                    <td colspan="9" style="padding:1mm 3mm;">COURSES EARNED</td>
+                </tr>
+
+                <!-- Courses table -->
+                <tr>
+                    <td colspan="9" style="padding:0;border:none;">
+                        <table class="courses-table">
+                            <!-- Column headers -->
+                            <thead>
+                                <tr>
+                                    <th class="year-level-cell">YEAR LEVEL</th>
+                                    <th class="sem1-col">1<sup>st</sup> SEMESTER</th>
+                                    <th class="units-col">Units</th>
+                                    <th class="sem2-col">2<sup>nd</sup> SEMESTER</th>
+                                    <th class="units-col">Units</th>
+                                    <th class="summer-col">SUMMER</th>
+                                    <th class="units-col">Units</th>
+                                    <th class="total-col">TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- FIRST YEAR -->
+                                <tr>
+                                    <td class="year-level-cell" rowspan="10">FIRST YEAR</td>
+                                    <td><span class="var">${fy_1s_1}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_1_u}</span></td>
+                                    <td><span class="var">${fy_2s_1}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_1_u}</span></td>
+                                    <td rowspan="10"></td>
+                                    <td rowspan="10" class="units-col"></td>
+                                    <td rowspan="10" class="total-col"><span class="var">${fy_total}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_2}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_2_u}</span></td>
+                                    <td><span class="var">${fy_2s_2}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_2_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_3}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_3_u}</span></td>
+                                    <td><span class="var">${fy_2s_3}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_3_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_4}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_4_u}</span></td>
+                                    <td><span class="var">${fy_2s_4}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_4_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_5}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_5_u}</span></td>
+                                    <td><span class="var">${fy_2s_5}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_5_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_6}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_6_u}</span></td>
+                                    <td><span class="var">${fy_2s_6}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_6_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_7}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_7_u}</span></td>
+                                    <td><span class="var">${fy_2s_7}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_7_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_8}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_8_u}</span></td>
+                                    <td><span class="var">${fy_2s_8}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_8_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_9}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_9_u}</span></td>
+                                    <td><span class="var">${fy_2s_9}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_9_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${fy_1s_10}</span></td>
+                                    <td class="units-col"><span class="var">${fy_1s_10_u}</span></td>
+                                    <td><span class="var">${fy_2s_10}</span></td>
+                                    <td class="units-col"><span class="var">${fy_2s_10_u}</span></td>
+                                </tr>
+
+                                <!-- SECOND YEAR -->
+                                <tr>
+                                    <td class="year-level-cell" rowspan="9">SECOND YEAR</td>
+                                    <td><span class="var">${sy_1s_1}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_1_u}</span></td>
+                                    <td><span class="var">${sy_2s_1}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_1_u}</span></td>
+                                    <td rowspan="9"></td>
+                                    <td rowspan="9" class="units-col"></td>
+                                    <td rowspan="9" class="total-col"><span class="var">${sy_total}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_2}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_2_u}</span></td>
+                                    <td><span class="var">${sy_2s_2}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_2_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_3}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_3_u}</span></td>
+                                    <td><span class="var">${sy_2s_3}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_3_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_4}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_4_u}</span></td>
+                                    <td><span class="var">${sy_2s_4}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_4_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_5}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_5_u}</span></td>
+                                    <td><span class="var">${sy_2s_5}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_5_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_6}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_6_u}</span></td>
+                                    <td><span class="var">${sy_2s_6}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_6_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_7}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_7_u}</span></td>
+                                    <td><span class="var">${sy_2s_7}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_7_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_8}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_8_u}</span></td>
+                                    <td><span class="var">${sy_2s_8}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_8_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${sy_1s_9}</span></td>
+                                    <td class="units-col"><span class="var">${sy_1s_9_u}</span></td>
+                                    <td><span class="var">${sy_2s_9}</span></td>
+                                    <td class="units-col"><span class="var">${sy_2s_9_u}</span></td>
+                                </tr>
+
+                                <!-- THIRD YEAR -->
+                                <tr>
+                                    <td class="year-level-cell" rowspan="11">THIRD YEAR</td>
+                                    <td><span class="var">${ty_1s_1}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_1_u}</span></td>
+                                    <td><span class="var">${ty_2s_1}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_1_u}</span></td>
+                                    <td rowspan="11"></td>
+                                    <td rowspan="11" class="units-col"></td>
+                                    <td rowspan="11" class="total-col"><span class="var">${ty_total}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_2}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_2_u}</span></td>
+                                    <td><span class="var">${ty_2s_2}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_2_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_3}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_3_u}</span></td>
+                                    <td><span class="var">${ty_2s_3}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_3_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_4}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_4_u}</span></td>
+                                    <td><span class="var">${ty_2s_4}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_4_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_5}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_5_u}</span></td>
+                                    <td><span class="var">${ty_2s_5}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_5_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_6}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_6_u}</span></td>
+                                    <td><span class="var">${ty_2s_6}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_6_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_7}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_7_u}</span></td>
+                                    <td><span class="var">${ty_2s_7}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_7_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_8}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_8_u}</span></td>
+                                    <td><span class="var">${ty_2s_8}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_8_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_9}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_9_u}</span></td>
+                                    <td><span class="var">${ty_2s_9}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_9_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_10}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_10_u}</span></td>
+                                    <td><span class="var">${ty_2s_10}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_10_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${ty_1s_11}</span></td>
+                                    <td class="units-col"><span class="var">${ty_1s_11_u}</span></td>
+                                    <td><span class="var">${ty_2s_11}</span></td>
+                                    <td class="units-col"><span class="var">${ty_2s_11_u}</span></td>
+                                </tr>
+
+                                <!-- FOURTH YEAR -->
+                                <tr>
+                                    <td class="year-level-cell" rowspan="10">FOURTH YEAR</td>
+                                    <td><span class="var">${4y_1s_1}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_1_u}</span></td>
+                                    <td><span class="var">${4y_2s_1}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_1_u}</span></td>
+                                    <td rowspan="10"></td>
+                                    <td rowspan="10" class="units-col"></td>
+                                    <td rowspan="10" class="total-col"><span class="var">${4y_total}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_2}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_2_u}</span></td>
+                                    <td><span class="var">${4y_2s_2}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_2_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_3}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_3_u}</span></td>
+                                    <td><span class="var">${4y_2s_3}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_3_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_4}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_4_u}</span></td>
+                                    <td><span class="var">${4y_2s_4}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_4_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_5}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_5_u}</span></td>
+                                    <td><span class="var">${4y_2s_5}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_5_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_6}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_6_u}</span></td>
+                                    <td><span class="var">${4y_2s_6}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_6_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_7}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_7_u}</span></td>
+                                    <td><span class="var">${4y_2s_7}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_7_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_8}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_8_u}</span></td>
+                                    <td><span class="var">${4y_2s_8}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_8_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_9}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_9_u}</span></td>
+                                    <td><span class="var">${4y_2s_9}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_9_u}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="var">${4y_1s_10}</span></td>
+                                    <td class="units-col"><span class="var">${4y_1s_10_u}</span></td>
+                                    <td><span class="var">${4y_2s_10}</span></td>
+                                    <td class="units-col"><span class="var">${4y_2s_10_u}</span></td>
+                                </tr>
+
+                                <!-- TOTAL ROW -->
+                                <tr>
+                                    <td colspan="2" style="font-weight:bold;padding:1mm 3mm;">TOTAL</td>
+                                    <td class="units-col"></td>
+                                    <td></td>
+                                    <td class="units-col"></td>
+                                    <td></td>
+                                    <td class="units-col"></td>
+                                    <td class="total-col" style="font-weight:bold;"><span
+                                            class="var">${grand_total}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- COURSES FAILED TO TAKE -->
+                <tr class="section-row">
+                    <td colspan="9" style="padding:1mm 3mm;">COURSES FAILED TO TAKE AS OF THE PRESENT</td>
+                </tr>
+                <tr>
+                    <td colspan="9" style="padding:0;border:none;">
+                        <table class="courses-table">
+                            <tr>
+                                <th style="width:15%;">COURSE CODE</th>
+                                <th style="width:70%;">COURSE TITLE</th>
+                                <th style="width:15%;">UNITS</th>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${fail_code_1}</span></td>
+                                <td><span class="var">${fail_title_1}</span></td>
+                                <td class="units-col"><span class="var">${fail_units_1}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${fail_code_2}</span></td>
+                                <td><span class="var">${fail_title_2}</span></td>
+                                <td class="units-col"><span class="var">${fail_units_2}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${fail_code_3}</span></td>
+                                <td><span class="var">${fail_title_3}</span></td>
+                                <td class="units-col"><span class="var">${fail_units_3}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- CERTIFIED TRUE AND CORRECT -->
+                <tr>
+                    <td colspan="9" style="padding:1.5mm 3mm;">
+                        <div style="text-align:center;">
+                            <p style="font-weight:bold;font-size:8pt;margin-bottom:3mm;">CERTIFIED TRUE AND CORRECT
+                            </p>
+                            <div
+                                style="display:inline-block;min-width:35%;border-top:1px solid #000;padding-top:0.3mm;">
+                                <span style="font-style:italic;font-size:7pt;">Registrar</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

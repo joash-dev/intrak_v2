@@ -13,7 +13,7 @@ export interface DocumentUploadedPayload {
     studentName: string;
     documentType: string;
     fileName: string;
-    uploadedAt: string;
+    createdAt: string;
 }
 
 export interface DocumentStatusChangedPayload {

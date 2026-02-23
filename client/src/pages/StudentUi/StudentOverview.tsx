@@ -20,6 +20,7 @@ import { formatDuration } from "../../utils/attendanceCalculations";
 import Skeleton from "../../components/Skeleton";
 import { settingsService } from "../../services/settingsService";
 import { ProfilePhoto } from "../../components/LoadingStates/ProfilePhotoSkeleton";
+import { formatStudentId } from "../../utils/formatStudentId";
 
 const defaultDashboardData: DashboardData = {
     student: {
@@ -39,21 +40,6 @@ const defaultDashboardData: DashboardData = {
     attendance: [],
     evaluations: [],
     announcements: [],
-};
-
-const formatStudentId = (studentNumber: string) => {
-    if (/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) return studentNumber;
-    if (/^\d{4}-\d{5}$/.test(studentNumber)) {
-        const year = studentNumber.substring(2, 4);
-        const number = studentNumber.substring(5, 9);
-        return `${year}-UR-${number}`;
-    }
-    if (/^\d{4}-\d{4}$/.test(studentNumber)) {
-        const year = studentNumber.substring(2, 4);
-        const number = studentNumber.substring(5);
-        return `${year}-UR-${number}`;
-    }
-    return studentNumber || "N/A";
 };
 
 const StudentOverview = () => {

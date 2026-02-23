@@ -160,7 +160,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
       radiusMeters: company.radiusMeters ?? 100,
       maxSlots: (company.maxSlots ?? 0).toString(),
       companyType: (company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE",
-      workingDays: company.workingDays || (company.companyType === "PRIVATE" 
+      workingDays: company.workingDays || (company.companyType === "PRIVATE"
         ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
         : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
     });
@@ -856,8 +856,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
                     <div
                       key={moa.id}
                       className={`p-4 rounded-xl border-l-4 ${isExpired(moa.uploadedAt)
-                          ? "bg-red-50 dark:bg-red-900/20 border-red-500"
-                          : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
+                        ? "bg-red-50 dark:bg-red-900/20 border-red-500"
+                        : "bg-orange-50 dark:bg-orange-900/20 border-orange-500"
                         }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -960,9 +960,9 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               company._count.students > 0
                             )}
                             className={`p-1.5 sm:p-2 rounded-lg transition-colors bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm ${company._count?.students &&
-                                company._count.students > 0
-                                ? "text-red-400/60 cursor-not-allowed"
-                                : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              company._count.students > 0
+                              ? "text-red-400/60 cursor-not-allowed"
+                              : "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                               }`}
                             title={
                               company._count?.students &&
@@ -1107,17 +1107,17 @@ const CoordinatorCompanyManagement: React.FC = () => {
                             {companyMOAs.slice(0, 2).map((moa) => {
                               const statusInfo = getStatusInfo(moa.status);
                               const StatusIcon = statusInfo.icon;
-                              const isExpiring = isExpiringSoon(moa.uploadedAt);
-                              const isExpiredMOA = isExpired(moa.uploadedAt);
-
+                              const isExpiring = isExpiringSoon(moa.createdAt);
+                              const isExpiredMOA = isExpired(moa.createdAt);
+                              const isValidMOA = !isExpired(moa.createdAt) && moa.status === 'APPROVED';
                               return (
                                 <div
                                   key={moa.id}
                                   className={`p-2.5 sm:p-3 rounded-lg border ${isExpiredMOA
-                                      ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
-                                      : isExpiring
-                                        ? "bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800"
-                                        : "bg-gray-50 dark:bg-[#212124]/50 border-gray-200 dark:border-gray-600"
+                                    ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800"
+                                    : isExpiring
+                                      ? "bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800"
+                                      : "bg-gray-50 dark:bg-[#212124]/50 border-gray-200 dark:border-gray-600"
                                     }`}
                                 >
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
@@ -1132,8 +1132,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                         {(isExpiring || isExpiredMOA) && (
                                           <span
                                             className={`text-[10px] sm:text-xs ${isExpiredMOA
-                                                ? "text-red-600"
-                                                : "text-orange-600"
+                                              ? "text-red-600"
+                                              : "text-orange-600"
                                               } flex-shrink-0`}
                                           >
                                             {isExpiredMOA
@@ -1437,15 +1437,13 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
                             <label
                               key={day}
-                              className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-colors ${
-                                companyForm.workingDays.includes(day)
+                              className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-colors ${companyForm.workingDays.includes(day)
                                   ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
                                   : "bg-gray-50 dark:bg-[#212124] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
-                              } ${
-                                companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")
+                                } ${companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")
                                   ? "opacity-50 cursor-not-allowed"
                                   : ""
-                              }`}
+                                }`}
                             >
                               <input
                                 type="checkbox"
@@ -2198,11 +2196,11 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         isDeletingCompany
                       }
                       className={`group relative px-6 py-2 rounded-lg transition-all duration-300 overflow-hidden ${deleteConfirmText === "delete" &&
-                          (!companyToDelete._count?.students ||
-                            companyToDelete._count.students === 0) &&
-                          !isDeletingCompany
-                          ? "bg-red-600 text-white hover:bg-red-700"
-                          : "bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400"
+                        (!companyToDelete._count?.students ||
+                          companyToDelete._count.students === 0) &&
+                        !isDeletingCompany
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400"
                         }`}
                     >
                       {companyToDelete._count?.students &&

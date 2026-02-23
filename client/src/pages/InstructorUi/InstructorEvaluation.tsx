@@ -245,70 +245,25 @@ const InstructorEvaluationsTab = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Total Students
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.total}
-              </p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total Students", value: stats.total, icon: Award, bg: "bg-purple-100 dark:bg-purple-900/30", iconColor: "text-purple-600 dark:text-purple-300" },
+          { label: "Pending", value: stats.pending, icon: Clock, bg: "bg-amber-100 dark:bg-amber-900/30", iconColor: "text-amber-600 dark:text-amber-300" },
+          { label: "Completed", value: stats.completed, icon: CheckCircle, bg: "bg-green-100 dark:bg-green-900/30", iconColor: "text-green-600 dark:text-green-300" },
+          { label: "Avg Rating", value: stats.avgRating, icon: Star, bg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-300" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className={`p-2 ${stat.bg} rounded-lg w-fit mb-2`}>
+              <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
             </div>
-            <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-              <Award className="w-5 h-5 text-white" />
-            </div>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+              {stat.label}
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {stat.value}
+            </p>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Pending
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.pending}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-yellow-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Completed
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.completed}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Avg Rating
-              </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {stats.avgRating}
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Star className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Search and Filters */}

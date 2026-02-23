@@ -36,6 +36,7 @@ enum DocumentType {
   INTERNSHIP_RESUME
   CONSENT_FORM
   ENDORSEMENT_LETTER
+  ENDORSEMENT_LETTER_MULTI
   INTERNSHIP_RELEASE
   // Upon approval documents
   INTERNSHIP_AGREEMENT
@@ -170,6 +171,7 @@ model User {
   companiesSupervised     Company[]              @relation("CompanySupervisor")
   partnershipMessagesSent PartnershipMessage[]   @relation("PartnershipMessageSender")
   supervisorFeedbacks     SupervisorFeedback[]   @relation("SupervisorFeedbacks")
+  announcementViews       AnnouncementView[]
   agencySelfEvaluations   AgencySelfEvaluation[] @relation("AgencySelfEvaluations")
 
   // Two-Factor Authentication
@@ -318,14 +320,21 @@ model Document {
   status       DocumentStatus @default(PENDING)
   remarks      String?
   uploadedById String
-  uploadedAt   DateTime       @default(now())
+  createdAt    DateTime       @default(now())
   reviewedAt   DateTime?
   fileSize     Int?           // File size in bytes
+  formData     Json?          // Data filled in the HTML form
 
   // E-signature fields (future feature - disabled)
   requiresSignature Boolean   @default(false)
   signedAt          DateTime?
   signatureData     String?
+
+  // Shared document acceptance (for multi-student endorsement letters)
+  // null = normal document, PENDING_ACCEPTANCE = waiting for this student,
+  // ACCEPTED = student accepted, WAITING_FOR_ACCEPTANCE = submitter waiting for all to accept
+  sharedStatus        String?
+  parentDocumentId    String?   // For child shared docs: the submitter's document ID
 
   // Relations
   student    Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -399,6 +408,7 @@ model Announcement {
   title       String
   content     String
   audience    AnnouncementAudience @default(ALL)
+  type        String               @default("info")
   isPinned    Boolean              @default(false)
   views       Int                  @default(0)
   createdById String
@@ -406,11 +416,27 @@ model Announcement {
   updatedAt   DateTime             @updatedAt
 
   // Relations
-  createdBy User @relation(fields: [createdById], references: [id])
+  createdBy          User               @relation(fields: [createdById], references: [id])
+  announcementViews  AnnouncementView[]
 
   @@index([audience])
   @@index([createdAt])
   @@map("announcements")
+}
+
+model AnnouncementView {
+  id             String       @id @default(uuid())
+  announcementId String
+  userId         String
+  viewedAt       DateTime     @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([announcementId])
+  @@index([userId])
+  @@map("announcement_views")
 }
 
 model DocumentFeedback {

@@ -11,6 +11,7 @@ import {
     Menu,
     LogOut,
     Loader2,
+    Lock,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -19,6 +20,7 @@ import { notificationService, type NotificationItem } from "../../services/notif
 import { dashboardService } from "../../services/dashboardService";
 import api from "../../services/api";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
+import toast from "react-hot-toast";
 
 const StudentLayout = () => {
     const navigate = useNavigate();
@@ -37,6 +39,7 @@ const StudentLayout = () => {
     const [currentUser, setCurrentUser] = useState<{ name: string; email: string; initials: string } | null>(null);
     const [companyApplications, setCompanyApplications] = useState<any[]>([]);
     const [studentCompany, setStudentCompany] = useState<string | null>(null);
+    const [studentSupervisor, setStudentSupervisor] = useState<string | null>(null);
 
     // Notifications State
     const { data: notificationsData } = useOptimizedData<NotificationItem[]>(
@@ -122,9 +125,10 @@ const StudentLayout = () => {
             const photoUrl = await settingsService.getProfilePhoto();
             if (photoUrl) setProfilePhoto(photoUrl);
 
-            // Fetch dashboard data to check company status
+            // Fetch dashboard data to check company & supervisor status
             const dashboardData = await dashboardService.getDashboardData();
             setStudentCompany(dashboardData.student.company || null);
+            setStudentSupervisor(dashboardData.student.supervisor || null);
 
             // Fetch applications
             const applicationsResponse = await api.get("/company-applications/my-applications");
@@ -196,15 +200,17 @@ const StudentLayout = () => {
         (app) => app.status === "PENDING" || app.status === "APPROVED"
     );
 
+    // Attendance & Evaluations require a company AND supervisor assignment
+    const isAttendanceDisabled = !studentCompany || !studentSupervisor;
+
     // Navigation Items
     const navItems = [
         { id: "dashboard", icon: Home, label: "Overview", path: "/student/dashboard" },
         { id: "documents", icon: FileText, label: "Documents", path: "/student/documents" },
         { id: "companies", icon: Building2, label: "Companies", path: "/student/companies" },
-        { id: "partnership-assistance", icon: Search, label: "Find Company", path: "/student/partnership-assistance", disabled: isFindCompanyDisabled },
-        { id: "attendance", icon: Clock, label: "Attendance", path: "/student/attendance" },
-        { id: "evaluations", icon: Star, label: "Evaluations", path: "/student/evaluations" },
-        { id: "reports", icon: TrendingUp, label: "Reports", path: "/student/reports" },
+        { id: "partnership-assistance", icon: Search, label: "Find Company", path: "/student/partnership-assistance", disabled: isFindCompanyDisabled, disabledTitle: "You already have a company or a pending application" },
+        { id: "attendance", icon: Clock, label: "Attendance", path: "/student/attendance", disabled: isAttendanceDisabled, disabledTitle: "You need a company and supervisor assignment before accessing attendance" },
+        { id: "evaluations", icon: Star, label: "Evaluations", path: "/student/evaluations", disabled: isAttendanceDisabled, disabledTitle: "You need a company and supervisor assignment before accessing evaluations" },
         { id: "notifications", icon: Bell, label: "Notifications", path: "/student/notifications" },
     ];
 
@@ -268,17 +274,21 @@ const StudentLayout = () => {
                                 key={item.id}
                                 id={`tour-nav-${item.id}`}
                                 onClick={() => {
-                                    if (!item.disabled) {
-                                        navigate(item.path);
-                                        if (window.innerWidth < 1024) setSidebarOpen(false);
+                                    if (item.disabled) {
+                                        toast(item.disabledTitle || "This feature is currently locked.", { icon: "🔒" });
+                                        return;
                                     }
+                                    navigate(item.path);
+                                    if (window.innerWidth < 1024) setSidebarOpen(false);
                                 }}
-                                disabled={item.disabled}
-                                title={item.disabled ? "You already have a company or a pending application" : ""}
+                                title={item.disabled ? (item.disabledTitle || "") : ""}
                                 className={`relative w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${item.disabled ? "opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600" : activeTab === item.id ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-lg" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"}`}
                             >
                                 <item.icon className="w-5 h-5 flex-shrink-0" />
                                 <span className={`font-medium text-sm ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
+                                {item.disabled && sidebarExpanded && (
+                                    <Lock className="w-3.5 h-3.5 ml-auto text-gray-400 dark:text-gray-600 flex-shrink-0" />
+                                )}
                                 {item.id === "notifications" && unreadCount > 0 && (
                                     <span className={`w-2 h-2 bg-purple-500 rounded-full ${sidebarExpanded ? "ml-auto" : "absolute top-1 right-1 lg:block hidden"}`}></span>
                                 )}
@@ -310,7 +320,7 @@ const StudentLayout = () => {
             {/* Main Content */}
             <main className={`p-6 pt-24 lg:pt-6 transition-all duration-300 relative ${sidebarOpen ? "z-10 lg:z-auto" : "z-auto"} ${sidebarOpen ? (sidebarExpanded ? "lg:ml-80" : "lg:ml-28") : "lg:ml-4"}`}>
                 <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
-                    <Outlet context={{ notifications: localNotifications, studentCompany, companyApplications, refreshStudentData }} />
+                    <Outlet context={{ notifications: localNotifications, setLocalNotifications, studentCompany, studentSupervisor, companyApplications, refreshStudentData }} />
                 </Suspense>
             </main>
 

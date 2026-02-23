@@ -43,7 +43,7 @@ export const sendVerificationEmail = async (req: AuthRequest, res: Response) => 
         });
 
         // Generate verification URL
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
         const verificationUrl = `${clientUrl}/verify-email?token=${verificationToken}`;
 
         // Send verification email
@@ -197,7 +197,7 @@ export const resendVerificationEmail = async (req: AuthRequest, res: Response) =
             }
         });
 
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+        const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
         const verificationUrl = `${clientUrl}/verify-email?token=${verificationToken}`;
 
         const emailResult = await emailService.sendVerificationEmail(

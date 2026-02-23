@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Users,
   Search,
@@ -11,6 +11,11 @@ import {
   Eye,
   FileText,
   X,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import {
@@ -26,24 +31,7 @@ import api from "../../services/api";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 import { devLog } from "../../utils/devLog";
-
-// Utility function to format student ID
-const formatStudentId = (studentNumber: string) => {
-  if (/^\d{2}-[A-Z]{2}-\d{4}$/.test(studentNumber)) {
-    return studentNumber;
-  }
-  if (/^\d{4}-\d{5}$/.test(studentNumber)) {
-    const year = studentNumber.substring(2, 4);
-    const number = studentNumber.substring(5, 9);
-    return `${year}-UR-${number}`;
-  }
-  if (/^\d{4}-\d{4}$/.test(studentNumber)) {
-    const year = studentNumber.substring(2, 4);
-    const number = studentNumber.substring(5);
-    return `${year}-UR-${number}`;
-  }
-  return studentNumber || "22-UR-0592";
-};
+import { formatStudentId } from "../../utils/formatStudentId";
 
 // Use CoordinatorStudent from the service instead of local interface
 // Alias for clarity
@@ -60,12 +48,20 @@ interface CoordinatorStudentManagementProps {
   bulkOperationsEnabled?: boolean;
 }
 
+type SortKey = "name" | "company" | "status" | "instructor";
+type SortDir = "asc" | "desc";
+const ITEMS_PER_PAGE = 10;
+
 const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> = ({
   bulkOperationsEnabled = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [instructorFilter, setInstructorFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showMassAssignModal, setShowMassAssignModal] = useState(false);
   const [showUnassignModal, setShowUnassignModal] = useState(false);
@@ -297,24 +293,98 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
     }
   };
 
+  // Unique company names for filter
+  const companyNames = useMemo(
+    () =>
+      [...new Set(
+        (students || [])
+          .map((s: Student) => s.company)
+          .filter((c: string) => c && c !== "No Company")
+      )].sort(),
+    [students]
+  );
+
   // Filter students
-  const filteredStudents = (students || []).filter((student: Student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.company.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredStudents = useMemo(() => {
+    let result = (students || []).filter((student: Student) => {
+      const matchesSearch =
+        !searchQuery ||
+        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.company.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all" || student.status.toLowerCase() === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || student.status.toLowerCase() === statusFilter;
 
-    const matchesInstructor =
-      instructorFilter === "all" ||
-      (instructorFilter === "assigned" && student.instructorId) ||
-      (instructorFilter === "unassigned" && !student.instructorId) ||
-      student.instructorId === instructorFilter;
+      const matchesInstructor =
+        instructorFilter === "all" ||
+        (instructorFilter === "assigned" && student.instructorId) ||
+        (instructorFilter === "unassigned" && !student.instructorId) ||
+        student.instructorId === instructorFilter;
 
-    return matchesSearch && matchesStatus && matchesInstructor;
-  });
+      const matchesCompany =
+        companyFilter === "all" ||
+        (companyFilter === "none" && (!student.company || student.company === "No Company")) ||
+        student.company === companyFilter;
+
+      return matchesSearch && matchesStatus && matchesInstructor && matchesCompany;
+    });
+
+    // Sort
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "name":
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case "company":
+          cmp = (a.company || "").localeCompare(b.company || "");
+          break;
+        case "status":
+          cmp = a.status.localeCompare(b.status);
+          break;
+        case "instructor":
+          cmp = (a.instructorName || "").localeCompare(b.instructorName || "");
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return result;
+  }, [students, searchQuery, statusFilter, instructorFilter, companyFilter, sortKey, sortDir]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / ITEMS_PER_PAGE));
+  const paginatedStudents = filteredStudents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, instructorFilter, companyFilter, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  // Stats
+  const stats = useMemo(() => {
+    const all = students || [];
+    return {
+      total: all.length,
+      assigned: all.filter((s: Student) => !!s.instructorId).length,
+      unassigned: all.filter((s: Student) => !s.instructorId).length,
+      withCompany: all.filter((s: Student) => s.company && s.company !== "No Company").length,
+      noCompany: all.filter((s: Student) => !s.company || s.company === "No Company").length,
+    };
+  }, [students]);
 
   const combinedLoading =
     studentsLoading || instructorsLoading || companiesLoading;
@@ -418,95 +488,153 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="group relative bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-600 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-purple-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-purple-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div className="relative">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 sm:space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                  Student Management
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
-                  Manage and monitor student progress
-                </p>
-              </div>
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 sm:px-6 py-4 sm:py-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <Users className="w-5 h-5 text-purple-600 dark:text-purple-300" />
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 w-full md:w-auto">
-              <div className="flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>{filteredStudents.length} students</span>
-              </div>
-              {filteredStudents.filter(
-                (student: Student) => !student.instructorId
-              ).length > 0 && (
-                  <button
-                    onClick={() => {
-                      const unassignedStudents = filteredStudents.filter(
-                        (student: Student) => !student.instructorId
-                      );
-                      setSelectedStudents(
-                        unassignedStudents.map((student: Student) => student.id)
-                      );
-                      setShowMassAssignModal(true);
-                    }}
-                    className="px-2 sm:px-3 py-1 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex-shrink-0"
-                  >
-                    <span className="hidden sm:inline">Quick Assign All Unassigned</span>
-                    <span className="sm:hidden">Quick Assign</span>
-                  </button>
-                )}
+            <div>
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
+                Student Management
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Manage assignments and monitor student progress
+              </p>
             </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            {stats.unassigned > 0 && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                {stats.unassigned} unassigned
+              </span>
+            )}
+            {filteredStudents.filter(
+              (student: Student) => !student.instructorId
+            ).length > 0 && (
+              <button
+                onClick={() => {
+                  const unassignedStudents = filteredStudents.filter(
+                    (student: Student) => !student.instructorId
+                  );
+                  setSelectedStudents(
+                    unassignedStudents.map((student: Student) => student.id)
+                  );
+                  setShowMassAssignModal(true);
+                }}
+                className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex-shrink-0"
+              >
+                <span className="hidden sm:inline">Quick Assign All</span>
+                <span className="sm:hidden">Assign All</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="group relative bg-white/80 dark:bg-[#212124]/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200/50 dark:border-gray-700/50 hover:shadow-xl hover:shadow-blue-500/10 dark:hover:shadow-blue-400/10 transition-all duration-300 hover:border-blue-300 dark:hover:border-blue-600 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-blue-500/5 dark:from-gray-800/10 dark:via-transparent dark:to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search students, companies, or student ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        {[
+          { label: "Total Students", value: stats.total, icon: Users, bg: "bg-blue-100 dark:bg-blue-900/30", iconColor: "text-blue-600 dark:text-blue-300" },
+          { label: "Assigned", value: stats.assigned, icon: UserCheck, bg: "bg-green-100 dark:bg-green-900/30", iconColor: "text-green-600 dark:text-green-300" },
+          { label: "Unassigned", value: stats.unassigned, icon: UserX, bg: "bg-amber-100 dark:bg-amber-900/30", iconColor: "text-amber-600 dark:text-amber-300" },
+          { label: "With Company", value: stats.withCompany, icon: Building2, bg: "bg-purple-100 dark:bg-purple-900/30", iconColor: "text-purple-600 dark:text-purple-300" },
+          { label: "No Company", value: stats.noCompany, icon: AlertCircle, bg: "bg-red-100 dark:bg-red-900/30", iconColor: "text-red-600 dark:text-red-300" },
+        ].map((card) => (
+          <div key={card.label} className="bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className={`p-2 ${card.bg} rounded-lg w-fit mb-2`}>
+              <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.iconColor}`} />
             </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="at_risk">At Risk</option>
-              <option value="completed">Completed</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            <select
-              value={instructorFilter}
-              onChange={(e) => setInstructorFilter(e.target.value)}
-              className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto"
-            >
-              <option value="all">All Assignments</option>
-              <option value="assigned">Assigned</option>
-              <option value="unassigned">Unassigned</option>
-              {(instructors || []).map((instructor: Instructor) => (
-                <option key={instructor.id} value={instructor.id}>
-                  {instructor.name}
-                </option>
-              ))}
-            </select>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+              {card.label}
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {card.value}
+            </p>
           </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search students, companies, or student ID…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="at_risk">At Risk</option>
+            <option value="completed">Completed</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          <select
+            value={instructorFilter}
+            onChange={(e) => setInstructorFilter(e.target.value)}
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+          >
+            <option value="all">All Assignments</option>
+            <option value="assigned">Assigned</option>
+            <option value="unassigned">Unassigned</option>
+            {(instructors || []).map((instructor: Instructor) => (
+              <option key={instructor.id} value={instructor.id}>
+                {instructor.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="px-3 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 w-full md:w-auto"
+          >
+            <option value="all">All Companies</option>
+            <option value="none">No Company</option>
+            {companyNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Sort chips */}
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+            <ArrowUpDown className="w-3 h-3" /> Sort:
+          </span>
+          {([
+            { key: "name" as SortKey, label: "Name" },
+            { key: "company" as SortKey, label: "Company" },
+            { key: "status" as SortKey, label: "Status" },
+            { key: "instructor" as SortKey, label: "Instructor" },
+          ]).map((s) => (
+            <button
+              key={s.key}
+              onClick={() => toggleSort(s.key)}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors ${
+                sortKey === s.key
+                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              {s.label}
+              {sortKey === s.key && <ArrowUpDown className="w-3 h-3" />}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -672,7 +800,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
       )}
       {/* Desktop Table View - Hidden on Mobile */}
       <div className="hidden lg:block bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className=""> {/* Removed overflow-x-auto */}
+        <div className="">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-[#212124]">
               <tr>
@@ -692,17 +820,29 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                     />
                   </th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Student
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-100 select-none"
+                  onClick={() => toggleSort("name")}
+                >
+                  <span className="inline-flex items-center gap-1">Student {sortKey === "name" && <ArrowUpDown className="w-3 h-3" />}</span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Company
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-100 select-none"
+                  onClick={() => toggleSort("company")}
+                >
+                  <span className="inline-flex items-center gap-1">Company {sortKey === "company" && <ArrowUpDown className="w-3 h-3" />}</span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-100 select-none"
+                  onClick={() => toggleSort("status")}
+                >
+                  <span className="inline-flex items-center gap-1">Status {sortKey === "status" && <ArrowUpDown className="w-3 h-3" />}</span>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Instructor
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-100 select-none"
+                  onClick={() => toggleSort("instructor")}
+                >
+                  <span className="inline-flex items-center gap-1">Instructor {sortKey === "instructor" && <ArrowUpDown className="w-3 h-3" />}</span>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
@@ -729,7 +869,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                   </td>
                 </tr>
               ) : (
-                filteredStudents.map((student: Student) => (
+                paginatedStudents.map((student: Student) => (
                   <tr
                     key={student.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -805,7 +945,6 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                               {student.instructorName}
                             </span>
                             <div className="text-xs text-gray-500 break-words">
-                              {/* Added break-words for long emails */}
                               {student.instructorEmail}
                             </div>
                           </div>
@@ -878,7 +1017,7 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
             </p>
           </div>
         ) : (
-          filteredStudents.map((student: Student) => (
+          paginatedStudents.map((student: Student) => (
             <div
               key={student.id}
               className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700"
@@ -990,6 +1129,73 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredStudents.length > ITEMS_PER_PAGE && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#212124] rounded-xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Showing{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+            </span>
+            –
+            <span className="font-medium text-gray-900 dark:text-white">
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredStudents.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {filteredStudents.length}
+            </span>{" "}
+            students
+          </p>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 sm:p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (p) =>
+                  p === 1 ||
+                  p === totalPages ||
+                  Math.abs(p - currentPage) <= 1
+              )
+              .reduce<(number | "ellipsis")[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1)
+                  acc.push("ellipsis");
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                p === "ellipsis" ? (
+                  <span key={`e-${idx}`} className="px-1 text-gray-400 text-xs">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setCurrentPage(p as number)}
+                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                      currentPage === p
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="p-1.5 sm:p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Assignment Modal */}
       {showAssignModal && selectedStudent && (
@@ -1288,6 +1494,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       INTERNSHIP_RESUME: "Internship Resume (Form FM-AA-INT-09)",
       CONSENT_FORM: "Consent Form (Form FM-AA-INT-03)",
       ENDORSEMENT_LETTER: "Endorsement Letter (Form FM-AA-INT-05)",
+      ENDORSEMENT_LETTER_MULTI: "Endorsement Letter - Multiple Students (Form FM-AA-INT-05)",
       INTERNSHIP_RELEASE: "Internship Release Form (Form FM-AA-INT-12)",
     };
     return names[type] || type.replace(/_/g, " ");

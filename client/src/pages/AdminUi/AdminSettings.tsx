@@ -2579,11 +2579,11 @@ const AdminSettings = () => {
                   </h3>
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                     <p>
-                      <span className="font-medium">Version:</span> 1.0.0
+                      <span className="font-medium">Version:</span> 2.0.0
                     </p>
                     <p>
-                      <span className="font-medium">Last Updated:</span> December
-                      2025
+                      <span className="font-medium">Last Updated:</span> February
+                      2026
                     </p>
                     <p>
                       <span className="font-medium">License:</span> Educational

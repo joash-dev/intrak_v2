@@ -3,6 +3,7 @@ import { companyService } from './companyService';
 import type { AxiosResponse } from 'axios';
 import type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorProvisionResult } from './companyService';
 import { devLog } from '../utils/devLog';
+import { announcementService, type Announcement } from './announcementService';
 
 export interface CoordinatorSettings {
   autoApproveDocuments: boolean;
@@ -166,27 +167,149 @@ class CoordinatorService {
     }
   }
 
-  // Get recent activities
+  // Get recent activities from real document submissions
   async getRecentActivities(): Promise<CoordinatorActivity[]> {
     try {
-      // For now, return empty array since this endpoint doesn't exist yet
-      // You can implement this later when the backend supports it
-      return [];
+      const response = await api.get('/documents', { params: { limit: 50 } });
+      const documents = response.data.documents || [];
+
+      const DocTypeMap: Record<string, string> = {
+        APPLICATION_INTERNSHIP: 'Application for Internship',
+        CERTIFICATION_UNITS: 'Certification of Units Earned',
+        RECORD_FILE: 'Record File',
+        CONSENT_FORM: 'Consent Form',
+        TRAINING_AGREEMENT: 'Training Agreement',
+        INTERNSHIP_AGREEMENT: 'Internship Agreement',
+        STUDENT_FEEDBACK: 'Student Feedback',
+        INTERNSHIP_RELEASE: 'Internship Release',
+        INTERNSHIP_RESUME: 'Internship Resume',
+      };
+
+      return documents
+        .slice(0, 10)
+        .map((doc: any) => ({
+          id: doc.id,
+          type: 'document' as const,
+          student: doc.student?.user?.name || 'Unknown Student',
+          action: `Submitted ${DocTypeMap[doc.type] || doc.type}`,
+          timestamp: doc.uploadedAt || doc.createdAt || new Date().toISOString(),
+          status: (doc.status || 'PENDING').toLowerCase() as 'pending' | 'approved' | 'rejected',
+        }));
     } catch (error) {
       console.error('Error fetching activities:', error);
       return [];
     }
   }
 
-  // Get alerts and notifications
-  async getAlerts(): Promise<CoordinatorAlert[]> {
+  // Compute real alerts from student data
+  computeAlerts(students: CoordinatorStudent[], pendingDocs: number): CoordinatorAlert[] {
+    const alerts: CoordinatorAlert[] = [];
+
+    const noCompany = students.filter(s => s.company === 'No Company' || !s.company);
+    if (noCompany.length > 0) {
+      alerts.push({
+        id: 'alert-no-company',
+        type: 'warning',
+        title: 'Students Without Company',
+        message: `${noCompany.length} student(s) have not been assigned to a company yet.`,
+        description: `${noCompany.length} student(s) have not been assigned to a company yet.`,
+        timestamp: 'Now',
+        priority: 'high',
+      });
+    }
+
+    if (pendingDocs > 0) {
+      alerts.push({
+        id: 'alert-pending-docs',
+        type: 'info',
+        title: 'Documents Awaiting Review',
+        message: `${pendingDocs} document(s) are pending your review.`,
+        description: `${pendingDocs} document(s) are pending your review.`,
+        timestamp: 'Now',
+        priority: 'medium',
+      });
+    }
+
+    const noInstructor = students.filter(s => !s.instructorId);
+    if (noInstructor.length > 0) {
+      alerts.push({
+        id: 'alert-no-instructor',
+        type: 'warning',
+        title: 'Students Without Instructor',
+        message: `${noInstructor.length} student(s) have not been assigned to an instructor.`,
+        description: `${noInstructor.length} student(s) have not been assigned to an instructor.`,
+        timestamp: 'Now',
+        priority: 'medium',
+      });
+    }
+
+    const pendingStudents = students.filter(s => s.status === 'pending');
+    if (pendingStudents.length > 0) {
+      alerts.push({
+        id: 'alert-pending-students',
+        type: 'info',
+        title: 'Pending Students',
+        message: `${pendingStudents.length} student(s) have not started their internship yet.`,
+        description: `${pendingStudents.length} student(s) have not started their internship yet.`,
+        timestamp: 'Now',
+        priority: 'low',
+      });
+    }
+
+    if (alerts.length === 0) {
+      alerts.push({
+        id: 'alert-all-good',
+        type: 'success',
+        title: 'All Clear',
+        message: 'No alerts at this time. Everything is running smoothly.',
+        description: 'No alerts at this time. Everything is running smoothly.',
+        timestamp: 'Now',
+        priority: 'low',
+      });
+    }
+
+    return alerts;
+  }
+
+  // Get announcements for coordinator
+  async getAnnouncements(): Promise<Announcement[]> {
     try {
-      // For now, return empty array since this endpoint doesn't exist yet
-      // You can implement this later when the backend supports it
-      return [];
+      const response = await announcementService.getAnnouncements();
+      const all = response.announcements || [];
+      return all
+        .filter((a: any) => a.audience === 'ALL' || a.audience === 'COORDINATORS')
+        .map((a: any) => announcementService.transformAnnouncement(a));
     } catch (error) {
-      console.error('Error fetching alerts:', error);
+      console.error('Error fetching announcements:', error);
       return [];
+    }
+  }
+
+  // Get document stats (pending count etc.)
+  async getDocumentStats(): Promise<{ total: number; pending: number; approved: number; rejected: number }> {
+    try {
+      const response = await api.get('/documents', { params: { limit: 500 } });
+      const documents = response.data.documents || [];
+      return {
+        total: documents.length,
+        pending: documents.filter((d: any) => d.status === 'PENDING').length,
+        approved: documents.filter((d: any) => d.status === 'APPROVED').length,
+        rejected: documents.filter((d: any) => d.status === 'REJECTED').length,
+      };
+    } catch (error) {
+      console.error('Error fetching document stats:', error);
+      return { total: 0, pending: 0, approved: 0, rejected: 0 };
+    }
+  }
+
+  // Get company count
+  async getCompanyCount(): Promise<number> {
+    try {
+      const companies = await companyService.getAllCompanies();
+      return companies.length;
+    } catch (error) {
+      console.error('Error fetching company count:', error);
+      return 0;
     }
   }
 

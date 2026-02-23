@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, Activity, Loader2 } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
@@ -6,7 +6,13 @@ import toast from "react-hot-toast";
 
 const StudentNotifications = () => {
     const navigate = useNavigate();
-    const { notifications: contextNotifications } = useOutletContext<{ notifications: NotificationItem[] }>() || { notifications: [] };
+    const {
+        notifications: contextNotifications,
+        setLocalNotifications: setParentNotifications
+    } = useOutletContext<{
+        notifications: NotificationItem[],
+        setLocalNotifications?: React.Dispatch<React.SetStateAction<NotificationItem[]>>
+    }>() || { notifications: [] };
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -35,6 +41,10 @@ const StudentNotifications = () => {
         try {
             await notificationService.markAllAsRead();
             setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            // Also update parent state so it persists when navigating
+            if (setParentNotifications) {
+                setParentNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            }
             toast.success("All notifications marked as read");
         } catch (error) {
             toast.error("Failed to mark all as read");
@@ -46,6 +56,10 @@ const StudentNotifications = () => {
             try {
                 await notificationService.markAsRead(notification.id);
                 setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+                // Also update parent state
+                if (setParentNotifications) {
+                    setParentNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -55,7 +69,12 @@ const StudentNotifications = () => {
             if (notification.link.startsWith("http")) {
                 window.open(notification.link, "_blank");
             } else {
-                navigate(notification.link);
+                // Translate generic links to student-specific routes
+                let link = notification.link;
+                if (link.startsWith("/documents")) {
+                    link = "/student/documents";
+                }
+                navigate(link);
             }
         }
     };

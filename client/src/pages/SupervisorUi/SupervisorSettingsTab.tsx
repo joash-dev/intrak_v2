@@ -1278,10 +1278,10 @@ const SupervisorSettings = () => {
                   <h3 className="text-base sm:text-lg font-semibold text-gray-200">App Information</h3>
                   <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
                     <p>
-                      <span className="text-gray-400">Version:</span> 1.0.0
+                      <span className="text-gray-400">Version:</span> 2.0.0
                     </p>
                     <p>
-                      <span className="text-gray-400">Last Updated:</span> December 2025
+                      <span className="text-gray-400">Last Updated:</span> February 2026
                     </p>
                     <p>
                       <span className="text-gray-400">License:</span> Educational Use

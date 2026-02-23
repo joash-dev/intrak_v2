@@ -104,7 +104,12 @@ const InstructorNotifications = () => {
                     navigate('/instructor/students');
                     return;
                 }
-                navigate(notification.link);
+                // Translate generic document links to instructor-specific route
+                let link = notification.link;
+                if (link.startsWith("/documents")) {
+                    link = "/instructor/documents";
+                }
+                navigate(link);
             }
         } else if (notification.type === "DOCUMENT") {
             navigate("/instructor/documents");

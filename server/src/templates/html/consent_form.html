@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Consent Form - FM-AA-INT-03</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 6mm 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #000;
+            background: #888;
+            line-height: 1.4;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 5mm auto;
+            padding: 5mm 12mm;
+            background: white;
+            position: relative;
+        }
+
+        /* Form Code top-right */
+        .form-code {
+            text-align: right;
+            font-size: 8pt;
+            font-style: italic;
+            line-height: 1.3;
+            margin-bottom: 3mm;
+        }
+
+        /* Header area */
+        .header {
+            position: relative;
+            text-align: center;
+            margin-top: 5mm;
+            margin-bottom: 6mm;
+        }
+
+        .header-text {
+            text-align: center;
+        }
+
+        .header-text h1 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 1mm;
+        }
+
+        .header-text p {
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        .header-logo {
+            position: absolute;
+            right: 15mm;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .header-logo img {
+            width: 22mm;
+            height: 22mm;
+        }
+
+        /* Underline blanks */
+        .blank {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 30mm;
+            text-align: center;
+            padding-bottom: 0.3mm;
+        }
+
+        .blank-sm {
+            min-width: 15mm;
+        }
+
+        .blank-md {
+            min-width: 25mm;
+        }
+
+        .blank-lg {
+            min-width: 40mm;
+        }
+
+        .blank-xl {
+            min-width: 55mm;
+        }
+
+        /* Variables */
+        .var {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* Body text */
+        .intro-text {
+            margin-bottom: 4mm;
+            text-align: justify;
+        }
+
+        /* Numbered list */
+        .items {
+            margin-bottom: 4mm;
+        }
+
+        .item {
+            display: flex;
+            gap: 3mm;
+            margin-bottom: 3mm;
+            text-align: justify;
+        }
+
+        .item-num {
+            flex-shrink: 0;
+            width: 5mm;
+            text-align: right;
+        }
+
+        .item-text {
+            flex: 1;
+        }
+
+        /* Signed at */
+        .signed-at {
+            margin-top: 6mm;
+            margin-bottom: 10mm;
+        }
+
+        /* Bottom section */
+        .bottom-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8mm;
+        }
+
+        .bottom-left {
+            width: 45%;
+        }
+
+        .bottom-right {
+            width: 45%;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 12mm;
+        }
+
+        .sig-name {
+            font-weight: bold;
+            font-size: 9pt;
+            margin-bottom: 0;
+            min-height: 5mm;
+            text-align: center;
+            width: 85%;
+        }
+
+        .sig-line {
+            border-top: 1px solid #000;
+            width: 85%;
+            margin-bottom: 0.5mm;
+        }
+
+        .sig-label {
+            font-size: 8pt;
+            font-style: italic;
+            margin-bottom: 6mm;
+        }
+
+        .noted-title {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-top: 6mm;
+            margin-bottom: 12mm;
+        }
+
+        .cert-line {
+            font-size: 9pt;
+            margin-bottom: 1.5mm;
+        }
+
+        .cert-blank {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 25mm;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0 8mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Form Code -->
+        <div class="form-code">FM-AA-INT-03<br>Rev: 02<br>14-Oct-2024</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-text">
+                <h1>CONSENT FORM</h1>
+                <p>PANGASINAN STATE UNIVERSITY</p>
+                <p><span class="blank blank-md"><span class="var">${campus}</span></span> Campus</p>
+            </div>
+            <div class="header-logo">
+                <img src="assets/psu_logo.png" alt="PSU Logo" style="width:22mm;height:22mm;">
+            </div>
+        </div>
+
+        <!-- Intro paragraph -->
+        <p class="intro-text">
+            I, <span class="blank blank-lg"><span class="var">${student_name}</span></span>, Filipino, of legal age,
+            and residing at <span class="blank blank-xl"><span class="var">${address}</span></span> after
+            being duly sworn by law, do hereby depose and say that:
+        </p>
+
+        <!-- Numbered items -->
+        <div class="items">
+            <div class="item">
+                <span class="item-num">1.</span>
+                <span class="item-text">
+                    I am a student of Pangasinan State University, <span class="blank blank-md"><span
+                            class="var">${campus}</span></span> Campus and that as a course
+                    requirement for <span class="blank blank-lg"><span class="var">${course}</span></span>,
+                    I am required to undergo Internship / Practicum in any company in line with my major field of
+                    specialization for <span class="blank blank-sm"><span class="var">${total_hours}</span></span>
+                    hours;
+                </span>
+            </div>
+
+            <div class="item">
+                <span class="item-num">2.</span>
+                <span class="item-text">
+                    That the Pangasinan State University, <span class="blank blank-md"><span
+                            class="var">${campus}</span></span> Campus, thru the Campus Internship
+                    Coordinator and the Internship/Practicum Subject Instructor has requested
+                    <span class="blank blank-lg"><span class="var">${company_name}</span></span>
+                    to allow me to undergo thereat and said company had accepted said request;
+                </span>
+            </div>
+
+            <div class="item">
+                <span class="item-num">3.</span>
+                <span class="item-text">
+                    I promise to render the necessary work to the best of my ability in order that my practicum shall
+                    be brought to a successful conclusion and that <span class="blank blank-lg"><span
+                            class="var">${company_name}</span></span> and the Pangasinan
+                    State University, <span class="blank blank-md"><span class="var">${campus}</span></span> Campus
+                    shall not adversely affect;
+                </span>
+            </div>
+
+            <div class="item">
+                <span class="item-num">4.</span>
+                <span class="item-text">
+                    That while performing the practicum and the duration thereof, I shall abide by the rules and
+                    policies of said Company and Pangasinan State University, <span class="blank blank-md"><span
+                            class="var">${campus}</span></span> Campus relative to the
+                    work covered by said practicum and such order and instruction issued or to be issued thereby;
+                </span>
+            </div>
+
+            <div class="item">
+                <span class="item-num">5.</span>
+                <span class="item-text">
+                    I shall be punctual in my attendance and shall abide by the evaluation given me by said company
+                    based on such internship;
+                </span>
+            </div>
+
+            <div class="item">
+                <span class="item-num">6.</span>
+                <span class="item-text">
+                    I declare unconditional that there exists no employer-employee relationship between <span
+                        class="blank blank-lg"><span class="var">${company_name}</span></span>
+                    and me, and hereby hold its officers, directors and personnel free and harmless
+                    from any case or causes of action, claims or otherwise arising from or about my internship which I
+                    have, including money claims, it understood that the internship is just a part of the academic
+                    preparation and thus non-compensable;
+                </span>
+            </div>
+        </div>
+
+        <!-- Signed at -->
+        <p class="signed-at">
+            Signed at <span class="blank blank-md"><span class="var">${signed_location}</span></span>, Pangasinan.
+            This <span class="blank blank-sm"><span class="var">${signed_day}</span></span> day of
+            <span class="blank blank-md"><span class="var">${signed_month}</span></span>, 20<span class="blank"
+                style="min-width:8mm;"><span class="var">${signed_year}</span></span>.
+        </p>
+
+        <!-- Bottom section: Witnesses + Conforme -->
+        <div class="bottom-section">
+            <!-- Left: Witnesses -->
+            <div class="bottom-left">
+                <div class="section-title">WITNESSES:</div>
+
+                <div class="sig-name"><span class="var">${coordinator_name}</span></div>
+                <div class="sig-line"></div>
+                <div class="sig-label">Campus Internship Coordinator</div>
+
+                <div class="noted-title">NOTED:</div>
+
+                <div class="sig-name"><span class="var">${campus_exec_director}</span></div>
+                <div class="sig-line"></div>
+                <div class="sig-label">
+                    Campus Executive Director<br>
+                    PSU <span class="blank blank-md"><span class="var">${campus}</span></span> Campus
+                </div>
+            </div>
+
+            <!-- Right: Conforme -->
+            <div class="bottom-right">
+                <div class="section-title">CONFORME:</div>
+
+                <div class="sig-name"><span class="var">${student_name}</span></div>
+                <div class="sig-line"></div>
+                <div class="sig-label">Signature over Printed Name of Student</div>
+
+                <div class="cert-line">Residence Cert. No.: <span class="cert-blank"><span
+                            class="var">${res_cert_no}</span></span></div>
+                <div class="cert-line">Issued at: <span class="cert-blank"><span
+                            class="var">${res_cert_issued_at}</span></span></div>
+                <div class="cert-line" style="margin-bottom:6mm;">Issued on: <span class="cert-blank"><span
+                            class="var">${res_cert_issued_on}</span></span></div>
+
+                <div class="sig-name"><span class="var">${parent_guardian}</span></div>
+                <div class="sig-line"></div>
+                <div class="sig-label">Signature over Printed Name of Parent/Guardian</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

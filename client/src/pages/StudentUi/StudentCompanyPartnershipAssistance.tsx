@@ -257,7 +257,11 @@ const StudentCompanyPartnershipAssistance = () => {
 
       // Map documents to pre-deployment document types (only show documents uploaded in Documents tab)
       setPreDeploymentDocuments(prev => prev.map(doc => {
-        const uploadedDoc = documents.find(d => d.type === doc.type);
+        let uploadedDoc = documents.find(d => d.type === doc.type);
+        // Also match ENDORSEMENT_LETTER_MULTI for ENDORSEMENT_LETTER
+        if (!uploadedDoc && doc.type === 'ENDORSEMENT_LETTER') {
+          uploadedDoc = documents.find(d => d.type === 'ENDORSEMENT_LETTER_MULTI');
+        }
         return {
           ...doc,
           document: uploadedDoc || null,

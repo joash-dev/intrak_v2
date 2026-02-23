@@ -1,0 +1,646 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COORDINATOR
+  INSTRUCTOR
+  STUDENT
+  INDUSTRY_PARTNER
+}
+
+enum CompanyType {
+  PUBLIC
+  PRIVATE
+}
+
+enum DocumentType {
+  APPLICATION_LETTER
+  MOA
+  ACCEPTANCE
+  EVALUATION_FORM
+  DTR_HARDCOPY
+  OTHER
+  // Pre-deployment documents
+  RECORD_FILE
+  APPLICATION_INTERNSHIP
+  MEDICAL_CERTIFICATE
+  CERTIFICATION_UNITS
+  INTERNSHIP_RESUME
+  CONSENT_FORM
+  ENDORSEMENT_LETTER
+  INTERNSHIP_RELEASE
+  // Upon approval documents
+  INTERNSHIP_AGREEMENT
+  TRAINING_AGREEMENT
+  // Post-OJT documents
+  INTERNSHIP_EVALUATION
+  CERTIFICATE_COMPLETION
+  NARRATIVE_REPORT
+  DTR_PHOTOCOPY
+  TIME_FRAMES
+  WEEKLY_REPORTS
+  STUDENT_FEEDBACK
+  SUPERVISOR_FEEDBACK
+  AGENCY_SELF_EVALUATION
+  AGENCY_STUDENT_EVALUATION
+}
+
+enum DocumentCategory {
+  PRE_DEPLOYMENT
+  UPON_APPROVAL
+  POST_OJT
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESUBMISSION_REQUESTED
+}
+
+enum VerificationMethod {
+  MANUAL
+  QR
+  GPS
+  IP
+  FACIAL
+}
+
+enum AnnouncementAudience {
+  ALL
+  STUDENTS
+  COORDINATORS
+  INSTRUCTORS
+  PARTNERS
+}
+
+enum AlertType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+}
+
+enum AlertPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActivityType {
+  USER_REGISTERED
+  USER_UPDATED
+  USER_DELETED
+  DOCUMENT_UPLOADED
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
+  ATTENDANCE_LOGGED
+  EVALUATION_SUBMITTED
+  ANNOUNCEMENT_CREATED
+  COMPANY_ADDED
+  STUDENT_ASSIGNED
+  SETTINGS_UPDATED
+  LOGIN
+  LOGOUT
+  PASSWORD_CHANGED
+}
+
+enum DocumentFeedbackType {
+  COMMENT
+  REQUEST_CHANGES
+  APPROVAL_NOTE
+  STUDENT_RESPONSE
+}
+
+enum NotificationType {
+  DOCUMENT
+  ATTENDANCE
+  SYSTEM
+  ALERT
+  OTHER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  profilePhoto String?
+  phone        String?
+  department   String?
+  office       String?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
+  
+  // Email verification
+  emailVerified             Boolean   @default(false)
+  emailVerificationToken    String?
+  emailVerificationExpires  DateTime?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  student                 Student?
+  studentsAssigned        Student[]              @relation("InstructorStudents") // Students assigned to this instructor
+  documentsUploaded       Document[]             @relation("DocumentUploader")
+  evaluationsGiven        Evaluation[]           @relation("Evaluator")
+  announcementsCreated    Announcement[]
+  auditLogs               AuditLog[]
+  refreshTokens           RefreshToken[]
+  templatesUploaded       DocumentTemplate[]     @relation("TemplateUploader")
+  adminSettings           AdminSettings?
+  coordinatorSettings     CoordinatorSettings?
+  applicationsReviewed    CompanyApplication[]   @relation("ApplicationReviewer")
+  feedbackAuthored        DocumentFeedback[]     @relation("DocumentFeedbackAuthor")
+  notifications           Notification[]         @relation("UserNotifications")
+  companiesSupervised     Company[]              @relation("CompanySupervisor")
+  partnershipMessagesSent PartnershipMessage[]   @relation("PartnershipMessageSender")
+  supervisorFeedbacks     SupervisorFeedback[]   @relation("SupervisorFeedbacks")
+  agencySelfEvaluations   AgencySelfEvaluation[] @relation("AgencySelfEvaluations")
+
+  // Two-Factor Authentication
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorCode     String?   // Temporary OTP code
+  twoFactorExpires  DateTime? // OTP expiration time
+  twoFactorBackupCodes String[] // Backup recovery codes (hashed)
+  trustedDevices    TrustedDevice[]
+
+  // Last login tracking
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+
+  @@map("users")
+}
+
+model TrustedDevice {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  lastUsed  DateTime @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("trusted_devices")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Student {
+  id               String    @id @default(uuid())
+  userId           String    @unique
+  studentNumber    String    @unique
+  program          String
+  year             Int
+  section          String
+  companyId        String?
+  supervisorName   String?
+  instructorId     String? // New field for instructor assignment
+  startDate        DateTime?
+  endDate          DateTime?
+  totalHours       Int       @default(240)
+  completedHours   Int       @default(0)
+  weeklyReportData Json? // Store weekly report data as JSON
+  jobDescription   String? // Job description for the internship
+  worksOnSaturday  Boolean   @default(false) // Saturday work preference (for private companies)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company             Company?             @relation(fields: [companyId], references: [id])
+  instructor          User?                @relation("InstructorStudents", fields: [instructorId], references: [id])
+  documents           Document[]
+  attendanceLogs      AttendanceLog[]
+  evaluations         Evaluation[]
+  applications        CompanyApplication[]
+  partnershipMessages PartnershipMessage[] @relation("PartnershipMessages")
+  supervisorFeedbacks SupervisorFeedback[]
+
+  @@index([companyId])
+  @@index([instructorId])
+  @@map("students")
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model Company {
+  id            String      @id @default(uuid())
+  name          String
+  address       String
+  contactPerson String
+  contactEmail  String
+  contactNumber String
+  latitude      Float?
+  longitude     Float?
+  radiusMeters  Int         @default(100)
+  maxSlots      Int         @default(10)
+  description   String?
+  industry      String?
+  supervisorId  String?
+  companyType   CompanyType @default(PUBLIC)
+  workingDays   String[]    @default(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  students     Student[]
+  applications CompanyApplication[]
+  supervisor   User?                @relation("CompanySupervisor", fields: [supervisorId], references: [id])
+
+  @@map("companies")
+}
+
+model CompanyApplication {
+  id              String            @id @default(uuid())
+  studentId       String
+  companyId       String
+  status          ApplicationStatus @default(PENDING)
+  message         String? // Application message from student
+  rejectionReason String? // Reason for rejection (if rejected)
+  appliedAt       DateTime          @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String? // User ID of instructor/coordinator who reviewed
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ApplicationReviewer", fields: [reviewedBy], references: [id])
+
+  @@unique([studentId, companyId]) // A student can only apply once to a company
+  @@index([status])
+  @@index([companyId])
+  @@map("company_applications")
+}
+
+model Document {
+  id           String         @id @default(uuid())
+  studentId    String
+  type         DocumentType
+  filename     String
+  filepath     String
+  mimeType     String
+  status       DocumentStatus @default(PENDING)
+  remarks      String?
+  uploadedById String
+  createdAt    DateTime       @default(now())
+  reviewedAt   DateTime?
+  fileSize     Int?           // File size in bytes
+  formData     Json?          // Data filled in the HTML form
+
+  // E-signature fields (future feature - disabled)
+  requiresSignature Boolean   @default(false)
+  signedAt          DateTime?
+  signatureData     String?
+
+  // Relations
+  student    Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  uploadedBy User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  feedback   DocumentFeedback[]
+
+  @@index([studentId])
+  @@index([status])
+  @@index([uploadedById])
+  @@index([studentId, status])
+  @@map("documents")
+}
+
+model AttendanceLog {
+  id                   String             @id @default(uuid())
+  studentId            String
+  date                 DateTime
+  timeIn               DateTime?
+  timeOut              DateTime?
+  durationMinutes      Int                @default(0)
+  verified             Boolean            @default(false)
+  verificationMethod   VerificationMethod @default(MANUAL)
+  verificationMetadata Json?
+  remarks              String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([date])
+  @@index([studentId, date])
+  @@map("attendance_logs")
+}
+
+model QRToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  studentId String
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([studentId])
+  @@map("qr_tokens")
+}
+
+model Evaluation {
+  id            String   @id @default(uuid())
+  studentId     String
+  evaluatorId   String
+  evaluatorRole String
+  rating        Float
+  criteria      Json?
+  comments      String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  evaluator User    @relation("Evaluator", fields: [evaluatorId], references: [id])
+
+  @@index([studentId])
+  @@index([evaluatorId])
+  @@map("evaluations")
+}
+
+model Announcement {
+  id          String               @id @default(uuid())
+  title       String
+  content     String
+  audience    AnnouncementAudience @default(ALL)
+  isPinned    Boolean              @default(false)
+  views       Int                  @default(0)
+  createdById String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  // Relations
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([audience])
+  @@index([createdAt])
+  @@map("announcements")
+}
+
+model DocumentFeedback {
+  id             String               @id @default(uuid())
+  documentId     String
+  authorId       String
+  message        String
+  type           DocumentFeedbackType @default(COMMENT)
+  requiresAction Boolean              @default(false)
+  createdAt      DateTime             @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author   User     @relation("DocumentFeedbackAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_feedback")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(OTHER)
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  readAt    DateTime?
+
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  meta      Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model DocumentTemplate {
+  id           String           @id @default(uuid())
+  name         String
+  description  String?
+  type         DocumentType
+  category     DocumentCategory
+  filename     String
+  filepath     String
+  mimeType     String
+  isActive     Boolean          @default(true)
+  uploadedById String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  uploadedBy User @relation("TemplateUploader", fields: [uploadedById], references: [id])
+
+  @@map("document_templates")
+}
+
+model AdminSettings {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  maintenanceMode    Boolean  @default(false)
+  emailNotifications Boolean  @default(true)
+  systemAlerts       Boolean  @default(true)
+  autoBackup         Boolean  @default(true)
+  sessionTimeout     Int      @default(30)
+  maxLoginAttempts   Int      @default(5)
+  emailSystemAlerts  Boolean  @default(true)
+  emailUserActivity  Boolean  @default(true)
+  emailMaintenance   Boolean  @default(true)
+  pushNotifications  Boolean  @default(true)
+  smsAlerts          Boolean  @default(false)
+  theme              String   @default("system")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_settings")
+}
+
+model CoordinatorSettings {
+  id                          String   @id @default(uuid())
+  userId                      String   @unique
+  autoApproveDocuments        Boolean  @default(false)
+  requireDocumentReview       Boolean  @default(true)
+  attendanceReminderTime      String   @default("09:00")
+  defaultAnnouncementAudience String   @default("ALL")
+  enableBulkOperations        Boolean  @default(true)
+  showAdvancedMetrics         Boolean  @default(false)
+  notificationFrequency       String   @default("immediate")
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coordinator_settings")
+}
+
+model SystemAlert {
+  id         String        @id @default(uuid())
+  type       AlertType     @default(INFO)
+  priority   AlertPriority @default(MEDIUM)
+  title      String
+  message    String
+  resolved   Boolean       @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@map("system_alerts")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  type        ActivityType
+  description String
+  userId      String?
+  userName    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+  @@map("activities")
+}
+
+model PartnershipMessage {
+  id        String   @id @default(uuid())
+  studentId String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  student Student @relation("PartnershipMessages", fields: [studentId], references: [id], onDelete: Cascade)
+  sender  User    @relation("PartnershipMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("partnership_messages")
+}
+
+model SupervisorFeedback {
+  id           String @id @default(uuid())
+  studentId    String
+  supervisorId String
+
+  // Ratings (1-5 scale)
+  punctualRating         Int // Punctuality and attendance
+  knowledgeRating        Int // Knowledge contribution
+  teamworkRating         Int // Teamwork
+  taskPerformanceRating  Int // Task performance
+  policyComplianceRating Int // Policy compliance
+  conductRating          Int // Conduct
+  traitsRating           Int // Desirable traits
+
+  // Additional fields
+  comments String? // Other comments and suggestions
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor User    @relation("SupervisorFeedbacks", fields: [supervisorId], references: [id])
+
+  @@index([studentId])
+  @@index([supervisorId])
+  @@map("supervisor_feedbacks")
+}
+
+model AgencySelfEvaluation {
+  id           String @id @default(uuid())
+  supervisorId String
+
+  // Personal Information
+  unitDivision String?
+  age          String?
+  sex          String?
+
+  // Communication Ratings (1-5 scale)
+  communicationConnectivity  Int
+  communicationDialogue      Int
+  communicationParticipation Int
+
+  // Ethical Dealings Ratings (1-5 scale)
+  ethicalReputation Int
+  ethicalCSR        Int
+  ethicalSupport    Int
+
+  // Student Satisfaction - PSU Ratings (1-5 scale)
+  psuSupervisorQualified Int
+  psuSupportActivities   Int
+  psuFacilities          Int
+
+  // Student Satisfaction - HTE Ratings (1-5 scale)
+  hteSupervision         Int
+  hteSupervisorQualified Int
+  hteFeedback            Int
+
+  // Quality Delivery Ratings (1-5 scale)
+  qualityTimeliness Int
+  qualityObjectives Int
+  qualityResources  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  supervisor User @relation("AgencySelfEvaluations", fields: [supervisorId], references: [id])
+
+  @@map("agency_self_evaluations")
+}

@@ -9,6 +9,7 @@ import {
   FileCheck,
   LayoutGrid,
   List,
+  Building2,
 } from "lucide-react";
 import { documentService, type Document } from "../../services/documentService";
 import { dashboardService } from "../../services/dashboardService";
@@ -16,6 +17,7 @@ import { supervisorService, type EvaluationExportPayload } from "../../services/
 import { toast } from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 import { devLog } from "../../utils/devLog";
+import { useOutletContext, useNavigate } from "react-router-dom";
 
 interface TerminationData {
   lackOfWork?: boolean;
@@ -55,6 +57,38 @@ interface EvaluationForm {
 
 
 const StudentEvaluationsTab: React.FC = () => {
+  const { studentCompany, studentSupervisor } = useOutletContext<{ studentCompany: string | null; studentSupervisor: string | null }>() || { studentCompany: null, studentSupervisor: null };
+  const navigateToCompanies = useNavigate();
+
+  // Guard: If student has no company or no supervisor, show a message
+  if (!studentCompany || !studentSupervisor) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-8 h-8 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {!studentCompany ? "Company Assignment Required" : "Supervisor Assignment Required"}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {!studentCompany
+              ? "You need to be assigned to a company before you can access evaluations. Please apply for a company first."
+              : "You have a company but no supervisor has been assigned yet. Please wait for your supervisor to be assigned by the coordinator."}
+          </p>
+          {!studentCompany && (
+            <button
+              onClick={() => navigateToCompanies("/student/companies")}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Go to Companies
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const [evaluationForms, setEvaluationForms] = useState<EvaluationForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedForm, setSelectedForm] = useState<EvaluationForm | null>(null);

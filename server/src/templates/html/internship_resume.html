@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Internship Resume - FM-AA-INT-09</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 4mm 6mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9pt;
+            color: #000;
+            background: #888;
+            line-height: 1.2;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 5mm auto;
+            padding: 2mm 5mm;
+            background: white;
+            position: relative;
+        }
+
+        .form-code {
+            text-align: right;
+            font-size: 7pt;
+            font-style: italic;
+            line-height: 1.3;
+            margin-bottom: 1mm;
+        }
+
+        /* ===== MAIN TABLE ===== */
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5pt solid #000;
+        }
+
+        .main-table>tbody>tr>td {
+            border: 1pt solid #000;
+            padding: 0;
+            vertical-align: top;
+        }
+
+        /* Header */
+        .header-cell-logo {
+            width: 22mm;
+            text-align: center;
+            vertical-align: middle;
+            padding: 2mm !important;
+        }
+
+        .header-cell-logo svg {
+            width: 18mm;
+            height: 18mm;
+        }
+
+        .header-cell-text {
+            text-align: center;
+            vertical-align: middle;
+            padding: 2mm 2mm !important;
+        }
+
+        .header-cell-text h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 0.5mm;
+        }
+
+        .header-cell-text h2 {
+            font-size: 10pt;
+            font-weight: normal;
+            margin-bottom: 0.5mm;
+        }
+
+        .header-cell-text h3 {
+            font-size: 9pt;
+            font-weight: normal;
+        }
+
+        /* Section header rows */
+        .section-row td {
+            font-weight: bold;
+            font-size: 9.5pt;
+            padding: 1mm 3mm !important;
+        }
+
+        /* Inner tables */
+        .inner-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inner-table td,
+        .inner-table th {
+            border: 0.5pt solid #000;
+            padding: 0.5mm 2mm;
+            font-size: 8pt;
+            height: 5.5mm;
+            vertical-align: middle;
+        }
+
+        .inner-table th {
+            font-weight: bold;
+            text-align: center;
+            font-size: 8pt;
+            padding: 0.6mm 1mm;
+        }
+
+        .inner-table .label {
+            font-weight: bold;
+            font-size: 8pt;
+            white-space: nowrap;
+        }
+
+        .inner-table tr td:first-child {
+            border-left: none;
+        }
+
+        .inner-table tr td:last-child {
+            border-right: none;
+        }
+
+        .inner-table tr th:first-child {
+            border-left: none;
+        }
+
+        .inner-table tr th:last-child {
+            border-right: none;
+        }
+
+        .inner-table.no-top-border tr:first-child td,
+        .inner-table.no-top-border tr:first-child th {
+            border-top: none;
+        }
+
+        /* Photo cell – exactly 2x2 inches (51mm × 51mm) */
+        .photo-cell {
+            text-align: center;
+            vertical-align: middle;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #666;
+            width: 51mm;
+            height: 51mm;
+            padding: 0 !important;
+        }
+
+        .photo-cell img {
+            width: 51mm;
+            height: 51mm;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Variables */
+        .var {
+            color: #000;
+            font-weight: 600;
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0 4mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Form Code -->
+        <div class="form-code">FM-AA-INT-09<br>Rev: 1<br>14-Oct-2024</div>
+
+        <table class="main-table">
+            <tbody>
+                <!-- HEADER -->
+                <tr>
+                    <td class="header-cell-logo" colspan="1">
+                        <img src="assets/psu_logo.png" alt="PSU Logo" style="width:18mm;height:18mm;">
+                    </td>
+                    <td class="header-cell-text" colspan="5">
+                        <h1>INTERNSHIP RESUME</h1>
+                        <h2>PANGASINAN STATE UNIVERSITY</h2>
+                        <h3><u><span class="var">${campus}</span></u> Campus</h3>
+                    </td>
+                </tr>
+
+                <!-- PERSONAL INFO with 2x2 Photo -->
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <td class="label" style="width:20%;">NAME</td>
+                                <td><span class="var">${name}</span></td>
+                                <td class="photo-cell" rowspan="5" style="width:51mm;"><img src="${photo}" alt="2x2 Photo" onerror="this.style.display='none';this.parentElement.textContent='2x2 PHOTO';"></td>
+                            </tr>
+                            <tr>
+                                <td class="label">ADDRESS</td>
+                                <td><span class="var">${address}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">TELEPHONE /<br>MOBILE NUMBER</td>
+                                <td><span class="var">${phone}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">EMAIL ADDRESS</td>
+                                <td><span class="var">${email}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label" style="height:12mm;vertical-align:top;padding-top:2mm;">CAREER
+                                    OBJECTIVE</td>
+                                <td style="vertical-align:top;padding-top:2mm;"><span
+                                        class="var">${career_objective}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- WORK EXPERIENCE -->
+                <tr class="section-row">
+                    <td colspan="6">WORK EXPERIENCE</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <th style="width:20%;">INCLUSIVE DATE</th>
+                                <th style="width:50%;">EMPLOYER</th>
+                                <th style="width:30%;">POSITION</th>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${we_date_1}</span></td>
+                                <td><span class="var">${we_employer_1}</span></td>
+                                <td><span class="var">${we_position_1}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${we_date_2}</span></td>
+                                <td><span class="var">${we_employer_2}</span></td>
+                                <td><span class="var">${we_position_2}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${we_date_3}</span></td>
+                                <td><span class="var">${we_employer_3}</span></td>
+                                <td><span class="var">${we_position_3}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${we_date_4}</span></td>
+                                <td><span class="var">${we_employer_4}</span></td>
+                                <td><span class="var">${we_position_4}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${we_date_5}</span></td>
+                                <td><span class="var">${we_employer_5}</span></td>
+                                <td><span class="var">${we_position_5}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- TRAININGS AND SEMINARS ATTENDED -->
+                <tr class="section-row">
+                    <td colspan="6">TRAININGS AND SEMINARS ATTENDED</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <th style="width:65%;">TITLE OF SEMINAR</th>
+                                <th style="width:35%;">INCLUSIVE DATE</th>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${sem_title_1}</span></td>
+                                <td><span class="var">${sem_date_1}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${sem_title_2}</span></td>
+                                <td><span class="var">${sem_date_2}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${sem_title_3}</span></td>
+                                <td><span class="var">${sem_date_3}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${sem_title_4}</span></td>
+                                <td><span class="var">${sem_date_4}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${sem_title_5}</span></td>
+                                <td><span class="var">${sem_date_5}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- EDUCATIONAL BACKGROUND -->
+                <tr class="section-row">
+                    <td colspan="6">EDUCATIONAL BACKGROUND</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <th style="width:20%;">LEVEL</th>
+                                <th style="width:50%;">SCHOOL</th>
+                                <th style="width:30%;">INCLUSIVE DATE</th>
+                            </tr>
+                            <tr>
+                                <td class="label">ELEMENTARY</td>
+                                <td><span class="var">${elem_school}</span></td>
+                                <td><span class="var">${elem_date}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">HIGH SCHOOL</td>
+                                <td><span class="var">${hs_school}</span></td>
+                                <td><span class="var">${hs_date}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">COLLEGE</td>
+                                <td><span class="var">${college_school}</span></td>
+                                <td><span class="var">${college_date}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- EXTRACURRICULAR ACTIVITIES AND AWARDS RECEIVED -->
+                <tr class="section-row">
+                    <td colspan="6">EXTRACURRICULAR ACTIVITIES AND AWARDS RECEIVED</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <td style="height:5.5mm;"><span class="var">${activity_1}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="height:5.5mm;"><span class="var">${activity_2}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="height:5.5mm;"><span class="var">${activity_3}</span></td>
+                            </tr>
+                            <tr>
+                                <td style="height:5.5mm;"><span class="var">${activity_4}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- PERSONAL BACKGROUND -->
+                <tr class="section-row">
+                    <td colspan="6">PERSONAL BACKGROUND</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <td class="label" style="width:15%;">NICKNAME</td>
+                                <td style="width:35%;"><span class="var">${nickname}</span></td>
+                                <td class="label" style="width:15%;">HEIGHT</td>
+                                <td style="width:35%;"><span class="var">${height}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">AGE</td>
+                                <td><span class="var">${age}</span></td>
+                                <td class="label">WEIGHT</td>
+                                <td><span class="var">${weight}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">GENDER</td>
+                                <td><span class="var">${gender}</span></td>
+                                <td class="label">CIVIL STATUS</td>
+                                <td><span class="var">${civil_status}</span></td>
+                            </tr>
+                            <tr>
+                                <td class="label">RELIGION</td>
+                                <td><span class="var">${religion}</span></td>
+                                <td class="label">SKILLS</td>
+                                <td><span class="var">${skills}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- REFERENCES -->
+                <tr class="section-row">
+                    <td colspan="6">REFERENCES</td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding:0;border:none;">
+                        <table class="inner-table no-top-border">
+                            <tr>
+                                <th style="width:25%;">NAME</th>
+                                <th style="width:25%;">POSITION</th>
+                                <th style="width:25%;">COMPANY</th>
+                                <th style="width:25%;">CONTACT NUMBER</th>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${ref_name_1}</span></td>
+                                <td><span class="var">${ref_pos_1}</span></td>
+                                <td><span class="var">${ref_company_1}</span></td>
+                                <td><span class="var">${ref_contact_1}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${ref_name_2}</span></td>
+                                <td><span class="var">${ref_pos_2}</span></td>
+                                <td><span class="var">${ref_company_2}</span></td>
+                                <td><span class="var">${ref_contact_2}</span></td>
+                            </tr>
+                            <tr>
+                                <td><span class="var">${ref_name_3}</span></td>
+                                <td><span class="var">${ref_pos_3}</span></td>
+                                <td><span class="var">${ref_company_3}</span></td>
+                                <td><span class="var">${ref_contact_3}</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

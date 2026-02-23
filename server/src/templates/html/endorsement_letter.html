@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Endorsement Letter - FM-AA-INT-05</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 6mm 10mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10.5pt;
+            color: #000;
+            background: #888;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 5mm auto;
+            padding: 5mm 14mm;
+            background: white;
+            position: relative;
+        }
+
+        /* Form Code top-right */
+        .form-code {
+            text-align: right;
+            font-size: 8pt;
+            font-style: italic;
+            line-height: 1.3;
+            margin-bottom: 2mm;
+        }
+
+        /* Header area */
+        .header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 6mm;
+        }
+
+        .header-logo img {
+            width: 22mm;
+            height: 22mm;
+            margin-bottom: 1mm;
+        }
+
+        .header h1 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 1mm;
+        }
+
+        .header p {
+            font-size: 10pt;
+            margin: 0;
+        }
+
+        /* Underline blanks */
+        .blank {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 30mm;
+            text-align: center;
+            padding-bottom: 0.3mm;
+        }
+
+        .blank-sm {
+            min-width: 15mm;
+        }
+
+        .blank-md {
+            min-width: 25mm;
+        }
+
+        .blank-lg {
+            min-width: 50mm;
+        }
+
+        .blank-xl {
+            min-width: 65mm;
+        }
+
+        /* Variables */
+        .var {
+            color: #000;
+            font-weight: 600;
+        }
+
+        /* Field lines */
+        .field-line {
+            border-bottom: 1px solid #000;
+            min-height: 6mm;
+            margin-bottom: 1mm;
+            width: 45%;
+        }
+
+        .field-label-below {
+            font-size: 8pt;
+            font-style: italic;
+            margin-bottom: 4mm;
+        }
+
+        /* Body paragraphs */
+        .body-para {
+            text-align: justify;
+            margin-bottom: 4mm;
+        }
+
+        .salutation {
+            font-weight: bold;
+            margin-bottom: 4mm;
+        }
+
+        /* Area list */
+        .area-list {
+            margin: 2mm 0 4mm 12mm;
+        }
+
+        .area-list li {
+            margin-bottom: 1mm;
+            list-style-type: upper-alpha;
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 6mm;
+            margin-bottom: 4mm;
+        }
+
+        .valediction {
+            margin-top: 8mm;
+            margin-bottom: 15mm;
+        }
+
+        /* Signature */
+        .sig-section {
+            width: 50%;
+        }
+
+        .sig-name {
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 0;
+            min-height: 5mm;
+        }
+
+        .sig-line {
+            border-top: 1px solid #000;
+            width: 80%;
+            margin-bottom: 1mm;
+        }
+
+        .sig-label {
+            font-size: 9pt;
+            font-weight: bold;
+        }
+
+        /* Print */
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0 10mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <!-- Form Code -->
+        <div class="form-code">FM-AA-INT-05<br>Rev: 02<br>14-Oct-2024</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="header-logo">
+                <img src="assets/psu_logo.png" alt="PSU Logo">
+            </div>
+            <h1>ENDORSEMENT LETTER</h1>
+            <p>PANGASINAN STATE UNIVERSITY</p>
+            <p><span class="blank blank-md"><span class="var">${campus}</span></span> Campus</p>
+        </div>
+
+        <!-- Date -->
+        <div style="margin-bottom: 5mm;">
+            <div class="field-line"><span class="var">${date}</span></div>
+            <div class="field-label-below">Date</div>
+        </div>
+
+        <!-- Address lines (company) -->
+        <div style="margin-bottom: 5mm;">
+            <div class="field-line"><span class="var">${company_head}</span></div>
+            <div class="field-line"><span class="var">${company_name}</span></div>
+            <div class="field-line"><span class="var">${company_address}</span></div>
+        </div>
+
+        <!-- Salutation -->
+        <p class="salutation">SIR/ MADAM:</p>
+
+        <!-- Body -->
+        <p class="body-para">
+            This is to introduce the bearer, Mr./Ms. <span class="blank blank-xl"><span
+                    class="var">${student_name}</span></span> a bonafide
+            student of this University who wishes to undergo Internship in your company, as an academic
+            requirement for graduation leading degree <span class="blank blank-xl"><span
+                    class="var">${degree}</span></span>.
+        </p>
+
+        <p class="body-para">
+            While we vouch for the good moral character of the student, he/she is still subject to your rules and
+            regulations especially on office decorum and discipline. Termination of internship training will be on
+            your discretion.
+        </p>
+
+        <p class="body-para">
+            Venues of training that may be assigned to the practicum trainee maybe in any of these
+            areas/positions:
+        </p>
+
+        <ol class="area-list">
+            <li>IT Department – Programming, Graphics Design, or the like in Face-to-face manner</li>
+            <li>Others, depending on the company needs.</li>
+        </ol>
+
+        <p class="body-para">
+            If considered by your company for internship, we are attaching herewith an Internship Agreement,
+            Resume, and later, an Internship Evaluation Form for final assessment of trainee's productivity and
+            performance in assigned tasks.
+        </p>
+
+        <p class="body-para">
+            We will be very grateful for whatever accommodation you may extend to our student. We hope he/she
+            keeps up to your work standards and requirements.
+        </p>
+
+        <!-- Closing -->
+        <p class="closing">Thank you.</p>
+
+        <p class="valediction">Very truly yours,</p>
+
+        <!-- Signature -->
+        <div class="sig-section">
+            <div class="sig-name"><span class="var">${campus_exec_director}</span></div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Campus Executive Director</div>
+        </div>
+    </div>
+</body>
+
+</html>

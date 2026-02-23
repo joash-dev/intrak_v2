@@ -11,19 +11,25 @@ import {
   Trash2,
   ChevronDown,
   Clock,
+  Zap,
+  Loader2,
+  Lock,
+  UserCheck,
+  UserX,
+  Users,
 } from "lucide-react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document, DocumentStats } from "../../services/documentService";
 import { templateService } from "../../services/templateService";
 import type { DocumentTemplate } from "../../services/templateService";
-import DocumentFeedbackPanel from "../../components/document/DocumentFeedbackPanel";
 import Skeleton from "../../components/Skeleton";
 import { toast } from "react-hot-toast";
 import PDFViewer from "../../components/document/PDFViewer";
 
 const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +51,7 @@ const StudentDocumentsTab: React.FC = () => {
 
   // For upload modal
   const [selectedType, setSelectedType] = useState<string>("");
+  const [generatingType, setGeneratingType] = useState<string | null>(null);
 
   // Expanded categories state
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
@@ -227,9 +234,80 @@ const StudentDocumentsTab: React.FC = () => {
     }
   };
 
+  // Split documents: pending acceptance (for this student) vs. waiting for others vs. active
+  const pendingSharedDocs = useMemo(() =>
+    documents.filter(d => d.sharedStatus === 'PENDING_ACCEPTANCE'), [documents]);
+  const waitingForAcceptanceDocs = useMemo(() =>
+    documents.filter(d => d.sharedStatus === 'WAITING_FOR_ACCEPTANCE'), [documents]);
+  const activeDocs = useMemo(() =>
+    documents.filter(d => d.sharedStatus !== 'PENDING_ACCEPTANCE' && d.sharedStatus !== 'WAITING_FOR_ACCEPTANCE'), [documents]);
+
   const stats: DocumentStats = useMemo(() => {
-    return documentService.calculateStats(documents);
+    return documentService.calculateStats(activeDocs);
+  }, [activeDocs]);
+
+  // Accept/Decline shared document handlers
+  const [processingSharedId, setProcessingSharedId] = useState<string | null>(null);
+
+  const handleAcceptShared = async (docId: string) => {
+    try {
+      setProcessingSharedId(docId);
+      const result = await documentService.acceptSharedDocument(docId);
+      if (result?.pdfGenerated) {
+        toast.success('All students accepted! PDF has been generated.', { duration: 5000 });
+      } else {
+        toast.success('Endorsement letter accepted! Waiting for other students.');
+      }
+      await loadData();
+    } catch (err) {
+      console.error('Error accepting shared document:', err);
+      toast.error('Failed to accept document');
+    } finally {
+      setProcessingSharedId(null);
+    }
+  };
+
+  const handleDeclineShared = async (docId: string) => {
+    if (!window.confirm('Are you sure you want to decline this endorsement letter? It will be removed from your documents.')) return;
+    try {
+      setProcessingSharedId(docId);
+      await documentService.declineSharedDocument(docId);
+      toast.success('Endorsement letter declined');
+      await loadData();
+    } catch (err) {
+      console.error('Error declining shared document:', err);
+      toast.error('Failed to decline document');
+    } finally {
+      setProcessingSharedId(null);
+    }
+  };
+
+  // Check if all required pre-deployment documents are approved
+  // Helper: find a document matching a requirement type (only active/accepted docs)
+  // Handles ENDORSEMENT_LETTER matching both ENDORSEMENT_LETTER and ENDORSEMENT_LETTER_MULTI
+  const findDocForType = (docType: string) => {
+    if (docType === 'ENDORSEMENT_LETTER') {
+      return activeDocs.find(d => d.type === 'ENDORSEMENT_LETTER' || d.type === 'ENDORSEMENT_LETTER_MULTI');
+    }
+    return activeDocs.find(d => d.type === docType);
+  };
+
+  const preDeploymentComplete = useMemo(() => {
+    const preDeploymentReqs = documentTypes.filter(
+      dt => dt.category === "PRE_DEPLOYMENT" && dt.required
+    );
+    return preDeploymentReqs.every(req => {
+      const doc = findDocForType(req.value);
+      return doc?.status === "APPROVED";
+    });
   }, [documents]);
+
+  // Check if a category is locked (can't submit yet)
+  const isCategoryLocked = (category: string): boolean => {
+    if (category === "PRE_DEPLOYMENT") return false;
+    // UPON_APPROVAL and POST_OJT require all pre-deployment to be completed
+    return !preDeploymentComplete;
+  };
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -304,6 +382,21 @@ const StudentDocumentsTab: React.FC = () => {
     setPreviewFileUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAutoGenerate = async (type: string) => {
+    try {
+      setGeneratingType(type);
+      const doc = await documentService.autoGenerateDocument(type);
+      toast.success("Document generated successfully!");
+      await loadData(); // Refresh the documents list
+      if (refreshStudentData) refreshStudentData();
+    } catch (error: any) {
+      console.error("Error auto-generating document:", error);
+      toast.error(error?.response?.data?.message || "Failed to generate document. Please try again.");
+    } finally {
+      setGeneratingType(null);
     }
   };
 
@@ -588,6 +681,119 @@ const StudentDocumentsTab: React.FC = () => {
         />
       </div>
 
+      {/* Pending Shared Endorsement Letters (from other students) */}
+      {pendingSharedDocs.length > 0 && (
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-amber-200 dark:border-amber-800 overflow-hidden">
+          <div className="flex items-center space-x-3 px-4 sm:px-6 py-4 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
+              <Users className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">
+                Pending Endorsement Letters ({pendingSharedDocs.length})
+              </h3>
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Another student has included you in their endorsement letter. Please review and accept or decline.
+              </p>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {pendingSharedDocs.map(doc => (
+              <div key={doc.id} className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
+                    <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      Endorsement Letter (Multiple Students)
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Submitted by <span className="font-medium text-gray-700 dark:text-gray-300">{doc.uploadedBy?.name || 'Unknown'}</span>
+                      {doc.uploadedAt && <> · {doc.uploadedAt}</>}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleAcceptShared(doc.id)}
+                    disabled={processingSharedId === doc.id}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {processingSharedId === doc.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <UserCheck className="w-4 h-4" />
+                    )}
+                    <span>Accept</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeclineShared(doc.id)}
+                    disabled={processingSharedId === doc.id}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg border border-red-200 dark:border-red-800 transition-colors disabled:opacity-50"
+                  >
+                    <UserX className="w-4 h-4" />
+                    <span>Decline</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Submitter's Endorsement Letters Waiting for Acceptance */}
+      {waitingForAcceptanceDocs.length > 0 && (
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-blue-200 dark:border-blue-800 overflow-hidden">
+          <div className="flex items-center space-x-3 px-4 sm:px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">
+                Waiting for Student Acceptance ({waitingForAcceptanceDocs.length})
+              </h3>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Your multi-student endorsement letter is waiting for all included students to accept. The PDF will be generated once everyone accepts.
+              </p>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {waitingForAcceptanceDocs.map(doc => (
+              <div key={doc.id} className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
+                    <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      Endorsement Letter (Multiple Students)
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Submitted {doc.uploadedAt && <>{doc.uploadedAt}</>} · <span className="text-blue-600 dark:text-blue-400 font-medium">Awaiting student acceptance</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                    Waiting for acceptance
+                  </span>
+                  <button
+                    onClick={() => handleDelete(doc.id)}
+                    className="flex items-center space-x-1.5 px-3 py-1.5 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    title="Cancel this endorsement letter"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Requirements Checklist */}
       <div className="space-y-6">
         {Object.entries(groupedRequirements).map(([category, requirements]) => {
@@ -621,24 +827,36 @@ const StudentDocumentsTab: React.FC = () => {
 
           const styles = categoryStyles[category as keyof typeof categoryStyles];
 
+          const locked = isCategoryLocked(category);
+
           return (
-            <div key={category} className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div key={category} className={`bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden ${locked ? 'opacity-75' : ''}`}>
               {/* Category Header */}
               <button
                 onClick={() => toggleCategory(category)}
                 className={`w-full flex items-center justify-between px-4 sm:px-6 py-4 border-b transition-colors ${styles.button}`}
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <div className={`p-2 rounded-lg flex-shrink-0 ${styles.iconBg}`}>
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${locked ? 'bg-gray-100 dark:bg-gray-800' : styles.iconBg}`}>
+                    {locked ? (
+                      <Lock className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    ) : (
                     <FileText className={`w-5 h-5 ${styles.iconColor}`} />
+                    )}
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
-                    <h3 className={`text-base sm:text-lg font-semibold ${styles.title} truncate`}>
+                    <h3 className={`text-base sm:text-lg font-semibold ${locked ? 'text-gray-400 dark:text-gray-500' : styles.title} truncate`}>
                       {categoryLabel}
                     </h3>
                     <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-700 whitespace-nowrap w-fit">
                       {requirements.length} items
                     </span>
+                    {locked && (
+                      <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800 whitespace-nowrap w-fit flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Complete Pre-Deployment first
+                      </span>
+                    )}
                   </div>
                 </div>
                 <ChevronDown
@@ -655,7 +873,7 @@ const StudentDocumentsTab: React.FC = () => {
                 <div className="overflow-hidden">
                   <div className="divide-y divide-gray-100 dark:divide-gray-700">
                     {requirements.map((req) => {
-                      const doc = documents.find(d => d.type === req.value);
+                      const doc = findDocForType(req.value);
                       const template = templates.find(t => t.type === req.value);
                       const isCompleted = doc?.status === "APPROVED";
 
@@ -680,7 +898,7 @@ const StudentDocumentsTab: React.FC = () => {
                                       {getStatusBadge(doc, req.required)}
                                       {doc && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          Uploaded: {new Date(doc.uploadedAt || "").toLocaleDateString()}
+                                          Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'N/A'}
                                         </span>
                                       )}
                                     </div>
@@ -697,17 +915,14 @@ const StudentDocumentsTab: React.FC = () => {
 
                             {/* Right: Actions */}
                             <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap justify-end min-w-[280px]">
-                              {/* Template Download Button (if missing or rejected) */}
-                              {!isCompleted && template && (
-                                <button
-                                  onClick={() => handleDownloadTemplate(req.value)}
-                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors border border-transparent"
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Template
-                                </button>
-                              )}
-
+                              {locked ? (
+                                /* Show locked state for non-pre-deployment categories */
+                                <div className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                  <Lock className="w-4 h-4" />
+                                  Locked
+                                </div>
+                              ) : (
+                                <>
                               {/* View Button (if uploaded) */}
                               {doc && (
                                 <button
@@ -719,8 +934,40 @@ const StudentDocumentsTab: React.FC = () => {
                                 </button>
                               )}
 
-                              {/* Upload/Re-upload Button */}
-                              {(!doc || doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && (
+                              {/* Fill Up Button (for template-backed forms) */}
+                              {(!doc || doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && documentService.hasFormTemplate(req.value) && (
+                                <button
+                                  onClick={() => navigate(`/student/documents/form/${req.value}`)}
+                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all hover:shadow-md border border-transparent"
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Fill Up
+                                </button>
+                              )}
+
+                                  {/* Auto-Generate Button (for types like TIME_FRAMES that can be generated from existing data) */}
+                                  {(!doc || doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && documentService.canAutoGenerate(req.value) && (
+                                    <button
+                                      onClick={() => handleAutoGenerate(req.value)}
+                                      disabled={generatingType === req.value}
+                                      className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 rounded-lg shadow-sm transition-all hover:shadow-md border border-transparent"
+                                    >
+                                      {generatingType === req.value ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Generating...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Zap className="w-4 h-4 mr-2" />
+                                          Generate
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+
+                              {/* Upload Button (for non-template types OR as fallback) */}
+                                  {(!doc || doc.status === "REJECTED" || doc.status === "RESUBMISSION_REQUESTED") && !documentService.hasFormTemplate(req.value) && !documentService.canAutoGenerate(req.value) && (
                                 <button
                                   onClick={() => doc ? handleReuploadClick(doc) : handleUploadClick(req.value)}
                                   className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all hover:shadow-md border border-transparent"
@@ -739,6 +986,8 @@ const StudentDocumentsTab: React.FC = () => {
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
@@ -929,7 +1178,7 @@ const StudentDocumentsTab: React.FC = () => {
                     </span>
                     <span className="text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Uploaded {new Date(selectedDoc.uploadedAt || "").toLocaleDateString()}
+                      Uploaded {selectedDoc.uploadedAt ? new Date(selectedDoc.uploadedAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -976,16 +1225,6 @@ const StudentDocumentsTab: React.FC = () => {
                 )}
               </div>
 
-              {/* Feedback Panel */}
-              <div className="w-full lg:w-96 h-1/3 lg:h-auto border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#19191c] flex flex-col">
-                <div className="flex-1 overflow-y-auto">
-                  <DocumentFeedbackPanel
-                    documentId={selectedDoc.id}
-                    className="h-full border-0 shadow-none bg-transparent"
-                    compact={true}
-                  />
-                </div>
-              </div>
             </div>
           </div>
         </div>

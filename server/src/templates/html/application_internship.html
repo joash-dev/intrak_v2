@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application for Internship - FM-AA-WT-01</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 4mm 6mm;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      color: #000;
+      background: #888;
+      line-height: 1.15;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      margin: 5mm auto;
+      padding: 2mm 5mm;
+      background: white;
+      position: relative;
+    }
+
+    /* Form Code top-right */
+    .form-code {
+      text-align: right;
+      font-size: 6.5pt;
+      font-style: italic;
+      line-height: 1.2;
+      margin-bottom: 0.5mm;
+    }
+
+    /* ===== MAIN STRUCTURE: One continuous bordered table ===== */
+    .main-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5pt solid #000;
+    }
+
+    .main-table>tbody>tr>td {
+      border: 1pt solid #000;
+      padding: 0;
+      vertical-align: top;
+    }
+
+    /* Header row */
+    .header-cell-logo {
+      width: 20mm;
+      text-align: center;
+      vertical-align: middle;
+      padding: 2mm !important;
+    }
+
+    .header-cell-logo img,
+    .header-cell-logo svg {
+      width: 16mm;
+      height: 16mm;
+    }
+
+    .header-cell-text {
+      text-align: center;
+      vertical-align: middle;
+      padding: 1.5mm 2mm !important;
+    }
+
+    .header-cell-text h1 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-bottom: 0.3mm;
+    }
+
+    .header-cell-text h2 {
+      font-size: 10pt;
+      font-weight: normal;
+      margin-bottom: 0.3mm;
+    }
+
+    .header-cell-text h3 {
+      font-size: 8.5pt;
+      font-weight: normal;
+    }
+
+    /* Section header rows (A, B, C) */
+    .section-row td {
+      font-weight: bold;
+      font-size: 9pt;
+      padding: 1mm 3mm !important;
+      border-left: none !important;
+      border-right: none !important;
+    }
+
+    /* ===== Inner tables (profile, academic, company) ===== */
+    .inner-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .inner-table td {
+      border: 0.5pt solid #000;
+      padding: 0.5mm 1.5mm;
+      font-size: 8pt;
+      height: 5.5mm;
+      vertical-align: middle;
+    }
+
+    .inner-table th {
+      border: 0.5pt solid #000;
+      padding: 0.4mm 1mm;
+      font-size: 7pt;
+      font-weight: bold;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .inner-table .label {
+      font-weight: bold;
+      font-size: 8pt;
+      white-space: nowrap;
+    }
+
+    /* Remove left/right borders on inner tables so they blend with outer */
+    .inner-table tr td:first-child {
+      border-left: none;
+    }
+
+    .inner-table tr td:last-child {
+      border-right: none;
+    }
+
+    .inner-table tr th:first-child {
+      border-left: none;
+    }
+
+    .inner-table tr th:last-child {
+      border-right: none;
+    }
+
+    /* Remove top border on first row (connects to section header) */
+    .inner-table.no-top-border tr:first-child td,
+    .inner-table.no-top-border tr:first-child th {
+      border-top: none;
+    }
+
+    /* Academic table - smaller */
+    .academic-table td {
+      font-size: 7pt;
+      padding: 0.3mm 1mm;
+      height: 4.5mm;
+    }
+
+    .academic-table th {
+      font-size: 7pt;
+      padding: 0.3mm;
+    }
+
+    /* ===== Full-width content cell ===== */
+    .content-cell {
+      border-left: none !important;
+      border-right: none !important;
+    }
+
+    /* ===== Text blocks ===== */
+    .text-block {
+      padding: 0.8mm 2mm;
+      font-size: 8pt;
+    }
+
+    .text-block.italic {
+      font-style: italic;
+    }
+
+    .note-text {
+      font-size: 6.5pt;
+      font-style: italic;
+      padding: 0.5mm 2mm;
+    }
+
+    .note-text u {
+      color: red;
+    }
+
+    /* ===== Registrar ===== */
+    .registrar-block {
+      text-align: center;
+      padding: 2mm 0 1.5mm;
+    }
+
+    .registrar-line {
+      border-top: 1px solid #000;
+      display: inline-block;
+      min-width: 30%;
+      padding-top: 0.2mm;
+      font-style: italic;
+      font-size: 7.5pt;
+    }
+
+    /* ===== Signatures ===== */
+    .sig-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      padding: 0 2mm;
+    }
+
+    .sig-block {
+      text-align: center;
+      padding: 2mm 3mm;
+      min-height: 14mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .sig-name {
+      font-weight: bold;
+      font-size: 8.5pt;
+      border-bottom: 1px solid #000;
+      display: inline-block;
+      padding-bottom: 0.2mm;
+      min-width: 75%;
+      margin-bottom: 0.3mm;
+    }
+
+    .sig-title {
+      font-size: 7pt;
+      font-style: italic;
+    }
+
+    /* ===== Rec header ===== */
+    .rec-header-cell {
+      font-weight: bold;
+      font-size: 9pt;
+      text-align: center;
+      padding: 1mm 3mm !important;
+    }
+
+    /* ===== Approved ===== */
+    .approved-cell {
+      padding: 2mm 4mm !important;
+      min-height: 22mm;
+    }
+
+    /* ===== Variables ===== */
+    .var {
+      color: #000;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    /* ===== Print ===== */
+    @media print {
+      body {
+        background: none;
+      }
+
+      .page {
+        margin: 0;
+        width: auto;
+        height: auto;
+        padding: 0 3mm;
+        overflow: hidden;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <!-- Form Code -->
+    <div class="form-code">FM-AA-WT-01<br>Rev: 1<br>14-Oct-2024</div>
+
+    <!-- ===== ONE CONTINUOUS TABLE ===== -->
+    <table class="main-table">
+      <tbody>
+        <!-- ROW: Header (Logo | Title) -->
+        <tr>
+          <td class="header-cell-logo" colspan="1" style="width:18mm;">
+            <img src="assets/psu_logo.png" alt="PSU Logo" style="width:16mm;height:16mm;">
+          </td>
+          <td class="header-cell-text" colspan="7">
+            <h1>APPLICATION FOR INTERNSHIP</h1>
+            <h2>PANGASINAN STATE UNIVERSITY</h2>
+            <h3><u>Urdaneta City Campus</u></h3>
+          </td>
+        </tr>
+
+        <!-- ROW: Section A -->
+        <tr class="section-row">
+          <td colspan="8" style="padding:1mm 3mm;">A. &nbsp; PERSONAL PROFILE</td>
+        </tr>
+
+        <!-- ROW: Profile table (embedded) -->
+        <tr>
+          <td colspan="8" style="padding:0; border:none;">
+            <table class="inner-table no-top-border">
+              <tr>
+                <td class="label" style="width:14%;">NAME</td>
+                <td style="width:28%;text-align:center;"><span class="var">${surname}</span><br><span
+                    style="font-size:5.5pt;font-style:italic;display:block;">Surname</span></td>
+                <td style="width:28%;text-align:center;"><span class="var">${given_name}</span><br><span
+                    style="font-size:5.5pt;font-style:italic;display:block;">Given Name</span></td>
+                <td style="width:30%;text-align:center;"><span class="var">${middle_name}</span><br><span
+                    style="font-size:5.5pt;font-style:italic;display:block;">Middle Name</span></td>
+              </tr>
+              <tr>
+                <td class="label">AGE</td>
+                <td><span class="var">${age}</span></td>
+                <td class="label">CIVIL STATUS</td>
+                <td><span class="var">${civil_status}</span></td>
+              </tr>
+              <tr>
+                <td class="label">SEX</td>
+                <td><span class="var">${sex}</span></td>
+                <td class="label">CONTACT NUMBER</td>
+                <td><span class="var">${contact_number}</span></td>
+              </tr>
+              <tr>
+                <td class="label">COURSE</td>
+                <td><span class="var">${course}</span></td>
+                <td class="label">YEAR & SECTION</td>
+                <td><span class="var">${year_section}</span></td>
+              </tr>
+              <tr>
+                <td class="label">MAJOR</td>
+                <td><span class="var">${major}</span></td>
+                <td class="label">PARENT/GUARDIAN</td>
+                <td><span class="var">${parent_guardian}</span></td>
+              </tr>
+              <tr>
+                <td class="label">CURRENT ADDRESS</td>
+                <td colspan="3"><span class="var">${current_address}</span></td>
+              </tr>
+              <tr>
+                <td class="label">HOME ADDRESS</td>
+                <td colspan="3"><span class="var">${home_address}</span></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ROW: Section B -->
+        <tr class="section-row">
+          <td colspan="8" style="padding:1mm 3mm;">B. &nbsp; ACADEMIC CREDENTIALS/QUALIFICATIONS</td>
+        </tr>
+
+        <!-- ROW: Certify text -->
+        <tr>
+          <td colspan="8" class="content-cell"
+            style="padding:0.8mm 3mm !important; border-top:none !important; border-bottom:none !important;">
+            <span class="text-block italic" style="padding:0;">
+              This is to certify that as per records kept in this office, the above name had already taken and pass
+              <span style="border-bottom:1px solid #000;display:inline-block;width:10mm;text-align:center;"><span
+                  class="var">${units_passed}</span></span>
+              units except the following subjects to wit:
+            </span>
+          </td>
+        </tr>
+
+        <!-- ROW: Academic table -->
+        <tr>
+          <td colspan="8" style="padding:0; border:none;">
+            <table class="inner-table academic-table">
+              <thead>
+                <tr>
+                  <th style="width:6%;">SEM</th>
+                  <th style="width:10%;">SY</th>
+                  <th style="width:34%;">SUBJECT</th>
+                  <th style="width:7%;">PASSING</th>
+                  <th style="width:7%;">FAILING</th>
+                  <th style="width:7%;">GRADE</th>
+                  <th style="width:14%;">SIGNATURE</th>
+                  <th style="width:9%;">DATE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>SUMMER</td><td>2024-2025</td><td>ON THE JOB TRAINING</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>SYSTEM AND NETWORK ADMINISTRATION 2</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>COMPUTER ARCHITECTURE AND ORGANIZATION</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>ADVANCE ADDITIVE MANUFACTURING ENGINEERING</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>CPE PRACTICE AND DESIGN 1</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>DIGITAL SIGNAL PROCESSING</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>1<sup>ST</sup></td><td>2025-2026</td><td>INDUSTRIAL IOT AND AUTOMATION</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>2<sup>ND</sup></td><td>2025-2026</td><td>CPE PRACTICE AND DESIGN 2</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>2<sup>ND</sup></td><td>2025-2026</td><td>SEMINARS AND FIELD TRIPS</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>2<sup>ND</sup></td><td>2025-2026</td><td>EMERGING TECHNOLOGIES IN CPE</td><td></td><td></td><td></td><td></td><td></td></tr>
+                <tr><td>2<sup>ND</sup></td><td>2025-2026</td><td>SYSTEM AND NETWORK ADMINISTRATION 3</td><td></td><td></td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ROW: Certify internship + Registrar -->
+        <tr>
+          <td colspan="8" style="padding:1mm 3mm !important; border-top:none !important; border-left:none !important; border-right:none !important;">
+            <div style="text-align:center;font-size:7.5pt;font-style:italic;margin-bottom:0.5mm;">
+              This is to certify that he/she is
+              <span style="border-bottom:1px solid #000;display:inline-block;width:30mm;text-align:center;"><span
+                  class="var">${eligibility_status}</span></span>
+              to undergo internship.
+            </div>
+            <div style="font-size:7.5pt;">Certified and verified true and correct:</div>
+            <div class="registrar-block">
+              <div class="registrar-line">Registrar</div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ROW: Section C -->
+        <tr class="section-row">
+          <td colspan="8" style="padding:1mm 3mm;">C. &nbsp; FIRM/AGENCY/COMPANY FOR INTERNSHIP</td>
+        </tr>
+
+        <!-- ROW: Company table -->
+        <tr>
+          <td colspan="8" style="padding:0; border:none;">
+            <table class="inner-table no-top-border">
+              <tr>
+                <td class="label" style="width:28%;">NAME OF THE<br>FIRM/AGENCY/COMPANY</td>
+                <td><span class="var">${company_name}</span></td>
+              </tr>
+              <tr>
+                <td class="label">ADDRESS</td>
+                <td><span class="var">${company_address}</span></td>
+              </tr>
+              <tr>
+                <td class="label">HEAD</td>
+                <td><span class="var">${company_head}</span></td>
+              </tr>
+              <tr>
+                <td class="label">CONTACT NUMBER</td>
+                <td><span class="var">${company_contact}</span></td>
+              </tr>
+              <tr>
+                <td class="label">NUMBER OF HOURS</td>
+                <td><span class="var">${number_of_hours}</span> hrs</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ROW: Note -->
+        <tr>
+          <td colspan="8" class="content-cell" style="padding:0.5mm 3mm !important; border-top:none !important;">
+            <p class="note-text" style="padding:0;">
+              Note: Please attach <u>Medical</u> Certificate and <u>Psychological</u> Test from any government
+              <u>physician</u>,
+              certifying that the student applicant is physically, emotionally, and mentally fit for the internship
+              ranking activity.
+            </p>
+          </td>
+        </tr>
+
+        <!-- ROW: Recommending Approval header -->
+        <tr>
+          <td colspan="8" class="rec-header-cell">RECOMMENDING APPROVAL</td>
+        </tr>
+
+        <!-- ROW: Signature grid -->
+        <tr>
+          <td colspan="8" class="content-cell" style="padding:0 !important;">
+            <div class="sig-grid">
+              <div class="sig-block">
+                <span class="sig-name"><span class="var">${instructor_name}</span></span>
+                <span class="sig-title">Internship/Practicum Subject Instructor</span>
+              </div>
+              <div class="sig-block">
+                <span class="sig-name"><span class="var">${coordinator_name}</span></span>
+                <span class="sig-title">Campus Internship Coordinator</span>
+              </div>
+              <div class="sig-block">
+                <span class="sig-name"><span class="var">${dept_chair_name}</span></span>
+                <span class="sig-title">Department Chair</span>
+              </div>
+              <div class="sig-block">
+                <span class="sig-name"><span class="var">${college_dean_name}</span></span>
+                <span class="sig-title">College Dean</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ROW: Approved By -->
+        <tr>
+          <td colspan="8" class="approved-cell">
+            <strong style="font-size:8pt;">APPROVED BY:</strong>
+            <div class="sig-block" style="min-height:14mm;">
+              <span class="sig-name"><span class="var">${campus_exec_director}</span></span>
+              <span class="sig-title">Campus Executive Director</span>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</body>
+
+</html>
