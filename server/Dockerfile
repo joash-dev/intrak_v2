@@ -28,7 +28,7 @@ RUN npx prisma generate
 RUN npx tsc -p tsconfig.build.json
 
 # Copy templates to dist folder (templates are needed at runtime)
-RUN mkdir -p dist/templates && cp -r src/templates/* dist/templates/
+RUN mkdir -p dist/src/templates && cp -r src/templates/* dist/src/templates/
 
 # Copy startup script
 USER root
