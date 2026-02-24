@@ -53,20 +53,16 @@ services:
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
-      # NAS mount from host (RPi via Tailscale)
-      # create_host_path: true ensures Docker creates the directory if NAS isn't mounted
-      # When NAS is mounted on host → container uses NAS storage (primary)
-      # When NAS is down → empty dir is created → server uses local storage (fallback)
+      # Optional NAS mount from host (RPi via Tailscale).
+      # Keep this as a side mount so container startup does not depend on NAS availability.
       - type: bind
         source: /mnt/nas
         target: /mnt/nas
         bind:
           create_host_path: true
-      - type: bind
-        source: /mnt/nas/intrak
-        target: /app/uploads
-        bind:
-          create_host_path: true
+      # Always use local Docker volume for app uploads path.
+      # Runtime NAS logic can switch to /mnt/nas/... when available.
+      - uploads_data:/app/uploads
     depends_on:
       - db
     deploy:
