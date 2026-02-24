@@ -1,0 +1,14 @@
+services:
+  server:
+    environment:
+      # Keep local uploads path for fallback copy logic.
+      - UPLOAD_PATH=/app/uploads
+      # Real NAS mount path inside container.
+      - NAS_PATH=/mnt/nas/intrak/uploads
+      - USE_NAS=true
+    volumes:
+      # Host NAS mount must already exist and be healthy on EC2.
+      - type: bind
+        source: /mnt/nas
+        target: /mnt/nas
+        read_only: false
