@@ -7,8 +7,13 @@ services:
       - NAS_PATH=/mnt/nas/intrak/uploads
       - USE_NAS=true
     volumes:
-      # Host NAS mount must already exist and be healthy on EC2.
-      - type: bind
-        source: /mnt/nas
-        target: /mnt/nas
-        read_only: false
+      # Mount NAS directly via Docker volume driver (no host bind dependency).
+      - nas_data:/mnt/nas
+
+volumes:
+  nas_data:
+    driver: local
+    driver_opts:
+      type: cifs
+      device: "//100.93.229.106/files"
+      o: "credentials=/etc/smbcredentials/intrakpi,uid=1000,gid=1000,vers=3.0,iocharset=utf8,noperm"
