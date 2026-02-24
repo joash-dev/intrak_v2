@@ -5,9 +5,12 @@ WORKDIR /app
 # Switch to root for system setup
 USER root
 RUN apt-get update && \
-    apt-get install -y curl ca-certificates && \
+    apt-get install -y curl ca-certificates chromium && \
     rm -rf /var/lib/apt/lists/* && \
     chown -R node:node /app
+
+ENV CHROME_BIN=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Switch to node user for npm operations
 USER node

@@ -75,19 +75,24 @@ export async function generatePdf(
     studentId: string
 ): Promise<{ filepath: string; filename: string; buffer: Buffer }> {
     const html = renderTemplate(templateFile, data);
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN;
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
     try {
-        // Launch Puppeteer
+    // Launch Puppeteer
         browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-            ],
-        });
+        headless: true,
+            executablePath,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+        ],
+    });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H1',location:'pdfGenerator.service.ts:generatePdf:launchConfig',message:'Launching Puppeteer with executable path',data:{executablePath:executablePath || null,hasExecutablePath:!!executablePath},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         const page = await browser.newPage();
 
         // Set content and wait for images to load
@@ -141,7 +146,7 @@ export async function generatePdf(
         throw error;
     } finally {
         if (browser) {
-            await browser.close();
+        await browser.close();
         }
     }
 }
