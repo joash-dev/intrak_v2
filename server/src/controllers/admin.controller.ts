@@ -6,6 +6,13 @@ import os from 'os';
 import checkDiskSpace from 'check-disk-space';
 import { prisma } from '../config/database';
 import { getNASStorageMetrics, getLocalStorageMetrics, getAllStorageAlerts, StorageAlert } from '../services/storageMonitor.service';
+import { getStoragePathWithFallback, syncLocalToNAS, validateNASConnection } from '../config/nas';
+import {
+  applyNASRuntimeConfigToEnv,
+  getNASRuntimeConfig,
+  NASRuntimeConfig,
+  saveNASRuntimeConfig
+} from '../services/nasRuntimeConfig.service';
 
 // simple in-memory cache reference that can be cleared via admin actions
 const globalCache = globalThis as { __appCache?: Record<string, unknown> };
@@ -52,6 +59,15 @@ const sanitizeAdminSettings = <T extends { [key: string]: unknown } | null>(sett
   const { smsAlerts, ...rest } = settings as Record<string, unknown>;
   return rest as T;
 };
+
+const sanitizeNASRuntimeConfig = (config: NASRuntimeConfig) => ({
+  enabled: config.enabled,
+  mountPath: config.mountPath,
+  host: config.host,
+  username: config.username,
+  shareName: config.shareName,
+  hasPassword: !!config.password,
+});
 
 // Get admin profile
 export const getAdminProfile = async (req: AuthRequest, res: Response) => {
@@ -965,6 +981,165 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
     console.error('Get system info error:', error);
     res.status(500).json({
       message: 'Failed to fetch system information',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const getNASConfig = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const config = await getNASRuntimeConfig();
+    applyNASRuntimeConfigToEnv(config);
+    const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+
+
+    res.json({
+      nasConfig: sanitizeNASRuntimeConfig(config),
+      runtime: {
+        storagePath,
+        isUsingFallback
+      }
+    });
+  } catch (error) {
+    console.error('Get NAS config error:', error);
+    res.status(500).json({
+      message: 'Failed to fetch NAS configuration',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const updateNASConfig = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const {
+      enabled,
+      mountPath,
+      host,
+      username,
+      password,
+      shareName,
+    } = req.body || {};
+
+    if (mountPath && typeof mountPath !== 'string') {
+      return res.status(400).json({ message: 'Invalid mountPath' });
+    }
+    if (host && typeof host !== 'string') {
+      return res.status(400).json({ message: 'Invalid host' });
+    }
+    if (username && typeof username !== 'string') {
+      return res.status(400).json({ message: 'Invalid username' });
+    }
+    if (password && typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid password' });
+    }
+    if (shareName && typeof shareName !== 'string') {
+      return res.status(400).json({ message: 'Invalid shareName' });
+    }
+
+    const config = await saveNASRuntimeConfig({
+      enabled: enabled === undefined ? undefined : !!enabled,
+      mountPath,
+      host,
+      username,
+      password,
+      shareName,
+    }, userId);
+
+    applyNASRuntimeConfigToEnv(config);
+
+
+    res.json({
+      message: 'NAS configuration updated',
+      nasConfig: sanitizeNASRuntimeConfig(config)
+    });
+  } catch (error) {
+    console.error('Update NAS config error:', error);
+    res.status(500).json({
+      message: 'Failed to update NAS configuration',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const testNASConfigConnection = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const config = await getNASRuntimeConfig();
+    applyNASRuntimeConfigToEnv(config);
+    const isConnected = await validateNASConnection();
+    const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+
+
+    res.json({
+      connected: isConnected,
+      message: isConnected
+        ? 'NAS connection is active and writable'
+        : 'NAS is not connected. Check host mount and credentials.',
+      runtime: {
+        storagePath,
+        isUsingFallback
+      }
+    });
+  } catch (error) {
+    console.error('Test NAS config error:', error);
+    res.status(500).json({
+      connected: false,
+      message: 'Failed to test NAS connection',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const syncNASFromLocal = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const config = await getNASRuntimeConfig();
+    applyNASRuntimeConfigToEnv(config);
+    const syncResult = await syncLocalToNAS();
+
+
+    res.json({
+      message: `Sync complete. ${syncResult.synced} file(s) synced, ${syncResult.failed} failed.`,
+      ...syncResult
+    });
+  } catch (error) {
+    console.error('Sync NAS config error:', error);
+    res.status(500).json({
+      message: 'Failed to sync local files to NAS',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }

@@ -178,6 +178,15 @@ export interface NASStorage {
   path: string;
 }
 
+export interface NASConfig {
+  enabled: boolean;
+  mountPath: string;
+  host: string;
+  username: string;
+  shareName: string;
+  hasPassword: boolean;
+}
+
 export interface SystemInfo {
   version: string;
   lastUpdated: string;
@@ -831,6 +840,53 @@ class AdminService {
         memoryUsage: 68,
         diskUsage: 75
       };
+    }
+  }
+
+  async getNASConfig(): Promise<{ nasConfig: NASConfig; runtime: { storagePath: string; isUsingFallback: boolean } }> {
+    try {
+      const response = await api.get('/admin/nas-config');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching NAS config:', error);
+      throw new Error(error.response?.data?.message || 'Failed to fetch NAS configuration');
+    }
+  }
+
+  async updateNASConfig(payload: {
+    enabled: boolean;
+    mountPath: string;
+    host: string;
+    username: string;
+    shareName: string;
+    password?: string;
+  }): Promise<{ message: string; nasConfig: NASConfig }> {
+    try {
+      const response = await api.put('/admin/nas-config', payload);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating NAS config:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update NAS configuration');
+    }
+  }
+
+  async testNASConnection(): Promise<{ connected: boolean; message: string; runtime?: { storagePath: string; isUsingFallback: boolean } }> {
+    try {
+      const response = await api.post('/admin/nas-config/test');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error testing NAS connection:', error);
+      throw new Error(error.response?.data?.message || 'Failed to test NAS connection');
+    }
+  }
+
+  async syncLocalToNAS(): Promise<{ message: string; synced: number; failed: number }> {
+    try {
+      const response = await api.post('/admin/nas-config/sync');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error syncing files to NAS:', error);
+      throw new Error(error.response?.data?.message || 'Failed to sync local files to NAS');
     }
   }
 

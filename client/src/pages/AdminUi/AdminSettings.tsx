@@ -31,7 +31,7 @@ import {
   settingsService,
   type AppPreferences,
 } from "../../services/settingsService";
-import { adminService, type SystemInfo, type SystemAlert } from "../../services/adminService";
+import { adminService, type NASConfig, type SystemInfo, type SystemAlert } from "../../services/adminService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
@@ -73,6 +73,16 @@ interface NotificationPreferences {
   emailUserActivity: boolean;
   emailMaintenance: boolean;
   pushNotifications: boolean;
+}
+
+interface NASSettingsForm {
+  enabled: boolean;
+  mountPath: string;
+  host: string;
+  username: string;
+  shareName: string;
+  password: string;
+  hasPassword: boolean;
 }
 
 const AdminSettings = () => {
@@ -151,6 +161,15 @@ const AdminSettings = () => {
     success: boolean;
     message: string;
   } | null>(null);
+  const [nasSettings, setNasSettings] = useState<NASSettingsForm>({
+    enabled: false,
+    mountPath: "/mnt/nas/intrak",
+    host: "",
+    username: "",
+    shareName: "files",
+    password: "",
+    hasPassword: false,
+  });
 
   // Settings sections for navigation
   const sections = [
@@ -169,6 +188,7 @@ const AdminSettings = () => {
       loadTheme();
       await loadSystemSettings();
       loadSystemInfo();
+      await loadNASSettings();
       loadProfilePhoto();
     };
 
@@ -340,6 +360,89 @@ const AdminSettings = () => {
     } catch (error) {
       devLog.error("Error loading system information:", error);
       // Keep the default state if API fails
+    }
+  };
+
+  const loadNASSettings = async () => {
+    try {
+      const response = await adminService.getNASConfig();
+      const config: NASConfig = response.nasConfig;
+      setNasSettings({
+        enabled: config.enabled,
+        mountPath: config.mountPath,
+        host: config.host,
+        username: config.username,
+        shareName: config.shareName,
+        password: "",
+        hasPassword: config.hasPassword,
+      });
+    } catch (error) {
+      devLog.error("Error loading NAS settings:", error);
+    }
+  };
+
+  const handleSaveNASSettings = async () => {
+    try {
+      setSaving(true);
+      const payload: {
+        enabled: boolean;
+        mountPath: string;
+        host: string;
+        username: string;
+        shareName: string;
+        password?: string;
+      } = {
+        enabled: nasSettings.enabled,
+        mountPath: nasSettings.mountPath.trim(),
+        host: nasSettings.host.trim(),
+        username: nasSettings.username.trim(),
+        shareName: nasSettings.shareName.trim(),
+      };
+      if (nasSettings.password.trim()) {
+        payload.password = nasSettings.password.trim();
+      }
+      const response = await adminService.updateNASConfig(payload);
+      setNasSettings((prev) => ({
+        ...prev,
+        hasPassword: response.nasConfig.hasPassword,
+        password: "",
+      }));
+      toast.success("NAS configuration saved");
+      await loadSystemInfo();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save NAS configuration");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestNASConnection = async () => {
+    try {
+      setSaving(true);
+      const result = await adminService.testNASConnection();
+      if (result.connected) {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+      await loadSystemInfo();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to test NAS connection");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSyncNASFromLocal = async () => {
+    try {
+      setSaving(true);
+      const result = await adminService.syncLocalToNAS();
+      toast.success(result.message);
+      await loadSystemInfo();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sync local files to NAS");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1724,6 +1827,107 @@ const AdminSettings = () => {
                         </p>
                       </div>
                     )}
+                  </div>
+
+                  {/* NAS Configuration */}
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                      <Database className="w-5 h-5 mr-2 text-indigo-600" />
+                      RPi NAS Connection
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <label className="block">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">NAS Host / IP</span>
+                        <input
+                          type="text"
+                          value={nasSettings.host}
+                          onChange={(e) => setNasSettings((prev) => ({ ...prev, host: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          placeholder="100.93.229.106"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Share Name</span>
+                        <input
+                          type="text"
+                          value={nasSettings.shareName}
+                          onChange={(e) => setNasSettings((prev) => ({ ...prev, shareName: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          placeholder="files"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">NAS Username</span>
+                        <input
+                          type="text"
+                          value={nasSettings.username}
+                          onChange={(e) => setNasSettings((prev) => ({ ...prev, username: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          NAS Password {nasSettings.hasPassword ? "(saved)" : ""}
+                        </span>
+                        <input
+                          type="password"
+                          value={nasSettings.password}
+                          onChange={(e) => setNasSettings((prev) => ({ ...prev, password: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          placeholder="Enter only if changing password"
+                        />
+                      </label>
+                      <label className="block md:col-span-2">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Mount Path</span>
+                        <input
+                          type="text"
+                          value={nasSettings.mountPath}
+                          onChange={(e) => setNasSettings((prev) => ({ ...prev, mountPath: e.target.value }))}
+                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          placeholder="/mnt/nas/intrak"
+                        />
+                      </label>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable NAS Mode</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          If disabled, system forces local storage fallback.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setNasSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${nasSettings.enabled ? "bg-indigo-600" : "bg-gray-600"}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${nasSettings.enabled ? "translate-x-6" : "translate-x-1"}`} />
+                      </button>
+                    </div>
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <button
+                        onClick={handleSaveNASSettings}
+                        disabled={saving}
+                        className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50"
+                      >
+                        Save NAS Config
+                      </button>
+                      <button
+                        onClick={handleTestNASConnection}
+                        disabled={saving}
+                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50"
+                      >
+                        Test Connection
+                      </button>
+                      <button
+                        onClick={handleSyncNASFromLocal}
+                        disabled={saving}
+                        className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50"
+                      >
+                        Sync Local to NAS
+                      </button>
+                    </div>
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                      Note: this UI updates app runtime settings. The actual host mount (`/mnt/nas`) still needs to exist on EC2.
+                    </p>
                   </div>
 
                   {/* System Configuration */}
