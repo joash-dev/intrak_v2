@@ -75,19 +75,19 @@ export async function generatePdf(
     studentId: string
 ): Promise<{ filepath: string; filename: string; buffer: Buffer }> {
     const html = renderTemplate(templateFile, data);
-
-    // Launch Puppeteer
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-        ],
-    });
+    let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
 
     try {
+        // Launch Puppeteer
+        browser = await puppeteer.launch({
+            headless: true,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+            ],
+        });
         const page = await browser.newPage();
 
         // Set content and wait for images to load
@@ -114,6 +114,9 @@ export async function generatePdf(
         // Determine storage path
         const { storagePath } = getStoragePathWithFallback();
         const documentsDir = path.join(storagePath, 'documents', studentId);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H2',location:'pdfGenerator.service.ts:generatePdf:storagePath',message:'Resolved storage path before writing PDF',data:{storagePath,documentsDir,templateFile,documentType,studentId},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         await ensureNASDirectoryExists(documentsDir);
 
         // Create filename
@@ -123,12 +126,22 @@ export async function generatePdf(
 
         // Write PDF to storage
         fs.writeFileSync(filepath, buffer);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H2',location:'pdfGenerator.service.ts:generatePdf:writeSuccess',message:'PDF written successfully',data:{filepath,filename,sizeBytes:buffer.length},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
 
         // Create local backup if on NAS
         createLocalBackup(filepath, buffer);
 
         return { filepath, filename, buffer };
+    } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H3',location:'pdfGenerator.service.ts:generatePdf:catch',message:'PDF generation failed',data:{templateFile,documentType,studentId,errorName:error instanceof Error ? error.name : 'UnknownError',errorMessage:error instanceof Error ? error.message : String(error),stackTop:error instanceof Error && error.stack ? error.stack.split('\n').slice(0,3).join(' | ') : null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        throw error;
     } finally {
-        await browser.close();
+        if (browser) {
+            await browser.close();
+        }
     }
 }

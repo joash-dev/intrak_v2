@@ -1616,6 +1616,9 @@ export const previewDocument = async (req: AuthRequest, res: Response) => {
 export const finalizeDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { type, formData } = req.body;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H0',location:'document.controller.ts:finalizeDocument:entry',message:'Finalize request received',data:{type:typeof type === 'string' ? type : null,hasFormData:!!formData,formDataKeyCount:formData && typeof formData === 'object' ? Object.keys(formData).length : 0,userId:req.user?.id || null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     if (!type || !formData) {
       return res.status(400).json({ message: 'Type and formData are required' });
@@ -1767,6 +1770,9 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
     templateData = formatDateFieldsForDisplay(type, templateData);
 
     // Generate PDF
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H1',location:'document.controller.ts:finalizeDocument:beforeGeneratePdf',message:'About to generate PDF',data:{type,templateFile:definition.templateFile,studentId:student.id},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const { filepath, filename, buffer } = await generatePdf(
       definition.templateFile,
       templateData,
@@ -1813,6 +1819,9 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'finalize-500-investigation',hypothesisId:'H4',location:'document.controller.ts:finalizeDocument:catch',message:'Finalize failed in controller catch',data:{errorName:error instanceof Error ? error.name : 'UnknownError',errorMessage:error instanceof Error ? error.message : String(error),stackTop:error instanceof Error && error.stack ? error.stack.split('\n').slice(0,3).join(' | ') : null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     console.error('Error finalizing document:', error);
     res.status(500).json({
       message: 'Failed to generate document',
