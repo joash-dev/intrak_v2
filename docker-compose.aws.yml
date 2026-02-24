@@ -53,15 +53,8 @@ services:
       - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
-      # Optional NAS mount from host (RPi via Tailscale).
-      # Keep this as a side mount so container startup does not depend on NAS availability.
-      - type: bind
-        source: /mnt/nas
-        target: /mnt/nas
-        bind:
-          create_host_path: true
       # Always use local Docker volume for app uploads path.
-      # Runtime NAS logic can switch to /mnt/nas/... when available.
+      # This keeps EC2 startup independent from host NAS/autofs mount state.
       - uploads_data:/app/uploads
     depends_on:
       - db
