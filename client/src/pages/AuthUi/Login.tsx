@@ -317,24 +317,28 @@ const Login: React.FC = () => {
       <div className="h-screen flex overflow-hidden">
         {/* Left Section - Login Form */}
         <div className="w-full lg:flex-1 flex items-center justify-center bg-white p-4 sm:p-6 lg:p-8">
-          <div className="w-full max-w-md">
+          <div className={`w-full ${requires2FA ? "max-w-sm" : "max-w-md"}`}>
             {/* Top Gap */}
-            <div className="h-4"></div>
+            <div className={requires2FA ? "h-2" : "h-4"}></div>
 
             {/* Logo */}
-            <div className="mb-8 flex justify-center">
-              <img src="/logo.jpg" alt="INTRAK Logo" className="h-32 w-auto" />
+            <div className={`flex justify-center ${requires2FA ? "mb-6" : "mb-8"}`}>
+              <img
+                src="/logo.jpg"
+                alt="INTRAK Logo"
+                className={requires2FA ? "h-24 w-auto" : "h-32 w-auto"}
+              />
             </div>
 
             {/* Welcome Message */}
-            <div className="text-center mb-6">
+            <div className={`text-center ${requires2FA ? "mb-5" : "mb-6"}`}>
               <h1
-                className="text-4xl font-bold text-gray-900 mb-2"
+                className={`font-bold text-gray-900 ${requires2FA ? "text-3xl mb-2" : "text-4xl mb-2"}`}
                 style={outfitFont}
               >
                 {requires2FA ? "Two-Factor Authentication" : "Welcome to INTRAK"}
               </h1>
-              <p className="text-gray-500 text-lg" style={outfitFont}>
+              <p className={`text-gray-500 ${requires2FA ? "text-base" : "text-lg"}`} style={outfitFont}>
                 {requires2FA
                   ? "Enter the verification code sent to your email"
                   : "Please enter your credentials to access the OJT Management System"
@@ -344,11 +348,11 @@ const Login: React.FC = () => {
 
             {/* 2FA Verification Form */}
             {requires2FA ? (
-              <form onSubmit={handle2FAVerify} className="space-y-4">
+              <form onSubmit={handle2FAVerify} className="space-y-3">
                 {/* 2FA Icon */}
-                <div className="flex justify-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Shield className="w-8 h-8 text-blue-600" />
+                <div className="flex justify-center mb-3">
+                  <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                    <Shield className="w-7 h-7 text-blue-600" />
                   </div>
                 </div>
 
@@ -449,7 +453,7 @@ const Login: React.FC = () => {
                           if (errors.otp) setErrors({});
                         }}
                         maxLength={6}
-                        className="w-full py-4 text-center text-3xl font-bold tracking-[0.5em] border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full py-3 text-center text-[2.1rem] font-bold tracking-[0.45em] border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="000000"
                         style={outfitFont}
                         autoFocus
@@ -481,7 +485,7 @@ const Login: React.FC = () => {
                     <button
                       type="submit"
                       disabled={loading || otpCode.length !== 6}
-                      className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
+                      className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex items-center justify-center space-x-2"
                       style={outfitFont}
                     >
                       {loading ? (
