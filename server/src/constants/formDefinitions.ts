@@ -194,6 +194,12 @@ export const formDefinitions: Record<string, FormDefinition> = {
       { name: 'company_head', label: 'Company Head / Manager', type: 'text', required: false, section: 'Company Details', placeholder: 'Name of company head' },
       { name: 'company_contact', label: 'Company Contact Number', type: 'text', required: false, section: 'Company Details', placeholder: 'Company phone number' },
       { name: 'number_of_hours', label: 'Number of Hours', type: 'number', required: true, autoFillKey: 'total_hours', section: 'Company Details' },
+      // Academic subjects for upcoming school year (repeatable rows)
+      ...[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].flatMap(i => [
+        { name: `acad_sem_${i}`, label: 'Semester', type: 'text' as const, required: false, section: 'Academic Subjects (Next School Year)', placeholder: 'e.g., 1ST / 2ND / SUMMER', repeatGroup: 'acad_subjects', repeatIndex: i, ...(i === 1 ? { repeatMax: 15 } : {}) },
+        { name: `acad_sy_${i}`, label: 'School Year', type: 'text' as const, required: false, section: 'Academic Subjects (Next School Year)', placeholder: 'e.g., 2026-2027', repeatGroup: 'acad_subjects', repeatIndex: i },
+        { name: `acad_subject_${i}`, label: 'Subject', type: 'text' as const, required: false, section: 'Academic Subjects (Next School Year)', placeholder: 'Subject title', repeatGroup: 'acad_subjects', repeatIndex: i },
+      ]),
       // Signature / Recommending Approval
       { name: 'instructor_name', label: 'Internship/Practicum Subject Instructor', type: 'text', required: false, autoFillKey: 'instructor_name', section: 'Recommending Approval' },
       { name: 'coordinator_name', label: 'Campus Internship Coordinator', type: 'text', required: false, autoFillKey: 'coordinator_name', section: 'Recommending Approval' },

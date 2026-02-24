@@ -1537,6 +1537,48 @@ const formatDateFieldsForDisplay = (type: string, data: Record<string, string>):
 };
 
 /**
+ * Build rows for APPLICATION_INTERNSHIP academic table from repeatable form fields.
+ * Expected keys: acad_sem_{i}, acad_sy_{i}, acad_subject_{i}
+ */
+const buildApplicationInternshipAcademicRows = (formData: Record<string, string>): { html: string; count: number } => {
+  const rows: Array<{ sem: string; sy: string; subject: string }> = [];
+  for (let i = 1; i <= 15; i++) {
+    const sem = (formData[`acad_sem_${i}`] || '').trim();
+    const sy = (formData[`acad_sy_${i}`] || '').trim();
+    const subject = (formData[`acad_subject_${i}`] || '').trim();
+
+    // Skip fully empty rows; keep partially-filled rows so user sees what was entered.
+    if (!sem && !sy && !subject) continue;
+    rows.push({ sem, sy, subject });
+  }
+
+  if (rows.length === 0) {
+    return {
+      html: '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>',
+      count: 0,
+    };
+  }
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  return {
+    html: rows
+      .map(
+        (row) =>
+          `<tr><td>${escapeHtml(row.sem)}</td><td>${escapeHtml(row.sy)}</td><td>${escapeHtml(row.subject)}</td><td></td><td></td><td></td><td></td><td></td></tr>`,
+      )
+      .join(''),
+    count: rows.length,
+  };
+};
+
+/**
  * For STUDENT_FEEDBACK forms, expand criteria_N (value 1-5) into individual
  * cell variables c{N}_{rating} with checkmarks for the selected rating.
  */
@@ -1589,6 +1631,14 @@ export const previewDocument = async (req: AuthRequest, res: Response) => {
     // For STUDENT_FEEDBACK, expand Likert scale criteria into checkmark variables
     if (type === 'STUDENT_FEEDBACK') {
       templateData = expandLikertScaleData(templateData);
+    }
+
+    if (type === 'APPLICATION_INTERNSHIP') {
+      const academicRows = buildApplicationInternshipAcademicRows(templateData);
+      templateData.academic_rows_html = academicRows.html;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'app-internship-academic-rows',hypothesisId:'H1',location:'document.controller.ts:previewDocument:APPLICATION_INTERNSHIP',message:'Built dynamic academic rows for preview',data:{rowCount:academicRows.count,hasRowsHtml:academicRows.html.length>0},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
 
     // For ENDORSEMENT_LETTER_MULTI, build the student list HTML
@@ -1655,6 +1705,14 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
     // For STUDENT_FEEDBACK, expand Likert scale criteria into checkmark variables
     if (type === 'STUDENT_FEEDBACK') {
       templateData = expandLikertScaleData(templateData);
+    }
+
+    if (type === 'APPLICATION_INTERNSHIP') {
+      const academicRows = buildApplicationInternshipAcademicRows(templateData);
+      templateData.academic_rows_html = academicRows.html;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'app-internship-academic-rows',hypothesisId:'H2',location:'document.controller.ts:finalizeDocument:APPLICATION_INTERNSHIP',message:'Built dynamic academic rows for finalize',data:{rowCount:academicRows.count,hasRowsHtml:academicRows.html.length>0},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     }
 
     // ====== ENDORSEMENT_LETTER_MULTI: Deferred PDF generation ======
