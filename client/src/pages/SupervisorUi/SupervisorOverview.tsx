@@ -565,7 +565,7 @@ const SupervisorOverview = () => {
             {/* Intern Details Modal */}
             {showDetailsModal && selectedIntern && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-3 sm:p-4"
+                    className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-start justify-center px-3 pb-3 pt-0 sm:px-4 sm:pb-4 sm:pt-0"
                     style={{ marginTop: 0 }}
                     onClick={() => setShowDetailsModal(false)}
                 >
