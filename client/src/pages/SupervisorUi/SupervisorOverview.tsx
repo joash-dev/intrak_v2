@@ -35,23 +35,6 @@ const SupervisorOverview = () => {
         fetchStudents();
     }, []);
 
-    useEffect(() => {
-        if (!showDetailsModal) return;
-
-        const overlay = document.getElementById("supervisor-intern-modal-overlay");
-        const card = document.getElementById("supervisor-intern-modal-card");
-        const main = document.querySelector("main");
-        const overlayRect = overlay?.getBoundingClientRect();
-        const cardRect = card?.getBoundingClientRect();
-        const bodyStyles = window.getComputedStyle(document.body);
-        const htmlStyles = window.getComputedStyle(document.documentElement);
-        const mainStyles = main ? window.getComputedStyle(main) : null;
-
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'supervisor-modal-top-gap',hypothesisId:'H1-H4',location:'SupervisorOverview.tsx:detailsModalOpen',message:'Measured modal top-gap related layout values',data:{showDetailsModal,viewportHeight:window.innerHeight,viewportWidth:window.innerWidth,windowScrollY:window.scrollY,overlayClass:overlay?.className||null,overlayTop:overlayRect?.top??null,overlayHeight:overlayRect?.height??null,cardTop:cardRect?.top??null,cardHeight:cardRect?.height??null,cardMaxHeightClass:card?.className||null,bodyMarginTop:bodyStyles.marginTop,bodyOverflow:bodyStyles.overflow,htmlMarginTop:htmlStyles.marginTop,htmlOverflow:htmlStyles.overflow,mainPaddingTop:mainStyles?.paddingTop??null},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
-    }, [showDetailsModal]);
-
     const fetchStudents = async () => {
         try {
             setLoading(true);
@@ -582,13 +565,11 @@ const SupervisorOverview = () => {
             {/* Intern Details Modal */}
             {showDetailsModal && selectedIntern && (
                 <div
-                    id="supervisor-intern-modal-overlay"
                     className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-start justify-center px-3 pb-3 pt-0 sm:px-4 sm:pb-4 sm:pt-0"
                     style={{ marginTop: 0 }}
                     onClick={() => setShowDetailsModal(false)}
                 >
                     <div
-                        id="supervisor-intern-modal-card"
                         className="bg-white dark:bg-[#19191c] rounded-xl sm:rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >

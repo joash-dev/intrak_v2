@@ -98,18 +98,12 @@ export const useWalkthrough = (role: WalkthroughRole) => {
             },
             onDestroyed: () => {
                 localStorage.setItem(`hasSeenWalkthrough_${role}`, 'true');
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'walkthrough-once-only',hypothesisId:'H2',location:'useWalkthrough.ts:onDestroyed',message:'Walkthrough completed and marked as seen',data:{role,key:`hasSeenWalkthrough_${role}`,seenValue:'true'},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
             }
         });
     }, [role]);
 
     const startWalkthrough = () => {
         const hasSeen = localStorage.getItem(`hasSeenWalkthrough_${role}`);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'walkthrough-once-only',hypothesisId:'H1',location:'useWalkthrough.ts:startWalkthrough',message:'Walkthrough start decision',data:{role,key:`hasSeenWalkthrough_${role}`,hasSeen:!!hasSeen},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
 
         // Show the walkthrough only once — ever. Mark as seen immediately.
         if (!hasSeen) {

@@ -645,9 +645,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
         emailMessage: result.emailMessage,
         wasCreated: result.created,
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'hide-temp-password-modal',hypothesisId:'H1',location:'CoordinatorCompanyManagement.tsx:handleCreateSupervisorAccount',message:'Supervisor account modal prepared with password hidden',data:{companyId:company.id,created:!!result.created,emailSent:!!result.emailSent,apiReturnedTemporaryPassword:!!result.temporaryPassword,temporaryPasswordStoredInModal:false},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
     } catch (error) {
       console.error("Error creating supervisor account:", error);
       errorMessage =
