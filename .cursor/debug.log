@@ -1,1 +1,2 @@
 {"runId":"walkthrough-once-only","hypothesisId":"H1","location":"useWalkthrough.ts:startWalkthrough","message":"Walkthrough start decision","data":{"role":"supervisor","key":"hasSeenWalkthrough_supervisor","hasSeen":true},"timestamp":1772362226667}
+{"runId":"walkthrough-once-only","hypothesisId":"H1","location":"useWalkthrough.ts:startWalkthrough","message":"Walkthrough start decision","data":{"role":"supervisor","key":"hasSeenWalkthrough_supervisor","hasSeen":true},"timestamp":1772362685988}
