@@ -827,7 +827,6 @@ const DocumentChecklistTab = () => {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-3 sm:p-4"
           style={{ marginTop: 0 }}
-          style={{ margin: "0" }}
         >
           <div className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl max-w-5xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
             <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-none dark:bg-[#212124] flex-shrink-0">
