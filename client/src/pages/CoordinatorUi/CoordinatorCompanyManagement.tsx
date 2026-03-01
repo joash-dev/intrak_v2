@@ -19,7 +19,6 @@ import {
   X,
   UserPlus,
   MailCheck,
-  Copy,
   SquarePen,
 } from "lucide-react";
 import { coordinatorService } from "../../services/coordinatorService";
@@ -624,10 +623,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
       if (result.emailSent) {
         toast.success(
           result.emailMessage ||
-          `Email has been sent to ${result.supervisor.email}.` +
-          (result.created && result.temporaryPassword
-            ? ` Temporary password: ${result.temporaryPassword}`
-            : "")
+          `Email has been sent to ${result.supervisor.email}.`
         );
       } else {
         toast(
@@ -644,14 +640,14 @@ const CoordinatorCompanyManagement: React.FC = () => {
           company.contactPerson ||
           result.supervisor.email,
         supervisorEmail: result.supervisor.email,
-        temporaryPassword:
-          result.created && result.temporaryPassword
-            ? result.temporaryPassword
-            : undefined,
+        temporaryPassword: undefined,
         emailSent: result.emailSent,
         emailMessage: result.emailMessage,
         wasCreated: result.created,
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'hide-temp-password-modal',hypothesisId:'H1',location:'CoordinatorCompanyManagement.tsx:handleCreateSupervisorAccount',message:'Supervisor account modal prepared with password hidden',data:{companyId:company.id,created:!!result.created,emailSent:!!result.emailSent,apiReturnedTemporaryPassword:!!result.temporaryPassword,temporaryPasswordStoredInModal:false},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     } catch (error) {
       console.error("Error creating supervisor account:", error);
       errorMessage =
@@ -665,20 +661,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
       toast.error(errorMessage);
     } finally {
       setCreatingSupervisorId(null);
-    }
-  };
-
-  const handleCopyToClipboard = async (value: string) => {
-    try {
-      if (navigator?.clipboard) {
-        await navigator.clipboard.writeText(value);
-        toast.success("Copied to clipboard");
-      } else {
-        throw new Error("Clipboard not available");
-      }
-    } catch (error) {
-      console.error("Clipboard copy failed:", error);
-      toast.error("Failed to copy. Please copy manually.");
     }
   };
 
@@ -2288,29 +2270,9 @@ const CoordinatorCompanyManagement: React.FC = () => {
                         {supervisorSuccessModal.supervisorEmail}
                       </p>
                     </div>
-                    {supervisorSuccessModal.temporaryPassword && (
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                          Temporary Password
-                        </p>
-                        <div className="mt-2 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-100">
-                          <span>{supervisorSuccessModal.temporaryPassword}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleCopyToClipboard(
-                                supervisorSuccessModal.temporaryPassword || ""
-                              )
-                            }
-                            className="ml-3 inline-flex items-center space-x-1 rounded-md border border-blue-300 bg-white px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50 dark:border-blue-600 dark:bg-blue-800/60 dark:text-blue-200 dark:hover:bg-blue-700/40"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                            <span>Copy</span>
-                          </button>
-                        </div>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          Share this password securely with the supervisor and remind them to change it on first login.
-                        </p>
+                    {supervisorSuccessModal.wasCreated && (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-200">
+                        Temporary password is sent only via email for security and is hidden in this screen.
                       </div>
                     )}
                   </div>

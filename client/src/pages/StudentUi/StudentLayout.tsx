@@ -186,7 +186,9 @@ const StudentLayout = () => {
             console.error("Logout API call failed:", error);
         } finally {
             setIsAuthenticated(false);
-            localStorage.clear();
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
             setShowLogoutModal(false);
             window.location.replace("/login");
         }

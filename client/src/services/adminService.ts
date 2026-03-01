@@ -826,15 +826,9 @@ class AdminService {
       const response = await api.get('/admin/system-info');
       devLog.log('System info API response:', response.data);
       const data = response.data.systemInfo || response.data;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H5',location:'adminService.ts:getSystemInfo:success',message:'Frontend received system info payload',data:{databaseStatus:data?.databaseStatus ?? null,diskUsage:data?.diskUsage ?? null,memoryUsage:data?.memoryUsage ?? null,serverLoad:data?.serverLoad ?? null,totalMemory:data?.totalMemory ?? null,usedMemory:data?.usedMemory ?? null,totalDisk:data?.totalDisk ?? null,usedDisk:data?.usedDisk ?? null,nasAvailable:data?.nasAvailable ?? null,cpuCount:data?.cpuCount ?? null},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return data;
     } catch (error) {
       console.error('Error fetching system information:', error);
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H6',location:'adminService.ts:getSystemInfo:catch',message:'Frontend system info request failed; using fallback payload',data:{errorMessage:error instanceof Error ? error.message : String(error)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       // Return realistic fallback data if API fails
       return {
         version: '2.1.3',

@@ -53,13 +53,10 @@ const MaintenancePage: React.FC = () => {
     try {
       devLog.log("Logging out user...");
 
-      // Clear all localStorage items
+      // Clear auth/session keys only; keep non-auth preferences and walkthrough flags.
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-
-      // Clear any other potential auth-related items
-      localStorage.clear();
 
       devLog.log("User logged out successfully");
 

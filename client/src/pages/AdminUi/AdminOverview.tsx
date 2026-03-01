@@ -241,17 +241,17 @@ const AdminOverview = () => {
               <p className="text-sm text-gray-400">System Uptime</p>
             </div>
           </div>
-          <p className="text-2xl font-bold text-white mb-2">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {systemInfo?.systemUptime || "0 days, 0 hours"}
           </p>
           <div className="flex items-center space-x-4 text-xs text-gray-500">
             <div>
               <p>Version</p>
-              <p className="text-white font-semibold">{systemInfo?.version || "2.1.3"}</p>
+              <p className="text-gray-900 dark:text-white font-semibold">{systemInfo?.version || "2.1.3"}</p>
             </div>
             <div>
               <p>Environment</p>
-              <p className="text-white font-semibold">{systemInfo?.environment || "production"}</p>
+              <p className="text-gray-900 dark:text-white font-semibold">{systemInfo?.environment || "production"}</p>
             </div>
           </div>
         </div>

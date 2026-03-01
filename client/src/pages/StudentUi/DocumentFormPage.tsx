@@ -541,14 +541,6 @@ const DocumentFormPage: React.FC = () => {
 
   const handleChange = (name: string, value: string, fieldType: string = 'text') => {
     const sanitizedValue = sanitizeValueByFieldType(value, fieldType);
-    if (sanitizedValue !== value) {
-      const lettersRemoved = fieldType === 'number' ? (value.match(/[A-Za-z]/g)?.length || 0) : 0;
-      const digitsRemoved = (fieldType === 'text' || fieldType === 'textarea') ? (value.match(/\d/g)?.length || 0) : 0;
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'field-type-input-restrictions',hypothesisId:'H1',location:'DocumentFormPage.tsx:handleChange',message:'Sanitized input based on field type',data:{fieldName:name,fieldType,rawLength:value.length,sanitizedLength:sanitizedValue.length,lettersRemoved,digitsRemoved},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }
-
     let updated = { ...formData, [name]: sanitizedValue };
     // If a unit field changed, recompute totals
     if (actualType === 'CERTIFICATION_UNITS' && name.endsWith('_u')) {
