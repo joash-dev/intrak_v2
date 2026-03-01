@@ -803,6 +803,10 @@ export const getAdminDashboard = async (req: AuthRequest, res: Response) => {
 export const getSystemInfo = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
+    console.log('[getSystemInfo] request start', { userId });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H0',location:'admin.controller.ts:getSystemInfo:entry',message:'System info request started',data:{userId},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     // Verify user is admin
     const user = await prisma.user.findUnique({
@@ -883,6 +887,17 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
         diskUsage = 75;
       }
     }
+    console.log('[getSystemInfo] storage summary', {
+      nasAvailableBranch: nasMetrics ? !!nasMetrics.available : null,
+      localAvailableBranch: localMetrics ? !!localMetrics.available : null,
+      diskUsage,
+      totalDiskGiB,
+      usedDiskGiB,
+      nasAvailable,
+    });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H1',location:'admin.controller.ts:getSystemInfo:storageBranch',message:'Resolved storage metrics branch',data:{nasAvailableBranch:nasMetrics ? !!nasMetrics.available : null,localAvailableBranch:localMetrics ? !!localMetrics.available : null,diskUsage,totalDiskGiB,usedDiskGiB,nasAvailable},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     // Get database information
     const [
@@ -923,6 +938,18 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       databaseStatus = 'offline';
       console.error('Database connectivity check failed:', dbError);
     }
+    console.log('[getSystemInfo] db/cpu summary', {
+      databaseStatus,
+      totalUsers,
+      activeUsers,
+      totalDocuments,
+      cpuCount,
+      serverLoad,
+      memoryUsagePercent,
+    });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H2',location:'admin.controller.ts:getSystemInfo:dbAndCpu',message:'Computed db and cpu summary',data:{databaseStatus,totalUsers,activeUsers,totalDocuments,cpuCount,serverLoad,memoryUsagePercent},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     // Get storage alerts
     const storageAlerts = await getAllStorageAlerts();
@@ -975,9 +1002,27 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       // Storage alerts
       alerts
     };
+    console.log('[getSystemInfo] response summary', {
+      databaseStatus: systemInfo.databaseStatus,
+      diskUsage: systemInfo.diskUsage,
+      memoryUsage: systemInfo.memoryUsage,
+      serverLoad: systemInfo.serverLoad,
+      totalMemory: systemInfo.totalMemory,
+      usedMemory: systemInfo.usedMemory,
+      totalDisk: systemInfo.totalDisk,
+      usedDisk: systemInfo.usedDisk,
+      nasAvailable: systemInfo.nasAvailable,
+      cpuCount: systemInfo.cpuCount,
+    });
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H3',location:'admin.controller.ts:getSystemInfo:response',message:'Sending system info response summary',data:{databaseStatus:systemInfo.databaseStatus,diskUsage:systemInfo.diskUsage,memoryUsage:systemInfo.memoryUsage,serverLoad:systemInfo.serverLoad,totalMemory:systemInfo.totalMemory,usedMemory:systemInfo.usedMemory,totalDisk:systemInfo.totalDisk,usedDisk:systemInfo.usedDisk,nasAvailable:systemInfo.nasAvailable,cpuCount:systemInfo.cpuCount},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     res.json({ systemInfo });
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'admin-system-info-zero-cards',hypothesisId:'H4',location:'admin.controller.ts:getSystemInfo:catch',message:'System info endpoint failed',data:{errorName:error instanceof Error ? error.name : 'UnknownError',errorMessage:error instanceof Error ? error.message : String(error),stackTop:error instanceof Error && error.stack ? error.stack.split('\n').slice(0,3).join(' | ') : null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     console.error('Get system info error:', error);
     res.status(500).json({
       message: 'Failed to fetch system information',

@@ -527,8 +527,29 @@ const DocumentFormPage: React.FC = () => {
   // Computed total field names (read-only)
   const computedFields = new Set(['fy_total', 'sy_total', 'ty_total', '4y_total', 'grand_total']);
 
-  const handleChange = (name: string, value: string) => {
-    let updated = { ...formData, [name]: value };
+  const sanitizeValueByFieldType = (value: string, fieldType: string) => {
+    if (fieldType === 'number') {
+      // Number-like fields: remove alphabetic characters, keep digits and special chars.
+      return value.replace(/[A-Za-z]/g, '');
+    }
+    if (fieldType === 'text' || fieldType === 'textarea') {
+      // Text-like fields: remove digits, keep letters, spaces, and special chars.
+      return value.replace(/\d/g, '');
+    }
+    return value;
+  };
+
+  const handleChange = (name: string, value: string, fieldType: string = 'text') => {
+    const sanitizedValue = sanitizeValueByFieldType(value, fieldType);
+    if (sanitizedValue !== value) {
+      const lettersRemoved = fieldType === 'number' ? (value.match(/[A-Za-z]/g)?.length || 0) : 0;
+      const digitsRemoved = (fieldType === 'text' || fieldType === 'textarea') ? (value.match(/\d/g)?.length || 0) : 0;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/46b30d57-8d19-4b14-963d-edda67b1b958',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({runId:'field-type-input-restrictions',hypothesisId:'H1',location:'DocumentFormPage.tsx:handleChange',message:'Sanitized input based on field type',data:{fieldName:name,fieldType,rawLength:value.length,sanitizedLength:sanitizedValue.length,lettersRemoved,digitsRemoved},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
+
+    let updated = { ...formData, [name]: sanitizedValue };
     // If a unit field changed, recompute totals
     if (actualType === 'CERTIFICATION_UNITS' && name.endsWith('_u')) {
       updated = computeUnitTotals(updated);
@@ -601,7 +622,7 @@ const DocumentFormPage: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
-      handleChange(fieldName, base64);
+      handleChange(fieldName, base64, 'image');
       setImageLoading(prev => ({ ...prev, [fieldName]: false }));
       toast.success('Photo uploaded successfully');
     };
@@ -613,7 +634,7 @@ const DocumentFormPage: React.FC = () => {
   };
 
   const handleRemoveImage = (fieldName: string) => {
-    handleChange(fieldName, '');
+    handleChange(fieldName, '', 'image');
   };
 
   const validate = (): boolean => {
@@ -870,7 +891,7 @@ const DocumentFormPage: React.FC = () => {
                   <textarea
                     id={`field-${field.name}`}
                     value={formData[field.name] || ''}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    onChange={(e) => handleChange(field.name, e.target.value, field.type)}
                     placeholder={field.placeholder}
                     rows={3}
                   />
@@ -878,7 +899,7 @@ const DocumentFormPage: React.FC = () => {
                   <select
                     id={`field-${field.name}`}
                     value={formData[field.name] || ''}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    onChange={(e) => handleChange(field.name, e.target.value, field.type)}
                   >
                     <option value="">— Select —</option>
                     {field.options.map(opt => (
@@ -888,9 +909,10 @@ const DocumentFormPage: React.FC = () => {
                 ) : (
                   <input
                     id={`field-${field.name}`}
-                    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                    type={field.type === 'date' ? 'date' : 'text'}
+                    inputMode={field.type === 'number' ? 'decimal' : undefined}
                     value={formData[field.name] || ''}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    onChange={(e) => handleChange(field.name, e.target.value, field.type)}
                     placeholder={field.placeholder}
                     readOnly={computedFields.has(field.name)}
                     style={computedFields.has(field.name) ? { background: '#f0fdf4', fontWeight: 700, color: '#166534', cursor: 'default' } : undefined}
