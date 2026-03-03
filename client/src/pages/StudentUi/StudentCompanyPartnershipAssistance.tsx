@@ -12,11 +12,15 @@ import {
   Download,
   FileText,
   AlertCircle,
+  FileUp,
+  PlusCircle,
+  Trash2,
 } from "lucide-react";
 import { useOutletContext, Link } from "react-router-dom";
 import api from "../../services/api";
 import { documentService } from "../../services/documentService";
 import type { Document as AppDocument } from "../../services/documentService";
+import { companyProposalService, type CompanyProposal } from "../../services/companyProposalService";
 import toast from "react-hot-toast";
 
 interface PartnershipMessage {
@@ -138,6 +142,18 @@ const StudentCompanyPartnershipAssistance = () => {
 
   const [previewDoc, setPreviewDoc] = useState<AppDocument | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [proposals, setProposals] = useState<CompanyProposal[]>([]);
+  const [proposalForm, setProposalForm] = useState({
+    companyName: "",
+    address: "",
+    contactPerson: "",
+    contactEmail: "",
+    contactNumber: "",
+    industry: "",
+    remarks: "",
+  });
+  const [creatingProposal, setCreatingProposal] = useState(false);
+  const [uploadingProposalId, setUploadingProposalId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -242,6 +258,7 @@ const StudentCompanyPartnershipAssistance = () => {
 
       // Load partnership documents
       await loadPartnershipDocuments();
+      await loadCompanyProposals();
     } catch (error: any) {
       console.error("Error loading data:", error);
       toast.error("Failed to load partnership assistance data");
@@ -269,6 +286,123 @@ const StudentCompanyPartnershipAssistance = () => {
       }));
     } catch (error: any) {
       console.error("Error loading pre-deployment documents:", error);
+    }
+  };
+
+  const loadCompanyProposals = async () => {
+    try {
+      const proposalData = await companyProposalService.getMyProposals();
+      setProposals(proposalData);
+    } catch (error: any) {
+      console.error("Error loading company proposals:", error);
+    }
+  };
+
+  const handleCreateProposal = async () => {
+    if (!proposalForm.companyName.trim()) {
+      toast.error("Company name is required");
+      return;
+    }
+
+    try {
+      setCreatingProposal(true);
+      await companyProposalService.createProposal({
+        companyName: proposalForm.companyName.trim(),
+        address: proposalForm.address.trim() || undefined,
+        contactPerson: proposalForm.contactPerson.trim() || undefined,
+        contactEmail: proposalForm.contactEmail.trim() || undefined,
+        contactNumber: proposalForm.contactNumber.trim() || undefined,
+        industry: proposalForm.industry.trim() || undefined,
+        remarks: proposalForm.remarks.trim() || undefined,
+      });
+
+      toast.success("Company proposal submitted to your instructor");
+      setProposalForm({
+        companyName: "",
+        address: "",
+        contactPerson: "",
+        contactEmail: "",
+        contactNumber: "",
+        industry: "",
+        remarks: "",
+      });
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error creating proposal:", error);
+      toast.error(error.response?.data?.message || "Failed to submit proposal");
+    } finally {
+      setCreatingProposal(false);
+    }
+  };
+
+  const handleUploadProposalFile = async (proposalId: string, file: File | null) => {
+    if (!file) return;
+    try {
+      setUploadingProposalId(proposalId);
+      await companyProposalService.uploadAttachment(proposalId, file, "STUDENT_PROPOSAL");
+      toast.success("Proposal file uploaded");
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error uploading proposal file:", error);
+      toast.error(error.response?.data?.message || "Failed to upload file");
+    } finally {
+      setUploadingProposalId(null);
+    }
+  };
+
+  const handlePreviewProposalAttachment = async (attachmentId: string, filename: string) => {
+    try {
+      const blob = await companyProposalService.downloadAttachment(attachmentId);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(url), 10_000);
+    } catch (error: any) {
+      console.error("Error previewing proposal attachment:", error);
+      toast.error(`Failed to preview ${filename}`);
+    }
+  };
+
+  const handleDownloadProposalAttachment = async (attachmentId: string, filename: string) => {
+    try {
+      const blob = await companyProposalService.downloadAttachment(attachmentId);
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Error downloading proposal attachment:", error);
+      toast.error(`Failed to download ${filename}`);
+    }
+  };
+
+  const handleDeleteProposal = async (proposal: CompanyProposal) => {
+    const deletableStatuses = [
+      "SUBMITTED_TO_INSTRUCTOR",
+      "RETURNED_BY_INSTRUCTOR",
+      "REJECTED_BY_INSTRUCTOR",
+    ];
+
+    if (!deletableStatuses.includes(proposal.status)) {
+      toast.error("This proposal can no longer be deleted.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete proposal for "${proposal.companyName}"? This will also remove uploaded proposal files.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await companyProposalService.deleteProposal(proposal.id);
+      toast.success("Proposal deleted");
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error deleting proposal:", error);
+      toast.error(error.response?.data?.message || "Failed to delete proposal");
     }
   };
 
@@ -442,6 +576,183 @@ const StudentCompanyPartnershipAssistance = () => {
               Get guidance from your instructor and coordinator on finding a company
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700 space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Company Proposals</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Submit a proposed company, upload supporting file(s), and track each approval stage.
+          </p>
+        </div>
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">New Proposal</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <input
+              value={proposalForm.companyName}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, companyName: e.target.value }))}
+              placeholder="Company name *"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.industry}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, industry: e.target.value }))}
+              placeholder="Industry"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.address}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, address: e.target.value }))}
+              placeholder="Address"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.contactPerson}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, contactPerson: e.target.value }))}
+              placeholder="Contact person"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.contactEmail}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, contactEmail: e.target.value }))}
+              placeholder="Contact email"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.contactNumber}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, contactNumber: e.target.value }))}
+              placeholder="Contact number"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+          </div>
+          <textarea
+            value={proposalForm.remarks}
+            onChange={(e) => setProposalForm((prev) => ({ ...prev, remarks: e.target.value }))}
+            placeholder="Remarks (optional)"
+            rows={2}
+            className="w-full mt-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+          />
+          <button
+            onClick={handleCreateProposal}
+            disabled={creatingProposal}
+            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            <PlusCircle className="w-4 h-4" />
+            {creatingProposal ? "Submitting..." : "Submit Proposal"}
+          </button>
+        </div>
+
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-base font-semibold text-gray-900 dark:text-white">My Proposals</p>
+            <span className="text-sm px-2.5 py-1 rounded-md bg-gray-100 dark:bg-[#19191c] text-gray-600 dark:text-gray-300">
+              {proposals.length} total
+            </span>
+          </div>
+          {proposals.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No proposals yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {proposals.map((proposal) => {
+                const isDeletable =
+                  proposal.status === "SUBMITTED_TO_INSTRUCTOR" ||
+                  proposal.status === "RETURNED_BY_INSTRUCTOR" ||
+                  proposal.status === "REJECTED_BY_INSTRUCTOR";
+                const statusClass =
+                  proposal.status === "APPROVED"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                    : proposal.status.includes("REJECTED")
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                      : proposal.status.includes("RETURNED")
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                        : proposal.status.includes("FORWARDED") || proposal.status.includes("COORDINATOR")
+                          ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
+
+                return (
+                  <div
+                    key={proposal.id}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-[#212124]"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{proposal.companyName}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                          Submitted {new Date(proposal.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className={`inline-flex items-center text-sm px-3 py-1.5 rounded-full ${statusClass}`}>
+                        {proposal.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+
+                    <div className="mt-3">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Files</p>
+                      {proposal.attachments.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No uploaded files yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {proposal.attachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-md bg-gray-50 dark:bg-[#19191c]"
+                            >
+                              <span className="text-base text-gray-800 dark:text-gray-200 truncate">{attachment.filename}</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() =>
+                                    handlePreviewProposalAttachment(attachment.id, attachment.filename)
+                                  }
+                                  className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                  title="Preview"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDownloadProposalAttachment(attachment.id, attachment.filename)
+                                  }
+                                  className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-[#19191c]">
+                        <FileUp className="w-4 h-4" />
+                        Upload File
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => handleUploadProposalFile(proposal.id, e.target.files?.[0] || null)}
+                        />
+                      </label>
+                      <button
+                        onClick={() => handleDeleteProposal(proposal)}
+                        disabled={!isDeletable}
+                        className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm bg-red-600 text-white disabled:opacity-40"
+                        title={isDeletable ? "Delete proposal" : "Cannot delete at this stage"}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </button>
+                      {uploadingProposalId === proposal.id && (
+                        <p className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 

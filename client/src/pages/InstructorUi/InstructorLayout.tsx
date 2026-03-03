@@ -9,6 +9,7 @@ import {
     FileCheck,
     BarChart3,
     Loader2,
+    FileUp,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -45,6 +46,7 @@ const InstructorLayout = () => {
         if (path.includes("/instructor/students")) return "students";
         if (path.includes("/instructor/documents")) return "documents";
         if (path.includes("/instructor/applications")) return "applications";
+        if (path.includes("/instructor/company-proposals")) return "company-proposals";
         if (path.includes("/instructor/reports")) return "reports";
         if (path.includes("/instructor/settings")) return "settings";
         if (path.includes("/instructor/notifications")) return "notifications";
@@ -166,6 +168,7 @@ const InstructorLayout = () => {
         { id: "notifications", icon: Bell, label: "Notifications", path: "/instructor/notifications" },
         { id: "documents", icon: FileCheck, label: "Student Documents", path: "/instructor/documents" },
         { id: "applications", icon: Building2, label: "Company Applications", path: "/instructor/applications" },
+        { id: "company-proposals", icon: FileUp, label: "Company Proposals", path: "/instructor/company-proposals" },
         { id: "students", icon: Users, label: "Students", path: "/instructor/students" },
         { id: "reports", icon: BarChart3, label: "Reports", path: "/instructor/reports" },
     ];

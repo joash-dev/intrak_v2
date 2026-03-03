@@ -11,6 +11,7 @@ import {
     Home,
     MessageSquare,
     Loader2,
+    FileUp,
 } from "lucide-react";
 import { settingsService } from "../../services/settingsService";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
@@ -199,6 +200,7 @@ const CoordinatorLayout: React.FC = () => {
         { id: "students", label: t("dashboard.nav.students"), icon: Users, path: "/coordinator/students" },
         { id: "documents", label: t("dashboard.nav.documents"), icon: FileCheck, path: "/coordinator/documents" },
         { id: "companies", label: t("dashboard.nav.companies"), icon: Building2, path: "/coordinator/companies" },
+        { id: "company-proposals", label: "Company Proposals", icon: FileUp, path: "/coordinator/company-proposals" },
         { id: "announcements", label: t("dashboard.nav.announcements"), icon: MessageSquare, path: "/coordinator/announcements" },
         { id: "reports", label: "Reports", icon: BarChart3, path: "/coordinator/reports" },
         { id: "notifications", label: "Notifications", icon: Bell, path: "/coordinator/notifications" },

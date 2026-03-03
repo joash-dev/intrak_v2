@@ -30,6 +30,7 @@ import templateRoutes from './routes/template.routes';
 import activityRoutes from './routes/activity.routes';
 import alertRoutes from './routes/alert.routes';
 import companyApplicationRoutes from './routes/companyApplication.routes';
+import companyProposalRoutes from './routes/companyProposal.routes';
 import notificationRoutes from './routes/notification.routes';
 import coordinatorRoutes from './routes/coordinator.routes';
 import aiRoutes from './routes/ai.routes';
@@ -117,8 +118,7 @@ app.use('/uploads', (req, res, next) => {
 
 // Serve profile photos with proper headers
 app.use('/api/users/profile-photo', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  // Let the global CORS middleware set the correct origin when credentials are used.
   res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
@@ -233,6 +233,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/company-applications', companyApplicationRoutes);
+app.use('/api/company-proposals', companyProposalRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/coordinator', coordinatorRoutes);
 app.use('/api/ai', aiRoutes);

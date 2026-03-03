@@ -27,6 +27,10 @@ import type { CoordinatorStudent } from "../../services/coordinatorService";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
+import {
+  companyProposalService,
+  type CompanyProposal,
+} from "../../services/companyProposalService";
 
 // Import types from the service
 import type { Company, MOA } from "../../services/companyService";
@@ -127,10 +131,12 @@ const CoordinatorCompanyManagement: React.FC = () => {
   });
   const [companyForm, setCompanyForm] = useState(createEmptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+  const [selectedApprovedProposalId, setSelectedApprovedProposalId] = useState("");
 
   const resetCompanyForm = () => {
     setCompanyForm(createEmptyCompanyForm());
     setEditingCompanyId(null);
+    setSelectedApprovedProposalId("");
   };
 
   const isEditingCompany = Boolean(editingCompanyId);
@@ -142,6 +148,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
   const openEditCompany = (company: Company) => {
     setEditingCompanyId(company.id);
+    setSelectedApprovedProposalId("");
     setCompanyForm({
       name: company.name || "",
       address: company.address || "",
@@ -197,7 +204,41 @@ const CoordinatorCompanyManagement: React.FC = () => {
     { ttl: 5 * 60 * 1000 } // 5 minutes cache
   );
 
+  const { data: approvedCompanyProposals = [] } = useOptimizedData<CompanyProposal[]>(
+    () => companyProposalService.getCoordinatorProposals("APPROVED"),
+    [],
+    { ttl: 2 * 60 * 1000 }
+  );
+
   const loading = companiesLoading || studentsLoading || moasLoading;
+
+  const unusedApprovedProposals = useMemo(() => {
+    const existingNames = new Set(
+      (companies || []).map((company) => (company.name || "").trim().toLowerCase())
+    );
+    return (approvedCompanyProposals || []).filter(
+      (proposal) => !existingNames.has((proposal.companyName || "").trim().toLowerCase())
+    );
+  }, [approvedCompanyProposals, companies]);
+
+  const applyApprovedProposalToCompanyForm = (proposalId: string) => {
+    setSelectedApprovedProposalId(proposalId);
+    if (!proposalId) {
+      return;
+    }
+
+    const proposal = unusedApprovedProposals.find((item) => item.id === proposalId);
+    if (!proposal) return;
+
+    setCompanyForm((prev) => ({
+      ...prev,
+      name: proposal.companyName || prev.name,
+      address: proposal.address || prev.address,
+      contactPerson: proposal.contactPerson || prev.contactPerson,
+      contactEmail: proposal.contactEmail || prev.contactEmail,
+      contactNumber: proposal.contactNumber || prev.contactNumber,
+    }));
+  };
 
   const studentsWithCompanies = useMemo(
     () =>
@@ -968,7 +1009,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                   {company.contactPerson}
                                 </p>
-                                {company._count?.students &&
+                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                  Slots: {typeof company.maxSlots === "number" ? company.maxSlots : 0}
+                                </p>
+                                {typeof company._count?.students === "number" &&
                                   company._count.students > 0 && (
                                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 sm:mt-1">
                                       {company._count.students} student
@@ -1254,6 +1298,29 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]"
                 >
                   <div className="space-y-4">
+                    {!isEditingCompany && (
+                      <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#19191c]">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Prefill from Approved Proposal (optional)
+                        </label>
+                        <select
+                          value={selectedApprovedProposalId}
+                          onChange={(e) => applyApprovedProposalToCompanyForm(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
+                        >
+                          <option value="">Manual entry</option>
+                          {unusedApprovedProposals.map((proposal) => (
+                            <option key={proposal.id} value={proposal.id}>
+                              {proposal.companyName} - {proposal.student.user.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Selecting an approved proposal auto-fills the company details. You can still edit before saving.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

@@ -31,6 +31,7 @@ const CoordinatorSettingsTab = React.lazy(() => import("./pages/CoordinatorUi/Co
 const CoordinatorStudentManagement = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorStudentManagement"));
 const CoordinatorReportsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorReportsTab"));
 const CoordinatorNotifications = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorNotifications"));
+const CoordinatorCompanyProposals = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorCompanyProposals"));
 const SupervisorLayout = React.lazy(() => import("./pages/SupervisorUi/SupervisorLayout"));
 const SupervisorOverview = React.lazy(() => import("./pages/SupervisorUi/SupervisorOverview"));
 const SupervisorAttendanceTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorAttendanceTab"));
@@ -58,6 +59,7 @@ const DocumentChecklistTab = React.lazy(() => import("./pages/InstructorUi/Instr
 const InstructorReportsTab = React.lazy(() => import("./pages/InstructorUi/InstructorReportsTab"));
 const InstructorSettings = React.lazy(() => import("./pages/InstructorUi/InstructorSettings"));
 const InstructorNotifications = React.lazy(() => import("./pages/InstructorUi/InstructorNotifications"));
+const InstructorCompanyProposals = React.lazy(() => import("./pages/InstructorUi/InstructorCompanyProposals"));
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -187,6 +189,7 @@ const App: React.FC = () => {
                 <Route path="students" element={<CoordinatorStudentManagement />} />
                 <Route path="documents" element={<CoordinatorDocumentsTab />} />
                 <Route path="companies" element={<CoordinatorCompanyManagement />} />
+                <Route path="company-proposals" element={<CoordinatorCompanyProposals />} />
                 <Route path="announcements" element={<CoordinatorAnnouncementsTab />} />
                 <Route path="reports" element={<CoordinatorReportsTab />} />
                 <Route path="settings" element={<CoordinatorSettingsTab />} />
@@ -208,6 +211,7 @@ const App: React.FC = () => {
                 <Route path="students" element={<InstructorStudentManagement />} />
                 <Route path="documents" element={<InstructorDocumentsTab />} />
                 <Route path="applications" element={<InstructorApplications />} />
+                <Route path="company-proposals" element={<InstructorCompanyProposals />} />
                 <Route path="checklist" element={<DocumentChecklistTab />} />
                 <Route path="monitoring" element={<Navigate to="/instructor/students" replace />} />
                 <Route path="reports" element={<InstructorReportsTab />} />
