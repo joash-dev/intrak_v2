@@ -35,6 +35,9 @@ import {
 // Import types from the service
 import type { Company, MOA } from "../../services/companyService";
 
+const normalizeForMatch = (value?: string | null) =>
+  (value || "").trim().toLowerCase().replace(/\s+/g, " ");
+
 const CoordinatorCompanyManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -220,6 +223,20 @@ const CoordinatorCompanyManagement: React.FC = () => {
       (proposal) => !existingNames.has((proposal.companyName || "").trim().toLowerCase())
     );
   }, [approvedCompanyProposals, companies]);
+
+  const approvedProposalLookup = useMemo(() => {
+    const byName = new Map<string, CompanyProposal>();
+    const byEmail = new Map<string, CompanyProposal>();
+
+    (approvedCompanyProposals || []).forEach((proposal) => {
+      const nameKey = normalizeForMatch(proposal.companyName);
+      const emailKey = normalizeForMatch(proposal.contactEmail);
+      if (nameKey && !byName.has(nameKey)) byName.set(nameKey, proposal);
+      if (emailKey && !byEmail.has(emailKey)) byEmail.set(emailKey, proposal);
+    });
+
+    return { byName, byEmail };
+  }, [approvedCompanyProposals]);
 
   const applyApprovedProposalToCompanyForm = (proposalId: string) => {
     setSelectedApprovedProposalId(proposalId);
@@ -949,6 +966,24 @@ const CoordinatorCompanyManagement: React.FC = () => {
                   const companyMOAs = (moas || []).filter(
                     (moa) => moa.student?.company?.id === company.id
                   );
+                  const matchedApprovedProposal =
+                    approvedProposalLookup.byName.get(
+                      normalizeForMatch(company.name)
+                    ) ||
+                    approvedProposalLookup.byEmail.get(
+                      normalizeForMatch(company.contactEmail)
+                    ) ||
+                    null;
+
+                  const hasApprovedMOA = companyMOAs.some(
+                    (moa) => moa.status === "APPROVED"
+                  );
+                  const hasPendingMOA = companyMOAs.some(
+                    (moa) => moa.status === "PENDING"
+                  );
+                  const hasRejectedMOA =
+                    companyMOAs.length > 0 &&
+                    companyMOAs.every((moa) => moa.status === "REJECTED");
 
                   // Check for urgent MOAs (expiring or expired)
                   const companyUrgentMOAs = companyMOAs.filter(
@@ -1012,6 +1047,30 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                                   Slots: {typeof company.maxSlots === "number" ? company.maxSlots : 0}
                                 </p>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                  {matchedApprovedProposal && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                      Proposal Approved
+                                    </span>
+                                  )}
+                                  {hasApprovedMOA ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                      MOA Approved
+                                    </span>
+                                  ) : hasPendingMOA ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                      MOA Pending
+                                    </span>
+                                  ) : hasRejectedMOA ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                      MOA Rejected
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700 dark:bg-[#19191c] dark:text-gray-300">
+                                      MOA Not Submitted
+                                    </span>
+                                  )}
+                                </div>
                                 {typeof company._count?.students === "number" &&
                                   company._count.students > 0 && (
                                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 sm:mt-1">

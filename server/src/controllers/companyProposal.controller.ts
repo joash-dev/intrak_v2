@@ -92,6 +92,83 @@ const countRoleAttachments = async (proposalId: string, role: Role): Promise<num
   });
 };
 
+const normalizeForMatch = (value?: string | null): string => (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+const findExistingCompanyForProposal = async (proposal: {
+  companyName: string;
+  contactEmail?: string | null;
+}) => {
+  const normalizedName = normalizeForMatch(proposal.companyName);
+  const normalizedEmail = normalizeForMatch(proposal.contactEmail);
+
+  const companies = await prisma.company.findMany({
+    select: {
+      id: true,
+      name: true,
+      contactEmail: true,
+      contactPerson: true,
+      contactNumber: true,
+      address: true,
+      maxSlots: true,
+      industry: true,
+      createdAt: true,
+      updatedAt: true,
+      supervisorId: true,
+      companyType: true,
+      workingDays: true,
+      _count: {
+        select: {
+          students: true,
+        },
+      },
+    },
+  });
+
+  return (
+    companies.find((company) => {
+      const sameName = normalizeForMatch(company.name) === normalizedName;
+      const sameEmail =
+        normalizedEmail.length > 0 && normalizeForMatch(company.contactEmail) === normalizedEmail;
+      return sameName || sameEmail;
+    }) || null
+  );
+};
+
+const createCompanyFromApprovedProposal = async (
+  proposal: {
+    id: string;
+    companyName: string;
+    address?: string | null;
+    contactPerson?: string | null;
+    contactEmail?: string | null;
+    contactNumber?: string | null;
+    industry?: string | null;
+  },
+) => {
+  const fallbackEmail = `proposal-${proposal.id.slice(0, 8)}@pending.local`;
+  return prisma.company.create({
+    data: {
+      name: proposal.companyName.trim(),
+      address: proposal.address?.trim() || 'To be updated',
+      contactPerson: proposal.contactPerson?.trim() || 'To be updated',
+      contactEmail: proposal.contactEmail?.trim() || fallbackEmail,
+      contactNumber: proposal.contactNumber?.trim() || 'To be updated',
+      industry: proposal.industry?.trim() || null,
+      description: `Auto-created from approved company proposal (${proposal.id}).`,
+      companyType: 'PUBLIC',
+      maxSlots: 10,
+      workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
+    include: {
+      _count: {
+        select: {
+          students: true,
+        },
+      },
+    },
+  });
+};
+
 const getStudentByUserId = async (userId: string) =>
   prisma.student.findUnique({
     where: { userId },
@@ -754,6 +831,32 @@ export const coordinatorFinalizeProposal = async (req: AuthRequest, res: Respons
       include: includeProposal,
     });
 
+    let linkedCompany: any = null;
+    let companyAction: 'created_new' | 'linked_existing' | 'none' = 'none';
+
+    if (decision === 'APPROVED') {
+      const existingCompany = await findExistingCompanyForProposal({
+        companyName: proposal.companyName,
+        contactEmail: proposal.contactEmail,
+      });
+
+      if (existingCompany) {
+        linkedCompany = existingCompany;
+        companyAction = 'linked_existing';
+      } else {
+        linkedCompany = await createCompanyFromApprovedProposal({
+          id: proposal.id,
+          companyName: proposal.companyName,
+          address: proposal.address,
+          contactPerson: proposal.contactPerson,
+          contactEmail: proposal.contactEmail,
+          contactNumber: proposal.contactNumber,
+          industry: proposal.industry,
+        });
+        companyAction = 'created_new';
+      }
+    }
+
     if (proposal.instructorId) {
       await notifyUser(
         proposal.instructorId,
@@ -766,6 +869,8 @@ export const coordinatorFinalizeProposal = async (req: AuthRequest, res: Respons
     return res.json({
       message: `Proposal ${decision.toLowerCase()} successfully`,
       proposal: updatedProposal,
+      company: linkedCompany,
+      companyAction,
     });
   } catch (error) {
     console.error('Error finalizing proposal:', error);
