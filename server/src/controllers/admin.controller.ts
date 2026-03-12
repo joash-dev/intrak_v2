@@ -186,53 +186,53 @@ export const updateAdminProfile = async (req: AuthRequest, res: Response) => {
 // Change admin password
 export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
   try {
-    console.log('🔐 Password change request received');
-    console.log('🔐 User from request:', req.user);
-    console.log('🔐 Request body:', { currentPassword: '***', newPassword: '***' });
+    console.log('[Admin] Password change request received');
+    console.log('[Admin] User from request:', req.user);
+    console.log('[Admin] Request body:', { currentPassword: '***', newPassword: '***' });
 
     const userId = req.user!.id;
     const { currentPassword, newPassword } = req.body;
 
     // Validate input
     if (!currentPassword) {
-      console.log('❌ No current password provided');
+      console.log('[Admin] No current password provided');
       return res.status(400).json({ message: 'Current password is required' });
     }
 
     if (!newPassword) {
-      console.log('❌ No new password provided');
+      console.log('[Admin] No new password provided');
       return res.status(400).json({ message: 'New password is required' });
     }
 
     // Verify user is admin
-    console.log('🔍 Looking up user with ID:', userId);
+    console.log('[Admin] Looking up user with ID:', userId);
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, passwordHash: true, email: true }
     });
 
     if (!user) {
-      console.log('❌ User not found with ID:', userId);
+      console.log('[Admin] User not found with ID:', userId);
       return res.status(404).json({ message: 'User not found' });
     }
 
     if (user.role !== 'ADMIN') {
-      console.log('❌ User is not admin. Role:', user.role);
+      console.log('[Admin] User is not admin. Role:', user.role);
       return res.status(403).json({ message: 'Access denied. Admin role required.' });
     }
 
     // Verify current password
-    console.log('🔐 Verifying current password for user:', user.email);
+    console.log('[Admin] Verifying current password for user:', user.email);
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
 
     if (!isCurrentPasswordValid) {
-      console.log('❌ Current password verification failed for user:', user.email);
+      console.log('[Admin] Current password verification failed for user:', user.email);
       return res.status(400).json({
         message: 'Current password is incorrect. Please enter your current password correctly.'
       });
     }
 
-    console.log('✅ Current password verified successfully for user:', user.email);
+    console.log('[Admin] Current password verified successfully for user:', user.email);
 
     // Validate new password
     if (newPassword.length < 8) {
@@ -258,7 +258,7 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
       data: { passwordHash: newPasswordHash }
     });
 
-    console.log('✅ Password updated successfully for user:', user.email);
+    console.log('[Admin] Password updated successfully for user:', user.email);
 
     // Log the password change
     await auditLog(userId, 'ADMIN_PASSWORD_CHANGED', {
@@ -1147,7 +1147,7 @@ export const syncNASFromLocal = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * Run a full NAS ↔ Local file integrity check.
+ * Run a full NAS vs Local file integrity check.
  * Compares every file by size and MD5 hash; returns a detailed report.
  */
 export const runNASIntegrityCheck = async (req: AuthRequest, res: Response) => {
@@ -1161,7 +1161,7 @@ export const runNASIntegrityCheck = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Access denied. Admin role required.' });
     }
 
-    console.log(`🔍 Integrity check triggered by admin ${userId}`);
+    console.log(`[Integrity] Check triggered by admin ${userId}`);
     const report = await runIntegrityCheck();
 
     res.json({
@@ -1211,7 +1211,7 @@ export const checkMaintenanceStatus = async (req: Request, res: Response) => {
 // Emergency disable maintenance mode (public endpoint for emergencies)
 export const emergencyDisableMaintenance = async (req: Request, res: Response) => {
   try {
-    console.log('🚨 Emergency maintenance mode disable requested');
+    console.log('[Admin] Emergency maintenance mode disable requested');
 
     // Update all admin settings to disable maintenance mode
     await prisma.adminSettings.updateMany({
@@ -1383,7 +1383,7 @@ export const restartSystem = async (req: AuthRequest, res: Response) => {
 
     // Give the response a moment to flush before exiting
     setTimeout(() => {
-      console.log('♻️ Restart requested by admin. Exiting process to trigger restart.');
+      console.log('[Admin] Restart requested by admin. Exiting process to trigger restart.');
       process.exit(0);
     }, 500);
   } catch (error) {

@@ -17,7 +17,7 @@ async function main() {
     });
 
     if (!company) {
-      console.error("⚠️ Company not found for email:", email);
+      console.error("Company not found for email:", email);
       return;
     }
 
@@ -25,12 +25,12 @@ async function main() {
       where: { id: company.id },
     });
 
-    console.log(`✅ Deleted company ${company.name} (${company.id})`);
+    console.log(`Deleted company ${company.name} (${company.id})`);
   } catch (error: any) {
     if (error.code === "P2025") {
-      console.error("⚠️ Company not found for email:", email);
+      console.error("Company not found for email:", email);
     } else {
-      console.error("❌ Failed to delete company:", error);
+      console.error("Failed to delete company:", error);
     }
   } finally {
     await prisma.$disconnect();

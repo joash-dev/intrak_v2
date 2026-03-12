@@ -33,7 +33,7 @@ export const errorHandler = (
     
     // Database connection errors
     if (err.code === 'P1001' || err.code === 'P1017' || err.code === 'P1000') {
-      console.error('❌ DATABASE CONNECTION ERROR');
+      console.error('[DB] DATABASE CONNECTION ERROR');
       return res.status(503).json({
         message: 'Database connection error. Please try again.',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined

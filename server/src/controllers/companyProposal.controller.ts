@@ -80,13 +80,13 @@ const notifyUser = async (userId: string, title: string, message: string, link: 
 
   // 2. Send email notification (fire-and-forget so it doesn't block the response)
   sendProposalEmailToUser(userId, title, message, link).catch((err) => {
-    console.error('📧 Failed to send proposal email notification:', err);
+    console.error('[Email] Failed to send proposal email notification:', err);
   });
 };
 
 /**
  * Look up the user's email and send a formatted company-proposal email.
- * Runs as fire-and-forget — failures are logged but never block the caller.
+ * Runs as fire-and-forget - failures are logged but never block the caller.
  */
 const sendProposalEmailToUser = async (
   userId: string,

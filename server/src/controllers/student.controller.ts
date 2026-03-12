@@ -499,7 +499,7 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
     // 6. Finally, delete the user account
     await prisma.user.delete({ where: { id: student.userId } });
 
-    console.log(`✅ Student deletion completed:`);
+    console.log(`[Student] Student deletion completed:`);
     console.log(`   • Attendance logs: ${attendanceResult.count}`);
     console.log(`   • Document submissions: ${documentResult.count}`);
     console.log(`   • Evaluations: ${evaluationResult.count}`);
@@ -818,7 +818,7 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
     } catch (error) {
       // Handle missing worksOnSaturday column error
       if (((error as any)?.code) === 'P2022' && ((error as any)?.meta)?.column?.includes('worksOnSaturday')) {
-        console.warn('⚠️ worksOnSaturday column not found in database. Using fallback query.');
+        console.warn('[Student] worksOnSaturday column not found in database. Using fallback query.');
         // Fallback: Use $queryRaw to explicitly exclude the column
         const studentIds = await prisma.student.findMany({
           where,

@@ -17,7 +17,7 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       });
     }
 
-    console.log('📧 Email controller: Attempting to send welcome email to:', userEmail);
+    console.log('[Email] Email controller: Attempting to send welcome email to:', userEmail);
 
     const result = await emailService.sendUserWelcomeEmail(
       userEmail,
@@ -27,7 +27,7 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       additionalInfo
     );
 
-    console.log('📧 Email controller: Email send result:', result);
+    console.log('[Email] Email controller: Email send result:', result);
 
     res.status(200).json({
       message: result.success
@@ -37,7 +37,7 @@ export const sendUserWelcomeEmail = async (req: Request, res: Response) => {
       error: result.error
     });
   } catch (error) {
-    console.error('❌ Error sending welcome email:', error);
+    console.error('[Email] Error sending welcome email:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -61,7 +61,7 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       });
     }
 
-    console.log('📧 Email controller: Attempting to send student welcome email to:', studentEmail);
+    console.log('[Email] Email controller: Attempting to send student welcome email to:', studentEmail);
 
     const result = await emailService.sendStudentWelcomeEmail(
       studentEmail,
@@ -70,7 +70,7 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       temporaryPassword
     );
 
-    console.log('📧 Email controller: Email send result:', result);
+    console.log('[Email] Email controller: Email send result:', result);
 
     res.status(200).json({
       message: result.success
@@ -80,7 +80,7 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
       error: result.error
     });
   } catch (error) {
-    console.error('❌ Error sending welcome email:', error);
+    console.error('[Email] Error sending welcome email:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -96,10 +96,10 @@ export const sendStudentWelcomeEmail = async (req: Request, res: Response) => {
 
 export const testEmailConnection = async (req: Request, res: Response) => {
   try {
-    console.log('📧 Email controller: Testing email connection...');
+    console.log('[Email] Email controller: Testing email connection...');
     const result = await emailService.testConnection();
 
-    console.log('📧 Email controller: Connection test result:', result);
+    console.log('[Email] Email controller: Connection test result:', result);
 
     if (result.success) {
       res.json({
@@ -115,7 +115,7 @@ export const testEmailConnection = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('❌ Error testing email connection:', error);
+    console.error('[Email] Error testing email connection:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
@@ -141,7 +141,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
       });
     }
 
-    console.log('📧 Email controller: Attempting to send test email to:', email);
+    console.log('[Email] Email controller: Attempting to send test email to:', email);
 
     const result = await emailService.sendStudentWelcomeEmail(
       email,
@@ -150,7 +150,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
       'testpass123'
     );
 
-    console.log('📧 Email controller: Test email send result:', result);
+    console.log('[Email] Email controller: Test email send result:', result);
 
     if (result.success) {
       res.json({
@@ -166,7 +166,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('❌ Error sending test email:', error);
+    console.error('[Email] Error sending test email:', error);
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,

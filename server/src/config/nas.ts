@@ -34,7 +34,7 @@ export const ensureNASDirectoryExists = async (dirPath: string): Promise<void> =
     // If NAS path fails, try local fallback
     if (nasConfig.enabled && dirPath.startsWith(nasConfig.mountPath)) {
       const localPath = dirPath.replace(nasConfig.mountPath, process.env.UPLOAD_PATH || './uploads');
-      console.warn(`⚠️  Failed to create NAS directory, using local fallback: ${localPath}`);
+      console.warn(`WARNING: Failed to create NAS directory, using local fallback: ${localPath}`);
       if (!fs.existsSync(localPath)) {
         fs.mkdirSync(localPath, { recursive: true });
       }
@@ -80,7 +80,7 @@ const isNetworkMountSync = (mountPath: string): boolean => {
       try {
         require('fs').writeFileSync(testFile, 'test');
         require('fs').unlinkSync(testFile);
-        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        console.log(`[NAS] ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
         return true;
       } catch {
         return false;
@@ -108,7 +108,7 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
       // Check if it's actually a network mount (not just a local directory)
       const isActualNAS = isNetworkMountSync(nasConfig.mountPath);
       if (!isActualNAS) {
-        console.warn('⚠️  NAS mount point exists but is NOT a network mount (NAS is unmounted), falling back to local storage');
+        console.warn('[NAS] Mount point exists but is NOT a network mount (NAS is unmounted), falling back to local storage');
         return { storagePath: localPath, isUsingFallback: true };
       }
 
@@ -120,13 +120,13 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
         return { storagePath: nasConfig.mountPath, isUsingFallback: false };
       } catch (error) {
         // NAS exists but not writable, fallback to local
-        console.warn('⚠️  NAS mount point exists but not writable, falling back to local storage');
+        console.warn('[NAS] Mount point exists but not writable, falling back to local storage');
         return { storagePath: localPath, isUsingFallback: true };
       }
     }
   } catch (error) {
     // NAS mount point doesn't exist or error accessing it
-    console.warn('⚠️  NAS mount point not accessible, falling back to local storage');
+    console.warn('[NAS] Mount point not accessible, falling back to local storage');
   }
 
   // Fallback to local storage
@@ -158,7 +158,7 @@ const isNetworkMount = (mountPath: string): boolean => {
       try {
         require('fs').writeFileSync(testFile, 'test');
         require('fs').unlinkSync(testFile);
-        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        console.log(`[NAS] ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
         return true;
       } catch {
         return false;
@@ -182,14 +182,14 @@ export const validateNASConnection = async (): Promise<boolean> => {
   try {
     // Check if mount point exists
     if (!fs.existsSync(nasConfig.mountPath)) {
-      console.warn(`⚠️  NAS mount point does not exist: ${nasConfig.mountPath}`);
+      console.warn(`[NAS] Mount point does not exist: ${nasConfig.mountPath}`);
       return false;
     }
 
     // Check if it's actually a network mount (not just a local directory)
     const isActualNAS = isNetworkMount(nasConfig.mountPath);
     if (!isActualNAS) {
-      console.warn(`⚠️  ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory - NAS is unmounted)`);
+      console.warn(`[NAS] ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory - NAS is unmounted)`);
       return false;
     }
 
@@ -200,7 +200,7 @@ export const validateNASConnection = async (): Promise<boolean> => {
       fs.unlinkSync(testFile);
       return true;
     } catch (writeError) {
-      console.warn(`⚠️  NAS mount point exists but not writable:`, writeError);
+      console.warn(`[NAS] Mount point exists but not writable:`, writeError);
       return false;
     }
   } catch (error) {
@@ -232,7 +232,7 @@ export const resolveFilePath = (storedPath: string): string | null => {
     if (nasConfig.enabled && normalizedPath.startsWith(nasConfig.mountPath)) {
       const localFallback = normalizedPath.replace(nasConfig.mountPath, localPath);
       if (fs.existsSync(localFallback)) {
-        console.warn(`⚠️  File not found on NAS, using local fallback: ${localFallback}`);
+        console.warn(`[NAS] File not found on NAS, using local fallback: ${localFallback}`);
         return localFallback;
       }
     }
@@ -241,7 +241,7 @@ export const resolveFilePath = (storedPath: string): string | null => {
     if (normalizedPath.startsWith(localPath) && nasConfig.enabled) {
       const nasFallback = normalizedPath.replace(localPath, nasConfig.mountPath);
       if (fs.existsSync(nasFallback)) {
-        console.warn(`⚠️  File not found locally, found on NAS: ${nasFallback}`);
+        console.warn(`[NAS] File not found locally, found on NAS: ${nasFallback}`);
         return nasFallback;
       }
     }
@@ -294,7 +294,7 @@ export const syncLocalToNAS = async (): Promise<{
   // Check if NAS is available
   const nasAvailable = await validateNASConnection();
   if (!nasAvailable) {
-    console.log('⏳ NAS not available, skipping sync');
+    console.log('[NAS Sync] NAS not available, skipping sync');
     return { synced: 0, failed: 0, hashVerified: 0, hashFailed: 0 };
   }
 
@@ -329,14 +329,14 @@ export const syncLocalToNAS = async (): Promise<{
           let needsSync = false;
 
           if (!fs.existsSync(nasFilePath)) {
-            // File missing on NAS → sync
+            // File missing on NAS - sync
             needsSync = true;
           } else {
-            // File exists on NAS — compare sizes to catch partial copies
+            // File exists on NAS - compare sizes to catch partial copies
             const localSize = fs.statSync(localFilePath).size;
             const nasSize = fs.statSync(nasFilePath).size;
             if (localSize !== nasSize) {
-              console.log(`📏 Size mismatch for ${file.name}: local=${localSize}, NAS=${nasSize} → re-syncing`);
+              console.log(`[NAS Sync] Size mismatch for ${file.name}: local=${localSize}, NAS=${nasSize} - re-syncing`);
               needsSync = true;
             }
           }
@@ -355,18 +355,18 @@ export const syncLocalToNAS = async (): Promise<{
 
                 if (localHash === nasHash) {
                   hashVerified++;
-                  console.log(`✅ Synced & verified: ${file.name} (MD5: ${localHash})`);
+                  console.log(`[NAS Sync] Synced and verified: ${file.name} (MD5: ${localHash})`);
                 } else {
                   hashFailed++;
-                  console.error(`⚠️  Synced but hash mismatch: ${file.name} (local=${localHash}, NAS=${nasHash})`);
+                  console.error(`[NAS Sync] WARNING - Synced but hash mismatch: ${file.name} (local=${localHash}, NAS=${nasHash})`);
                 }
               } catch (hashErr) {
-                // Hash computation failed — file was still copied
-                console.warn(`⚠️  Synced ${file.name} but could not verify hash:`, hashErr);
+                // Hash computation failed - file was still copied
+                console.warn(`[NAS Sync] Synced ${file.name} but could not verify hash:`, hashErr);
               }
             } catch (error) {
               failed++;
-              console.error(`❌ Failed to sync ${file.name}:`, error);
+              console.error(`[NAS Sync] Failed to sync ${file.name}:`, error);
             }
           }
         }
@@ -386,12 +386,12 @@ export const syncLocalToNAS = async (): Promise<{
 
     if (synced > 0 || failed > 0) {
       console.log(
-        `📦 Sync complete: ${synced} synced, ${failed} failed, ` +
+        `[NAS Sync] Complete: ${synced} synced, ${failed} failed, ` +
         `${hashVerified} hash-verified, ${hashFailed} hash-failed`,
       );
     }
   } catch (error) {
-    console.error('❌ Sync error:', error);
+    console.error('[NAS Sync] Error:', error);
   }
 
   return { synced, failed, hashVerified, hashFailed };
@@ -437,7 +437,7 @@ export const createLocalBackup = (nasFilePath: string, fileContent: string | Buf
 
     return localBackupPath;
   } catch (error) {
-    console.warn(`⚠️  Failed to create local backup for ${nasFilePath}:`, error);
+    console.warn(`[NAS] Failed to create local backup for ${nasFilePath}:`, error);
     return null;
   }
 };

@@ -7,7 +7,7 @@ let isSyncing = false;
 /**
  * Start the scheduled NAS sync cron job.
  *
- * Default schedule: every 30 minutes ("*​/30 * * * *").
+ * Default schedule: every 30 minutes ("*/30 * * * *").
  * Override with the NAS_SYNC_CRON environment variable.
  *
  * The job calls syncLocalToNAS() which:
@@ -19,14 +19,14 @@ export const startNASSyncJob = (): void => {
   const schedule = process.env.NAS_SYNC_CRON || '*/30 * * * *';
 
   if (!cron.validate(schedule)) {
-    console.error(`❌ Invalid NAS_SYNC_CRON expression: "${schedule}". NAS sync job not started.`);
+    console.error(`[NAS Sync] Invalid NAS_SYNC_CRON expression: "${schedule}". Job not started.`);
     return;
   }
 
   syncTask = cron.schedule(schedule, async () => {
     // Prevent overlapping runs
     if (isSyncing) {
-      console.log('⏳ NAS sync already in progress, skipping this run');
+      console.log('[NAS Sync] Sync already in progress, skipping this run');
       return;
     }
 
@@ -34,28 +34,28 @@ export const startNASSyncJob = (): void => {
     const startTime = Date.now();
 
     try {
-      console.log('🔄 [Cron] Starting scheduled NAS sync...');
+      console.log('[NAS Sync] Starting scheduled sync...');
       const result = await syncLocalToNAS();
 
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
       if (result.synced > 0 || result.failed > 0) {
         console.log(
-          `🔄 [Cron] NAS sync finished in ${elapsed}s — ` +
+          `[NAS Sync] Finished in ${elapsed}s - ` +
           `${result.synced} synced, ${result.failed} failed, ` +
           `${result.hashVerified} verified, ${result.hashFailed} hash-failed`,
         );
       } else {
-        console.log(`🔄 [Cron] NAS sync finished in ${elapsed}s — everything up to date`);
+        console.log(`[NAS Sync] Finished in ${elapsed}s - everything up to date`);
       }
     } catch (error) {
-      console.error('❌ [Cron] NAS sync job error:', error);
+      console.error('[NAS Sync] Job error:', error);
     } finally {
       isSyncing = false;
     }
   });
 
-  console.log(`⏰ NAS sync cron job started (schedule: "${schedule}")`);
+  console.log(`[NAS Sync] Cron job started (schedule: "${schedule}")`);
 };
 
 /**
@@ -65,6 +65,6 @@ export const stopNASSyncJob = (): void => {
   if (syncTask) {
     syncTask.stop();
     syncTask = null;
-    console.log('⏰ NAS sync cron job stopped');
+    console.log('[NAS Sync] Cron job stopped');
   }
 };

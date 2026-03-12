@@ -11,14 +11,14 @@ const uploadPath = getStoragePath();
 
 export const uploadTemplate = async (req: AuthRequest, res: Response) => {
   try {
-    console.log(`📄 Template upload request from user: ${req.user?.id}, role: ${req.user?.role}`);
+    console.log(`[Template] Upload request from user: ${req.user?.id}, role: ${req.user?.role}`);
     
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
     const { name, description, type, category } = req.body;
-    console.log(`📄 Template upload data: name=${name}, type=${type}, category=${category}`);
+    console.log(`[Template] Upload data: name=${name}, type=${type}, category=${category}`);
 
     // Validate required fields
     if (!name || !type || !category) {
@@ -45,7 +45,7 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
     // Get storage path with automatic fallback to local if NAS unavailable
     const { storagePath, isUsingFallback } = getStoragePathWithFallback();
     if (isUsingFallback) {
-      console.warn('⚠️  NAS unavailable, using local storage fallback for template upload');
+      console.warn('[NAS] NAS unavailable, using local storage fallback for template upload');
     }
 
     // Create templates directory if it doesn't exist (using persistent storage path)
@@ -68,7 +68,7 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       if (!isUsingFallback && filepath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
         const backupPath = createLocalBackup(filepath, filepath);
         if (backupPath) {
-          console.log(`✅ Created local backup for template: ${backupPath}`);
+          console.log(`[NAS] Created local backup for template: ${backupPath}`);
         }
       }
     } catch (moveError) {
@@ -112,7 +112,7 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       filename: req.file.originalname
     }, req);
 
-    console.log(`✅ Template uploaded successfully: ${template.name} (${template.id})`);
+    console.log(`[Template] Template uploaded successfully: ${template.name} (${template.id})`);
     console.log(`📁 File stored at: ${filepath}`);
 
     res.status(201).json({ 

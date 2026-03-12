@@ -24,10 +24,10 @@ export const testDatabaseConnection = async (): Promise<boolean> => {
     await prisma.$connect();
     // Test with a simple query
     await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Database connection established');
+    console.log('[DB] Database connection established');
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error);
+    console.error('[DB] Database connection failed:', error);
     return false;
   }
 };

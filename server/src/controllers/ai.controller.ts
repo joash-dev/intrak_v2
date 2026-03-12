@@ -10,10 +10,10 @@ export const generateEvaluationRemarks = async (req: AuthRequest, res: Response)
   try {
     const { competencyId, rating, studentId, competencyTitle, ratingCriteria } = req.body;
 
-    console.log('📝 AI Request received:', { competencyId, rating, studentId, competencyTitle });
+    console.log('[AI] Request received:', { competencyId, rating, studentId, competencyTitle });
 
     if (!competencyId || !rating || !studentId) {
-      console.error('❌ Missing required fields:', { competencyId: !!competencyId, rating: !!rating, studentId: !!studentId });
+      console.error('[AI] Missing required fields:', { competencyId: !!competencyId, rating: !!rating, studentId: !!studentId });
       return res.status(400).json({
         message: 'Missing required fields: competencyId, rating, studentId',
         received: { competencyId: !!competencyId, rating: !!rating, studentId: !!studentId }
@@ -233,7 +233,7 @@ export const generateWeeklyReportSummary = async (req: AuthRequest, res: Respons
 
     // Log AI config status for debugging
     const config = getAIConfigFromConfig();
-    console.log('📝 AI Weekly Report Summary requested');
+    console.log('[AI] Weekly Report Summary requested');
     console.log('   AI Enabled:', config.enabled);
     console.log('   AI Provider:', config.provider);
     console.log('   AI Model:', config.model);
@@ -252,7 +252,7 @@ export const generateWeeklyReportSummary = async (req: AuthRequest, res: Respons
 
     res.json({ summary });
   } catch (error) {
-    console.error('❌ Error generating weekly report summary:', (error instanceof Error ? error.message : String(error)));
+    console.error('[AI] Error generating weekly report summary:', (error instanceof Error ? error.message : String(error)));
     console.error('   Full error:', error);
     res.status(500).json({
       message: 'Failed to generate summary',

@@ -82,7 +82,7 @@ export const verifyFileIntegrity = async (
       };
     }
 
-    // Both exist — compare sizes first (fast check)
+    // Both exist - compare sizes first (fast check)
     const nasStat = fs.statSync(nasFilePath);
     const localStat = fs.statSync(localFilePath);
 
@@ -96,7 +96,7 @@ export const verifyFileIntegrity = async (
       };
     }
 
-    // Sizes match — compute MD5 hashes for deeper verification
+    // Sizes match - compute MD5 hashes for deeper verification
     const [nasHash, localHash] = await Promise.all([
       computeFileHash(nasFilePath),
       computeFileHash(localFilePath),
@@ -164,10 +164,10 @@ export const runIntegrityCheck = async (): Promise<IntegrityReport> => {
   const localPath = process.env.UPLOAD_PATH || './uploads';
   const results: IntegrityResult[] = [];
 
-  console.log('🔍 Starting file integrity check...');
+  console.log('[Integrity] Starting file integrity check...');
 
   if (!nasConfig.enabled) {
-    console.log('ℹ️  NAS is not enabled, skipping integrity check');
+    console.log('[Integrity] NAS is not enabled, skipping integrity check');
     return {
       checkedAt: new Date().toISOString(),
       totalFiles: 0,
@@ -203,7 +203,7 @@ export const runIntegrityCheck = async (): Promise<IntegrityReport> => {
     }
   }
 
-  console.log(`🔍 Checking ${allRelativePaths.size} files...`);
+  console.log(`[Integrity] Checking ${allRelativePaths.size} files...`);
 
   // Verify each file
   for (const relativePath of allRelativePaths) {
@@ -228,19 +228,19 @@ export const runIntegrityCheck = async (): Promise<IntegrityReport> => {
   };
 
   // Log summary
-  console.log('📊 Integrity Check Report:');
-  console.log(`   Total files: ${report.totalFiles}`);
-  console.log(`   ✅ OK: ${report.ok}`);
-  console.log(`   ❌ Mismatches: ${report.mismatches}`);
-  console.log(`   ⚠️  Missing on NAS: ${report.missingNas}`);
-  console.log(`   ⚠️  Missing locally: ${report.missingLocal}`);
-  console.log(`   💥 Errors: ${report.errors}`);
+  console.log('[Integrity] Check Report:');
+  console.log(`  Total files: ${report.totalFiles}`);
+  console.log(`  OK: ${report.ok}`);
+  console.log(`  Mismatches: ${report.mismatches}`);
+  console.log(`  Missing on NAS: ${report.missingNas}`);
+  console.log(`  Missing locally: ${report.missingLocal}`);
+  console.log(`  Errors: ${report.errors}`);
 
   if (report.mismatches > 0) {
-    console.log('   🔴 MISMATCH DETAILS:');
+    console.log('[Integrity] MISMATCH DETAILS:');
     results
       .filter((r) => r.status === 'mismatch')
-      .forEach((r) => console.log(`      - ${r.file}: ${r.detail}`));
+      .forEach((r) => console.log(`  - ${r.file}: ${r.detail}`));
   }
 
   return report;

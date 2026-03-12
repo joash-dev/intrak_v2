@@ -97,14 +97,14 @@ const isNetworkMount = async (mountPath: string): Promise<boolean> => {
       try {
         fs.writeFileSync(testFile, 'test');
         fs.unlinkSync(testFile);
-        console.log(`✅ ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
+        console.log(`[Storage] ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
         return true;
       } catch {
         return false;
       }
     }
 
-    console.log(`🔍 Checking if ${mountPath} is network mount: ${isNetwork || isBindMount ? '✅ YES' : '❌ NO'}`);
+    console.log(`[Storage] Checking if ${mountPath} is network mount: ${isNetwork || isBindMount ? 'YES' : 'NO'}`);
 
     return isNetwork || isBindMount;
   } catch (error) {
@@ -127,7 +127,7 @@ export const getNASStorageMetrics = async (): Promise<StorageMetrics | null> => 
   const isActualNAS = await isNetworkMount(nasConfig.mountPath);
 
   if (!isActualNAS) {
-    console.log(`⚠️ ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory created by Docker)`);
+    console.log(`[Storage] ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory created by Docker)`);
     return null;
   }
 

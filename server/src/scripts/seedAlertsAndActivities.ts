@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function seedAlertsAndActivities() {
-  console.log('🌱 Seeding alerts and activities...');
+  console.log('[Seed] Seeding alerts and activities...');
 
   try {
     // Create system alerts
@@ -33,7 +33,7 @@ async function seedAlertsAndActivities() {
       ]
     });
 
-    console.log(`✅ Created ${alerts.count} system alerts`);
+    console.log(`[Seed] Created ${alerts.count} system alerts`);
 
     // Create activities
     const now = new Date();
@@ -102,10 +102,10 @@ async function seedAlertsAndActivities() {
       ]
     });
 
-    console.log(`✅ Created ${activities.count} activities`);
-    console.log('✨ Seeding completed successfully!');
+    console.log(`[Seed] Created ${activities.count} activities`);
+    console.log('[Seed] Seeding completed successfully!');
   } catch (error) {
-    console.error('❌ Error seeding data:', error);
+    console.error('[Seed] Error seeding data:', error);
     throw error;
   } finally {
     await prisma.$disconnect();

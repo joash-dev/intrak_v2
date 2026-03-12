@@ -110,7 +110,7 @@ export const authenticate = async (
 
     next();
   } catch (error: any) {
-    console.error('❌ Auth error:', error.message);
+    console.error('[Auth] Auth error:', error.message);
 
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token expired' });

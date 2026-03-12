@@ -34,11 +34,11 @@ class EmailService {
       this.resend = new Resend(RESEND_API_KEY);
       this.fromEmail = RESEND_FROM_EMAIL;
       this.emailProvider = 'resend';
-      console.log('📧 Initializing Resend API (works on Render without SMTP):', {
+      console.log('[Email] Initializing Resend API (works on Render without SMTP):', {
         from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
         hasApiKey: !!RESEND_API_KEY
       });
-      console.log('✅ Resend email service initialized');
+      console.log('[Email] Resend email service initialized');
       return; // Don't initialize SMTP if Resend is configured
     }
 
@@ -53,7 +53,7 @@ class EmailService {
       const secure = port === 465;
       const requiresTLS = port === 587; // Explicitly require TLS for port 587
 
-      console.log('📧 Initializing SMTP transporter (Laravel mailer pattern):', {
+      console.log('[Email] Initializing SMTP transporter (Laravel mailer pattern):', {
         host: SMTP_HOST,
         port: port,
         secure: secure,
@@ -92,10 +92,10 @@ class EmailService {
 
       // Don't verify connection on startup (Render blocks initial connections)
       // Connection will be verified when actually sending emails
-      console.log('📧 SMTP transporter created (connection will be verified on first email send)');
+      console.log('[Email] SMTP transporter created (connection will be verified on first email send)');
     } else {
-      console.warn('📧 SMTP not configured. Email sending is disabled.');
-      console.warn('📧 Required environment variables: SMTP_HOST, SMTP_USER, SMTP_PASS');
+      console.warn('[Email] SMTP not configured. Email sending is disabled.');
+      console.warn('[Email] Required environment variables: SMTP_HOST, SMTP_USER, SMTP_PASS');
       if (!SMTP_HOST) console.warn('   - SMTP_HOST: NOT SET');
       if (!SMTP_USER) console.warn('   - SMTP_USER: NOT SET');
       if (!SMTP_PASS) console.warn('   - SMTP_PASS: NOT SET');
@@ -115,14 +115,14 @@ class EmailService {
 
     // No email provider configured
     const errorMsg = 'Email service not configured. Please set either RESEND_API_KEY and RESEND_FROM_EMAIL, or SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
-    console.error('❌ Email sending skipped (no email provider configured).');
-    console.error('📧 Environment variables check:');
+    console.error('[Email] ERROR: Email sending skipped (no email provider configured).');
+    console.error('[Email] Environment variables check:');
     console.error('   RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'SET' : 'NOT SET');
     console.error('   RESEND_FROM_EMAIL:', process.env.RESEND_FROM_EMAIL || 'NOT SET');
     console.error('   SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
     console.error('   SMTP_USER:', process.env.SMTP_USER ? process.env.SMTP_USER.substring(0, 10) + '...' : 'NOT SET');
     console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
-    console.error('📧 Email content would be:');
+    console.error('[Email] Email content would be:');
     console.error('   To:', options.to);
     console.error('   Subject:', options.subject);
     return { success: false, error: errorMsg };
@@ -137,7 +137,7 @@ class EmailService {
       const fromName = process.env.RESEND_FROM_NAME || process.env.MAIL_FROM_NAME || 'INTRAK System';
       const fromAddress = fromName ? `${fromName} <${this.fromEmail}>` : this.fromEmail;
 
-      console.log('📧 Attempting to send email via Resend API:', {
+      console.log('[Email] Attempting to send email via Resend API:', {
         to: options.to,
         from: fromAddress,
         subject: options.subject
@@ -152,21 +152,21 @@ class EmailService {
       });
 
       if (error) {
-        console.error('❌ Resend API error:', error);
+        console.error('[Email] Resend API error:', error);
         return {
           success: false,
           error: `Resend API error: ${error.message || JSON.stringify(error)}`
         };
       }
 
-      console.log('📧 Email sent successfully via Resend:', {
+      console.log('[Email] Email sent successfully via Resend:', {
         to: options.to,
         messageId: data?.id
       });
 
       return { success: true };
     } catch (error: any) {
-      console.error('❌ Email sending failed via Resend:', error);
+      console.error('[Email] Email sending failed via Resend:', error);
       console.error('Error details:', {
         message: error?.message,
         stack: error?.stack
@@ -187,7 +187,7 @@ class EmailService {
     }
 
     try {
-      console.log('📧 Attempting to send email via SMTP:', {
+      console.log('[Email] Attempting to send email via SMTP:', {
         to: options.to,
         from: this.fromEmail,
         subject: options.subject,
@@ -203,9 +203,9 @@ class EmailService {
       // Verify connection before sending (lazy verification)
       try {
         await this.transporter.verify();
-        console.log('✅ SMTP connection verified before sending');
+        console.log('[Email] SMTP connection verified before sending');
       } catch (verifyError: any) {
-        console.warn('⚠️ SMTP verification failed, but attempting to send anyway:', verifyError.message);
+        console.warn('[Email] SMTP verification failed, but attempting to send anyway:', verifyError.message);
         // Continue anyway - sometimes verification fails but sending works
       }
 
@@ -217,13 +217,13 @@ class EmailService {
         text: options.text
       });
 
-      console.log('📧 Email sent successfully:', {
+      console.log('[Email] Email sent successfully:', {
         to: options.to,
         messageId: info.messageId
       });
       return { success: true };
     } catch (error: any) {
-      console.error('❌ Email sending failed:', error);
+      console.error('[Email] Email sending failed:', error);
       console.error('Error details:', {
         message: error.message,
         code: error.code,
@@ -249,7 +249,7 @@ class EmailService {
 
       // Provide helpful troubleshooting tips in logs
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
-        console.error('💡 Troubleshooting tips:');
+        console.error('[Email] Troubleshooting tips:');
         console.error('   1. Check if SMTP_PORT is set to 587 (TLS) not 465 (SSL)');
         console.error('   2. Verify SMTP_HOST is correct');
         console.error('   3. Check if Render.com is blocking outbound SMTP connections');
@@ -668,10 +668,10 @@ This is an automated message from INTRAK System. Please do not reply to this ema
     // Test Resend connection
     if (this.emailProvider === 'resend' && this.resend) {
       try {
-        console.log('📧 Testing Resend API connection...');
+        console.log('[Email] Testing Resend API connection...');
         // Resend doesn't have a test endpoint, so we'll just verify the client is initialized
         if (this.resend && this.fromEmail) {
-          console.log('✅ Resend API client initialized');
+          console.log('[Email] Resend API client initialized');
           return { success: true };
         }
         return { success: false, error: 'Resend client not properly initialized' };
@@ -688,7 +688,7 @@ This is an automated message from INTRAK System. Please do not reply to this ema
       return new Promise((resolve) => {
         this.transporter!.verify((error: Error | null) => {
           if (error) {
-            console.error('❌ SMTP connection failed:', error);
+            console.error('[Email] SMTP connection failed:', error);
             let errorMessage = error.message || 'Unknown error occurred';
 
             if ((error as any).code === 'ETIMEDOUT') {
@@ -701,7 +701,7 @@ This is an automated message from INTRAK System. Please do not reply to this ema
 
             resolve({ success: false, error: errorMessage });
           } else {
-            console.log('✅ SMTP connection verified');
+            console.log('[Email] SMTP connection verified');
             resolve({ success: true });
           }
         });

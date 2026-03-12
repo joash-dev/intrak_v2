@@ -54,7 +54,7 @@ export class SocketServer {
         this.io.on(SOCKET_EVENTS.CONNECTION, (socket: AuthenticatedSocket) => {
             if (!socket.user) return;
 
-            console.log(`✅ Socket connected: ${socket.user.name} (${socket.user.role}) - ${socket.id}`);
+            console.log(`[Socket] Connected: ${socket.user.name} (${socket.user.role}) - ${socket.id}`);
 
             // Auto-join user to their personal room
             socket.join(getRoomName.user(socket.user.id));
@@ -76,7 +76,7 @@ export class SocketServer {
 
             // Handle disconnection
             socket.on(SOCKET_EVENTS.DISCONNECT, () => {
-                console.log(`❌ Socket disconnected: ${socket.user?.name} - ${socket.id}`);
+                console.log(`[Socket] Disconnected: ${socket.user?.name} - ${socket.id}`);
             });
         });
     }
@@ -113,7 +113,7 @@ let socketServer: SocketServer | null = null;
 export const initializeSocketServer = (httpServer: HTTPServer): SocketServer => {
     if (!socketServer) {
         socketServer = new SocketServer(httpServer);
-        console.log('🔌 Socket.IO server initialized');
+        console.log('[Socket] Socket.IO server initialized');
     }
     return socketServer;
 };

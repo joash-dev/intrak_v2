@@ -7,10 +7,10 @@ export const authorize = (roles: string[]) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    console.log(`🔐 Authorization check: user role=${req.user.role}, required roles=${roles.join(',')}`);
+    console.log(`[Auth] Authorization check: user role=${req.user.role}, required roles=${roles.join(',')}`);
 
     if (!roles.includes(req.user.role)) {
-      console.log(`🔐 Access denied: user role '${req.user.role}' not in allowed roles [${roles.join(',')}]`);
+      console.log(`[Auth] Access denied: user role '${req.user.role}' not in allowed roles [${roles.join(',')}]`);
       return res.status(403).json({ 
         message: 'Forbidden: Insufficient permissions',
         userRole: req.user.role,
@@ -18,7 +18,7 @@ export const authorize = (roles: string[]) => {
       });
     }
 
-    console.log(`🔐 Access granted for user with role '${req.user.role}'`);
+    console.log(`[Auth] Access granted for user with role '${req.user.role}'`);
     next();
   };
 };

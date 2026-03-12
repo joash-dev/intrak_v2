@@ -10,7 +10,7 @@ import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
-// generateDTRPDF no longer used — TIME_FRAMES now uses the HTML template pipeline
+// generateDTRPDF no longer used - TIME_FRAMES now uses the HTML template pipeline
 // Note: uploadPath is now determined dynamically with fallback in uploadDocument
 const uploadPath = getStoragePath(); // Fallback for other uses
 
@@ -190,7 +190,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     // Get storage path with automatic fallback to local if NAS unavailable
     const { storagePath, isUsingFallback } = getStoragePathWithFallback();
     if (isUsingFallback) {
-      console.warn('⚠️  NAS unavailable, using local storage fallback for document upload');
+      console.warn('[NAS] NAS unavailable, using local storage fallback for document upload');
     }
 
     // Calculate file size in MB
@@ -213,7 +213,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       if (!isUsingFallback && finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
         const backupPath = createLocalBackup(finalPath, finalPath);
         if (backupPath) {
-          console.log(`✅ Created local backup: ${backupPath}`);
+          console.log(`[NAS] Created local backup: ${backupPath}`);
         }
       }
     } catch (moveError) {
@@ -464,17 +464,17 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
 
 export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
   try {
-    console.log(`📄 Getting documents for user: ${req.user?.id}, role: ${req.user?.role}`);
+    console.log(`[Document] Getting documents for user: ${req.user?.id}, role: ${req.user?.role}`);
 
     // Check if user is authenticated
     if (!req.user) {
-      console.log(`📄 No authenticated user found`);
+      console.log(`[Document] No authenticated user found`);
       return res.status(401).json({ message: 'Authentication required' });
     }
 
     // Check if user is a student
     if (req.user.role !== 'STUDENT') {
-      console.log(`📄 User is not a student, role: ${req.user.role}`);
+      console.log(`[Document] User is not a student, role: ${req.user.role}`);
       return res.status(403).json({ message: 'Access denied. Student role required.' });
     }
 
@@ -495,10 +495,10 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    console.log(`📄 Student found:`, student ? 'Yes' : 'No');
+    console.log(`[Document] Student found:`, student ? 'Yes' : 'No');
 
     if (!student) {
-      console.log(`📄 Student record not found for user: ${req.user.id}`);
+      console.log(`[Document] Student record not found for user: ${req.user.id}`);
       return res.status(404).json({
         message: 'Student record not found',
         debug: process.env.NODE_ENV === 'development' ? {
@@ -524,7 +524,7 @@ export const getStudentDocuments = async (req: AuthRequest, res: Response) => {
       documents = [];
     }
 
-    console.log(`📄 Found ${documents.length} documents for student ${student.id}`);
+    console.log(`[Document] Found ${documents.length} documents for student ${student.id}`);
 
     // Format documents for client with null safety
     const formattedDocuments = documents.map(doc => ({
@@ -1069,8 +1069,8 @@ export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
       );
 
       if (allAccepted) {
-        // 🎉 All students accepted — time to generate the PDF!
-        console.log(`✅ All ${allChildren.length} student(s) accepted. Generating PDF...`);
+        // All students accepted - time to generate the PDF!
+        console.log(`[Document] All ${allChildren.length} student(s) accepted. Generating PDF...`);
 
         // Get the parent (submitter's) document with saved form data
         const parentDoc = await prisma.document.findUnique({
@@ -1140,7 +1140,7 @@ export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
         await prisma.notification.create({
           data: {
             userId: parentDoc.student.user.id,
-            title: 'Endorsement Letter — PDF Generated!',
+            title: 'Endorsement Letter - PDF Generated!',
             message: `All students have accepted your multi-student endorsement letter. The PDF has been generated and submitted for review.`,
             type: 'DOCUMENT',
             link: '/documents',
@@ -1157,9 +1157,9 @@ export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
           createdAt: new Date().toISOString(),
         });
 
-        console.log(`✅ PDF generated and all ${allChildren.length + 1} document records updated.`);
+        console.log(`[Document] PDF generated and all ${allChildren.length + 1} document records updated.`);
 
-        return res.json({ message: 'Endorsement letter accepted! All students have accepted — PDF generated.', allAccepted: true, pdfGenerated: true });
+        return res.json({ message: 'Endorsement letter accepted! All students have accepted - PDF generated.', allAccepted: true, pdfGenerated: true });
       }
     }
 
@@ -1172,7 +1172,7 @@ export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
 
 /**
  * POST /documents/:id/decline-shared
- * Student declines a shared endorsement letter — removes the document record.
+ * Student declines a shared endorsement letter - removes the document record.
  * Notifies the submitter about the decline. Then checks if remaining students
  * have all accepted (if so, generates the PDF without the declined student).
  */
@@ -1215,7 +1215,7 @@ export const declineSharedDocument = async (req: AuthRequest, res: Response) => 
         await prisma.notification.create({
           data: {
             userId: parentDoc.student.user.id,
-            title: 'Endorsement Letter — Student Declined',
+            title: 'Endorsement Letter - Student Declined',
             message: `${declinedStudentName} has declined the multi-student endorsement letter. They will not be included in the final document.`,
             type: 'DOCUMENT',
             link: '/documents',
@@ -1228,15 +1228,15 @@ export const declineSharedDocument = async (req: AuthRequest, res: Response) => 
         });
 
         if (remainingChildren.length === 0) {
-          // No more children — cancel the whole endorsement letter
+          // No more children - cancel the whole endorsement letter
           // Delete the parent doc since there are no other students
           await prisma.document.delete({ where: { id: parentDocId } });
-          console.log('⚠️ All students declined. Parent endorsement letter deleted.');
+          console.log('[Document] All students declined. Parent endorsement letter deleted.');
         } else {
           const allAccepted = remainingChildren.every(c => c.sharedStatus === 'ACCEPTED');
           if (allAccepted) {
-            // All remaining students accepted — generate PDF without declined student
-            console.log(`✅ Remaining ${remainingChildren.length} student(s) have all accepted after decline. Generating PDF...`);
+            // All remaining students accepted - generate PDF without declined student
+            console.log(`[Document] Remaining ${remainingChildren.length} student(s) have all accepted after decline. Generating PDF...`);
 
             const acceptedChildren = await prisma.document.findMany({
               where: { parentDocumentId: parentDocId, sharedStatus: 'ACCEPTED' },
@@ -1274,14 +1274,14 @@ export const declineSharedDocument = async (req: AuthRequest, res: Response) => 
               await prisma.notification.create({
                 data: {
                   userId: parentDoc.student.user.id,
-                  title: 'Endorsement Letter — PDF Generated!',
+                  title: 'Endorsement Letter - PDF Generated!',
                   message: `All remaining students have accepted. The PDF has been generated and submitted for review (without ${declinedStudentName}).`,
                   type: 'DOCUMENT',
                   link: '/documents',
                 },
               });
 
-              console.log(`✅ PDF generated after decline — ${allNames.length} students included.`);
+              console.log(`[Document] PDF generated after decline - ${allNames.length} students included.`);
             }
           }
         }
@@ -1329,7 +1329,7 @@ const buildStudentListHtml = (selectedStudentsJson: string): string => {
   });
   html += '</div>';
 
-  // Right column (items 6-10) — only render if there are more than 5
+  // Right column (items 6-10) - only render if there are more than 5
   if (rightCol.length > 0) {
     html += '<div class="student-col">';
     rightCol.forEach((name, i) => {
@@ -1643,7 +1643,7 @@ export const previewDocument = async (req: AuthRequest, res: Response) => {
       templateData.student_list_html = buildStudentListHtml(templateData.selected_students);
     }
 
-    // Format date fields (YYYY-MM-DD → display format) for the template
+    // Format date fields (YYYY-MM-DD to display format) for the template
     templateData = formatDateFieldsForDisplay(type, templateData);
 
     const html = generatePreviewHtml(definition.templateFile, templateData);
@@ -1773,7 +1773,7 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
               await prisma.notification.create({
                 data: {
                   userId: otherStudent.user.id,
-                  title: 'Endorsement Letter — Action Required',
+                  title: 'Endorsement Letter - Action Required',
                   message: `${student.user.name} has included you in a multi-student endorsement letter. Please review and accept or decline it in your Documents tab.`,
                   type: 'DOCUMENT',
                   link: '/documents',
@@ -1791,7 +1791,7 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
               });
             }
 
-            console.log(`✅ Created pending endorsement letter records for ${otherStudents.length} student(s). Waiting for acceptance.`);
+            console.log(`[Document] Created pending endorsement letter records for ${otherStudents.length} student(s). Waiting for acceptance.`);
           }
         } catch (err) {
           console.error('Warning: Failed to create shared endorsement letter records:', err);
@@ -1815,7 +1815,7 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
       templateData.student_list_html = buildStudentListHtml(templateData.selected_students);
     }
 
-    // Format date fields (YYYY-MM-DD → display format) for the template
+    // Format date fields (YYYY-MM-DD to display format) for the template
     templateData = formatDateFieldsForDisplay(type, templateData);
 
     // Generate PDF
@@ -1884,7 +1884,7 @@ export const canAutoGenerate = (type: string): boolean => {
 
 /**
  * POST /documents/generate-auto
- * Auto-generates a document from existing system data (e.g. attendance → Time Frames PDF).
+ * Auto-generates a document from existing system data (e.g. attendance to Time Frames PDF).
  * Body: { type }
  */
 export const autoGenerateDocument = async (req: AuthRequest, res: Response) => {

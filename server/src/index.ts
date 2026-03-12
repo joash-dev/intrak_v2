@@ -43,7 +43,7 @@ if (!process.env.JWT_SECRET) {
   if (process.env.NODE_ENV === 'test') {
     process.env.JWT_SECRET = 'test-secret';
   } else {
-    console.error('❌ JWT_SECRET missing in .env!');
+    console.error('ERROR: JWT_SECRET missing in .env!');
     process.exit(1);
   }
 }
@@ -250,16 +250,16 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
   // Test database connection on startup
   const initializeDatabase = async () => {
-    console.log('🔌 Testing database connection...');
+    console.log('[DB] Testing database connection...');
     try {
       const connected = await testDatabaseConnection();
       if (!connected) {
-        console.error('❌ Database connection failed. Server will start but may have issues.');
+        console.error('[DB] ERROR: Database connection failed. Server will start but may have issues.');
         console.error('   Please check your DATABASE_URL environment variable.');
         console.error('   Current DATABASE_URL:', process.env.DATABASE_URL ? 'Set (hidden)' : 'NOT SET');
       }
     } catch (error: any) {
-      console.error('❌ Database initialization error:', error.message);
+      console.error('[DB] ERROR: Database initialization error:', error.message);
       console.error('   Error code:', error.code);
       console.error('   This may cause 500 errors on all database queries.');
     }
@@ -268,37 +268,37 @@ if (process.env.NODE_ENV !== 'test') {
   // Wait for NAS to be ready (if enabled) and sync local files
   const waitForNAS = async () => {
     if (process.env.USE_NAS === 'true') {
-      console.log('🔌 Checking NAS connection...');
+      console.log('[NAS] Checking NAS connection...');
       let attempts = 0;
       const maxAttempts = 10;
 
       while (attempts < maxAttempts) {
         const isValid = await validateNASConnection();
         if (isValid) {
-          console.log('✅ NAS connection validated successfully');
+          console.log('[NAS] Connection validated successfully');
 
           // Sync local files to NAS if any exist
-          console.log('🔄 Checking for local files to sync to NAS...');
+          console.log('[NAS Sync] Checking for local files to sync to NAS...');
           const syncResult = await syncLocalToNAS();
           if (syncResult.synced > 0) {
-            console.log(`✅ Synced ${syncResult.synced} files from local storage to NAS (${syncResult.hashVerified} hash-verified)`);
+            console.log(`Synced ${syncResult.synced} files from local storage to NAS (${syncResult.hashVerified} hash-verified)`);
           }
           if (syncResult.failed > 0) {
-            console.warn(`⚠️  Failed to sync ${syncResult.failed} files`);
+            console.warn(`WARNING: Failed to sync ${syncResult.failed} files`);
           }
           if (syncResult.hashFailed > 0) {
-            console.warn(`⚠️  ${syncResult.hashFailed} files failed hash verification after sync`);
+            console.warn(`WARNING: ${syncResult.hashFailed} files failed hash verification after sync`);
           }
 
           return;
         }
         attempts++;
         if (attempts < maxAttempts) {
-          console.log(`⏳ Waiting for NAS... (attempt ${attempts}/${maxAttempts})`);
+          console.log(`[NAS] Waiting for NAS... (attempt ${attempts}/${maxAttempts})`);
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
-      console.error('❌ NAS connection failed after 10 attempts - continuing with local storage');
+      console.error('[NAS] ERROR: Connection failed after 10 attempts - continuing with local storage');
       process.env.USE_NAS = 'false';
     }
   };
@@ -322,18 +322,18 @@ if (process.env.NODE_ENV !== 'test') {
 
     httpServer.listen(PORT, () => {
       console.log('========================================');
-      console.log(`🚀 INTRAK Server running on port ${PORT}`);
-      console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+      console.log(`INTRAK Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
       if (process.env.USE_NAS === 'true') {
-        console.log(`💾 Storage: NAS (${process.env.NAS_PATH})`);
-        console.log(`⏰ NAS Sync: Scheduled (${process.env.NAS_SYNC_CRON || '*/30 * * * *'})`);
+        console.log(`Storage: NAS (${process.env.NAS_PATH})`);
+        console.log(`NAS Sync: Scheduled (${process.env.NAS_SYNC_CRON || '*/30 * * * *'})`);
       } else {
-        console.log(`💾 Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);
+        console.log(`Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);
       }
       console.log('========================================');
       console.log('');
-      console.log('📋 Available endpoints:');
+      console.log('Available endpoints:');
       console.log('   POST   /api/auth/login');
       console.log('   POST   /api/auth/register');
       console.log('   GET    /api/test-auth (test authentication)');
@@ -344,7 +344,7 @@ if (process.env.NODE_ENV !== 'test') {
   };
 
   startServer().catch((error) => {
-    console.error('❌ Failed to start server:', error);
+    console.error('ERROR: Failed to start server:', error);
     process.exit(1);
   });
 }
