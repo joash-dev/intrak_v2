@@ -7,6 +7,7 @@ import checkDiskSpace from 'check-disk-space';
 import { prisma } from '../config/database';
 import { getNASStorageMetrics, getLocalStorageMetrics, getAllStorageAlerts, StorageAlert } from '../services/storageMonitor.service';
 import { getStoragePathWithFallback, syncLocalToNAS, validateNASConnection } from '../config/nas';
+import { runIntegrityCheck } from '../services/fileIntegrity.service';
 import {
   applyNASRuntimeConfigToEnv,
   getNASRuntimeConfig,
@@ -1133,13 +1134,44 @@ export const syncNASFromLocal = async (req: AuthRequest, res: Response) => {
 
 
     res.json({
-      message: `Sync complete. ${syncResult.synced} file(s) synced, ${syncResult.failed} failed.`,
+      message: `Sync complete. ${syncResult.synced} file(s) synced, ${syncResult.failed} failed, ${syncResult.hashVerified} hash-verified.`,
       ...syncResult
     });
   } catch (error) {
     console.error('Sync NAS config error:', error);
     res.status(500).json({
       message: 'Failed to sync local files to NAS',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+/**
+ * Run a full NAS ↔ Local file integrity check.
+ * Compares every file by size and MD5 hash; returns a detailed report.
+ */
+export const runNASIntegrityCheck = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    console.log(`🔍 Integrity check triggered by admin ${userId}`);
+    const report = await runIntegrityCheck();
+
+    res.json({
+      message: `Integrity check complete. ${report.totalFiles} files checked.`,
+      report,
+    });
+  } catch (error) {
+    console.error('Integrity check error:', error);
+    res.status(500).json({
+      message: 'Failed to run integrity check',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }

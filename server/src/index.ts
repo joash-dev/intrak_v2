@@ -11,6 +11,7 @@ import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, getStoragePath, syncLocalToNAS } from './config/nas';
+import { startNASSyncJob } from './jobs/nasSync.job';
 import { testDatabaseConnection, prisma } from './config/database';
 
 // Routes
@@ -280,10 +281,13 @@ if (process.env.NODE_ENV !== 'test') {
           console.log('🔄 Checking for local files to sync to NAS...');
           const syncResult = await syncLocalToNAS();
           if (syncResult.synced > 0) {
-            console.log(`✅ Synced ${syncResult.synced} files from local storage to NAS`);
+            console.log(`✅ Synced ${syncResult.synced} files from local storage to NAS (${syncResult.hashVerified} hash-verified)`);
           }
           if (syncResult.failed > 0) {
             console.warn(`⚠️  Failed to sync ${syncResult.failed} files`);
+          }
+          if (syncResult.hashFailed > 0) {
+            console.warn(`⚠️  ${syncResult.hashFailed} files failed hash verification after sync`);
           }
 
           return;
@@ -311,6 +315,11 @@ if (process.env.NODE_ENV !== 'test') {
     // Initialize Socket.IO
     initializeSocketServer(httpServer);
 
+    // Start scheduled NAS sync job (runs every 30 min by default)
+    if (process.env.USE_NAS === 'true') {
+      startNASSyncJob();
+    }
+
     httpServer.listen(PORT, () => {
       console.log('========================================');
       console.log(`🚀 INTRAK Server running on port ${PORT}`);
@@ -318,6 +327,7 @@ if (process.env.NODE_ENV !== 'test') {
       console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
       if (process.env.USE_NAS === 'true') {
         console.log(`💾 Storage: NAS (${process.env.NAS_PATH})`);
+        console.log(`⏰ NAS Sync: Scheduled (${process.env.NAS_SYNC_CRON || '*/30 * * * *'})`);
       } else {
         console.log(`💾 Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);
       }

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { computeFileHash } from '../services/fileIntegrity.service';
 
 export interface NASConfig {
   enabled: boolean;
@@ -271,29 +272,38 @@ export const resolveFilePath = (storedPath: string): string | null => {
 };
 
 /**
- * Sync files from local storage to NAS when NAS becomes available
- * This should be called when NAS reconnects
+ * Sync files from local storage to NAS when NAS becomes available.
+ * This should be called when NAS reconnects or on a scheduled basis.
+ *
+ * Enhanced: now compares file sizes (not just existence) so partially copied
+ * or outdated files are re-synced, and verifies integrity via MD5 after copy.
  */
-export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number }> => {
+export const syncLocalToNAS = async (): Promise<{
+  synced: number;
+  failed: number;
+  hashVerified: number;
+  hashFailed: number;
+}> => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
 
   if (!nasConfig.enabled) {
-    return { synced: 0, failed: 0 };
+    return { synced: 0, failed: 0, hashVerified: 0, hashFailed: 0 };
   }
 
   // Check if NAS is available
   const nasAvailable = await validateNASConnection();
   if (!nasAvailable) {
     console.log('⏳ NAS not available, skipping sync');
-    return { synced: 0, failed: 0 };
+    return { synced: 0, failed: 0, hashVerified: 0, hashFailed: 0 };
   }
 
   let synced = 0;
   let failed = 0;
+  let hashVerified = 0;
+  let hashFailed = 0;
 
   try {
-    // Sync documents
     const syncDirectory = async (localDir: string, nasDir: string) => {
       if (!fs.existsSync(localDir)) {
         return;
@@ -307,19 +317,53 @@ export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number
       const files = fs.readdirSync(localDir, { withFileTypes: true });
 
       for (const file of files) {
+        // Skip hidden / test files
+        if (file.name.startsWith('.')) continue;
+
         const localFilePath = path.join(localDir, file.name);
         const nasFilePath = path.join(nasDir, file.name);
 
         if (file.isDirectory()) {
-          // Recursively sync subdirectories
           await syncDirectory(localFilePath, nasFilePath);
         } else if (file.isFile()) {
-          // Only sync if file doesn't exist on NAS
+          let needsSync = false;
+
           if (!fs.existsSync(nasFilePath)) {
+            // File missing on NAS → sync
+            needsSync = true;
+          } else {
+            // File exists on NAS — compare sizes to catch partial copies
+            const localSize = fs.statSync(localFilePath).size;
+            const nasSize = fs.statSync(nasFilePath).size;
+            if (localSize !== nasSize) {
+              console.log(`📏 Size mismatch for ${file.name}: local=${localSize}, NAS=${nasSize} → re-syncing`);
+              needsSync = true;
+            }
+          }
+
+          if (needsSync) {
             try {
               fs.copyFileSync(localFilePath, nasFilePath);
               synced++;
-              console.log(`✅ Synced: ${file.name}`);
+
+              // Verify integrity after copy via MD5
+              try {
+                const [localHash, nasHash] = await Promise.all([
+                  computeFileHash(localFilePath),
+                  computeFileHash(nasFilePath),
+                ]);
+
+                if (localHash === nasHash) {
+                  hashVerified++;
+                  console.log(`✅ Synced & verified: ${file.name} (MD5: ${localHash})`);
+                } else {
+                  hashFailed++;
+                  console.error(`⚠️  Synced but hash mismatch: ${file.name} (local=${localHash}, NAS=${nasHash})`);
+                }
+              } catch (hashErr) {
+                // Hash computation failed — file was still copied
+                console.warn(`⚠️  Synced ${file.name} but could not verify hash:`, hashErr);
+              }
             } catch (error) {
               failed++;
               console.error(`❌ Failed to sync ${file.name}:`, error);
@@ -329,35 +373,28 @@ export const syncLocalToNAS = async (): Promise<{ synced: number; failed: number
       }
     };
 
-    // Sync documents directory
-    const localDocsDir = path.join(localPath, 'documents');
-    const nasDocsDir = path.join(nasConfig.mountPath, 'documents');
-    if (fs.existsSync(localDocsDir)) {
-      await syncDirectory(localDocsDir, nasDocsDir);
+    // Directories to sync
+    const syncDirs = ['documents', 'templates', 'profile-photos', 'company-proposals'];
+
+    for (const dir of syncDirs) {
+      const localDir = path.join(localPath, dir);
+      const nasDir = path.join(nasConfig.mountPath, dir);
+      if (fs.existsSync(localDir)) {
+        await syncDirectory(localDir, nasDir);
+      }
     }
 
-    // Sync templates directory
-    const localTemplatesDir = path.join(localPath, 'templates');
-    const nasTemplatesDir = path.join(nasConfig.mountPath, 'templates');
-    if (fs.existsSync(localTemplatesDir)) {
-      await syncDirectory(localTemplatesDir, nasTemplatesDir);
-    }
-
-    // Sync profile photos directory
-    const localPhotosDir = path.join(localPath, 'profile-photos');
-    const nasPhotosDir = path.join(nasConfig.mountPath, 'profile-photos');
-    if (fs.existsSync(localPhotosDir)) {
-      await syncDirectory(localPhotosDir, nasPhotosDir);
-    }
-
-    if (synced > 0) {
-      console.log(`✅ Sync complete: ${synced} files synced to NAS, ${failed} failed`);
+    if (synced > 0 || failed > 0) {
+      console.log(
+        `📦 Sync complete: ${synced} synced, ${failed} failed, ` +
+        `${hashVerified} hash-verified, ${hashFailed} hash-failed`,
+      );
     }
   } catch (error) {
     console.error('❌ Sync error:', error);
   }
 
-  return { synced, failed };
+  return { synced, failed, hashVerified, hashFailed };
 };
 
 /**

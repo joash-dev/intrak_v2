@@ -39,6 +39,7 @@ router.get('/nas-config', adminController.getNASConfig);
 router.put('/nas-config', adminController.updateNASConfig);
 router.post('/nas-config/test', adminController.testNASConfigConnection);
 router.post('/nas-config/sync', adminController.syncNASFromLocal);
+router.post('/nas-config/integrity-check', adminController.runNASIntegrityCheck);
 router.post('/system/backup', adminController.createSystemBackup);
 router.post('/system/cache/clear', adminController.clearSystemCache);
 router.post('/system/restart', adminController.restartSystem);
