@@ -4,17 +4,15 @@ import { syncLocalToNAS } from '../config/nas';
 let syncTask: cron.ScheduledTask | null = null;
 let isSyncing = false;
 
-/**
- * Start the scheduled NAS sync cron job.
- *
- * Default schedule: every 30 minutes ("*/30 * * * *").
- * Override with the NAS_SYNC_CRON environment variable.
- *
- * The job calls syncLocalToNAS() which:
- *   1. Copies local-only files to NAS
- *   2. Re-syncs files with size mismatches (partial copies)
- *   3. Verifies each copy via MD5 hash
- */
+// Start the scheduled NAS sync cron job.
+//
+// Default schedule: every 30 minutes ("*/30 * * * *").
+// Override with the NAS_SYNC_CRON environment variable.
+//
+// The job calls syncLocalToNAS() which:
+//   1. Copies local-only files to NAS
+//   2. Re-syncs files with size mismatches (partial copies)
+//   3. Verifies each copy via MD5 hash
 export const startNASSyncJob = (): void => {
   const schedule = process.env.NAS_SYNC_CRON || '*/30 * * * *';
 
