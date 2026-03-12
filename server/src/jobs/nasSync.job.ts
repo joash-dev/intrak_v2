@@ -1,7 +1,8 @@
 import cron from 'node-cron';
+import type { ScheduledTask } from 'node-cron';
 import { syncLocalToNAS } from '../config/nas';
 
-let syncTask: cron.ScheduledTask | null = null;
+let syncTask: ScheduledTask | null = null;
 let isSyncing = false;
 
 // Start the scheduled NAS sync cron job.
