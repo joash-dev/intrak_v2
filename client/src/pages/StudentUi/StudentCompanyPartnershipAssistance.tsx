@@ -254,7 +254,7 @@ const StudentCompanyPartnershipAssistance = () => {
     try {
       setLoading(true);
       // Load partnership messages
-      loadMessages(true);
+      await loadMessages(true);
 
       // Load partnership documents
       await loadPartnershipDocuments();

@@ -615,6 +615,55 @@ If you did not create an account, please ignore this email.
     });
   }
 
+  async sendCompanyProposalEmail(
+    recipientEmail: string,
+    recipientName: string,
+    title: string,
+    body: string,
+    proposalLink: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    const subject = `INTRAK - ${title}`;
+
+    const content = `
+      <p>Hello ${recipientName}!</p>
+      <p>${body}</p>
+
+      <a href="${proposalLink}" class="login-button">View Proposal</a>
+
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${proposalLink}</span></p>
+
+      <p>If you have any questions, please contact your OJT coordinator.</p>
+
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      title,
+      'https://img.icons8.com/ios-filled/50/ffffff/document.png'
+    );
+
+    const text = `
+${title}
+
+Hello ${recipientName}!
+
+${body}
+
+View proposal: ${proposalLink}
+
+This is an automated message from INTRAK System. Please do not reply to this email.
+    `.trim();
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+      text
+    });
+  }
+
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     // Test Resend connection
     if (this.emailProvider === 'resend' && this.resend) {
