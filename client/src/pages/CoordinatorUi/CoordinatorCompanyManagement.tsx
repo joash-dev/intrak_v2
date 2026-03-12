@@ -217,10 +217,10 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
   const unusedApprovedProposals = useMemo(() => {
     const existingNames = new Set(
-      (companies || []).map((company) => (company.name || "").trim().toLowerCase())
+      (companies || []).map((company) => normalizeForMatch(company.name))
     );
     return (approvedCompanyProposals || []).filter(
-      (proposal) => !existingNames.has((proposal.companyName || "").trim().toLowerCase())
+      (proposal) => !existingNames.has(normalizeForMatch(proposal.companyName))
     );
   }, [approvedCompanyProposals, companies]);
 

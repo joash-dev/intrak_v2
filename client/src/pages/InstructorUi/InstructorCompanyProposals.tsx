@@ -6,6 +6,7 @@ import {
   type CompanyProposal,
   type CompanyProposalStatus,
 } from '../../services/companyProposalService';
+import Skeleton from '../../components/Skeleton';
 
 const statusLabel: Record<CompanyProposalStatus, string> = {
   SUBMITTED_TO_INSTRUCTOR: 'Submitted to Instructor',
@@ -175,31 +176,82 @@ const InstructorCompanyProposals = () => {
   };
 
   if (loading) {
-    return <div className="text-sm text-gray-600 dark:text-gray-300">Loading company proposals...</div>;
+    return (
+      <div className="space-y-4">
+        {/* Header Skeleton */}
+        <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48 sm:w-64" />
+            <Skeleton className="h-4 w-full sm:w-80" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-lg mt-4" />
+        </div>
+        {/* Proposal Card Skeletons */}
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 space-y-4"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-5 w-40 sm:w-56" />
+                <Skeleton className="h-3 w-28 sm:w-36" />
+              </div>
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+              <Skeleton className="h-3 w-28" />
+              <Skeleton className="h-5 w-40" />
+            </div>
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-8 w-full rounded" />
+              <Skeleton className="h-8 w-full rounded" />
+            </div>
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Skeleton className="h-9 w-40 rounded-lg" />
+              <div className="flex gap-2 flex-1 sm:justify-end">
+                <Skeleton className="h-9 w-24 rounded-lg" />
+                <Skeleton className="h-9 w-24 rounded-lg" />
+                <Skeleton className="h-9 w-20 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+    <div className="space-y-3 sm:space-y-4">
+      {/* Header */}
+      <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Instructor Company Proposals</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Instructor Company Proposals</h2>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
             Review student files, add remarks, then forward, return, or reject.
           </p>
         </div>
-        <div className="mt-4 relative">
+        <div className="mt-3 sm:mt-4 relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by student or company"
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124]"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124] dark:text-white"
           />
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-sm text-gray-500 dark:text-gray-400">
+        <div className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 text-sm text-gray-500 dark:text-gray-400">
           No proposals found.
         </div>
       ) : (
@@ -215,28 +267,31 @@ const InstructorCompanyProposals = () => {
           return (
             <div
               key={proposal.id}
-              className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-4"
+              className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 space-y-3 sm:space-y-4"
             >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{proposal.companyName}</h3>
+              {/* Header: Company name + status */}
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{proposal.companyName}</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Student: {proposal.student.user.name}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${statusClass[proposal.status]}`}>
+                <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap self-start ${statusClass[proposal.status]}`}>
                   {statusLabel[proposal.status]}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
+              {/* Company Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-xs text-gray-600 dark:text-gray-300">
                 <p><strong>Address:</strong> {proposal.address || '-'}</p>
                 <p><strong>Industry:</strong> {proposal.industry || '-'}</p>
                 <p><strong>Contact Person:</strong> {proposal.contactPerson || '-'}</p>
                 <p><strong>Contact Email:</strong> {proposal.contactEmail || '-'}</p>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+              {/* Current Decision */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 sm:p-3">
                 <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Current Decision</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {getInstructorDecisionLabel(proposal.status)}
@@ -253,23 +308,24 @@ const InstructorCompanyProposals = () => {
                 )}
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+              {/* Files for Review */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 sm:p-3">
                 <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Files for Review</p>
                 {!hasInstructorEndorsement ? (
                   <p className="text-xs text-red-600 dark:text-red-400">
                     Upload your instructor endorsement first. Forward is disabled until this is uploaded.
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {[...studentFiles, ...instructorFiles].map((attachment) => (
                       <div
                         key={attachment.id}
                         className="flex items-center justify-between text-xs bg-white dark:bg-[#212124] rounded px-2 py-1.5 border border-gray-200 dark:border-gray-700"
                       >
-                        <span className="truncate mr-2">
-                          {attachment.filename} ({attachment.role})
+                        <span className="truncate mr-2 min-w-0">
+                          {attachment.filename} <span className="text-gray-400">({attachment.role})</span>
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={() => handlePreviewAttachment(attachment.id)}
                             className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -291,22 +347,24 @@ const InstructorCompanyProposals = () => {
                 )}
               </div>
 
+              {/* Remarks */}
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Instructor Remarks</label>
                 <textarea
                   rows={2}
                   value={remarksMap[proposal.id] || ''}
                   onChange={(e) => setRemarksMap((prev) => ({ ...prev, [proposal.id]: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124] dark:text-white text-sm"
                   placeholder="Required for return/reject. Optional for forward."
                 />
               </div>
 
-              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+              {/* Upload & Decision Actions */}
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
                 <div>
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Upload</p>
-                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer text-sm">
-                    <FileUp className="w-4 h-4" />
+                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer text-xs sm:text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <FileUp className="w-4 h-4 flex-shrink-0" />
                     Upload Endorsement
                     <input
                       type="file"
@@ -316,38 +374,38 @@ const InstructorCompanyProposals = () => {
                   </label>
                 </div>
 
-                <div className="lg:text-right">
+                <div className="sm:text-right">
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-1.5">Decision</p>
-                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <button
                       onClick={() => handleForward(proposal.id)}
                       disabled={!canReview || !hasInstructorEndorsement || processingId === proposal.id || uploadingId === proposal.id}
-                      className="px-3 py-2 text-sm rounded-lg bg-green-600 text-white disabled:opacity-50 inline-flex items-center gap-1"
+                      className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm rounded-lg bg-green-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1 transition-colors hover:bg-green-700"
                     >
-                      <CheckCircle className="w-4 h-4" /> Forward
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" /> Forward
                     </button>
 
                     <button
                       onClick={() => handleDecision(proposal.id, 'RETURNED_BY_INSTRUCTOR')}
                       disabled={!canReview || processingId === proposal.id}
-                      className="px-3 py-2 text-sm rounded-lg bg-amber-600 text-white disabled:opacity-50 inline-flex items-center gap-1"
+                      className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm rounded-lg bg-amber-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1 transition-colors hover:bg-amber-700"
                     >
-                      <RotateCcw className="w-4 h-4" /> Return
+                      <RotateCcw className="w-4 h-4 flex-shrink-0" /> Return
                     </button>
 
                     <button
                       onClick={() => handleDecision(proposal.id, 'REJECTED_BY_INSTRUCTOR')}
                       disabled={!canReview || processingId === proposal.id}
-                      className="px-3 py-2 text-sm rounded-lg bg-red-600 text-white disabled:opacity-50 inline-flex items-center gap-1"
+                      className="flex-1 sm:flex-none px-3 py-2 text-xs sm:text-sm rounded-lg bg-red-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1 transition-colors hover:bg-red-700"
                     >
-                      <XCircle className="w-4 h-4" /> Reject
+                      <XCircle className="w-4 h-4 flex-shrink-0" /> Reject
                     </button>
 
                     {(proposal.status === 'APPROVED' || proposal.status === 'REJECTED') && (
                       <button
                         onClick={() => handleNotifyStudent(proposal.id, proposal.status)}
                         disabled={processingId === proposal.id}
-                        className="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 disabled:opacity-50"
+                        className="w-full sm:w-auto px-3 py-2 text-xs sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 disabled:opacity-50 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         {processingId === proposal.id ? 'Notifying...' : notifiedMap[proposal.id] ? 'Notified' : 'Notify Student'}
                       </button>
