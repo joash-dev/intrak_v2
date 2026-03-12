@@ -30,12 +30,6 @@ const statusClass: Record<CompanyProposalStatus, string> = {
   REJECTED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
-const processableStatuses: CompanyProposalStatus[] = [
-  'FORWARDED_TO_COORDINATOR',
-  'UNDER_COORDINATOR_REVIEW',
-  'PENDING_EXTERNAL_APPROVAL',
-];
-
 const CoordinatorCompanyProposals = () => {
   const [proposals, setProposals] = useState<CompanyProposal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,10 +296,8 @@ const CoordinatorCompanyProposals = () => {
           ) : (
             <div className="space-y-4">
               {filtered.map((proposal) => {
-                const canProcess = processableStatuses.includes(proposal.status);
                 const canSendToPresident =
                   proposal.status === 'FORWARDED_TO_COORDINATOR' || proposal.status === 'UNDER_COORDINATOR_REVIEW';
-                const coordinatorDocs = proposal.attachments.filter((attachment) => attachment.role === 'COORDINATOR');
                 const canFinalizeNow = proposal.status === 'PENDING_EXTERNAL_APPROVAL';
                 const allDocs = proposal.attachments;
 
