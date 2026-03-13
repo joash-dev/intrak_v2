@@ -298,8 +298,9 @@ if (process.env.NODE_ENV !== 'test') {
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
-      console.error('[NAS] ERROR: Connection failed after 10 attempts - continuing with local storage');
-      process.env.USE_NAS = 'false';
+      // Keep USE_NAS=true so the system can detect when NAS comes back online
+      // The sync job and storage checks will handle fallback gracefully
+      console.error('[NAS] ERROR: Connection failed after 10 attempts - using local storage fallback (will keep checking for NAS)');
     }
   };
 
@@ -316,6 +317,7 @@ if (process.env.NODE_ENV !== 'test') {
     initializeSocketServer(httpServer);
 
     // Start scheduled NAS sync job (runs every 30 min by default)
+    // Always start when NAS is configured so it can detect NAS coming back online
     if (process.env.USE_NAS === 'true') {
       startNASSyncJob();
     }
@@ -326,7 +328,7 @@ if (process.env.NODE_ENV !== 'test') {
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
       if (process.env.USE_NAS === 'true') {
-        console.log(`Storage: NAS (${process.env.NAS_PATH})`);
+        console.log(`Storage: NAS (${process.env.NAS_PATH}) - with local fallback`);
         console.log(`NAS Sync: Scheduled (${process.env.NAS_SYNC_CRON || '*/30 * * * *'})`);
       } else {
         console.log(`Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);

@@ -1,19 +1,21 @@
 import cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
-import { syncLocalToNAS } from '../config/nas';
+import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 
 let syncTask: ScheduledTask | null = null;
 let isSyncing = false;
+let wasNASAvailable = false;
 
 // Start the scheduled NAS sync cron job.
 //
 // Default schedule: every 30 minutes ("*/30 * * * *").
 // Override with the NAS_SYNC_CRON environment variable.
 //
-// The job calls syncLocalToNAS() which:
-//   1. Copies local-only files to NAS
-//   2. Re-syncs files with size mismatches (partial copies)
-//   3. Verifies each copy via MD5 hash
+// The job:
+//   1. Re-validates NAS connectivity (detects NAS coming back online)
+//   2. Copies local-only files to NAS
+//   3. Re-syncs files with size mismatches (partial copies)
+//   4. Verifies each copy via MD5 hash
 export const startNASSyncJob = (): void => {
   const schedule = process.env.NAS_SYNC_CRON || '*/30 * * * *';
 
@@ -33,6 +35,23 @@ export const startNASSyncJob = (): void => {
     const startTime = Date.now();
 
     try {
+      // Re-validate NAS connectivity each run (detect NAS coming back online)
+      const isNASAvailable = await validateNASConnection();
+
+      if (isNASAvailable && !wasNASAvailable) {
+        console.log('[NAS Sync] NAS is now available! Reconnected successfully.');
+      } else if (!isNASAvailable && wasNASAvailable) {
+        console.warn('[NAS Sync] NAS has gone offline. Using local storage fallback.');
+      } else if (!isNASAvailable) {
+        console.log('[NAS Sync] NAS still unavailable, skipping sync (will retry next cycle)');
+      }
+
+      wasNASAvailable = isNASAvailable;
+
+      if (!isNASAvailable) {
+        return;
+      }
+
       console.log('[NAS Sync] Starting scheduled sync...');
       const result = await syncLocalToNAS();
 
