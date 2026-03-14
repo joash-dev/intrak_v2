@@ -60,8 +60,24 @@ export const getStoragePath = (): string => {
 const isNetworkMountSync = (mountPath: string): boolean => {
   try {
     const { execSync } = require('child_process');
-    // Check if the path is a mount point and if it's a network filesystem
-    const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
+    const mountOutput = execSync('mount', { encoding: 'utf8' });
+    const mountLines = mountOutput.split('\n').map((line: string) => line.trim()).filter(Boolean);
+
+    // Build candidate paths from most-specific to least-specific.
+    // This lets NAS_PATH like /mnt/nas/intrak/uploads match parent mount /mnt/nas.
+    const normalizedPath = path.resolve(mountPath);
+    const candidates: string[] = [];
+    let current = normalizedPath;
+    while (!candidates.includes(current)) {
+      candidates.push(current);
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+
+    const mountInfo = mountLines.find((line: string) =>
+      candidates.some(candidate => line.includes(` on ${candidate} `))
+    ) || '';
 
     // Look for network filesystem types: cifs, nfs, smbfs
     const isNetwork = mountInfo.includes('type cifs') ||
@@ -141,8 +157,24 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
 const isNetworkMount = (mountPath: string): boolean => {
   try {
     const { execSync } = require('child_process');
-    // Check if the path is a mount point and if it's a network filesystem
-    const mountInfo = execSync(`mount | grep "${mountPath}" || echo ""`, { encoding: 'utf8' });
+    const mountOutput = execSync('mount', { encoding: 'utf8' });
+    const mountLines = mountOutput.split('\n').map((line: string) => line.trim()).filter(Boolean);
+
+    // Build candidate paths from most-specific to least-specific.
+    // This lets NAS_PATH like /mnt/nas/intrak/uploads match parent mount /mnt/nas.
+    const normalizedPath = path.resolve(mountPath);
+    const candidates: string[] = [];
+    let current = normalizedPath;
+    while (!candidates.includes(current)) {
+      candidates.push(current);
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+
+    const mountInfo = mountLines.find((line: string) =>
+      candidates.some(candidate => line.includes(` on ${candidate} `))
+    ) || '';
 
     // Look for network filesystem types: cifs, nfs, smbfs
     const isNetwork = mountInfo.includes('type cifs') ||
