@@ -1,627 +1,509 @@
-# INTRAK Web Application User Manual
+# INTRAK User Manual
+
+## Document Control
+
+- **System Name:** INTRAK (Internship/OJT Tracking and Management System)
+- **Version:** 2.0
+- **Manual Version:** 2026.03
+- **Audience:** Students, Instructors, Coordinators, Industry Partners, Administrators
+- **Purpose:** Provide complete, role-based guidance for all user-facing features
+
+---
 
 ## Table of Contents
 
-- [1. Document Information](#1-document-information)
-- [2. Student Quick Start Guide](#2-student-quick-start-guide)
-- [3. System Overview](#3-system-overview)
-- [4. User Roles and Navigation](#4-user-roles-and-navigation)
-- [5. System Requirements](#5-system-requirements)
-- [6. Accessing the System](#6-accessing-the-system)
-- [7. Dashboard Overview](#7-dashboard-overview)
-- [8. Core Features and Functions](#8-core-features-and-functions)
-- [9. Administrative Functions](#9-administrative-functions)
-- [10. Troubleshooting](#10-troubleshooting)
-- [11. Logging Out](#11-logging-out)
-- [12. Support Information](#12-support-information)
+- [1. System Overview](#1-system-overview)
+- [2. Access and Login](#2-access-and-login)
+- [3. Navigation and Interface](#3-navigation-and-interface)
+- [4. Role Access Matrix](#4-role-access-matrix)
+- [5. Core Workflows (End-to-End)](#5-core-workflows-end-to-end)
+- [6. Student Portal Features](#6-student-portal-features)
+- [7. Instructor Portal Features](#7-instructor-portal-features)
+- [8. Coordinator Portal Features](#8-coordinator-portal-features)
+- [9. Industry Partner Portal Features](#9-industry-partner-portal-features)
+- [10. Admin Portal Features](#10-admin-portal-features)
+- [11. Security and Account Settings](#11-security-and-account-settings)
+- [12. Status Definitions and Business Rules](#12-status-definitions-and-business-rules)
+- [13. Troubleshooting Guide](#13-troubleshooting-guide)
+- [14. Support and Escalation](#14-support-and-escalation)
 
 ---
 
-<div class="page-break"></div>
+## 1. System Overview
 
-## 1. Document Information
+INTRAK centralizes internship operations in one platform:
 
-**System Name:** INTRAK (Internship Tracking and Management System)  
-**Version:** 2.0  
-**Prepared by:** INTRAK Development Team  
-**Publication Date:** March 2026  
-**Institution:** Pangasinan State University
+- Student onboarding and document submission
+- Company application and placement processing
+- Company partnership proposal workflow
+- Attendance logging and verification
+- Evaluations, compliance tracking, and reporting
+- Notifications, announcements, and role-based monitoring
 
-> **Figure 1.** [Insert Screenshot: System Cover Page or Login Banner]
+### 1.1 User Roles
 
----
-
-<div class="page-break"></div>
-
-## 2. Student Quick Start Guide
-
-This section provides a concise, student-only workflow for getting started in INTRAK.
-
-### 2.1 Log In and Open Dashboard
-
-1. Open the official INTRAK URL in a supported browser.
-2. Enter your school-issued email and password.
-3. Complete two-factor authentication (2FA), if prompted.
-4. Confirm that your dashboard loads correctly.
-
-### 2.2 Complete Priority Tasks
-
-1. Open `/student/documents` and submit all required files.
-2. Open `/student/companies` and apply to a partner company (if not yet assigned).
-3. Open `/student/attendance` and begin logging attendance using QR or manual entry.
-4. Open `/student/notifications` daily to monitor updates and required actions.
-
-### 2.3 Recommended Daily Routine
-
-1. Check notifications before starting work.
-2. Verify attendance status after each log submission.
-3. Track document remarks and resubmit corrected files immediately when requested.
-4. Review progress and completed hours from `/student/dashboard`.
-
-### 2.4 Common Student Routes
-
-- `/student/dashboard`
-- `/student/documents`
-- `/student/documents/form/:type`
-- `/student/templates`
-- `/student/companies`
-- `/student/partnership-assistance`
-- `/student/attendance`
-- `/student/evaluations`
-- `/student/settings`
-- `/student/notifications`
+- **Student**: submits requirements, applies to companies, logs attendance, views evaluations
+- **Instructor**: manages assigned students, reviews requirements, checks compliance, monitors reports
+- **Coordinator**: oversees the entire program, companies, proposals, announcements, and reporting
+- **Industry Partner**: verifies attendance and submits intern evaluations
+- **Admin**: manages platform settings, users, maintenance mode, and system-level controls
 
 ---
 
-<div class="page-break"></div>
+## 2. Access and Login
 
-## 3. System Overview
+### 2.1 Public Authentication Routes
 
-INTRAK is a web-based platform for managing internship and on-the-job training (OJT) activities in a centralized environment. It enables schools, students, and partner companies to manage requirements, attendance, evaluations, and internship progress efficiently.
+- `/login`
+- `/forgot-password`
+- `/reset-password`
+- `/verify-email`
 
-### 3.1 Purpose
+### 2.2 Login Process
 
-1. Centralize internship records and required documentation.
-2. Streamline document submission and review workflows.
-3. Monitor attendance and accumulated internship hours in real time.
-4. Strengthen communication among students, school personnel, and industry supervisors.
+1. Open the official system URL.
+2. Enter email and password.
+3. If two-factor authentication is enabled, enter:
+   - one-time email code, or
+   - backup code.
+4. System redirects to your role dashboard.
 
-### 3.2 Intended Users
+### 2.3 Password Recovery
 
-- Students enrolled in internship/OJT programs
-- Instructors supervising student internship progress
-- Coordinators overseeing internship operations
-- Industry Partners/Supervisors validating attendance and evaluations
-- Administrators managing users and system configuration
+1. Open `/forgot-password`.
+2. Submit your registered email.
+3. Open reset link from email.
+4. Set a new password on `/reset-password`.
 
----
+### 2.4 Email Verification
 
-<div class="page-break"></div>
-
-## 4. User Roles and Navigation
-
-### 4.1 Student
-
-**Base path:** `/student`
-
-1. `/student/dashboard`  
-   Student home page displaying progress cards, completed hours, document status, company details, and announcements.
-2. `/student/documents`  
-   Requirements checklist where students upload documents, track review status, read remarks, and resubmit when required.
-3. `/student/documents/form/:type`  
-   Dynamic form page for selected document types, including form completion, preview, and submission.
-4. `/student/templates`  
-   Template repository for downloading official forms and files provided by instructors.
-5. `/student/companies`  
-   Company application page for browsing partner organizations, submitting applications, and tracking status.
-6. `/student/partnership-assistance`  
-   Support page for students without company placement and for company proposal concerns.
-7. `/student/attendance`  
-   Attendance module for QR generation, manual logs, hour tracking, calendar/list views, and DTR export.
-8. `/student/evaluations`  
-   Evaluation results page showing submitted ratings and feedback.
-9. `/student/settings`  
-   Account settings for profile, password, preferences, and security options.
-10. `/student/notifications`  
-    Notification center for updates related to documents, attendance, evaluations, and announcements.
-
-### 4.2 Instructor
-
-**Base path:** `/instructor`
-
-1. `/instructor/dashboard`  
-   Instructor home page summarizing assigned students and key activity.
-2. `/instructor/students`  
-   Student management page for monitoring progress and internship status.
-3. `/instructor/documents`  
-   Document review module for approving, rejecting, or requesting resubmission with remarks.
-4. `/instructor/applications`  
-   Company application review page for student placement requests.
-5. `/instructor/company-proposals`  
-   Proposal review page for student-submitted company proposals.
-6. `/instructor/checklist`  
-   Checklist monitoring page for requirement completion tracking.
-7. `/instructor/reports`  
-   Reporting module for attendance and performance reports with export options.
-8. `/instructor/settings`  
-   Account and preference settings.
-9. `/instructor/notifications`  
-   Notification center for submissions, attendance updates, and announcements.
-
-### 4.3 Coordinator
-
-**Base path:** `/coordinator`
-
-1. `/coordinator/dashboard`  
-   Coordinator home page displaying program-wide metrics, activity, and alerts.
-2. `/coordinator/students`  
-   Student management page for monitoring assignment and progress status.
-3. `/coordinator/documents`  
-   Centralized review page for student document submissions.
-4. `/coordinator/companies`  
-   Company management page for maintaining partner company records.
-5. `/coordinator/company-proposals`  
-   Company proposal decision page for review and approval actions.
-6. `/coordinator/announcements`  
-   Announcement publishing page for role-based and system-wide updates.
-7. `/coordinator/reports`  
-   Program reporting module for monitoring and export.
-8. `/coordinator/settings`  
-   Account and system preference settings.
-9. `/coordinator/notifications`  
-   Notification center for coordinator-level actions and updates.
-
-### 4.4 Industry Partner / Supervisor
-
-**Base path:** `/industry-partner`
-
-1. `/industry-partner/dashboard`  
-   Supervisor home page displaying assigned interns and high-level progress.
-2. `/industry-partner/attendance`  
-   Attendance verification module for QR scanning and log approval/rejection.
-3. `/industry-partner/documents`  
-   Document viewing page for assigned intern submissions.
-4. `/industry-partner/evaluations`  
-   Evaluation page for rating intern performance and submitting comments.
-5. `/industry-partner/settings`  
-   Account settings page.
-6. `/industry-partner/notifications`  
-   Notification center for attendance and intern-related updates.
-
-### 4.5 Administrator
-
-**Base path:** `/admin`
-
-1. `/admin/dashboard`  
-   Admin home page with system health indicators, usage metrics, and platform alerts.
-2. `/admin/users`  
-   User administration page for account creation, editing, role assignment, and lifecycle management.
-3. `/admin/companies`  
-   Company administration page for partner company records and availability management.
-4. `/admin/settings`  
-   System configuration page for security, maintenance mode, and policy settings.
-5. `/admin/notifications`  
-   Notification center for system-level events and warnings.
+Users can verify account email and check verification status from Settings security sections.
 
 ---
 
-<div class="page-break"></div>
+## 3. Navigation and Interface
 
-## 5. System Requirements
+### 3.1 Main Layout Pattern
 
-### 5.1 Hardware Requirements
+All role portals use:
 
-**Minimum:**
+- Sidebar navigation with role-specific modules
+- Header shortcuts (notifications and profile/settings)
+- Notification unread indicators
+- Logout confirmation modal
 
-- Dual-core processor
-- 4 GB RAM
-- 1 GB available storage
-- Stable internet connection
+### 3.2 Common UX Features
 
-**Recommended:**
-
-- Intel i5 / Ryzen 5 or higher
-- 8 GB RAM or higher
-- 5 GB available storage
-- Reliable broadband internet
-
-### 5.2 Software Requirements
-
-- Operating System: Windows 10/11, macOS, or Linux
-- PDF reader for exported files
-- Modern internet-enabled web browser
-
-### 5.3 Supported Browsers
-
-- Google Chrome (recommended)
-- Microsoft Edge
-- Mozilla Firefox
-- Safari (latest version)
+- Responsive layout (desktop and mobile)
+- Light/dark/system theme preference
+- Session protection and role-based route guards
+- Error pages (`/error/:code`, `404`, `500`)
+- Maintenance mode (non-admin users see maintenance page when enabled)
 
 ---
 
-<div class="page-break"></div>
+## 4. Role Access Matrix
 
-## 6. Accessing the System
-
-### 6.1 Opening the Website
-
-1. Open a supported web browser.
-2. Enter the official INTRAK URL provided by your school or administrator.
-3. Wait for the login page to load.
-
-> **Figure 2.** [Insert Screenshot: Login Page]
-
-### 6.2 Logging In
-
-1. Enter your registered email address.
-2. Enter your password.
-3. Click **Continue**.
-4. If prompted, enter your two-factor authentication (2FA) code.
-
-> **Figure 3.** [Insert Screenshot: Two-Factor Authentication Screen]
-
-### 6.3 Account Provisioning
-
-User accounts are created by an Administrator or authorized school personnel.
-
-If you do not yet have an account:
-
-1. Contact your Coordinator or Administrator.
-2. Provide required details (name, email, role, and related profile information).
-3. Wait for account activation confirmation.
+| Role | Base Path | Main Modules |
+| --- | --- | --- |
+| Student | `/student` | Dashboard, Documents, Templates, Companies, Partnership Assistance, Attendance, Evaluations, Settings, Notifications |
+| Instructor | `/instructor` | Dashboard, Notifications, Student Documents, Company Applications, Company Proposals, Students, Reports, Settings |
+| Coordinator | `/coordinator` | Dashboard, Students, Documents, Companies, Company Proposals, Announcements, Reports, Settings, Notifications |
+| Industry Partner | `/industry-partner` | Dashboard, Attendance, Documents, Evaluations, Settings, Notifications |
+| Admin | `/admin` | Dashboard, Users, Companies, Settings, Notifications |
 
 ---
 
-<div class="page-break"></div>
+## 5. Core Workflows (End-to-End)
 
-## 7. Dashboard Overview
+### 5.1 Document Compliance Workflow
 
-After authentication, users are redirected to a role-specific dashboard.
+1. Student uploads or generates required document.
+2. Instructor/Coordinator reviews submission.
+3. Reviewer approves, rejects, or requests resubmission with remarks.
+4. Student monitors status and submits corrections if required.
+5. Compliance reflected in dashboards/reports.
 
-### 7.1 Main Dashboard Components
+### 5.2 Company Placement Workflow
 
-Common dashboard elements include:
+1. Student browses companies and submits application.
+2. Instructor/Coordinator reviews application.
+3. Status updated to approved/rejected/withdrawn.
+4. Once assigned, attendance and evaluation modules become fully usable.
 
-1. Status cards (documents, attendance, progress, alerts)
-2. Recent activity summaries
-3. Notifications and announcements
-4. Quick-access links to major modules
+### 5.3 Partnership Proposal Workflow (for non-listed companies)
 
-> **Figure 4.** [Insert Screenshot: Role Dashboard]
+1. Student submits company proposal in Partnership Assistance.
+2. Student uploads supporting attachments.
+3. Instructor reviews and either returns, rejects, or forwards to coordinator.
+4. Coordinator performs final decision and updates status.
 
-### 7.2 Sidebar Navigation
+### 5.4 Attendance and Evaluation Workflow
 
-Common menu items include:
-
-- Dashboard
-- Documents
-- Attendance
-- Reports
-- Settings
-- Notifications
-
-Some menu items are visible only to specific user roles.
-
-> **Figure 5.** [Insert Screenshot: Sidebar Navigation]
+1. Student logs attendance (manual/QR supported by workflow).
+2. Industry Partner verifies attendance.
+3. Industry Partner submits performance evaluation.
+4. Student sees evaluation results in Student Evaluations.
 
 ---
 
-<div class="page-break"></div>
+## 6. Student Portal Features
 
-## 8. Core Features and Functions
+Base path: `/student`
 
-### 8.1 Document Management
+### 6.1 Dashboard (`/student/dashboard`)
 
-**Routes:**
-- Student: `/student/documents`
-- Student Form Pages: `/student/documents/form/:type`
-- Instructor Review: `/instructor/documents`
-- Coordinator Review: `/coordinator/documents`
-- Supervisor View: `/industry-partner/documents`
+- View current progress and internship summary
+- Track document status and completion indicators
+- View assigned company/supervisor context
+- Access announcements and recent updates quickly
 
-#### Function
+### 6.2 Documents (`/student/documents`)
 
-Supports student submission of internship requirements and role-based review by instructors and coordinators.
+- Upload required internship documents
+- View requirement checklist by phase
+- Track document status per submission
+- Read reviewer remarks and resubmit when needed
+- Access shared-document acceptance actions (if assigned)
 
-#### Procedure (Student)
+### 6.3 Dynamic Document Forms (`/student/documents/form/:type`)
 
-1. Navigate to **Documents**.
-2. Select a requirement.
-3. Click **Upload** or **Fill Up**.
-4. Submit the document.
-5. Monitor status updates (**Pending**, **Approved**, **Rejected**, **Resubmit**).
+- Fill structured document forms (instead of file-only upload)
+- Preview generated document before submission
+- Finalize and submit directly to document workflow
+- Supports specific official forms (example: endorsement variants)
 
-> **Figure 6.** [Insert Screenshot: Student Documents Page]
+### 6.4 Templates (`/student/templates`)
 
-#### Procedure (Instructor/Coordinator)
+- Download official document templates published by authorized personnel
+- Use templates as source files for requirement preparation
 
-1. Navigate to **Documents**.
-2. Open a student submission.
-3. Review the attached file.
-4. Approve, reject, or request resubmission.
-5. Add remarks as required.
+### 6.5 Companies (`/student/companies`)
 
-> **Figure 7.** [Insert Screenshot: Document Review Page]
+- Browse available partner companies
+- Review company details and slots
+- Submit placement application
+- View current application state
 
-#### Restrictions and Notes
+### 6.6 Partnership Assistance (`/student/partnership-assistance`)
 
-- Accepted file format: **PDF only**
-- Maximum file size: **10 MB**
-- Some sections may be locked until prerequisite requirements are completed
+- Submit proposal for a non-listed company
+- Upload proposal attachments
+- View proposal timeline and status progression
+- Use messaging thread for follow-ups
+- Check required pre-deployment document readiness
 
-### 8.2 Company Application and Assignment
+### 6.7 Attendance (`/student/attendance`)
 
-**Routes:**
-- Student Company Listing and Application: `/student/companies`
-- Student Partnership Assistance: `/student/partnership-assistance`
-- Instructor Application Review: `/instructor/applications`
-- Instructor Proposal Review: `/instructor/company-proposals`
-- Coordinator Company Management: `/coordinator/companies`
-- Coordinator Proposal Review: `/coordinator/company-proposals`
+- Log attendance entries
+- Use verification-supported methods (for implemented policy flow)
+- Review logs and total completed hours
+- Track verification status and corrections
+- Export attendance outputs where available in UI
 
-#### Function
+### 6.8 Evaluations (`/student/evaluations`)
 
-Allows students to browse partner companies and submit applications for placement.
+- View evaluation ratings and comments submitted by authorized evaluators
+- Monitor evaluation history for internship performance
 
-#### Procedure (Student)
+### 6.9 Notifications (`/student/notifications`)
 
-1. Navigate to **Companies**.
-2. Search or browse available companies.
-3. Select a company profile.
-4. Click **Apply** and submit the application.
-5. Monitor application status updates.
+- View system and workflow alerts
+- Mark notifications as read
+- Open linked modules directly from notification items
 
-> **Figure 8.** [Insert Screenshot: Company Selection Page]
+### 6.10 Settings (`/student/settings`)
 
-#### Restrictions and Notes
-
-- Depending on policy, users may be restricted from applying to multiple companies simultaneously.
-- Partnership Assistance is typically available only when no company is assigned.
-
-### 8.3 Attendance Management
-
-**Routes:**
-- Student Attendance: `/student/attendance`
-- Supervisor Attendance Verification: `/industry-partner/attendance`
-
-#### Function
-
-Tracks attendance logs and total internship hours.
-
-#### Procedure (Student)
-
-1. Navigate to **Attendance**.
-2. Select **Generate QR** or **Manual Log**.
-3. For QR logging, present the generated code to your supervisor.
-4. For manual logging, enter date, time-in, and time-out, then submit.
-5. Review attendance status in calendar or list view.
-
-> **Figure 9.** [Insert Screenshot: Student Attendance Page]
-
-#### Procedure (Supervisor)
-
-1. Navigate to **Attendance**.
-2. Open **QR Scanner**.
-3. Scan the student QR code.
-4. Approve or reject logs as needed.
-
-> **Figure 10.** [Insert Screenshot: Supervisor QR Scanner]
-
-#### Restrictions and Notes
-
-- Attendance access may require an approved company and supervisor assignment.
-- QR codes expire after a short interval.
-- Rejected logs may require correction and resubmission.
-
-### 8.4 Evaluations
-
-**Routes:**
-- Student Evaluation View: `/student/evaluations`
-- Supervisor Evaluation Submission: `/industry-partner/evaluations`
-
-#### Function
-
-Enables authorized personnel to evaluate student performance.
-
-#### Procedure
-
-1. Navigate to **Evaluations**.
-2. Select a student record.
-3. Complete ratings and comments.
-4. Submit the evaluation.
-5. Students may view completed results in their account.
-
-> **Figure 11.** [Insert Screenshot: Evaluation Form]
-
-#### Restrictions and Notes
-
-- Only authorized roles can submit evaluations.
-- Editing may be restricted after submission, depending on policy.
-
-### 8.5 Reports
-
-**Routes:**
-- Instructor Reports: `/instructor/reports`
-- Coordinator Reports: `/coordinator/reports`
-- Student DTR Export (within Attendance): `/student/attendance`
-
-#### Function
-
-Generates attendance and performance reports for monitoring and documentation.
-
-#### Procedure
-
-1. Navigate to **Reports**.
-2. Configure filters (date range, status, user group).
-3. Click **Generate**.
-4. Export to PDF or Excel, if available.
-
-> **Figure 12.** [Insert Screenshot: Reports Page]
-
-#### Restrictions and Notes
-
-- Export formats vary by role and permissions.
-- Large date ranges may increase report generation time.
-
-### 8.6 Notifications and Announcements
-
-**Routes:**
-- Student Notifications: `/student/notifications`
-- Instructor Notifications: `/instructor/notifications`
-- Coordinator Notifications: `/coordinator/notifications`
-- Supervisor Notifications: `/industry-partner/notifications`
-- Admin Notifications: `/admin/notifications`
-- Coordinator Announcements: `/coordinator/announcements`
-
-#### Function
-
-Provides timely updates on submissions, approvals, reminders, and system alerts.
-
-#### Procedure
-
-1. Open **Notifications** from the sidebar or bell icon.
-2. Review unread updates.
-3. Open linked modules directly from each notification.
-
-> **Figure 13.** [Insert Screenshot: Notifications Panel]
+- **Profile**: update personal details and emergency contacts
+- **Profile Photo**: upload/remove avatar
+- **Password**: change current password with strength guidance
+- **Email Verification**: send/resend and verify email status
+- **Two-Factor Security**: enable/disable 2FA and backup codes
+- **Last Login Info**: view account access details
+- **Notifications Preferences**: control notification channels
+- **Appearance**: light/dark/system mode
+- **Preferences**: language/date/time formats
+- **Help & About**: built-in help references and app details
 
 ---
 
-<div class="page-break"></div>
+## 7. Instructor Portal Features
 
-## 9. Administrative Functions
+Base path: `/instructor`
 
-The following functions are available only to Administrator accounts.
+### 7.1 Dashboard (`/instructor/dashboard`)
 
-### 9.1 User Management
+- View assigned student performance at a glance
+- Monitor pending submissions and key updates
+- Access quick links to review tasks
 
-**Route:** `/admin/users`
+### 7.2 Notifications (`/instructor/notifications`)
 
-1. Navigate to **Admin > Users**.
-2. Add, edit, deactivate, or delete user accounts.
-3. Assign roles and required profile fields.
-4. Save changes.
+- Receive alerts on student submissions and actions
+- Manage read/unread notification states
 
-> **Figure 14.** [Insert Screenshot: Admin User Management]
+### 7.3 Student Documents (`/instructor/documents`)
 
-### 9.2 System Settings
+- Review student document uploads
+- Approve/reject with remarks
+- Request resubmission when corrections are needed
+- Add feedback entries to document history
 
-**Route:** `/admin/settings`
+### 7.4 Company Applications (`/instructor/applications`)
 
-1. Navigate to **Admin > Settings**.
-2. Configure policies such as session timeout and security controls.
-3. Manage maintenance mode settings.
-4. Save changes.
+- Review company applications submitted by students
+- Approve, reject, or update decision context
+- Track student placement readiness
 
-> **Figure 15.** [Insert Screenshot: Admin Settings]
+### 7.5 Company Proposals (`/instructor/company-proposals`)
 
-### 9.3 Data and Submission Oversight
+- Review non-listed company proposals
+- Return for correction, reject, or forward to coordinator
+- Manage proposal-level remarks
 
-**Routes:** `/admin/dashboard`, `/admin/companies`, `/admin/notifications`
+### 7.6 Students (`/instructor/students`)
 
-1. Review system-wide document and attendance trends.
-2. Monitor alerts, usage, and storage conditions.
-3. Export required system or report data.
+- View assigned students and profile details
+- Manage student records within role permissions
+- Review student timeline and activity context
 
-> **Figure 16.** [Insert Screenshot: Admin Dashboard]
+### 7.7 Reports (`/instructor/reports`)
 
----
+- Generate monitoring and compliance reports
+- Analyze attendance and requirement completion
+- Export report outputs where enabled
 
-<div class="page-break"></div>
+### 7.8 Settings (`/instructor/settings`)
 
-## 10. Troubleshooting
-
-### 10.1 Unable to Log In
-
-**Possible Causes:**
-
-- Incorrect email or password
-- Inactive account
-- Temporary service disruption
-
-**Resolution:**
-
-1. Re-enter credentials carefully.
-2. Use **Forgot Password**.
-3. Contact the Administrator if access issues persist.
-
-### 10.2 OTP or Email Not Received
-
-**Resolution:**
-
-1. Check Spam/Junk folders.
-2. Wait at least 60 seconds, then request resend.
-3. Verify your registered email with the Administrator.
-
-### 10.3 Document Upload Failed
-
-**Resolution:**
-
-1. Confirm the file is in PDF format.
-2. Confirm file size is below 10 MB.
-3. Rename the file and upload again.
-4. Retry using a stable internet connection.
-
-### 10.4 Attendance Not Recorded
-
-**Resolution:**
-
-1. Verify company and supervisor assignment.
-2. Regenerate the QR code and rescan.
-3. Use manual logging if QR is unavailable.
-4. Report unresolved issues to your supervisor or coordinator.
-
-### 10.5 Page Not Loading Properly
-
-**Resolution:**
-
-1. Refresh the browser.
-2. Clear browser cache.
-3. Switch to another supported browser.
-4. Check internet connectivity.
+- Manage profile and account preferences
+- Update password and security settings
+- Configure theme and preference options
 
 ---
 
-<div class="page-break"></div>
+## 8. Coordinator Portal Features
 
-## 11. Logging Out
+Base path: `/coordinator`
 
-To log out securely:
+### 8.1 Dashboard (`/coordinator/dashboard`)
 
-1. Click your profile menu or logout icon.
-2. Click **Logout**.
-3. Confirm that you are redirected to the login page.
+- Program-wide oversight with key metrics
+- Quick access to students, documents, companies, and announcements
 
-> **Figure 17.** [Insert Screenshot: Logout Confirmation]
+### 8.2 Students (`/coordinator/students`)
 
-**Important:**
+- Monitor all student records across the program
+- Assign or reassign instructors where authorized
+- Review progress and intervention needs
 
-- Always log out when using shared or public devices.
+### 8.3 Documents (`/coordinator/documents`)
+
+- Conduct centralized document review and approvals
+- Apply final review decisions when needed
+
+### 8.4 Companies (`/coordinator/companies`)
+
+- Manage partner company records
+- Track company internship capacity and assignment context
+
+### 8.5 Company Proposals (`/coordinator/company-proposals`)
+
+- Perform coordinator-level decisioning for proposals
+- Update status to final states according to policy
+
+### 8.6 Announcements (`/coordinator/announcements`)
+
+- Create and publish announcements
+- Target audience groups (all or role-specific)
+- Manage pinned and informational updates
+
+### 8.7 Reports (`/coordinator/reports`)
+
+- Generate program-wide operational reports
+- Export monitoring outputs for compliance and administration
+
+### 8.8 Settings and Notifications
+
+- `/coordinator/settings`: profile/security/preferences
+- `/coordinator/notifications`: system and workflow alerts
 
 ---
 
-<div class="page-break"></div>
+## 9. Industry Partner Portal Features
 
-## 12. Support Information
+Base path: `/industry-partner`
 
-For account or system concerns, contact:
+### 9.1 Dashboard (`/industry-partner/dashboard`)
 
-- **System Administrator:** [Insert Name]
-- **Email:** [Insert Support Email]
-- **Phone:** [Insert Contact Number]
-- **Office/Department:** [Insert Office Name]
-- **Support Hours:** [Insert Business Hours]
+- View assigned interns and monitoring overview
 
-For urgent concerns, include the following details:
+### 9.2 Attendance (`/industry-partner/attendance`)
 
-1. Full name
-2. Role (Student/Instructor/Coordinator/Supervisor/Administrator)
-3. Screenshot of the issue
-4. Date and time the issue occurred
+- Verify student attendance entries
+- Approve or reject logs with remarks
+- Apply verification actions required by workflow
 
-> **Figure 18.** [Insert Screenshot: Help or Support Section]
+### 9.3 Documents (`/industry-partner/documents`)
+
+- View student-related documents relevant to supervised interns
+
+### 9.4 Evaluations (`/industry-partner/evaluations`)
+
+- Submit intern performance evaluations
+- Provide criteria ratings and comments
+
+### 9.5 Settings and Notifications
+
+- `/industry-partner/settings`: account, security, preferences
+- `/industry-partner/notifications`: alerts and updates
 
 ---
 
-End of document.
+## 10. Admin Portal Features
+
+Base path: `/admin`
+
+### 10.1 Dashboard (`/admin/dashboard`)
+
+- View high-level system health and operational indicators
+
+### 10.2 User Management (`/admin/users`)
+
+- Create and manage users across roles
+- Update user profile, account state, and access context
+- Remove users where permitted by policy
+
+### 10.3 Company Management (`/admin/companies`)
+
+- Maintain master company records
+- Support institutional company data governance
+
+### 10.4 Admin Settings (`/admin/settings`)
+
+- Configure system settings
+- Manage maintenance mode and emergency controls
+- Export/import admin setting files
+- Manage infrastructure options (including NAS-related operations where configured)
+
+### 10.5 Notifications (`/admin/notifications`)
+
+- Monitor system-level notifications and alerts
+
+---
+
+## 11. Security and Account Settings
+
+### 11.1 Authentication and Authorization
+
+- Role-based route protection for all portals
+- Access token and refresh token session model
+- Unauthorized users redirected to login
+
+### 11.2 Two-Factor Authentication (2FA)
+
+- Enable/disable from account settings (supported roles via settings flow)
+- Login challenge with one-time code
+- Backup code verification and regeneration support
+
+### 11.3 Email Verification
+
+- Send verification email
+- Verify account via token workflow
+- Check verification status inside account settings
+
+### 11.4 Profile Photo Management
+
+- Upload profile photo
+- Replace or remove photo
+- Updates reflected across portal header/profile panels
+
+---
+
+## 12. Status Definitions and Business Rules
+
+### 12.1 Document Status
+
+- `PENDING`: submitted and waiting review
+- `APPROVED`: accepted
+- `REJECTED`: not accepted
+- `RESUBMISSION_REQUESTED`: correction required before approval
+
+### 12.2 Company Application Status
+
+- `PENDING`
+- `APPROVED`
+- `REJECTED`
+- `WITHDRAWN`
+
+### 12.3 Company Proposal Status
+
+- `SUBMITTED_TO_INSTRUCTOR`
+- `RETURNED_BY_INSTRUCTOR`
+- `REJECTED_BY_INSTRUCTOR`
+- `FORWARDED_TO_COORDINATOR`
+- `UNDER_COORDINATOR_REVIEW`
+- `PENDING_EXTERNAL_APPROVAL`
+- `APPROVED`
+- `REJECTED`
+
+### 12.4 Attendance Notes
+
+- Verification status depends on reviewer actions
+- Method can include policy-driven verification types
+- Access to attendance/evaluation may require company + supervisor assignment
+
+---
+
+## 13. Troubleshooting Guide
+
+### 13.1 Cannot Log In
+
+- Confirm correct email/password.
+- Check if account is active.
+- Use `/forgot-password` if needed.
+- Contact admin if issue persists.
+
+### 13.2 Did Not Receive Verification or 2FA Code
+
+- Check spam/junk folder.
+- Wait briefly, then resend code.
+- Confirm registered email is correct.
+
+### 13.3 Document Upload/Submission Fails
+
+- Verify file type and size meet policy.
+- Retry on stable internet.
+- Check if document type requires form-based submission.
+
+### 13.4 Attendance Not Available
+
+- Confirm student has assigned company and supervisor.
+- Verify current application/proposal status.
+- Ask coordinator/instructor to review assignment state.
+
+### 13.5 Feature Not Visible
+
+- Some modules are role-based or condition-based.
+- Recheck logged-in role and active workflow status.
+
+---
+
+## 14. Support and Escalation
+
+For support requests, provide:
+
+- Full name and role
+- Screenshot/video of issue
+- Date/time encountered
+- Module/page URL
+- Short description of expected vs actual behavior
+
+Recommended escalation path:
+
+1. Student to Instructor
+2. Instructor to Coordinator
+3. Coordinator to Admin/Technical Team
+
+---
+
+End of manual.
