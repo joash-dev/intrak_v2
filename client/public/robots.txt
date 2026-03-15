@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /instructor
+Disallow: /coordinator
+Disallow: /industry-partner
+Disallow: /student
+
+Sitemap: https://intrak.site/sitemap.xml
