@@ -260,7 +260,7 @@ const App: React.FC = () => {
               <Route path="/error" element={<ErrorPage errorCode={500} />} />
 
               {/* default + catch-all */}
-              <Route path="/" element={<Navigate to="/documentation/" replace />} />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="*" element={<ErrorPage errorCode={404} />} />
             </Routes>
           </Suspense>

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INTRAK Documentation Portal | OJT Management System</title>
+<link rel="icon" type="image/png" href="/just_logo.png">
+<link rel="apple-touch-icon" href="/just_logo.png"><title>INTRAK Documentation Portal | OJT Management System</title>
 <meta name="description" content="INTRAK Documentation Portal for students, instructors, coordinators, industry partners, and admins. Explore role-based guides, workflows, troubleshooting, and support.">
 <link rel="canonical" href="https://intrak.site/">
 <meta property="og:title" content="INTRAK Documentation Portal">
@@ -924,7 +925,7 @@ footer {
     <li><a href="#features">Features</a></li>
     <li><a href="#workflows">Workflows</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="/documentation/manuals/full/" class="nav-cta">Open Documentation</a></li>
+    <li><a href="/manuals/full/" class="nav-cta">Open Documentation</a></li>
   </ul>
 </nav>
 
@@ -1363,7 +1364,7 @@ footer {
   <div class="footer-meta">
     <span>Version 2.0</span>
     <span>Manual 2026.03</span>
-    <a href="/documentation/manuals/full/">User Manual</a>
+    <a href="/manuals/full/">User Manual</a>
   </div>
 </footer>
 
@@ -1402,18 +1403,18 @@ footer {
 
   // Role cards -> open manual by role
   const roleManualMap = {
-    '/student': '/documentation/manuals/student/',
-    '/instructor': '/documentation/manuals/instructor/',
-    '/coordinator': '/documentation/manuals/coordinator/',
-    '/industry-partner': '/documentation/manuals/industry-partner/',
-    '/admin': '/documentation/manuals/admin/'
+    '/student': '/manuals/student/',
+    '/instructor': '/manuals/instructor/',
+    '/coordinator': '/manuals/coordinator/',
+    '/industry-partner': '/manuals/industry-partner/',
+    '/admin': '/manuals/admin/'
   };
 
   document.querySelectorAll('#roles .role-card').forEach(card => {
     const pathEl = card.querySelector('.role-path');
     if (!pathEl) return;
     const rolePath = pathEl.textContent.trim().toLowerCase();
-    const targetUrl = roleManualMap[rolePath] || '/documentation/manuals/student/';
+    const targetUrl = roleManualMap[rolePath] || '/manuals/student/';
 
     if (card.getAttribute('aria-hidden') !== 'true') {
       card.setAttribute('role', 'link');
