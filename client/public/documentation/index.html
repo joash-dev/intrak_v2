@@ -3,1255 +3,1429 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INTRAK User Manual v2.0</title>
+<title>INTRAK — User Manual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --brand: #1D9E75;
-    --brand-light: #E1F5EE;
-    --brand-dark: #085041;
-    --brand-mid: #9FE1CB;
-    --purple: #534AB7;
-    --purple-light: #EEEDFE;
-    --purple-dark: #3C3489;
-    --amber: #BA7517;
-    --amber-light: #FAEEDA;
-    --amber-dark: #633806;
-    --blue: #185FA5;
-    --blue-light: #E6F1FB;
-    --blue-dark: #0C447C;
-    --red: #E24B4A;
-    --red-light: #FCEBEB;
-    --red-dark: #791F1F;
-    --gray: #888780;
-    --bg: #ffffff;
-    --bg2: #f8f7f5;
-    --bg3: #f1f0ed;
-    --text: #1a1a18;
-    --text2: #5f5e5a;
-    --text3: #9a9890;
-    --border: rgba(0,0,0,0.1);
-    --border2: rgba(0,0,0,0.18);
-    --r: 12px;
-    --rm: 8px;
-    --ff-head: 'DM Serif Display', Georgia, serif;
-    --ff-body: 'DM Sans', system-ui, sans-serif;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: var(--ff-body);
-    font-size: 14px;
-    line-height: 1.65;
-    color: var(--text);
-    background: var(--bg3);
-    display: flex;
-    min-height: 100vh;
-  }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: 220px;
-    flex-shrink: 0;
-    background: var(--bg);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-  }
-
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-
-  .sb-brand {
-    padding: 1.25rem 1rem 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sb-logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .sb-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: var(--brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .sb-dot svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; }
-
-  .sb-name {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text);
-    letter-spacing: -0.01em;
-  }
-
-  .sb-ver {
-    font-size: 10px;
-    color: var(--text3);
-    letter-spacing: 0.05em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .ver-pill {
-    display: inline-block;
-    background: var(--brand-light);
-    color: var(--brand-dark);
-    padding: 1px 6px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 500;
-  }
-
-  .sb-nav { padding: 0.5rem 0; flex: 1; }
-
-  .nav-group { padding: 0.25rem 0; }
-
-  .nav-label {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text3);
-    padding: 0.4rem 1rem 0.15rem;
-    font-weight: 500;
-    display: block;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 1rem;
-    cursor: pointer;
-    font-size: 12.5px;
-    color: var(--text2);
-    border-left: 2px solid transparent;
-    transition: all 0.12s ease;
-    text-decoration: none;
-  }
-
-  .nav-item:hover {
-    background: var(--bg2);
-    color: var(--text);
-  }
-
-  .nav-item.active {
-    background: var(--brand-light);
-    color: var(--brand-dark);
-    border-left: 2px solid var(--brand);
-    font-weight: 500;
-  }
-
-  .nav-icon {
-    width: 14px;
-    height: 14px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    flex-shrink: 0;
-    opacity: 0.75;
-  }
-
-  .sb-footer {
-    padding: 0.75rem 1rem;
-    border-top: 1px solid var(--border);
-    font-size: 10px;
-    color: var(--text3);
-  }
-
-  /* ── MAIN ── */
-  .main {
-    flex: 1;
-    overflow-y: auto;
-    background: var(--bg3);
-  }
-
-  .main::-webkit-scrollbar { width: 5px; }
-  .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-
-  /* PAGE */
-  .page { display: none; }
-  .page.active { display: block; animation: fadein 0.18s ease; }
-  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-
-  /* HERO */
-  .hero {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    padding: 2rem 2rem 1.75rem;
-  }
-
-  .hero-eye {
-    font-size: 9px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--brand);
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-
-  .hero-title {
-    font-family: var(--ff-head);
-    font-size: 28px;
-    color: var(--text);
-    line-height: 1.15;
-    margin-bottom: 6px;
-  }
-
-  .hero-title em { font-style: italic; color: var(--brand); }
-
-  .hero-sub {
-    font-size: 13px;
-    color: var(--text2);
-    max-width: 520px;
-    line-height: 1.55;
-  }
-
-  .hero-meta {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-
-  .meta-chip {
-    font-size: 11px;
-    color: var(--text2);
-    background: var(--bg2);
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  /* CONTENT */
-  .content { padding: 1.75rem 2rem; }
-
-  .sec-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 0.5rem;
-  }
-
-  .sec-desc {
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 1rem;
-  }
-
-  /* DIVIDER */
-  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
-
-  /* CARD GRID */
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  .card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-
-  .card:hover {
-    border-color: var(--border2);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
-
-  .card-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: var(--rm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.6rem;
-  }
-
-  .card-icon svg { width: 15px; height: 15px; stroke-width: 2; fill: none; }
-
-  .card-label {
-    font-size: 12.5px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 3px;
-  }
-
-  .card-path {
-    font-size: 10px;
-    color: var(--text3);
-    font-family: monospace;
-    margin-bottom: 4px;
-  }
-
-  .card-desc {
-    font-size: 11.5px;
-    color: var(--text2);
-    line-height: 1.4;
-  }
-
-  /* ROW ITEMS */
-  .row-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--rm);
-    padding: 9px 13px;
-    margin-bottom: 6px;
-    transition: border-color 0.12s;
-  }
-
-  .row-item:hover { border-color: var(--border2); }
-
-  .row-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .row-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    flex: 1;
-  }
-
-  .row-path {
-    font-size: 10.5px;
-    color: var(--text3);
-    font-family: monospace;
-    margin-left: 5px;
-    font-weight: 400;
-  }
-
-  .row-desc {
-    font-size: 11.5px;
-    color: var(--text2);
-    max-width: 340px;
-    text-align: right;
-  }
-
-  /* ROUTE BOXES */
-  .route-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 8px;
-    margin-bottom: 1.25rem;
-  }
-
-  .route-box {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--rm);
-    padding: 8px 11px;
-    font-size: 12px;
-    font-family: monospace;
-    color: var(--text2);
-  }
-
-  /* WORKFLOW */
-  .workflow {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem 1.1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .step {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 12.5px;
-    color: var(--text2);
-  }
-
-  .step:last-child { border-bottom: none; padding-bottom: 0; }
-
-  .step-num {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    color: var(--text3);
-    font-size: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .step-text { flex: 1; line-height: 1.4; }
-
-  .step-role {
-    font-size: 9.5px;
-    color: var(--brand-dark);
-    background: var(--brand-light);
-    padding: 1px 6px;
-    border-radius: 3px;
-    white-space: nowrap;
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-
-  /* STATUS PILLS */
-  .pill-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem; }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--rm);
-    padding: 5px 10px;
-    font-size: 11.5px;
-  }
-
-  .pill-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .pill-name { font-weight: 500; color: var(--text); }
-  .pill-sub { color: var(--text2); font-size: 11px; }
-
-  /* ROLE CARDS */
-  .role-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 10px;
-    margin-bottom: 1.5rem;
-  }
-
-  .role-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem;
-    transition: all 0.15s;
-  }
-
-  .role-card:hover {
-    border-color: var(--brand);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0,0,0,0.07);
-  }
-
-  .role-badge {
-    display: inline-block;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 500;
-    margin-bottom: 7px;
-  }
-
-  .role-path {
-    font-size: 10px;
-    color: var(--text3);
-    font-family: monospace;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .tags { display: flex; flex-wrap: wrap; gap: 4px; }
-  .tag {
-    font-size: 10px;
-    background: var(--bg2);
-    color: var(--text2);
-    padding: 2px 6px;
-    border-radius: 3px;
-  }
-
-  /* SECURITY ROWS */
-  .sec-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 0.25rem 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .sec-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .sec-row:last-child { border-bottom: none; }
-
-  .sec-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--rm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .sec-icon svg { width: 15px; height: 15px; stroke-width: 2; fill: none; }
-
-  .sec-info { flex: 1; }
-  .sec-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
-  .sec-desc { font-size: 11.5px; color: var(--text2); margin-top: 1px; }
-
-  .sec-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-
-  /* ISSUE CARDS */
-  .issue {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem;
-    margin-bottom: 8px;
-    transition: border-color 0.12s;
-  }
-
-  .issue:hover { border-color: var(--border2); }
-
-  .issue-q {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 7px;
-    display: flex;
-    align-items: flex-start;
-    gap: 7px;
-  }
-
-  .issue-badge {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--amber-light);
-    color: var(--amber);
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  .issue-steps {
-    padding-left: 25px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .issue-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--text2);
-  }
-
-  .issue-bul {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--text3);
-    flex-shrink: 0;
-    margin-top: 6px;
-  }
-
-  .mono {
-    font-family: monospace;
-    font-size: 11px;
-    background: var(--bg2);
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid var(--border);
-  }
-
-  /* ESCALATION */
-  .escalation {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1.25rem;
-    flex-wrap: wrap;
-  }
-
-  .esc-node-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    flex: 1;
-    min-width: 80px;
-  }
-
-  .esc-node {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 500;
-    border: 2px solid;
-  }
-
-  .esc-arrow { color: var(--text3); font-size: 18px; padding: 0 2px; }
-  .esc-label { font-size: 11px; color: var(--text2); text-align: center; line-height: 1.3; }
-
-  /* SUPPORT REQ */
-  .req-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .req-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 8px;
-  }
-
-  .req-item {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    font-size: 12px;
-    color: var(--text2);
-  }
-
-  .req-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--brand);
-    flex-shrink: 0;
-    margin-top: 5px;
-  }
-
-  /* PRINT */
-  @media print {
-    .sidebar { display: none; }
-    .main { overflow: visible; }
-    .page { display: block !important; page-break-before: always; }
-    .page:first-child { page-break-before: auto; }
-  }
-
-  @media (max-width: 680px) {
-    .sidebar { width: 180px; }
-    .row-desc { display: none; }
-    .hero-title { font-size: 22px; }
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #ffffff;
+  --bg2:      #f8fafc;
+  --bg3:      #eef2f7;
+  --surface:  #ffffff;
+  --brand:    #2563EB;
+  --brand2:   #4F46E5;
+  --brand-dim:#1E3A8A;
+  --brand-light: #93C5FD;
+  --brand-pale:  #EAF2FF;
+  --text:     #0f172a;
+  --text2:    #475569;
+  --text3:    #94a3b8;
+  --border:   rgba(37,99,235,0.18);
+  --border2:  rgba(79,70,229,0.34);
+  --ff-head:  'DM Serif Display', Georgia, serif;
+  --ff-body:  'DM Sans', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ── GRID TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(37,99,235,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37,99,235,0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── GLOW ORBS ── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: rgba(37,99,235,0.13);
+  top: -120px; right: -100px;
+}
+.orb-2 {
+  width: 350px; height: 350px;
+  background: rgba(79,70,229,0.08);
+  bottom: 100px; left: -80px;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3rem;
+  height: 60px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #c9dafc;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.02;
+}
+
+.nav-name {
+  font-size: 34px;
+  font-family: 'Montserrat', var(--ff-body);
+  font-weight: 800;
+  color: #1f60c8;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.nav-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7b8290;
+  letter-spacing: 0.01em;
+  margin-top: 3px;
+}
+
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 13px;
+  color: #475569;
+  text-decoration: none;
+  transition: color 0.2s;
+  letter-spacing: 0.01em;
+}
+.nav-links a:hover { color: var(--brand-dim); }
+
+.nav-cta {
+  background: var(--brand) !important;
+  color: white !important;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-weight: 500 !important;
+  transition: background 0.2s !important;
+}
+.nav-cta:hover { background: var(--brand2) !important; }
+
+/* ── SECTIONS ── */
+section { position: relative; z-index: 1; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 8rem 3rem 5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  width: 100%;
+}
+
+.hero-left { max-width: 520px; }
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand);
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border2);
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(37,99,235,0.09);
+  opacity: 0;
+  animation: rise 0.6s ease 0.1s forwards;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  display: inline-block;
+}
+
+.hero-title {
+  font-family: var(--ff-head);
+  font-size: clamp(40px, 5vw, 62px);
+  line-height: 1.05;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: rise 0.6s ease 0.2s forwards;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--brand2);
+  display: block;
+}
+
+.hero-title .line-accent {
+  position: relative;
+  display: inline-block;
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 420px;
+  margin-bottom: 2rem;
+  font-weight: 300;
+  opacity: 0;
+  animation: rise 0.6s ease 0.3s forwards;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: rise 0.6s ease 0.4s forwards;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover {
+  background: var(--brand2);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.32);
+}
+.btn-primary svg { width: 15px; height: 15px; stroke: white; fill: none; stroke-width: 2; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text2);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  border: 1px solid var(--border2);
+  transition: all 0.2s;
+}
+.btn-secondary:hover {
+  color: var(--text);
+  border-color: var(--brand);
+  background: rgba(37,99,235,0.07);
+}
+
+/* HERO RIGHT — VISUAL CARD */
+.hero-right {
+  opacity: 0;
+  animation: risefade 0.8s ease 0.5s forwards;
+}
+
+.manual-preview {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.preview-bar {
+  background: var(--bg3);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.dot-r { width: 10px; height: 10px; border-radius: 50%; background: #ff6059; }
+.dot-y { width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; }
+.dot-g { width: 10px; height: 10px; border-radius: 50%; background: #28c940; }
+
+.preview-url {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: monospace;
+  margin-left: 8px;
+}
+
+.preview-body {
+  display: flex;
+  height: 280px;
+}
+
+.preview-sb {
+  width: 130px;
+  background: var(--bg3);
+  border-right: 1px solid var(--border);
+  padding: 12px 0;
+  flex-shrink: 0;
+}
+
+.psb-brand {
+  padding: 0 12px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.psb-dot {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: var(--brand);
+}
+
+.psb-name { font-size: 11px; font-weight: 500; color: var(--text2); }
+
+.psb-group { padding: 6px 12px 2px; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+
+.psb-item {
+  padding: 4px 12px;
+  font-size: 10px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.psb-item.on {
+  background: rgba(37,99,235,0.12);
+  color: var(--brand-light);
+  border-left: 2px solid var(--brand);
+}
+
+.psb-item svg { width: 9px; height: 9px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+.preview-main {
+  flex: 1;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.pm-eyebrow { font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brand); margin-bottom: 4px; }
+.pm-title { font-family: var(--ff-head); font-size: 16px; color: var(--text2); margin-bottom: 8px; }
+.pm-title em { font-style: italic; color: var(--brand); }
+.pm-sub { font-size: 9px; color: var(--text3); margin-bottom: 12px; line-height: 1.4; }
+
+.pm-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
+.pm-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 8px;
+}
+.pm-card-icon { width: 14px; height: 14px; border-radius: 3px; margin-bottom: 4px; }
+.pm-card-name { font-size: 8px; font-weight: 500; color: var(--text2); }
+.pm-card-desc { font-size: 7px; color: var(--text3); margin-top: 2px; line-height: 1.3; }
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  padding: 2rem 3rem;
+}
+
+.stats-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.stat {
+  text-align: center;
+  opacity: 0;
+  animation: rise 0.5s ease var(--delay) forwards;
+}
+
+.stat-num {
+  font-family: var(--ff-head);
+  font-size: 36px;
+  color: var(--brand2);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text2);
+  letter-spacing: 0.02em;
+}
+
+/* ── ROLES SECTION ── */
+.roles-section {
+  padding: 6rem 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+}
+
+.roles-section .section-header {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+  padding: 0 3rem;
+}
+
+.section-header {
+  margin-bottom: 3rem;
+}
+
+.section-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-family: var(--ff-head);
+  font-size: 36px;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.section-title em { font-style: italic; color: var(--brand2); }
+
+.section-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-top: 10px;
+  max-width: 480px;
+  font-weight: 300;
+}
+
+.roles-marquee {
+  overflow-x: hidden;
+  overflow-y: visible;
+  border-radius: 0;
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: 0.8rem 0 1rem;
+  min-height: 340px;
+}
+
+.roles-track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  padding: 0 8rem;
+  align-items: stretch;
+  animation: rolesMarquee 28s linear infinite;
+}
+
+.roles-marquee:hover .roles-track {
+  animation-play-state: paused;
+}
+
+.role-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.4rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  min-width: 230px;
+  max-width: 230px;
+  flex: 0 0 230px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.role-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+
+
+.role-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.role-icon svg { width: 17px; height: 17px; stroke-width: 1.75; fill: none; }
+
+.role-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.role-path {
+  font-size: 10px;
+  color: var(--text3);
+  font-family: monospace;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.role-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+.role-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.role-tag {
+  font-size: 9.5px;
+  background: rgba(37,99,235,0.1);
+  color: var(--text3);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+/* ── FEATURES SECTION ── */
+.features-section {
+  padding: 5rem 3rem 6rem;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.features-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 3rem;
+}
+
+.feature-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg3);
+  transition: all 0.2s;
+}
+
+.feature-card:hover {
+  border-color: var(--border2);
+  background: var(--surface);
+}
+
+.feature-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.feature-icon svg { width: 18px; height: 18px; stroke: var(--brand); fill: none; stroke-width: 1.75; }
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.feature-desc {
+  font-size: 12.5px;
+  color: var(--text2);
+  line-height: 1.55;
+  font-weight: 300;
+}
+
+/* ── WORKFLOWS SECTION ── */
+.workflows-section {
+  padding: 6rem 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.workflow-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 3rem;
+}
+
+.workflow-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.workflow-card:hover { border-color: var(--border2); }
+
+.wf-num {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--brand);
+  margin-bottom: 1rem;
+}
+
+.wf-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.wf-steps { display: flex; flex-direction: column; gap: 5px; }
+
+.wf-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.wf-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--brand-dim);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+/* ── ABOUT SECTION ── */
+.about-section {
+  padding: 6rem 3rem;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.about-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+  margin-top: 2.25rem;
+}
+
+.about-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+}
+
+.about-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.about-text {
+  font-size: 12.8px;
+  color: var(--text2);
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+.about-points {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.about-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.about-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* ── CTA SECTION ── */
+.cta-section {
+  padding: 7rem 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(37,99,235,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-inner {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-title {
+  font-family: var(--ff-head);
+  font-size: clamp(32px, 4vw, 50px);
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+.cta-title em { font-style: italic; color: var(--brand2); }
+
+.cta-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 2rem;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--bg2);
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.footer-sub {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.footer-meta {
+  font-size: 11px;
+  color: var(--text3);
+  display: flex;
+  gap: 20px;
+}
+
+.footer-meta a {
+  color: var(--text3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-meta a:hover { color: var(--brand); }
+
+/* ── ANIMATIONS ── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes risefade {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes rolesMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-right { display: none; }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); }
+  .workflow-list { grid-template-columns: 1fr; }
+  nav { padding: 0 1.5rem; }
+  .nav-links { display: none; }
+  .nav-logo { width: 36px; height: 36px; }
+  .nav-name { font-size: 26px; }
+  .nav-sub { font-size: 9px; }
+  .hero { padding: 7rem 1.5rem 4rem; }
+  .roles-section .section-header { padding: 0 1.5rem; }
+  .roles-marquee { min-height: 300px; }
+  .roles-track { padding: 0 3rem; }
+  .roles-track { animation-duration: 20s; }
+  .role-card { min-width: 210px; max-width: 210px; flex-basis: 210px; }
+  .roles-section, .workflows-section { padding: 4rem 1.5rem; }
+  .about-section { padding: 4rem 1.5rem; }
+  .about-grid { grid-template-columns: 1fr; }
+  .features-section { padding: 4rem 1.5rem; }
+  .cta-section { padding: 5rem 1.5rem; }
+  footer { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sb-brand">
-    <div class="sb-logo">
-      <div class="sb-dot">
-        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      </div>
-      <span class="sb-name">INTRAK</span>
-    </div>
-    <div class="sb-ver">User Manual &nbsp;<span class="ver-pill">v2.0</span></div>
-  </div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
 
-  <nav class="sb-nav">
-    <div class="nav-group">
-      <span class="nav-label">Getting Started</span>
-      <a class="nav-item active" onclick="show('overview', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        Overview
-      </a>
-      <a class="nav-item" onclick="show('access', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Access &amp; Login
-      </a>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-label">Reference</span>
-      <a class="nav-item" onclick="show('roles', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Role Access
-      </a>
-      <a class="nav-item" onclick="show('workflows', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Workflows
-      </a>
-      <a class="nav-item" onclick="show('statuses', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Status Definitions
-      </a>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-label">Portals</span>
-      <a class="nav-item" onclick="show('student', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-        Student
-      </a>
-      <a class="nav-item" onclick="show('instructor', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        Instructor
-      </a>
-      <a class="nav-item" onclick="show('coordinator', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>
-        Coordinator
-      </a>
-      <a class="nav-item" onclick="show('partner', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg>
-        Industry Partner
-      </a>
-      <a class="nav-item" onclick="show('admin', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        Admin
-      </a>
-    </div>
-
-    <div class="nav-group">
-      <span class="nav-label">Support</span>
-      <a class="nav-item" onclick="show('security', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Security
-      </a>
-      <a class="nav-item" onclick="show('troubleshoot', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-        Troubleshooting
-      </a>
-      <a class="nav-item" onclick="show('support', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Support
-      </a>
-    </div>
-  </nav>
-
-  <div class="sb-footer">Manual Version 2026.03</div>
-</aside>
-
-<!-- MAIN CONTENT -->
-<main class="main">
-
-  <!-- OVERVIEW -->
-  <div class="page active" id="page-overview">
-    <div class="hero">
-      <div class="hero-eye">System Documentation</div>
-      <div class="hero-title">INTRAK <em>User Manual</em></div>
-      <div class="hero-sub">Internship &amp; OJT Tracking and Management System — complete role-based guidance for students, instructors, coordinators, industry partners, and administrators.</div>
-      <div class="hero-meta">
-        <span class="meta-chip">Version 2.0</span>
-        <span class="meta-chip">Manual 2026.03</span>
-        <span class="meta-chip">5 User Roles</span>
-      </div>
-    </div>
-    <div class="content">
-      <div class="sec-title">What INTRAK Does</div>
-      <div class="sec-desc">INTRAK centralizes all internship operations into one integrated platform for all stakeholders.</div>
-      <div class="card-grid">
-        <div class="card">
-          <div class="card-icon" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-          <div class="card-label">Documents</div>
-          <div class="card-desc">Submit, review, and track all required internship documents by phase.</div>
-        </div>
-        <div class="card">
-          <div class="card-icon" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-          <div class="card-label">Company Placement</div>
-          <div class="card-desc">Browse, apply, and track placement at partner companies.</div>
-        </div>
-        <div class="card">
-          <div class="card-icon" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-          <div class="card-label">Attendance</div>
-          <div class="card-desc">Log and verify attendance with hour tracking and exports.</div>
-        </div>
-        <div class="card">
-          <div class="card-icon" style="background:#FAECE7"><svg viewBox="0 0 24 24" stroke="#993C1D"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-          <div class="card-label">Evaluations</div>
-          <div class="card-desc">Partners submit evaluations; students view their results.</div>
-        </div>
-        <div class="card">
-          <div class="card-icon" style="background:#EAF3DE"><svg viewBox="0 0 24 24" stroke="#3B6D11"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
-          <div class="card-label">Reports</div>
-          <div class="card-desc">Program-wide compliance and operational reporting.</div>
-        </div>
-        <div class="card">
-          <div class="card-icon" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-          <div class="card-label">Notifications</div>
-          <div class="card-desc">Role-based alerts for all workflow actions and submissions.</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="sec-title">User Roles</div>
-      <div class="row-item"><div class="row-dot" style="background:#1D9E75"></div><div class="row-name">Student<span class="row-path">/student</span></div><div class="row-desc">Submits documents, applies to companies, logs attendance, views evaluations</div></div>
-      <div class="row-item"><div class="row-dot" style="background:#534AB7"></div><div class="row-name">Instructor<span class="row-path">/instructor</span></div><div class="row-desc">Reviews docs, applications, proposals; monitors assigned students</div></div>
-      <div class="row-item"><div class="row-dot" style="background:#BA7517"></div><div class="row-name">Coordinator<span class="row-path">/coordinator</span></div><div class="row-desc">Oversees entire program, companies, announcements, and reporting</div></div>
-      <div class="row-item"><div class="row-dot" style="background:#185FA5"></div><div class="row-name">Industry Partner<span class="row-path">/industry-partner</span></div><div class="row-desc">Verifies attendance and submits intern performance evaluations</div></div>
-      <div class="row-item"><div class="row-dot" style="background:#E24B4A"></div><div class="row-name">Admin<span class="row-path">/admin</span></div><div class="row-desc">Manages platform settings, users, maintenance, and system controls</div></div>
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <img class="nav-logo" src="/just_logo.png" alt="INTRAK logo">
+    <div class="nav-brand-text">
+      <span class="nav-name">INTRAK</span>
+      <span class="nav-sub">Internship &amp; OJT Tracking System</span>
     </div>
   </div>
+  <ul class="nav-links">
+    <li><a href="#roles">Roles</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#workflows">Workflows</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="manuals/full/" class="nav-cta">Open Documentation</a></li>
+  </ul>
+</nav>
 
-  <!-- ACCESS & LOGIN -->
-  <div class="page" id="page-access">
-    <div class="hero">
-      <div class="hero-eye">Authentication</div>
-      <div class="hero-title">Access &amp; <em>Login</em></div>
-      <div class="hero-sub">Login process, public routes, and password recovery guidance.</div>
-    </div>
-    <div class="content">
-      <div class="sec-title">Login Process</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Open the official system URL in your browser</div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Enter your registered email and password</div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">If 2FA is enabled, enter your one-time email code or backup code</div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">System redirects you to your role-specific dashboard</div></div>
-      </div>
-
-      <div class="sec-title">Public Routes</div>
-      <div class="route-grid">
-        <div class="route-box">/login</div>
-        <div class="route-box">/forgot-password</div>
-        <div class="route-box">/reset-password</div>
-        <div class="route-box">/verify-email</div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="sec-title">Password Recovery</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Go to <span class="mono">/forgot-password</span> and submit your registered email</div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Check your inbox for the password reset link</div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Follow the link to <span class="mono">/reset-password</span> and set a new password</div></div>
+<!-- HERO -->
+<section>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Version 2.0 · Manual 2026.03</div>
+      <h1 class="hero-title">
+        Your guide to<br>
+        <em>INTRAK</em>
+      </h1>
+      <p class="hero-sub">Everything you need to navigate the Internship &amp; OJT Tracking and Management System — from student onboarding to coordinator reporting, all in one place.</p>
+      <div class="hero-actions">
+        <a href="https://intrak.site/login" class="btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Login
+        </a>
+        <a href="#roles" class="btn-secondary">Browse by Role ↓</a>
       </div>
     </div>
-  </div>
 
-  <!-- ROLES -->
-  <div class="page" id="page-roles">
-    <div class="hero">
-      <div class="hero-eye">Permissions</div>
-      <div class="hero-title">Role <em>Access Matrix</em></div>
-      <div class="hero-sub">Each role has a dedicated base path and tailored set of modules and permissions.</div>
-    </div>
-    <div class="content">
-      <div class="role-grid">
-        <div class="role-card">
-          <div class="role-badge" style="background:#E1F5EE;color:#085041">Student</div>
-          <span class="role-path">/student</span>
-          <div class="tags"><span class="tag">Dashboard</span><span class="tag">Documents</span><span class="tag">Templates</span><span class="tag">Companies</span><span class="tag">Partnership</span><span class="tag">Attendance</span><span class="tag">Evaluations</span><span class="tag">Settings</span><span class="tag">Notifications</span></div>
+    <div class="hero-right">
+      <div class="manual-preview">
+        <div class="preview-bar">
+          <div class="dot-r"></div>
+          <div class="dot-y"></div>
+          <div class="dot-g"></div>
+          <div class="preview-url">intrak.site / student / dashboard</div>
         </div>
-        <div class="role-card">
-          <div class="role-badge" style="background:#EEEDFE;color:#3C3489">Instructor</div>
-          <span class="role-path">/instructor</span>
-          <div class="tags"><span class="tag">Dashboard</span><span class="tag">Notifications</span><span class="tag">Documents</span><span class="tag">Applications</span><span class="tag">Proposals</span><span class="tag">Students</span><span class="tag">Reports</span><span class="tag">Settings</span></div>
-        </div>
-        <div class="role-card">
-          <div class="role-badge" style="background:#FAEEDA;color:#633806">Coordinator</div>
-          <span class="role-path">/coordinator</span>
-          <div class="tags"><span class="tag">Dashboard</span><span class="tag">Students</span><span class="tag">Documents</span><span class="tag">Companies</span><span class="tag">Proposals</span><span class="tag">Announcements</span><span class="tag">Reports</span><span class="tag">Settings</span></div>
-        </div>
-        <div class="role-card">
-          <div class="role-badge" style="background:#E6F1FB;color:#0C447C">Industry Partner</div>
-          <span class="role-path">/industry-partner</span>
-          <div class="tags"><span class="tag">Dashboard</span><span class="tag">Attendance</span><span class="tag">Documents</span><span class="tag">Evaluations</span><span class="tag">Settings</span><span class="tag">Notifications</span></div>
-        </div>
-        <div class="role-card">
-          <div class="role-badge" style="background:#FCEBEB;color:#791F1F">Admin</div>
-          <span class="role-path">/admin</span>
-          <div class="tags"><span class="tag">Dashboard</span><span class="tag">Users</span><span class="tag">Companies</span><span class="tag">Settings</span><span class="tag">Notifications</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- WORKFLOWS -->
-  <div class="page" id="page-workflows">
-    <div class="hero">
-      <div class="hero-eye">Process Flows</div>
-      <div class="hero-title">Core <em>Workflows</em></div>
-      <div class="hero-sub">End-to-end process flows for the four primary operations in INTRAK.</div>
-    </div>
-    <div class="content">
-      <div class="sec-title">1 — Document Compliance</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Student uploads or generates required document</div><span class="step-role">Student</span></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Instructor or Coordinator reviews submission</div><span class="step-role">Instructor / Coordinator</span></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Reviewer approves, rejects, or requests resubmission with remarks</div><span class="step-role">Reviewer</span></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">Student monitors status and submits corrections if required</div><span class="step-role">Student</span></div>
-        <div class="step"><div class="step-num">5</div><div class="step-text">Compliance reflected in dashboards and reports</div><span class="step-role">All</span></div>
-      </div>
-
-      <div class="sec-title" style="margin-top:1.25rem">2 — Company Placement</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Student browses companies and submits application</div><span class="step-role">Student</span></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Instructor / Coordinator reviews application</div><span class="step-role">Instructor / Coordinator</span></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Status updated to approved, rejected, or withdrawn</div><span class="step-role">Reviewer</span></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">Once assigned, attendance and evaluation modules become fully usable</div><span class="step-role">Student</span></div>
-      </div>
-
-      <div class="sec-title" style="margin-top:1.25rem">3 — Partnership Proposal</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Student submits non-listed company proposal with attachments</div><span class="step-role">Student</span></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Instructor reviews: returns, rejects, or forwards to coordinator</div><span class="step-role">Instructor</span></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Coordinator performs final decision and updates status</div><span class="step-role">Coordinator</span></div>
-      </div>
-
-      <div class="sec-title" style="margin-top:1.25rem">4 — Attendance &amp; Evaluation</div>
-      <div class="workflow">
-        <div class="step"><div class="step-num">1</div><div class="step-text">Student logs attendance (manual or QR-supported)</div><span class="step-role">Student</span></div>
-        <div class="step"><div class="step-num">2</div><div class="step-text">Industry Partner verifies attendance entries</div><span class="step-role">Industry Partner</span></div>
-        <div class="step"><div class="step-num">3</div><div class="step-text">Industry Partner submits performance evaluation</div><span class="step-role">Industry Partner</span></div>
-        <div class="step"><div class="step-num">4</div><div class="step-text">Student views evaluation results in Student Evaluations</div><span class="step-role">Student</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- STATUS DEFINITIONS -->
-  <div class="page" id="page-statuses">
-    <div class="hero">
-      <div class="hero-eye">Reference</div>
-      <div class="hero-title">Status <em>Definitions</em></div>
-      <div class="hero-sub">All system statuses for documents, applications, and company proposals.</div>
-    </div>
-    <div class="content">
-      <div class="sec-title">Document Status</div>
-      <div class="pill-wrap">
-        <div class="status-pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span><span class="pill-sub">— submitted, awaiting review</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#1D9E75"></div><span class="pill-name">APPROVED</span><span class="pill-sub">— accepted</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span><span class="pill-sub">— not accepted</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RESUBMISSION_REQUESTED</span><span class="pill-sub">— correction required</span></div>
-      </div>
-      <div class="divider"></div>
-      <div class="sec-title">Company Application Status</div>
-      <div class="pill-wrap">
-        <div class="status-pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#1D9E75"></div><span class="pill-name">APPROVED</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
-        <div class="status-pill"><div class="pill-dot" style="background:#888780"></div><span class="pill-name">WITHDRAWN</span></div>
-      </div>
-      <div class="divider"></div>
-      <div class="sec-title">Company Proposal Status</div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">SUBMITTED_TO_INSTRUCTOR</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RETURNED_BY_INSTRUCTOR</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED_BY_INSTRUCTOR</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">FORWARDED_TO_COORDINATOR</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">UNDER_COORDINATOR_REVIEW</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING_EXTERNAL_APPROVAL</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#1D9E75"></div><span class="pill-name">APPROVED</span></div>
-        <div class="status-pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- STUDENT PORTAL -->
-  <div class="page" id="page-student">
-    <div class="hero">
-      <div class="hero-eye">Portal Guide</div>
-      <div class="hero-title">Student <em>Portal</em></div>
-      <div class="hero-sub">Base path: <code style="font-size:12px;background:#f1f0ed;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,0.1)">/student</code> — Submit documents, apply to companies, log attendance, and view evaluations.</div>
-      <div class="hero-meta"><span class="meta-chip" style="background:#E1F5EE;border-color:#9FE1CB;color:#085041">9 Modules</span></div>
-    </div>
-    <div class="content">
-      <div class="card-grid">
-        <div class="card"><div class="card-label">Dashboard</div><div class="card-path">/student/dashboard</div><div class="card-desc">View progress, document status, assigned company, and announcements.</div></div>
-        <div class="card"><div class="card-label">Documents</div><div class="card-path">/student/documents</div><div class="card-desc">Upload requirements, track statuses, read remarks, and resubmit.</div></div>
-        <div class="card"><div class="card-label">Dynamic Forms</div><div class="card-path">/student/documents/form/:type</div><div class="card-desc">Fill structured forms, preview, and submit official documents.</div></div>
-        <div class="card"><div class="card-label">Templates</div><div class="card-path">/student/templates</div><div class="card-desc">Download official templates published by authorized staff.</div></div>
-        <div class="card"><div class="card-label">Companies</div><div class="card-path">/student/companies</div><div class="card-desc">Browse partners, review slots, and submit placement applications.</div></div>
-        <div class="card"><div class="card-label">Partnership Assistance</div><div class="card-path">/student/partnership-assistance</div><div class="card-desc">Submit non-listed company proposals with attachments and messaging.</div></div>
-        <div class="card"><div class="card-label">Attendance</div><div class="card-path">/student/attendance</div><div class="card-desc">Log hours, track verification status, and view total completed hours.</div></div>
-        <div class="card"><div class="card-label">Evaluations</div><div class="card-path">/student/evaluations</div><div class="card-desc">View ratings and comments submitted by your industry partner.</div></div>
-        <div class="card"><div class="card-label">Settings</div><div class="card-path">/student/settings</div><div class="card-desc">Profile, photo, password, 2FA, appearance, and preferences.</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INSTRUCTOR PORTAL -->
-  <div class="page" id="page-instructor">
-    <div class="hero">
-      <div class="hero-eye">Portal Guide</div>
-      <div class="hero-title">Instructor <em>Portal</em></div>
-      <div class="hero-sub">Base path: <code style="font-size:12px;background:#f1f0ed;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,0.1)">/instructor</code> — Review documents, applications, and proposals; monitor assigned students.</div>
-      <div class="hero-meta"><span class="meta-chip" style="background:#EEEDFE;border-color:#AFA9EC;color:#3C3489">7 Modules</span></div>
-    </div>
-    <div class="content">
-      <div class="card-grid">
-        <div class="card"><div class="card-label">Dashboard</div><div class="card-path">/instructor/dashboard</div><div class="card-desc">View assigned student performance and pending review tasks.</div></div>
-        <div class="card"><div class="card-label">Notifications</div><div class="card-path">/instructor/notifications</div><div class="card-desc">Receive alerts on student submissions and manage read states.</div></div>
-        <div class="card"><div class="card-label">Student Documents</div><div class="card-path">/instructor/documents</div><div class="card-desc">Approve, reject, or request resubmission with feedback remarks.</div></div>
-        <div class="card"><div class="card-label">Company Applications</div><div class="card-path">/instructor/applications</div><div class="card-desc">Review and decide on company applications from assigned students.</div></div>
-        <div class="card"><div class="card-label">Company Proposals</div><div class="card-path">/instructor/company-proposals</div><div class="card-desc">Return, reject, or forward non-listed company proposals.</div></div>
-        <div class="card"><div class="card-label">Students</div><div class="card-path">/instructor/students</div><div class="card-desc">View assigned student profiles, timelines, and activity records.</div></div>
-        <div class="card"><div class="card-label">Reports</div><div class="card-path">/instructor/reports</div><div class="card-desc">Generate attendance and compliance reports; export where enabled.</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COORDINATOR PORTAL -->
-  <div class="page" id="page-coordinator">
-    <div class="hero">
-      <div class="hero-eye">Portal Guide</div>
-      <div class="hero-title">Coordinator <em>Portal</em></div>
-      <div class="hero-sub">Base path: <code style="font-size:12px;background:#f1f0ed;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,0.1)">/coordinator</code> — Program-wide oversight, company management, announcements, and reporting.</div>
-      <div class="hero-meta"><span class="meta-chip" style="background:#FAEEDA;border-color:#FAC775;color:#633806">8 Modules</span></div>
-    </div>
-    <div class="content">
-      <div class="card-grid">
-        <div class="card"><div class="card-label">Dashboard</div><div class="card-path">/coordinator/dashboard</div><div class="card-desc">Program-wide metrics and quick access to key functions.</div></div>
-        <div class="card"><div class="card-label">Students</div><div class="card-path">/coordinator/students</div><div class="card-desc">Monitor all students, assign instructors, and track progress.</div></div>
-        <div class="card"><div class="card-label">Documents</div><div class="card-path">/coordinator/documents</div><div class="card-desc">Centralized document reviews and final approval decisions.</div></div>
-        <div class="card"><div class="card-label">Companies</div><div class="card-path">/coordinator/companies</div><div class="card-desc">Manage partner company records, capacity, and assignments.</div></div>
-        <div class="card"><div class="card-label">Company Proposals</div><div class="card-path">/coordinator/company-proposals</div><div class="card-desc">Final decisioning for non-listed company proposals.</div></div>
-        <div class="card"><div class="card-label">Announcements</div><div class="card-path">/coordinator/announcements</div><div class="card-desc">Create, publish, and pin announcements to targeted audiences.</div></div>
-        <div class="card"><div class="card-label">Reports</div><div class="card-path">/coordinator/reports</div><div class="card-desc">Program-wide operational reports and compliance exports.</div></div>
-        <div class="card"><div class="card-label">Settings</div><div class="card-path">/coordinator/settings</div><div class="card-desc">Profile, security, and notification preferences.</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INDUSTRY PARTNER PORTAL -->
-  <div class="page" id="page-partner">
-    <div class="hero">
-      <div class="hero-eye">Portal Guide</div>
-      <div class="hero-title">Industry Partner <em>Portal</em></div>
-      <div class="hero-sub">Base path: <code style="font-size:12px;background:#f1f0ed;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,0.1)">/industry-partner</code> — Verify intern attendance and submit performance evaluations.</div>
-      <div class="hero-meta"><span class="meta-chip" style="background:#E6F1FB;border-color:#B5D4F4;color:#0C447C">5 Modules</span></div>
-    </div>
-    <div class="content">
-      <div class="card-grid">
-        <div class="card"><div class="card-label">Dashboard</div><div class="card-path">/industry-partner/dashboard</div><div class="card-desc">View assigned interns and monitoring overview at a glance.</div></div>
-        <div class="card"><div class="card-label">Attendance</div><div class="card-path">/industry-partner/attendance</div><div class="card-desc">Verify, approve, or reject intern attendance logs with remarks.</div></div>
-        <div class="card"><div class="card-label">Documents</div><div class="card-path">/industry-partner/documents</div><div class="card-desc">View intern-related documents relevant to supervised students.</div></div>
-        <div class="card"><div class="card-label">Evaluations</div><div class="card-path">/industry-partner/evaluations</div><div class="card-desc">Submit intern performance evaluations with criteria ratings and comments.</div></div>
-        <div class="card"><div class="card-label">Settings</div><div class="card-path">/industry-partner/settings</div><div class="card-desc">Account, security, and notification preferences.</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN PORTAL -->
-  <div class="page" id="page-admin">
-    <div class="hero">
-      <div class="hero-eye">Portal Guide</div>
-      <div class="hero-title">Admin <em>Portal</em></div>
-      <div class="hero-sub">Base path: <code style="font-size:12px;background:#f1f0ed;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,0.1)">/admin</code> — Platform-level controls, user management, and system configuration.</div>
-      <div class="hero-meta"><span class="meta-chip" style="background:#FCEBEB;border-color:#F7C1C1;color:#791F1F">5 Modules</span></div>
-    </div>
-    <div class="content">
-      <div class="card-grid">
-        <div class="card"><div class="card-label">Dashboard</div><div class="card-path">/admin/dashboard</div><div class="card-desc">High-level system health and operational indicators.</div></div>
-        <div class="card"><div class="card-label">User Management</div><div class="card-path">/admin/users</div><div class="card-desc">Create, update, and remove users across all roles.</div></div>
-        <div class="card"><div class="card-label">Company Management</div><div class="card-path">/admin/companies</div><div class="card-desc">Maintain master company records and institutional data governance.</div></div>
-        <div class="card"><div class="card-label">Admin Settings</div><div class="card-path">/admin/settings</div><div class="card-desc">System configuration, maintenance mode, import/export, and NAS options.</div></div>
-        <div class="card"><div class="card-label">Notifications</div><div class="card-path">/admin/notifications</div><div class="card-desc">Monitor system-level notifications and platform alerts.</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECURITY -->
-  <div class="page" id="page-security">
-    <div class="hero">
-      <div class="hero-eye">Account Security</div>
-      <div class="hero-title">Security &amp; <em>Account Settings</em></div>
-      <div class="hero-sub">Authentication model, two-factor authentication, email verification, and profile photo management.</div>
-    </div>
-    <div class="content">
-      <div class="sec-title">Security Features</div>
-      <div class="sec-card">
-        <div class="sec-row">
-          <div class="sec-icon" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <div class="sec-info">
-            <div class="sec-name">Role-based route protection</div>
-            <div class="sec-desc">All portal routes are guarded — unauthorized users are redirected to login. Access and refresh token session model.</div>
+        <div class="preview-body">
+          <div class="preview-sb">
+            <div class="psb-brand">
+              <div class="psb-dot"></div>
+              <span class="psb-name">INTRAK</span>
+            </div>
+            <div class="psb-group">Main</div>
+            <div class="psb-item on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg> Dashboard</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Documents</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Companies</div>
+            <div class="psb-group">Internship</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Attendance</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Evaluations</div>
+            <div class="psb-group">Account</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg> Notifications</div>
+            <div class="psb-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 1 1 0-4H3a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1A1.7 1.7 0 0 0 4.4 6.4l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6c.38 0 .74-.15 1-.4.25-.25.4-.62.4-1V3a2 2 0 1 1 4 0v.1c0 .38.15.75.4 1 .25.25.62.4 1 .4.43 0 .84-.17 1.15-.48l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.31.31-.48.72-.48 1.15 0 .38.15.74.4 1 .25.26.62.4 1 .4h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.1.4c-.25.25-.4.62-.5 1z"/></svg> Settings</div>
           </div>
-          <span class="sec-badge" style="background:#E1F5EE;color:#085041">Always On</span>
-        </div>
-        <div class="sec-row">
-          <div class="sec-icon" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-          <div class="sec-info">
-            <div class="sec-name">Two-Factor Authentication (2FA)</div>
-            <div class="sec-desc">Enable/disable from account settings. Login challenge with one-time code. Backup code verification and regeneration supported.</div>
+          <div class="preview-main">
+            <div class="pm-eyebrow">Student Portal</div>
+            <div class="pm-title">Student <em>Dashboard</em></div>
+            <div class="pm-sub">Track your internship status, pending requirements, and progress at a glance.</div>
+            <div class="pm-grid">
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#2563EB22"></div>
+                <div class="pm-card-name">Completion</div>
+                <div class="pm-card-desc">72% overall progress</div>
+              </div>
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#4F46E522"></div>
+                <div class="pm-card-name">Required Docs</div>
+                <div class="pm-card-desc">3 pending review</div>
+              </div>
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#06B6D422"></div>
+                <div class="pm-card-name">Assigned Company</div>
+                <div class="pm-card-desc">TechNova Solutions</div>
+              </div>
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#3B82F622"></div>
+                <div class="pm-card-name">Hours Logged</div>
+                <div class="pm-card-desc">248 / 486 hours</div>
+              </div>
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#8B5CF622"></div>
+                <div class="pm-card-name">Latest Evaluation</div>
+                <div class="pm-card-desc">4.6 / 5.0 rating</div>
+              </div>
+              <div class="pm-card">
+                <div class="pm-card-icon" style="background:#F59E0B22"></div>
+                <div class="pm-card-name">Next Deadline</div>
+                <div class="pm-card-desc">Weekly report due Friday</div>
+              </div>
+            </div>
           </div>
-          <span class="sec-badge" style="background:#EEEDFE;color:#3C3489">Optional</span>
-        </div>
-        <div class="sec-row">
-          <div class="sec-icon" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-          <div class="sec-info">
-            <div class="sec-name">Email Verification</div>
-            <div class="sec-desc">Send and verify account email via token workflow. Check verification status inside account settings.</div>
-          </div>
-          <span class="sec-badge" style="background:#E6F1FB;color:#0C447C">Recommended</span>
-        </div>
-        <div class="sec-row">
-          <div class="sec-icon" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <div class="sec-info">
-            <div class="sec-name">Profile Photo Management</div>
-            <div class="sec-desc">Upload, replace, or remove your photo. Updates are reflected across all portal header and profile panels.</div>
-          </div>
-          <span class="sec-badge" style="background:#FAEEDA;color:#633806">Cosmetic</span>
         </div>
       </div>
     </div>
   </div>
+</div>
+</section>
 
-  <!-- TROUBLESHOOTING -->
-  <div class="page" id="page-troubleshoot">
-    <div class="hero">
-      <div class="hero-eye">Help</div>
-      <div class="hero-title">Troubleshooting <em>Guide</em></div>
-      <div class="hero-sub">Common issues and step-by-step resolution paths for all user roles.</div>
+<!-- STATS STRIP -->
+<section class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat" style="--delay: 0.1s">
+      <div class="stat-num">5</div>
+      <div class="stat-label">User Roles</div>
     </div>
-    <div class="content">
-      <div class="issue">
-        <div class="issue-q"><div class="issue-badge">!</div>Cannot Log In</div>
-        <div class="issue-steps">
-          <div class="issue-step"><div class="issue-bul"></div>Confirm correct email and password are being entered</div>
-          <div class="issue-step"><div class="issue-bul"></div>Check if your account is still active</div>
-          <div class="issue-step"><div class="issue-bul"></div>Use <span class="mono">/forgot-password</span> if you've forgotten your password</div>
-          <div class="issue-step"><div class="issue-bul"></div>Contact the admin if the issue persists</div>
-        </div>
+    <div class="stat" style="--delay: 0.2s">
+      <div class="stat-num">13</div>
+      <div class="stat-label">Manual Sections</div>
+    </div>
+    <div class="stat" style="--delay: 0.3s">
+      <div class="stat-num">4</div>
+      <div class="stat-label">Core Workflows</div>
+    </div>
+    <div class="stat" style="--delay: 0.4s">
+      <div class="stat-num">30+</div>
+      <div class="stat-label">Portal Modules</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES SECTION -->
+<section id="roles">
+<div class="roles-section">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">Who is this for?</div>
+    <h2 class="section-title">Every role,<br><em>covered</em></h2>
+    <p class="section-sub">INTRAK has five distinct portals, each with tailored features and permissions for your specific responsibilities.</p>
+  </div>
+
+  <div class="roles-marquee">
+  <div class="roles-track">
+    <div class="role-card" style="--accent-color:#2563EB">
+      <div class="role-icon" style="background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
       </div>
-      <div class="issue">
-        <div class="issue-q"><div class="issue-badge">!</div>Did Not Receive Verification or 2FA Code</div>
-        <div class="issue-steps">
-          <div class="issue-step"><div class="issue-bul"></div>Check your spam or junk mail folder</div>
-          <div class="issue-step"><div class="issue-bul"></div>Wait a moment, then use the resend option</div>
-          <div class="issue-step"><div class="issue-bul"></div>Confirm your registered email address is correct</div>
-        </div>
+      <div class="role-name">Student</div>
+      <span class="role-path">/student</span>
+      <div class="role-desc">Submit documents, apply to companies, log attendance, and view evaluations.</div>
+      <div class="role-modules">
+        <span class="role-tag">Documents</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Attendance</span>
+        <span class="role-tag">Evaluations</span>
+        <span class="role-tag">+5 more</span>
       </div>
-      <div class="issue">
-        <div class="issue-q"><div class="issue-badge">!</div>Document Upload or Submission Fails</div>
-        <div class="issue-steps">
-          <div class="issue-step"><div class="issue-bul"></div>Verify file type and size meet policy requirements</div>
-          <div class="issue-step"><div class="issue-bul"></div>Retry on a stable internet connection</div>
-          <div class="issue-step"><div class="issue-bul"></div>Check if this document type requires form-based submission instead of file upload</div>
-        </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#534AB7">
+      <div class="role-icon" style="background:rgba(83,74,183,0.12);border:1px solid rgba(83,74,183,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#7F77DD"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       </div>
-      <div class="issue">
-        <div class="issue-q"><div class="issue-badge">!</div>Attendance Module Not Available</div>
-        <div class="issue-steps">
-          <div class="issue-step"><div class="issue-bul"></div>Confirm you have an assigned company and supervisor</div>
-          <div class="issue-step"><div class="issue-bul"></div>Verify your current application or proposal status</div>
-          <div class="issue-step"><div class="issue-bul"></div>Ask your coordinator or instructor to review your assignment state</div>
-        </div>
+      <div class="role-name">Instructor</div>
+      <span class="role-path">/instructor</span>
+      <div class="role-desc">Review documents, applications, and proposals; monitor assigned students.</div>
+      <div class="role-modules">
+        <span class="role-tag">Documents</span>
+        <span class="role-tag">Applications</span>
+        <span class="role-tag">Proposals</span>
+        <span class="role-tag">Reports</span>
       </div>
-      <div class="issue">
-        <div class="issue-q"><div class="issue-badge">!</div>A Feature Is Not Visible</div>
-        <div class="issue-steps">
-          <div class="issue-step"><div class="issue-bul"></div>Some modules are role-based or condition-based</div>
-          <div class="issue-step"><div class="issue-bul"></div>Recheck your logged-in role and active workflow status</div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#BA7517">
+      <div class="role-icon" style="background:rgba(186,117,23,0.12);border:1px solid rgba(186,117,23,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#EF9F27"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>
+      </div>
+      <div class="role-name">Coordinator</div>
+      <span class="role-path">/coordinator</span>
+      <div class="role-desc">Oversee the entire program, companies, announcements, and reporting.</div>
+      <div class="role-modules">
+        <span class="role-tag">Students</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Announcements</span>
+        <span class="role-tag">Reports</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#185FA5">
+      <div class="role-icon" style="background:rgba(24,95,165,0.12);border:1px solid rgba(24,95,165,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#378ADD"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg>
+      </div>
+      <div class="role-name">Industry Partner</div>
+      <span class="role-path">/industry-partner</span>
+      <div class="role-desc">Verify intern attendance and submit performance evaluations.</div>
+      <div class="role-modules">
+        <span class="role-tag">Attendance</span>
+        <span class="role-tag">Evaluations</span>
+        <span class="role-tag">Documents</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#E24B4A">
+      <div class="role-icon" style="background:rgba(226,75,74,0.12);border:1px solid rgba(226,75,74,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#E24B4A"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <div class="role-name">Admin</div>
+      <span class="role-path">/admin</span>
+      <div class="role-desc">Manage platform settings, users, maintenance mode, and system-level controls.</div>
+      <div class="role-modules">
+        <span class="role-tag">Users</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Settings</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#2563EB" aria-hidden="true">
+      <div class="role-icon" style="background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#2563EB"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      </div>
+      <div class="role-name">Student</div>
+      <span class="role-path">/student</span>
+      <div class="role-desc">Submit documents, apply to companies, log attendance, and view evaluations.</div>
+      <div class="role-modules">
+        <span class="role-tag">Documents</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Attendance</span>
+        <span class="role-tag">Evaluations</span>
+        <span class="role-tag">+5 more</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#534AB7" aria-hidden="true">
+      <div class="role-icon" style="background:rgba(83,74,183,0.12);border:1px solid rgba(83,74,183,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#7F77DD"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="role-name">Instructor</div>
+      <span class="role-path">/instructor</span>
+      <div class="role-desc">Review documents, applications, and proposals; monitor assigned students.</div>
+      <div class="role-modules">
+        <span class="role-tag">Documents</span>
+        <span class="role-tag">Applications</span>
+        <span class="role-tag">Proposals</span>
+        <span class="role-tag">Reports</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#BA7517" aria-hidden="true">
+      <div class="role-icon" style="background:rgba(186,117,23,0.12);border:1px solid rgba(186,117,23,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#EF9F27"><path d="M3 3h18M3 9h18"/></svg>
+      </div>
+      <div class="role-name">Coordinator</div>
+      <span class="role-path">/coordinator</span>
+      <div class="role-desc">Oversee the entire program, companies, announcements, and reporting.</div>
+      <div class="role-modules">
+        <span class="role-tag">Students</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Announcements</span>
+        <span class="role-tag">Reports</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#185FA5" aria-hidden="true">
+      <div class="role-icon" style="background:rgba(24,95,165,0.12);border:1px solid rgba(24,95,165,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#378ADD"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg>
+      </div>
+      <div class="role-name">Industry Partner</div>
+      <span class="role-path">/industry-partner</span>
+      <div class="role-desc">Verify intern attendance and submit performance evaluations.</div>
+      <div class="role-modules">
+        <span class="role-tag">Attendance</span>
+        <span class="role-tag">Evaluations</span>
+        <span class="role-tag">Documents</span>
+      </div>
+    </div>
+
+    <div class="role-card" style="--accent-color:#E24B4A" aria-hidden="true">
+      <div class="role-icon" style="background:rgba(226,75,74,0.12);border:1px solid rgba(226,75,74,0.25)">
+        <svg viewBox="0 0 24 24" style="stroke:#E24B4A"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <div class="role-name">Admin</div>
+      <span class="role-path">/admin</span>
+      <div class="role-desc">Manage platform settings, users, maintenance mode, and system-level controls.</div>
+      <div class="role-modules">
+        <span class="role-tag">Users</span>
+        <span class="role-tag">Companies</span>
+        <span class="role-tag">Settings</span>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section id="features" class="features-section">
+  <div class="features-inner">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">What's inside</div>
+      <h2 class="section-title">Everything the<br><em>system offers</em></h2>
+      <p class="section-sub">INTRAK brings together all internship operations — from document compliance to real-time evaluations.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="feature-title">Document Management</div>
+        <div class="feature-desc">Upload, review, approve, or request resubmission of all required internship documents with full status tracking per phase.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="feature-icon" style="display:none"></div>
+        <div class="feature-title">Company Placement</div>
+        <div class="feature-desc">Browse partner companies, check available slots, and submit placement applications. Track application status from pending to approved.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="feature-title">Attendance Logging</div>
+        <div class="feature-desc">Log daily attendance with manual or QR-supported methods. Industry partners verify entries; total hours are tracked automatically.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <div class="feature-title">Intern Evaluations</div>
+        <div class="feature-desc">Industry partners submit structured performance evaluations with criteria ratings and comments. Students view their results instantly.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
+        <div class="feature-title">Reports &amp; Compliance</div>
+        <div class="feature-desc">Generate monitoring and compliance reports at instructor and coordinator levels. Export attendance and requirement completion data.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="feature-title">Security &amp; 2FA</div>
+        <div class="feature-desc">Role-based route protection, two-factor authentication, email verification, and access token session management built in.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="feature-title">Notifications</div>
+        <div class="feature-desc">Role-based alerts for every workflow action — submissions, approvals, rejections, and announcements delivered in real time.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="feature-title">Partnership Assistance</div>
+        <div class="feature-desc">Students can propose non-listed companies, upload supporting documents, and track the proposal through instructor and coordinator review.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOWS SECTION -->
+<section id="workflows">
+<div class="workflows-section">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">How it works</div>
+    <h2 class="section-title">Core<br><em>Workflows</em></h2>
+    <p class="section-sub">Four end-to-end processes that drive INTRAK from student onboarding to final evaluation.</p>
+  </div>
+
+  <div class="workflow-list">
+    <div class="workflow-card reveal">
+      <div class="wf-num">01</div>
+      <div class="wf-title">Document Compliance</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-dot"></div>Student uploads or generates required document</div>
+        <div class="wf-step"><div class="wf-dot"></div>Instructor or Coordinator reviews the submission</div>
+        <div class="wf-step"><div class="wf-dot"></div>Reviewer approves, rejects, or requests resubmission</div>
+        <div class="wf-step"><div class="wf-dot"></div>Compliance reflected across dashboards and reports</div>
+      </div>
+    </div>
+    <div class="workflow-card reveal">
+      <div class="wf-num">02</div>
+      <div class="wf-title">Company Placement</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-dot"></div>Student browses companies and submits application</div>
+        <div class="wf-step"><div class="wf-dot"></div>Instructor / Coordinator reviews the application</div>
+        <div class="wf-step"><div class="wf-dot"></div>Status updated to approved, rejected, or withdrawn</div>
+        <div class="wf-step"><div class="wf-dot"></div>Attendance and evaluation modules unlock upon assignment</div>
+      </div>
+    </div>
+    <div class="workflow-card reveal">
+      <div class="wf-num">03</div>
+      <div class="wf-title">Partnership Proposal</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-dot"></div>Student submits non-listed company proposal</div>
+        <div class="wf-step"><div class="wf-dot"></div>Instructor returns, rejects, or forwards to coordinator</div>
+        <div class="wf-step"><div class="wf-dot"></div>Coordinator performs final decision and updates status</div>
+      </div>
+    </div>
+    <div class="workflow-card reveal">
+      <div class="wf-num">04</div>
+      <div class="wf-title">Attendance &amp; Evaluation</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-dot"></div>Student logs attendance (manual or QR-supported)</div>
+        <div class="wf-step"><div class="wf-dot"></div>Industry Partner verifies attendance entries</div>
+        <div class="wf-step"><div class="wf-dot"></div>Industry Partner submits performance evaluation</div>
+        <div class="wf-step"><div class="wf-dot"></div>Student views results in the Evaluations module</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ABOUT / THESIS SECTION -->
+<section id="about" class="about-section">
+  <div class="about-inner">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">About Us</div>
+      <h2 class="section-title">About the<br><em>Thesis Project</em></h2>
+      <p class="section-sub">INTRAK is developed as an academic thesis project focused on improving internship and OJT monitoring through a centralized digital platform.</p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-card reveal">
+        <div class="about-title">Project Background</div>
+        <p class="about-text">This thesis addresses common challenges in internship management such as fragmented document submissions, delayed attendance verification, and manual reporting. INTRAK unifies these processes into one system to provide clearer tracking for students, instructors, coordinators, industry partners, and administrators.</p>
+      </div>
+      <div class="about-card reveal">
+        <div class="about-title">Thesis Contributions</div>
+        <div class="about-points">
+          <div class="about-point"><div class="about-dot"></div><span>Role-based portals designed for each stakeholder in the OJT lifecycle.</span></div>
+          <div class="about-point"><div class="about-dot"></div><span>End-to-end workflows for documents, placement, attendance, and evaluations.</span></div>
+          <div class="about-point"><div class="about-dot"></div><span>Data-driven monitoring and reporting to support institutional decision-making.</span></div>
+          <div class="about-point"><div class="about-dot"></div><span>Improved communication and transparency between school and industry partners.</span></div>
         </div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- SUPPORT -->
-  <div class="page" id="page-support">
-    <div class="hero">
-      <div class="hero-eye">Help &amp; Escalation</div>
-      <div class="hero-title">Support &amp; <em>Escalation</em></div>
-      <div class="hero-sub">What to provide when requesting support, and the recommended escalation path.</div>
-    </div>
-    <div class="content">
-      <div class="sec-title">When submitting a support request, provide:</div>
-      <div class="req-card">
-        <div class="req-grid">
-          <div class="req-item"><div class="req-dot"></div>Full name and role</div>
-          <div class="req-item"><div class="req-dot"></div>Screenshot or video of the issue</div>
-          <div class="req-item"><div class="req-dot"></div>Date and time encountered</div>
-          <div class="req-item"><div class="req-dot"></div>Module and page URL</div>
-          <div class="req-item"><div class="req-dot"></div>Expected vs. actual behavior</div>
-        </div>
-      </div>
-
-      <div class="sec-title" style="margin-bottom:0.75rem">Escalation Path</div>
-      <div class="escalation">
-        <div class="esc-node-wrap">
-          <div class="esc-node" style="background:#E1F5EE;border-color:#1D9E75;color:#085041">S</div>
-          <div class="esc-label">Student</div>
-        </div>
-        <div class="esc-arrow">→</div>
-        <div class="esc-node-wrap">
-          <div class="esc-node" style="background:#EEEDFE;border-color:#534AB7;color:#3C3489">I</div>
-          <div class="esc-label">Instructor</div>
-        </div>
-        <div class="esc-arrow">→</div>
-        <div class="esc-node-wrap">
-          <div class="esc-node" style="background:#FAEEDA;border-color:#BA7517;color:#633806">C</div>
-          <div class="esc-label">Coordinator</div>
-        </div>
-        <div class="esc-arrow">→</div>
-        <div class="esc-node-wrap">
-          <div class="esc-node" style="background:#FCEBEB;border-color:#E24B4A;color:#791F1F">A</div>
-          <div class="esc-label">Admin / Tech Team</div>
-        </div>
-      </div>
+<!-- CTA SECTION -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title reveal">Ready to get<br><em>started?</em></h2>
+    <p class="cta-sub reveal">Open the full interactive manual to explore every module, workflow, and feature — organized by your role.</p>
+    <div class="cta-actions reveal">
+      <a href="https://intrak.site/login" class="btn-primary">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Login
+      </a>
+      <a href="#roles" class="btn-secondary">Browse by Role</a>
     </div>
   </div>
+</section>
 
-</main>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <img class="nav-logo" src="/logo.jpg" alt="INTRAK footer logo" style="width:24px;height:24px;border-radius:6px;object-fit:cover">
+    <div>
+      <div class="footer-name">INTRAK</div>
+      <div class="footer-sub">Internship &amp; OJT Tracking System</div>
+    </div>
+  </div>
+  <div class="footer-meta">
+    <span>Version 2.0</span>
+    <span>Manual 2026.03</span>
+    <a href="manuals/full/">User Manual</a>
+  </div>
+</footer>
 
 <script>
-  function show(id, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + id).classList.add('active');
-    el.classList.add('active');
-    document.querySelector('.main').scrollTop = 0;
-  }
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, (entry.target.dataset.delay || 0) * 1000);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = (i % 4) * 0.08 + 's';
+    observer.observe(el);
+  });
+
+  // Smooth nav highlight
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+  window.addEventListener('scroll', () => {
+    let cur = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 80) cur = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + cur
+        ? 'var(--brand2)'
+        : '';
+    });
+  });
+
+  // Role cards -> open manual by role
+  const roleManualMap = {
+    '/student': 'manuals/student/',
+    '/instructor': 'manuals/instructor/',
+    '/coordinator': 'manuals/coordinator/',
+    '/industry-partner': 'manuals/industry-partner/',
+    '/admin': 'manuals/admin/'
+  };
+
+  document.querySelectorAll('#roles .role-card').forEach(card => {
+    const pathEl = card.querySelector('.role-path');
+    if (!pathEl) return;
+    const rolePath = pathEl.textContent.trim().toLowerCase();
+    const targetUrl = roleManualMap[rolePath] || 'manuals/student/';
+
+    if (card.getAttribute('aria-hidden') !== 'true') {
+      card.setAttribute('role', 'link');
+      card.setAttribute('tabindex', '0');
+    }
+
+    card.addEventListener('click', () => {
+      window.location.href = targetUrl;
+    });
+
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        window.location.href = targetUrl;
+      }
+    });
+  });
 </script>
+
 </body>
 </html>

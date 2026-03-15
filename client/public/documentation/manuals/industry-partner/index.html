@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>INTRAK — Industry Partner Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--brand:#185FA5;--bl:#E6F1FB;--bd:#0C447C;--bm:#B5D4F4;--bg:#fff;--bg2:#f8f7f5;--bg3:#f1f0ec;--t:#1a1917;--t2:#5c5a55;--t3:#9a9890;--br:rgba(0,0,0,.09);--br2:rgba(0,0,0,.16);--r:12px;--rm:8px;--fh:'DM Serif Display',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);background:var(--bg3);display:flex;min-height:100vh}
+.sb{width:220px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--br);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb::-webkit-scrollbar{width:3px}.sb::-webkit-scrollbar-thumb{background:var(--br2);border-radius:3px}
+.sbt{padding:1.1rem 1rem 1rem;border-bottom:1px solid var(--br)}
+.sbl{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.sbd{width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbd img{width:100%;height:100%;object-fit:contain}
+
+
+
+.sbt2{font-size:13px;font-weight:600;color:#2563EB}
+.rp{display:inline-block;background:var(--bl);color:var(--bd);padding:2px 9px;border-radius:20px;font-size:10px;font-weight:500;margin-top:4px}
+.ver{font-size:10px;color:var(--t3);margin-top:3px}
+.nav{padding:.4rem 0;flex:1}
+.gl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:.35rem 1rem .1rem;font-weight:500;display:block}
+.ni{display:flex;align-items:center;gap:7px;padding:6px 1rem;cursor:pointer;font-size:12.5px;color:var(--t2);border-left:2px solid transparent;transition:all .12s;text-decoration:none}
+.ni:hover{background:var(--bg2);color:var(--t)}
+.ni.on{background:var(--bl);color:var(--bd);border-left:2px solid var(--brand);font-weight:500}
+.ni svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;opacity:.75}
+.sbf{padding:.6rem 1rem;border-top:1px solid var(--br);font-size:10px;color:var(--t3)}
+.bk{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);text-decoration:none;padding:.5rem 1rem .3rem;transition:color .15s}
+.bk:hover{color:var(--brand)}
+.bk svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+.main{flex:1;overflow-y:auto;background:var(--bg3)}
+.main::-webkit-scrollbar{width:4px}.main::-webkit-scrollbar-thumb{background:var(--br2);border-radius:4px}
+.pg{display:none}.pg.on{display:block;animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hero{background:var(--bg);border-bottom:1px solid var(--br);padding:2rem 2.25rem 1.75rem}
+.eye{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:500;margin-bottom:6px}
+.h1{font-family:var(--fh);font-size:26px;color:var(--t);line-height:1.15;margin-bottom:6px}
+.h1 em{font-style:italic;color:var(--brand)}
+.hs{font-size:13px;color:var(--t2);max-width:540px;line-height:1.6;font-weight:300}
+.hm{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ch{font-size:10px;color:var(--t2);background:var(--bg2);padding:3px 9px;border-radius:20px;border:1px solid var(--br)}
+.ch.b{background:var(--bl);color:var(--bd);border-color:var(--bm)}
+.bd{padding:1.5rem 2.25rem}
+.st{font-size:14px;font-weight:500;color:var(--t);margin-bottom:.5rem}
+.sd{font-size:12px;color:var(--t2);margin-bottom:1rem;font-weight:300}
+.hr{height:1px;background:var(--br);margin:1.4rem 0}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem}
+.card{background:var(--bg);border:1px solid var(--br);border-radius:var(--r);padding:.9rem 1rem;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--br2);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.ci{width:28px;height:28px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;margin-bottom:.6rem}
+.ci svg{width:13px;height:13px;stroke-width:2;fill:none}
+.cl{font-size:12.5px;font-weight:500;color:var(--t);margin-bottom:3px}
+.cp{font-size:10px;color:var(--t3);font-family:monospace;margin-bottom:4px;display:block}
+.cd{font-size:11.5px;color:var(--t2);line-height:1.4;font-weight:300}
+.wf{background:var(--bg);border:1px solid var(--br);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1.1rem}
+.step{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--br);font-size:12.5px;color:var(--t2)}
+.step:last-child{border-bottom:none;padding-bottom:0}
+.snum{width:20px;height:20px;border-radius:50%;background:var(--bg2);border:1px solid var(--br);color:var(--t3);font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.stx{flex:1;line-height:1.4}
+.sbg{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:500;flex-shrink:0;background:var(--bl);color:var(--bd)}
+.ib{border-radius:var(--rm);padding:10px 14px;font-size:12px;margin-bottom:1rem;display:flex;gap:8px;align-items:flex-start;border:1px solid}
+.ib.tip{background:var(--bl);border-color:var(--bm);color:var(--bd)}
+.ib.warn{background:#FAEEDA;border-color:#FAC775;color:#633806}
+.ib.note{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
+.ib svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2}
+.pw{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:1rem}
+.sp{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--br);border-radius:var(--rm);padding:4px 10px;font-size:11.5px}
+.pd{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pn{font-weight:500;color:var(--t)}
+.ps{color:var(--t2);font-size:11px}
+.iss{background:var(--bg);border:1px solid var(--br);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:8px}
+.iq{font-size:13px;font-weight:500;color:var(--t);margin-bottom:6px;display:flex;align-items:flex-start;gap:7px}
+.ibg{width:18px;height:18px;border-radius:50%;background:#FAEEDA;color:#BA7517;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:500;flex-shrink:0;margin-top:1px}
+.isl{padding-left:25px;display:flex;flex-direction:column;gap:3px}
+.ist{display:flex;align-items:flex-start;gap:5px;font-size:12px;color:var(--t2)}
+.ibu{width:4px;height:4px;border-radius:50%;background:var(--t3);flex-shrink:0;margin-top:6px}
+.slist{display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--br);border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.srow{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--br)}
+.srow:last-child{border-bottom:none}
+.sic{width:28px;height:28px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sic svg{width:13px;height:13px;stroke-width:2;fill:none}
+.sna{font-size:12.5px;font-weight:500;color:var(--t);flex:1}
+.sde{font-size:11.5px;color:var(--t2);font-weight:300}
+.mono{font-family:monospace;font-size:11px;background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--br)}
+.row{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--br);border-radius:var(--rm);padding:9px 12px;margin-bottom:6px}
+.rdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rn{font-size:12.5px;font-weight:500;color:var(--t);flex:1}
+.rp2{font-size:10px;color:var(--t3);font-family:monospace;margin-left:4px;font-weight:400}
+.rd{font-size:11.5px;color:var(--t2);font-weight:300}
+.menu-toggle{display:none;position:fixed;top:12px;left:12px;z-index:260;width:38px;height:38px;border-radius:10px;border:1px solid var(--br,var(--border));background:var(--bg,#fff);color:var(--t,var(--text));font-size:20px;line-height:1;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.sb-overlay{display:none}
+@media (max-width:860px){
+  body{display:block}
+  .sidebar,.sb{position:fixed!important;left:0;top:0;height:100vh;transform:translateX(-100%);transition:transform .22s ease;z-index:250;box-shadow:0 10px 28px rgba(0,0,0,.2)}
+  body.open-sidebar .sidebar,body.open-sidebar .sb{transform:translateX(0)}
+  .menu-toggle{display:flex}
+  .sb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:240;display:none}
+  body.open-sidebar .sb-overlay{display:block}
+}/* Mobile concept: icon-only sidebar rail (no hamburger) */
+@media (max-width:860px){
+  .menu-toggle{display:none!important}
+  .sb-overlay{display:none!important}
+  body{display:flex!important;min-height:100vh}
+  .sidebar,.sb{position:sticky!important;top:0;left:0;height:100vh;transform:none!important;width:64px!important;z-index:120;box-shadow:none!important;overflow-x:hidden}
+  body.open-sidebar .sidebar,body.open-sidebar .sb{transform:none!important}
+  .main{flex:1;margin-left:0!important}
+
+  .sb-top,.sbt{padding:.7rem .45rem!important;border-bottom:1px solid var(--border,var(--br))}
+  .sb-logo,.sbl{justify-content:center!important;gap:0!important}
+  .sb-dot,.sbd{width:30px!important;height:30px!important}
+.sbd img{width:100%;height:100%;object-fit:contain}
+
+  .sb-title,.sbt2,.role-pill,.rp,.sb-ver,.ver,.gl{display:none!important}
+
+  .ni{justify-content:center!important;padding:10px 0!important;font-size:0!important;border-left:none!important;gap:0!important}
+  .ni svg{width:16px!important;height:16px!important;opacity:.9}
+  .ni.on{border-left:none!important}
+
+  .sb-back,.bk{justify-content:center!important;padding:.5rem 0!important;font-size:0!important;gap:0!important}
+  .sb-back svg,.bk svg{width:14px!important;height:14px!important}
+
+  .sb-ft,.sbf{font-size:0!important;padding:.6rem 0!important;text-align:center}
+  .sb-ft::before,.sbf::before{content:'INTRAK';font-size:9px;color:var(--text3,var(--t3));letter-spacing:.04em}
+}</style>
+</head>
+<body>
+<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+<div class="sb-overlay" aria-hidden="true"></div><aside class="sb">
+  <div class="sbt">
+    <div class="sbl">
+      <div class="sbd"><img src="/just_logo.png" alt="INTRAK logo"></div>
+      <span class="sbt2">INTRAK</span>
+    </div>
+    <div class="rp">Industry Partner Manual</div>
+    <div class="ver">Version 2.0 · 2026.03</div>
+  </div>
+  <nav class="nav">
+    <span class="gl">Getting Started</span>
+    <a class="ni on" onclick="go('overview',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Overview</a>
+    <a class="ni" onclick="go('login',this)"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Login &amp; Access</a>
+    <span class="gl">Your Modules</span>
+    <a class="ni" onclick="go('dashboard',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="ni" onclick="go('attendance',this)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Attendance Verification</a>
+    <a class="ni" onclick="go('evaluations',this)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Evaluations</a>
+    <a class="ni" onclick="go('documents',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documents</a>
+    <span class="gl">Account</span>
+    <a class="ni" onclick="go('settings',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
+    <a class="ni" onclick="go('notifications',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
+    <span class="gl">Help</span>
+    <a class="ni" onclick="go('troubleshoot',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
+  </nav>
+  <a class="bk" href="../full/"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Full Manual</a>
+  <div class="sbf">INTRAK v2.0 · Industry Partner</div>
+</aside>
+<main class="main">
+
+<div class="pg on" id="pg-overview">
+  <div class="hero"><div class="eye">Industry Partner Portal</div><div class="h1">Industry Partner <em>Manual</em></div>
+  <div class="hs">Your complete guide to verifying intern attendance and submitting performance evaluations through INTRAK.</div>
+  <div class="hm"><span class="ch b">5 Modules</span><span class="ch">Base Path: /industry-partner</span></div></div>
+  <div class="bd">
+    <div class="st">Your two main responsibilities</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="cl">Verify Attendance</div><div class="cd">Review and verify daily attendance entries submitted by your assigned interns.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="cl">Submit Evaluations</div><div class="cd">Submit structured performance evaluations with ratings and comments for each intern.</div></div>
+    </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Interns are assigned to you by the institution's coordinator. You will only see the interns under your supervision in the system.</span></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-login">
+  <div class="hero"><div class="eye">Authentication</div><div class="h1">Login &amp; <em>Access</em></div><div class="hs">How to log in to the Industry Partner portal.</div></div>
+  <div class="bd">
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Open the official INTRAK URL and enter your credentials</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Complete 2FA challenge if enabled</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">You are redirected to <span class="mono">/industry-partner/dashboard</span></div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Your account is created by the system administrator. Contact your institution coordinator if you have not received your login credentials.</span></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-dashboard">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Your <em>Dashboard</em></div><div class="hs">Overview of assigned interns and their current status.</div><div class="hm"><span class="ch b">/industry-partner/dashboard</span></div></div>
+  <div class="bd">
+    <div class="cg">
+      <div class="card"><div class="cl">Assigned Interns</div><div class="cd">List of all interns currently under your supervision.</div></div>
+      <div class="card"><div class="cl">Pending Verifications</div><div class="cd">Count of attendance entries awaiting your review.</div></div>
+      <div class="card"><div class="cl">Evaluation Status</div><div class="cd">Whether evaluations have been submitted for each intern.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-attendance">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Attendance <em>Verification</em></div><div class="hs">Review and verify daily attendance entries submitted by your interns.</div><div class="hm"><span class="ch b">/industry-partner/attendance</span></div></div>
+  <div class="bd">
+    <div class="st">How to verify an attendance entry</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/industry-partner/attendance</span></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Review the pending attendance entry details (intern, date, time)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Choose: Approve or Reject</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Add a remark if rejecting — explain why the entry is invalid</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Submit your verification — the intern is notified</div></div>
+    </div>
+    <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Only approved entries count toward the intern's total completed hours. Please verify entries promptly and accurately.</span></div>
+    <div class="st">Verification workflow</div>
+    <div class="pw">
+      <div class="sp"><div class="pd" style="background:#BA7517"></div><span class="pn">PENDING</span><span class="ps">— intern submitted, waiting for you</span></div>
+      <div class="sp"><div class="pd" style="background:#1D9E75"></div><span class="pn">APPROVED</span><span class="ps">— hours counted</span></div>
+      <div class="sp"><div class="pd" style="background:#E24B4A"></div><span class="pn">REJECTED</span><span class="ps">— not counted, intern notified</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-evaluations">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Intern <em>Evaluations</em></div><div class="hs">Submit structured performance evaluations for your assigned interns.</div><div class="hm"><span class="ch b">/industry-partner/evaluations</span></div></div>
+  <div class="bd">
+    <div class="st">Submitting an evaluation</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/industry-partner/evaluations</span></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Select the intern you want to evaluate</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Fill in ratings for each performance criteria</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Add comments — be specific and constructive</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Submit — the intern and their instructor are notified</div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Evaluation comments are visible to the intern. Be professional, specific, and constructive in your feedback.</span></div>
+    <div class="st">What evaluations include</div>
+    <div class="cg">
+      <div class="card"><div class="cl">Criteria Ratings</div><div class="cd">Scale-based ratings across defined performance categories set by the institution.</div></div>
+      <div class="card"><div class="cl">Comments</div><div class="cd">Open-text comments providing qualitative feedback to the intern.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-documents">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Intern <em>Documents</em></div><div class="hs">View documents relevant to your supervised interns — for reference only.</div><div class="hm"><span class="ch b">/industry-partner/documents</span></div></div>
+  <div class="bd">
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>This section provides read-only access to documents relevant to your assigned interns. You cannot submit or review documents — that is handled by the institution.</span></div>
+    <div class="cg">
+      <div class="card"><div class="cl">Intern Documents</div><div class="cd">View submitted documents from your supervised interns for reference.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-settings">
+  <div class="hero"><div class="eye">Account</div><div class="h1">Settings &amp; <em>Preferences</em></div><div class="hm"><span class="ch b">/industry-partner/settings</span></div></div>
+  <div class="bd">
+    <div class="slist">
+      <div class="srow"><div class="sic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="sna">Profile</div><div class="sde">Update your name, company, and contact details</div></div>
+      <div class="srow"><div class="sic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="sna">Password &amp; 2FA</div><div class="sde">Change password and manage two-factor authentication</div></div>
+      <div class="srow"><div class="sic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></div><div class="sna">Appearance</div><div class="sde">Light, dark, or system theme</div></div>
+      <div class="srow"><div class="sic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div class="sna">Notification Preferences</div><div class="sde">Control which alerts you receive</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-notifications">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1"><em>Notifications</em></div><div class="hm"><span class="ch b">/industry-partner/notifications</span></div></div>
+  <div class="bd">
+    <div class="cg">
+      <div class="card"><div class="cl">New Attendance Entries</div><div class="cd">Notified when an intern submits an attendance entry for your verification.</div></div>
+      <div class="card"><div class="cl">System Alerts</div><div class="cd">Platform-level alerts and institutional announcements.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-troubleshoot">
+  <div class="hero"><div class="eye">Help</div><div class="h1">Troubleshooting <em>Guide</em></div><div class="hs">Common industry partner issues and how to resolve them.</div></div>
+  <div class="bd">
+    <div class="iss"><div class="iq"><div class="ibg">!</div>I can't see any interns</div><div class="isl"><div class="ist"><div class="ibu"></div>Interns are assigned to you by the institution's coordinator</div><div class="ist"><div class="ibu"></div>Contact the program coordinator if no interns appear under your account</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>I can't find an attendance entry</div><div class="isl"><div class="ist"><div class="ibu"></div>The intern may not have submitted an entry for that date yet</div><div class="ist"><div class="ibu"></div>Check with the intern directly and ask them to log the entry</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>I can't submit an evaluation</div><div class="isl"><div class="ist"><div class="ibu"></div>Verify you are selecting the correct intern</div><div class="ist"><div class="ibu"></div>Ensure all required criteria fields are filled in before submitting</div><div class="ist"><div class="ibu"></div>Contact the coordinator if access is blocked</div></div></div>
+    <div class="hr"></div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>For system issues, contact the institution's program coordinator. They will escalate to the Admin or technical team on your behalf.</span></div>
+  </div>
+</div>
+</main>
+<script>
+function go(id,el){
+  document.querySelectorAll('.page,.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  const page = document.getElementById('pg-'+id);
+  if(page) page.classList.add('on');
+  if(el) el.classList.add('on');
+  const main = document.querySelector('.main');
+  if(main) main.scrollTop = 0;
+  closeSidebar();
+}
+function closeSidebar(){
+  document.body.classList.remove('open-sidebar');
+  const t = document.querySelector('.menu-toggle');
+  if(t) t.setAttribute('aria-expanded','false');
+}
+(function(){
+  const toggle = document.querySelector('.menu-toggle');
+  const overlay = document.querySelector('.sb-overlay');
+  if(!toggle || !overlay) return;
+  toggle.addEventListener('click', ()=>{
+    const open = document.body.classList.toggle('open-sidebar');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  overlay.addEventListener('click', closeSidebar);
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeSidebar(); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth > 860) closeSidebar(); });
+})();</script>
+</body>
+</html>

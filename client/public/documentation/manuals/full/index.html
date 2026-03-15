@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INTRAK — Complete User Manual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#2563EB;--brand2:#4F46E5;--bl:#EAF2FF;--bd:#1E3A8A;--bm:#93C5FD;
+  --purple:#534AB7;--pl:#EEEDFE;--pd:#3C3489;
+  --amber:#BA7517;--al:#FAEEDA;--ad:#633806;
+  --blue:#185FA5;--blu:#E6F1FB;--bld:#0C447C;
+  --red:#A32D2D;--rl:#FCEBEB;--rd:#791F1F;
+  --bg:#ffffff;--bg2:#f9f8f6;--bg3:#f2f1ee;
+  --t:#1a1917;--t2:#57554f;--t3:#9a9890;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --r:12px;--rm:8px;
+  --fh:'Lora',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif;
+  --sidebar-w:260px;--toc-w:220px;
+}
+html{scroll-behavior:smooth;font-size:15px}
+body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
+
+/* ═══ TOP NAV ═══ */
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:56px;background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 1.5rem;gap:1rem;
+}
+.tn-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0}
+.tn-dot{width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.tn-dot img{width:100%;height:100%;object-fit:contain}
+
+.tn-name{font-size:15px;font-weight:600;color:#2563EB;letter-spacing:-0.01em}
+.tn-badge{font-size:10px;background:var(--bl);color:var(--bd);padding:2px 8px;border-radius:20px;font-weight:500;margin-left:2px}
+.tn-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0}
+.tn-title{font-size:13px;color:var(--t2);flex:1;font-weight:400}
+.tn-search{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rm);padding:6px 12px;font-size:12px;color:var(--t3);cursor:text;transition:border-color .15s;min-width:180px}
+.tn-search:hover{border-color:var(--brand)}
+.tn-search svg{width:13px;height:13px;stroke:var(--t3);fill:none;stroke-width:2;flex-shrink:0}
+.hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px;border:none;background:none}
+.hamburger span{width:20px;height:2px;background:var(--t2);border-radius:2px;transition:all .2s}
+
+/* ═══ LAYOUT ═══ */
+.layout{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
+
+/* ═══ LEFT SIDEBAR ═══ */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  position:sticky;top:56px;height:calc(100vh - 56px);
+  overflow-y:auto;background:var(--bg2);
+  border-right:1px solid var(--border);
+  padding:1.5rem 0 2rem;
+}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.sb-section{margin-bottom:.25rem}
+.sb-group{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:.75rem 1.25rem .2rem;font-weight:500;display:block}
+.sb-link{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 1.25rem;font-size:12.5px;color:var(--t2);
+  text-decoration:none;transition:all .12s;
+  border-left:2px solid transparent;border-radius:0 var(--rm) var(--rm) 0;
+}
+.sb-link:hover{background:rgba(0,0,0,.04);color:var(--t)}
+.sb-link.active{background:var(--bl);color:var(--bd);border-left-color:var(--brand);font-weight:500}
+.sb-link svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;opacity:.7}
+.sb-sub{font-size:11.5px;color:var(--t3);padding:3px 1.25rem 3px 2.75rem;display:block;text-decoration:none;transition:color .12s;line-height:1.4}
+.sb-sub:hover{color:var(--brand)}
+.sb-sub.active{color:var(--brand);font-weight:500}
+.sb-divider{height:1px;background:var(--border);margin:.5rem 1.25rem}
+
+/* ═══ MAIN CONTENT ═══ */
+.content{
+  flex:1;min-width:0;
+  max-width:820px;
+  padding:3rem 3.5rem 6rem;
+}
+
+/* ═══ RIGHT TOC ═══ */
+.toc{
+  width:var(--toc-w);flex-shrink:0;
+  position:sticky;top:56px;height:calc(100vh - 56px);
+  overflow-y:auto;padding:1.5rem 1rem 2rem;
+  border-left:1px solid var(--border);
+  display:block;
+}
+.toc::-webkit-scrollbar{width:3px}
+.toc::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.toc-title{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:500;margin-bottom:.75rem;padding-left:.25rem}
+.toc-link{display:block;font-size:11.5px;color:var(--t3);text-decoration:none;padding:3px .5rem;border-left:2px solid transparent;margin-bottom:1px;transition:all .12s;line-height:1.4}
+.toc-link:hover{color:var(--t2)}
+.toc-link.active{color:var(--brand);border-left-color:var(--brand);font-weight:500}
+.toc-link.sub{padding-left:1.25rem;font-size:11px}
+
+/* ═══ TYPOGRAPHY ═══ */
+.manual-section{margin-bottom:4rem;padding-bottom:3rem;border-bottom:1px solid var(--border)}
+.manual-section:last-child{border-bottom:none;margin-bottom:0}
+
+.section-eye{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);font-weight:500;margin-bottom:.5rem;display:block}
+.section-h1{font-family:var(--fh);font-size:32px;color:var(--t);line-height:1.15;margin-bottom:.75rem;font-weight:600}
+.section-h1 em{font-style:italic;color:var(--brand)}
+.section-h2{font-family:var(--fh);font-size:22px;color:var(--t);line-height:1.2;margin:2.5rem 0 .75rem;font-weight:500;display:flex;align-items:center;gap:10px}
+.section-h2::before{content:'';display:inline-block;width:4px;height:20px;background:var(--brand);border-radius:2px;flex-shrink:0}
+.section-h3{font-size:15px;font-weight:500;color:var(--t);margin:1.75rem 0 .5rem}
+.section-lead{font-size:15px;color:var(--t2);line-height:1.7;margin-bottom:1.5rem;font-weight:300;max-width:680px}
+.prose{font-size:14px;color:var(--t2);line-height:1.75;margin-bottom:1.25rem;font-weight:300}
+.prose strong{color:var(--t);font-weight:500}
+
+/* ═══ ROLE HERO BANNER ═══ */
+.role-banner{border-radius:var(--r);padding:1.5rem 1.75rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem;border:1px solid}
+.rb-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rb-icon svg{width:20px;height:20px;stroke-width:1.75;fill:none}
+.rb-name{font-family:var(--fh);font-size:20px;font-weight:500;margin-bottom:3px}
+.rb-desc{font-size:13px;font-weight:300;opacity:.85}
+.rb-path{font-size:11px;font-family:monospace;opacity:.65;margin-top:4px}
+
+/* ═══ CARDS ═══ */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin:1rem 0 1.5rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;transition:border-color .15s}
+.card:hover{border-color:var(--border2)}
+.card-icon{width:28px;height:28px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;margin-bottom:.6rem}
+.card-icon svg{width:13px;height:13px;stroke-width:2;fill:none}
+.card-label{font-size:12.5px;font-weight:500;color:var(--t);margin-bottom:3px}
+.card-path{font-size:10px;color:var(--t3);font-family:monospace;margin-bottom:4px;display:block}
+.card-desc{font-size:12px;color:var(--t2);line-height:1.45;font-weight:300}
+
+/* ═══ STEPS ═══ */
+.steps{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;margin:1rem 0}
+.step{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--t2)}
+.step:last-child{border-bottom:none;padding-bottom:0}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--border2);color:var(--t3);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-weight:500}
+.step-t{flex:1;line-height:1.5}
+.step-r{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;flex-shrink:0;background:var(--bl);color:var(--bd);margin-top:2px}
+
+/* ═══ STATUS PILLS ═══ */
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;margin:1rem 0}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:5px 11px;font-size:12px}
+.pill-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pill-name{font-weight:500;color:var(--t)}
+.pill-note{color:var(--t2);font-size:11px}
+
+/* ═══ INFO BOXES ═══ */
+.info{border-radius:var(--rm);padding:11px 14px;margin:1rem 0;display:flex;gap:9px;align-items:flex-start;border:1px solid;font-size:13px}
+.info svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2}
+.info.tip{background:var(--bl);border-color:var(--bm);color:var(--bd)}
+.info.warn{background:#FAEEDA;border-color:#FAC775;color:#633806}
+.info.note{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
+
+/* ═══ TABLE ═══ */
+.mtable{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0}
+.mtable th{background:var(--bg2);text-align:left;padding:8px 12px;font-weight:500;color:var(--t);border-bottom:2px solid var(--border2);font-size:12px}
+.mtable td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--t2);vertical-align:top}
+.mtable tr:last-child td{border-bottom:none}
+.mtable tr:hover td{background:var(--bg2)}
+
+/* ═══ SETTINGS LIST ═══ */
+.settings{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:1rem 0}
+.setting{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.setting:last-child{border-bottom:none}
+.set-ic{width:30px;height:30px;border-radius:var(--rm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.set-ic svg{width:13px;height:13px;stroke-width:2;fill:none}
+.set-name{font-size:13px;font-weight:500;color:var(--t);flex:1}
+.set-desc{font-size:12px;color:var(--t2);font-weight:300}
+
+/* ═══ ISSUE CARDS ═══ */
+.issue{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:8px}
+.issue-q{font-size:13.5px;font-weight:500;color:var(--t);margin-bottom:7px;display:flex;align-items:flex-start;gap:8px}
+.issue-badge{width:20px;height:20px;border-radius:50%;background:#FAEEDA;color:#BA7517;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:500;flex-shrink:0;margin-top:1px}
+.issue-list{padding-left:28px;display:flex;flex-direction:column;gap:4px}
+.issue-item{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--t2)}
+.issue-dot{width:4px;height:4px;border-radius:50%;background:var(--t3);flex-shrink:0;margin-top:6px}
+
+/* ═══ ESCALATION ═══ */
+.esc{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;flex-wrap:wrap;margin:1rem 0}
+.esc-node{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:80px}
+.esc-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:2px solid}
+.esc-arrow{color:var(--t3);font-size:18px;flex-shrink:0}
+.esc-label{font-size:11px;color:var(--t2);text-align:center}
+
+/* ═══ DIVIDER ═══ */
+.hr{height:1px;background:var(--border);margin:2rem 0}
+.mono{font-family:monospace;font-size:12px;background:var(--bg2);padding:1px 5px;border-radius:4px;border:1px solid var(--border)}
+
+/* ═══ MODULE TAG ═══ */
+.tag{font-size:11px;background:var(--bg2);color:var(--t2);padding:2px 8px;border-radius:4px;border:1px solid var(--border);display:inline-block;margin:2px}
+.tag.green{background:var(--bl);color:var(--bd);border-color:var(--bm)}
+.tag.purple{background:var(--pl);color:var(--pd);border-color:#AFA9EC}
+.tag.amber{background:var(--al);color:var(--ad);border-color:#FAC775}
+.tag.blue{background:var(--blu);color:var(--bld);border-color:#B5D4F4}
+.tag.red{background:var(--rl);color:var(--rd);border-color:#F7C1C1}
+
+/* ═══ PRINT STYLES ═══ */
+@media print{
+  .topnav,.sidebar,.toc,.hamburger{display:none!important}
+  .layout{display:block}
+  .content{max-width:100%;padding:1rem 2rem}
+  .manual-section{page-break-before:auto;break-inside:avoid}
+  .section-h1{page-break-after:avoid}
+  .steps,.card,.issue{break-inside:avoid}
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1200px){
+  .toc{display:none}
+  .content{max-width:none;flex:1}
+}
+@media(max-width:860px){
+  :root{--sidebar-w:240px}
+  .sidebar{
+    position:fixed;left:-100%;top:56px;z-index:150;
+    height:calc(100vh - 56px);transition:left .25s ease;
+    box-shadow:none;
+  }
+  .sidebar.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,.12)}
+  .overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(0,0,0,.35);z-index:140}
+  .overlay.show{display:block}
+  .hamburger{display:flex}
+  .content{padding:2rem 1.5rem 4rem}
+  .section-h1{font-size:26px}
+  .section-h2{font-size:19px}
+  .card-grid{grid-template-columns:1fr 1fr}
+  .role-banner{flex-wrap:wrap}
+  .esc{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:520px){
+  .content{padding:1.5rem 1.1rem 4rem}
+  .section-h1{font-size:22px}
+  .card-grid{grid-template-columns:1fr}
+  .tn-search{display:none}
+  .tn-title{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="tn-brand" href="#">
+    <div class="tn-dot"><img src="/just_logo.png" alt="INTRAK logo"></div>
+    <span class="tn-name">INTRAK</span>
+    <span class="tn-badge">v2.0</span>
+  </a>
+  <div class="tn-sep"></div>
+  <span class="tn-title">Complete User Manual</span>
+  <div class="tn-search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Search manual…</span>
+  </div>
+</nav>
+<div class="overlay" id="overlay"></div>
+
+<div class="layout">
+
+<!-- LEFT SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <span class="sb-group">Introduction</span>
+    <a href="#intro" class="sb-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>System Overview</a>
+    <a href="#access" class="sb-link"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Access &amp; Login</a>
+    <a href="#navigation" class="sb-link"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Navigation</a>
+    <a href="#roles" class="sb-link"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Role Access Matrix</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Core Workflows</span>
+    <a href="#wf-documents" class="sb-link"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Document Compliance</a>
+    <a href="#wf-placement" class="sb-link"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Company Placement</a>
+    <a href="#wf-proposal" class="sb-link"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Partnership Proposal</a>
+    <a href="#wf-attendance" class="sb-link"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Attendance &amp; Evaluation</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Student Portal</span>
+    <a href="#student" class="sb-link"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>Student Overview</a>
+    <a href="#s-dashboard" class="sb-sub">Dashboard</a>
+    <a href="#s-documents" class="sb-sub">Documents</a>
+    <a href="#s-templates" class="sb-sub">Templates</a>
+    <a href="#s-companies" class="sb-sub">Companies</a>
+    <a href="#s-partnership" class="sb-sub">Partnership Assistance</a>
+    <a href="#s-attendance" class="sb-sub">Attendance</a>
+    <a href="#s-evaluations" class="sb-sub">Evaluations</a>
+    <a href="#s-settings" class="sb-sub">Settings</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Instructor Portal</span>
+    <a href="#instructor" class="sb-link"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Instructor Overview</a>
+    <a href="#i-documents" class="sb-sub">Student Documents</a>
+    <a href="#i-applications" class="sb-sub">Company Applications</a>
+    <a href="#i-proposals" class="sb-sub">Company Proposals</a>
+    <a href="#i-students" class="sb-sub">Students</a>
+    <a href="#i-reports" class="sb-sub">Reports</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Coordinator Portal</span>
+    <a href="#coordinator" class="sb-link"><svg viewBox="0 0 24 24"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>Coordinator Overview</a>
+    <a href="#c-students" class="sb-sub">Students</a>
+    <a href="#c-companies" class="sb-sub">Companies</a>
+    <a href="#c-proposals" class="sb-sub">Company Proposals</a>
+    <a href="#c-announcements" class="sb-sub">Announcements</a>
+    <a href="#c-reports" class="sb-sub">Reports</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Industry Partner Portal</span>
+    <a href="#partner" class="sb-link"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg>Partner Overview</a>
+    <a href="#p-attendance" class="sb-sub">Attendance Verification</a>
+    <a href="#p-evaluations" class="sb-sub">Evaluations</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Admin Portal</span>
+    <a href="#admin" class="sb-link"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Admin Overview</a>
+    <a href="#a-users" class="sb-sub">User Management</a>
+    <a href="#a-companies" class="sb-sub">Company Management</a>
+    <a href="#a-settings" class="sb-sub">Admin Settings</a>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <span class="sb-group">Reference</span>
+    <a href="#statuses" class="sb-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Status Definitions</a>
+    <a href="#security" class="sb-link"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</a>
+    <a href="#troubleshoot" class="sb-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
+    <a href="#support" class="sb-link"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Support &amp; Escalation</a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="content" id="content">
+
+<!-- ══════════════════════════════════════════ INTRO -->
+<section class="manual-section" id="intro">
+  <span class="section-eye">System Documentation · Version 2.0</span>
+  <h1 class="section-h1">INTRAK <em>User Manual</em></h1>
+  <p class="section-lead">INTRAK is the Internship and OJT Tracking and Management System. This manual covers every feature, workflow, and setting available to all five user roles — students, instructors, coordinators, industry partners, and administrators.</p>
+
+  <h3 class="section-h3">What INTRAK Does</h3>
+  <div class="card-grid">
+    <div class="card"><div class="card-icon" style="background:#EAF2FF"><svg viewBox="0 0 24 24" stroke="#2563EB"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="card-label">Documents</div><div class="card-desc">Submit, review, and track required internship documents by phase.</div></div>
+    <div class="card"><div class="card-icon" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="card-label">Company Placement</div><div class="card-desc">Browse, apply, and track student placement at partner companies.</div></div>
+    <div class="card"><div class="card-icon" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="card-label">Attendance</div><div class="card-desc">Log and verify daily attendance with total hours tracking.</div></div>
+    <div class="card"><div class="card-icon" style="background:#FAECE7"><svg viewBox="0 0 24 24" stroke="#993C1D"><path d="M9 11l3 3L22 4"/></svg></div><div class="card-label">Evaluations</div><div class="card-desc">Partners submit evaluations; students view their performance results.</div></div>
+    <div class="card"><div class="card-icon" style="background:#DBEAFE"><svg viewBox="0 0 24 24" stroke="#1E40AF"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="card-label">Reports</div><div class="card-desc">Compliance and operational reporting at instructor and coordinator level.</div></div>
+    <div class="card"><div class="card-icon" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div class="card-label">Notifications</div><div class="card-desc">Role-based alerts for all workflow actions and announcements.</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ ACCESS & LOGIN -->
+<section class="manual-section" id="access">
+  <span class="section-eye">Authentication</span>
+  <h2 class="section-h2">Access &amp; Login</h2>
+  <p class="section-lead">All users access INTRAK through the same login page. The system automatically routes you to the correct portal based on your assigned role.</p>
+
+  <h3 class="section-h3">Login Process</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Open the official INTRAK system URL in your browser</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Enter your registered email address and password</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">If Two-Factor Authentication is enabled, enter the one-time code sent to your email, or use a backup code</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">The system redirects you to your role-specific dashboard automatically</div></div>
+  </div>
+
+  <h3 class="section-h3">Public Authentication Routes</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:1rem 0">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:8px 12px;font-family:monospace;font-size:12px;color:var(--t2)">/login</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:8px 12px;font-family:monospace;font-size:12px;color:var(--t2)">/forgot-password</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:8px 12px;font-family:monospace;font-size:12px;color:var(--t2)">/reset-password</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:8px 12px;font-family:monospace;font-size:12px;color:var(--t2)">/verify-email</div>
+  </div>
+
+  <h3 class="section-h3">Password Recovery</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <span class="mono">/forgot-password</span> and submit your registered email</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Check your inbox (including spam folder) for the reset link</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Follow the link to <span class="mono">/reset-password</span> and set a new password</div></div>
+  </div>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>If you do not receive the reset email after a few minutes, check your spam folder, then contact your instructor or admin.</span></div>
+</section>
+
+<!-- ══════════════════════════════════════════ NAVIGATION -->
+<section class="manual-section" id="navigation">
+  <span class="section-eye">Interface</span>
+  <h2 class="section-h2">Navigation &amp; Interface</h2>
+  <p class="section-lead">All role portals share the same layout pattern — a sidebar navigation, header shortcuts, and a responsive main content area.</p>
+
+  <h3 class="section-h3">Common Interface Elements</h3>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Sidebar Navigation</div><div class="card-desc">Role-specific module links organized into groups. Highlights the active section.</div></div>
+    <div class="card"><div class="card-label">Header</div><div class="card-desc">Notifications icon with unread indicator, profile/settings access, and logout.</div></div>
+    <div class="card"><div class="card-label">Notification Panel</div><div class="card-desc">Slide-out panel with all system and workflow alerts. Click to jump to related module.</div></div>
+    <div class="card"><div class="card-label">Theme Toggle</div><div class="card-desc">Light, dark, or system mode — configured under Settings → Appearance.</div></div>
+    <div class="card"><div class="card-label">Session Protection</div><div class="card-desc">Automatic logout after inactivity. Role-based route guards prevent unauthorized access.</div></div>
+    <div class="card"><div class="card-label">Maintenance Mode</div><div class="card-desc">When enabled by Admin, non-admin users see a maintenance page instead of the portal.</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ ROLES -->
+<section class="manual-section" id="roles">
+  <span class="section-eye">Permissions</span>
+  <h2 class="section-h2">Role Access Matrix</h2>
+  <p class="section-lead">INTRAK has five user roles. Each role has a dedicated base path and a specific set of modules accessible to that role only.</p>
+
+  <table class="mtable">
+    <thead><tr><th>Role</th><th>Base Path</th><th>Key Modules</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag green">Student</span></td><td><span class="mono">/student</span></td><td>Dashboard, Documents, Templates, Companies, Partnership, Attendance, Evaluations, Settings</td></tr>
+      <tr><td><span class="tag purple">Instructor</span></td><td><span class="mono">/instructor</span></td><td>Dashboard, Documents, Applications, Proposals, Students, Reports, Settings</td></tr>
+      <tr><td><span class="tag amber">Coordinator</span></td><td><span class="mono">/coordinator</span></td><td>Dashboard, Students, Documents, Companies, Proposals, Announcements, Reports, Settings</td></tr>
+      <tr><td><span class="tag blue">Industry Partner</span></td><td><span class="mono">/industry-partner</span></td><td>Dashboard, Attendance, Documents, Evaluations, Settings</td></tr>
+      <tr><td><span class="tag red">Admin</span></td><td><span class="mono">/admin</span></td><td>Dashboard, Users, Companies, Settings, Notifications</td></tr>
+    </tbody>
+  </table>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Users can only access modules within their assigned role. Attempting to access another role's path redirects to the login page.</span></div>
+</section>
+
+<!-- ══════════════════════════════════════════ WORKFLOWS -->
+<section class="manual-section" id="wf-documents">
+  <span class="section-eye">Core Workflows</span>
+  <h2 class="section-h2">1 — Document Compliance Workflow</h2>
+  <p class="section-lead">The document workflow governs all required submissions from students through the review and approval process.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Student uploads or generates required document via Documents module</div><span class="step-r">Student</span></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Instructor or Coordinator reviews the submission</div><span class="step-r">Instructor / Coordinator</span></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Reviewer approves, rejects, or requests resubmission with written remarks</div><span class="step-r">Reviewer</span></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Student receives notification, reads remarks, corrects and resubmits if needed</div><span class="step-r">Student</span></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">Compliance status reflected in dashboards and reports for all reviewers</div><span class="step-r">All</span></div>
+  </div>
+</section>
+
+<section class="manual-section" id="wf-placement">
+  <h2 class="section-h2">2 — Company Placement Workflow</h2>
+  <p class="section-lead">The placement workflow handles how students apply to and get assigned to partner companies.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Student browses available partner companies and submits a placement application</div><span class="step-r">Student</span></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Instructor or Coordinator reviews the application and student eligibility</div><span class="step-r">Instructor / Coordinator</span></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Application status updated to Approved, Rejected, or Withdrawn</div><span class="step-r">Reviewer</span></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Once assigned, Attendance and Evaluation modules become fully usable for the student</div><span class="step-r">Student</span></div>
+  </div>
+  <div class="info tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>If a student's preferred company is not listed, they can propose it via Partnership Assistance before applying.</span></div>
+</section>
+
+<section class="manual-section" id="wf-proposal">
+  <h2 class="section-h2">3 — Partnership Proposal Workflow</h2>
+  <p class="section-lead">Students can propose non-listed companies through a structured two-stage review process.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Student submits a non-listed company proposal with supporting attachments</div><span class="step-r">Student</span></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Instructor reviews and either returns for correction, rejects, or forwards to coordinator</div><span class="step-r">Instructor</span></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Coordinator performs final review and updates the proposal to a terminal status</div><span class="step-r">Coordinator</span></div>
+  </div>
+  <h3 class="section-h3">Proposal Status Flow</h3>
+  <div class="pill-row" style="flex-direction:column;align-items:flex-start;gap:5px">
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">SUBMITTED_TO_INSTRUCTOR</span><span class="pill-note">— student submitted, awaiting instructor</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RETURNED_BY_INSTRUCTOR</span><span class="pill-note">— sent back for correction</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED_BY_INSTRUCTOR</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">FORWARDED_TO_COORDINATOR</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">UNDER_COORDINATOR_REVIEW</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING_EXTERNAL_APPROVAL</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
+  </div>
+</section>
+
+<section class="manual-section" id="wf-attendance">
+  <h2 class="section-h2">4 — Attendance &amp; Evaluation Workflow</h2>
+  <p class="section-lead">After placement, students log attendance and industry partners verify hours and submit evaluations.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Student logs attendance entry (manual entry or QR-supported method)</div><span class="step-r">Student</span></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Industry Partner reviews and verifies or rejects the attendance entry</div><span class="step-r">Industry Partner</span></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Industry Partner submits a structured performance evaluation with ratings and comments</div><span class="step-r">Industry Partner</span></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Student views evaluation results in their Evaluations module</div><span class="step-r">Student</span></div>
+  </div>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Attendance and Evaluation modules are only accessible after a student has an approved placement with a company and supervisor assigned.</span></div>
+</section>
+
+<!-- ══════════════════════════════════════════ STUDENT -->
+<section class="manual-section" id="student">
+  <span class="section-eye">Portal Guide</span>
+  <h1 class="section-h1">Student <em>Portal</em></h1>
+  <div class="role-banner" style="background:#EAF2FF;border-color:#93C5FD">
+    <div class="rb-icon" style="background:rgba(37,99,235,0.15)"><svg viewBox="0 0 24 24" stroke="#2563EB"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+    <div>
+      <div class="rb-name" style="color:#1E3A8A">Student</div>
+      <div class="rb-desc" style="color:#1E3A8A">Submit documents, apply to companies, log attendance, and view your evaluations.</div>
+      <div class="rb-path" style="color:#1E3A8A">Base path: /student · 9 modules available</div>
+    </div>
+  </div>
+  <p class="section-lead">The Student Portal is your primary workspace throughout the internship program. Every document you submit, every application you make, and every attendance entry you log is managed here.</p>
+</section>
+
+<section class="manual-section" id="s-dashboard">
+  <h2 class="section-h2">Dashboard</h2>
+  <p class="prose">Your dashboard gives you an instant overview of where you are in the internship program. <strong>Path:</strong> <span class="mono">/student/dashboard</span></p>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Progress Summary</div><div class="card-desc">See your current internship stage and overall completion indicators.</div></div>
+    <div class="card"><div class="card-label">Document Status</div><div class="card-desc">Quick view of pending, approved, and rejected documents needing action.</div></div>
+    <div class="card"><div class="card-label">Company Context</div><div class="card-desc">Your assigned company and supervisor once placement is confirmed.</div></div>
+    <div class="card"><div class="card-label">Announcements</div><div class="card-desc">Latest announcements published by your coordinator.</div></div>
+  </div>
+  <div class="info tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Check your dashboard at the start of every session. Pending document actions and new announcements appear here first.</span></div>
+</section>
+
+<section class="manual-section" id="s-documents">
+  <h2 class="section-h2">Documents</h2>
+  <p class="prose">The Documents module is where you submit all required internship requirements. <strong>Path:</strong> <span class="mono">/student/documents</span></p>
+  <h3 class="section-h3">Submitting a Document</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <span class="mono">/student/documents</span> and view your requirement checklist by phase</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click the document item you need to submit</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Upload a file (verify type and size) or fill out the structured form if required</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Submit — status changes to PENDING and your reviewer is notified</div></div>
+  </div>
+  <h3 class="section-h3">Document Statuses</h3>
+  <div class="pill-row">
+    <div class="pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span><span class="pill-note">— submitted, awaiting review</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span><span class="pill-note">— accepted, no action needed</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span><span class="pill-note">— read remarks and correct</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RESUBMISSION_REQUESTED</span><span class="pill-note">— correction required</span></div>
+  </div>
+  <h3 class="section-h3">Dynamic Document Forms</h3>
+  <p class="prose">Some documents require filling an online form instead of uploading a file. Navigate to <span class="mono">/student/documents/form/:type</span>, fill in all fields, preview the generated document, then submit directly into the review workflow.</p>
+</section>
+
+<section class="manual-section" id="s-templates">
+  <h2 class="section-h2">Templates</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/student/templates</span><br>Download official document templates published by authorized personnel. Always use the latest template version — using outdated templates may result in document rejection. Download the template, fill it in, then upload the completed file under Documents.</p>
+</section>
+
+<section class="manual-section" id="s-companies">
+  <h2 class="section-h2">Companies</h2>
+  <p class="prose">Browse and apply to available partner companies for your internship placement. <strong>Path:</strong> <span class="mono">/student/companies</span></p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Browse available partner companies and review details and available slots</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click Apply on your preferred company and confirm</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Monitor your application status from the same page</div></div>
+  </div>
+  <h3 class="section-h3">Application Statuses</h3>
+  <div class="pill-row">
+    <div class="pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span><span class="pill-note">— awaiting review</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span><span class="pill-note">— placement confirmed</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#888780"></div><span class="pill-name">WITHDRAWN</span><span class="pill-note">— cancelled by you</span></div>
+  </div>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>If your preferred company is not listed, use Partnership Assistance to propose it before applying.</span></div>
+</section>
+
+<section class="manual-section" id="s-partnership">
+  <h2 class="section-h2">Partnership Assistance</h2>
+  <p class="prose">Propose a company that is not yet listed as a partner. Your proposal will go through instructor and coordinator review. <strong>Path:</strong> <span class="mono">/student/partnership-assistance</span></p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Fill in the company proposal details and upload supporting documents (e.g., company profile, MOA)</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Submit — status becomes SUBMITTED_TO_INSTRUCTOR</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Monitor progress in the proposal timeline and respond to instructor messages</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Once approved by coordinator, the company may be added to the partner list</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="s-attendance">
+  <h2 class="section-h2">Attendance</h2>
+  <p class="prose">Log your daily internship attendance and track your total verified hours. <strong>Path:</strong> <span class="mono">/student/attendance</span></p>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>This module is only available after you have been assigned to a company and supervisor. Check your application status if attendance is unavailable.</span></div>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Log your attendance entry for the day (manual or QR-supported method)</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Entry status becomes PENDING — your industry partner will verify it</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Once verified and approved, hours are counted toward your total</div></div>
+  </div>
+  <p class="prose">You can view your full attendance log, total completed hours, verification status per entry, and export attendance records where available.</p>
+</section>
+
+<section class="manual-section" id="s-evaluations">
+  <h2 class="section-h2">Evaluations</h2>
+  <p class="prose">View the performance evaluation submitted by your industry partner supervisor. <strong>Path:</strong> <span class="mono">/student/evaluations</span><br>You will receive a notification when a new evaluation is submitted. Evaluations include criteria ratings and qualitative comments. You cannot edit evaluations — contact your instructor or coordinator if you have concerns.</p>
+</section>
+
+<section class="manual-section" id="s-settings">
+  <h2 class="section-h2">Student Settings</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/student/settings</span></p>
+  <div class="settings">
+    <div class="setting"><div class="set-ic" style="background:#EAF2FF"><svg viewBox="0 0 24 24" stroke="#2563EB"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="set-name">Profile</div><div class="set-desc">Update personal details and emergency contacts</div></div>
+    <div class="setting"><div class="set-ic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><circle cx="12" cy="8" r="4"/><rect x="4" y="14" width="16" height="8" rx="2"/></svg></div><div class="set-name">Profile Photo</div><div class="set-desc">Upload, replace, or remove your avatar</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="set-name">Password</div><div class="set-desc">Change your password with strength guidance</div></div>
+    <div class="setting"><div class="set-ic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div class="set-name">Email Verification</div><div class="set-desc">Send or resend verification and check status</div></div>
+    <div class="setting"><div class="set-ic" style="background:#DBEAFE"><svg viewBox="0 0 24 24" stroke="#1E40AF"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="set-name">Two-Factor Authentication</div><div class="set-desc">Enable/disable 2FA and manage backup codes</div></div>
+    <div class="setting"><div class="set-ic" style="background:#F1EFE8"><svg viewBox="0 0 24 24" stroke="#5F5E5A"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></div><div class="set-name">Appearance</div><div class="set-desc">Light, dark, or system theme preference</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FAECE7"><svg viewBox="0 0 24 24" stroke="#993C1D"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div class="set-name">Notification Preferences</div><div class="set-desc">Control notification channels and types</div></div>
+    <div class="setting"><div class="set-ic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="set-name">Preferences</div><div class="set-desc">Language, date, and time format settings</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ INSTRUCTOR -->
+<section class="manual-section" id="instructor">
+  <span class="section-eye">Portal Guide</span>
+  <h1 class="section-h1">Instructor <em>Portal</em></h1>
+  <div class="role-banner" style="background:#EEEDFE;border-color:#AFA9EC">
+    <div class="rb-icon" style="background:rgba(83,74,183,0.15)"><svg viewBox="0 0 24 24" stroke="#534AB7"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+    <div>
+      <div class="rb-name" style="color:#3C3489">Instructor</div>
+      <div class="rb-desc" style="color:#3C3489">Review documents, manage applications and proposals, and monitor your assigned students.</div>
+      <div class="rb-path" style="color:#3C3489">Base path: /instructor · 7 modules available</div>
+    </div>
+  </div>
+  <p class="section-lead">As an instructor, you are the first reviewer in the document compliance and company proposal workflows. You are responsible for your assigned students' progress and placement readiness.</p>
+</section>
+
+<section class="manual-section" id="i-documents">
+  <h2 class="section-h2">Student Documents</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/documents</span><br>Review all document submissions from your assigned students. For every submission you can Approve, Reject, or Request Resubmission. Always include clear, actionable remarks when rejecting or requesting resubmission so students know exactly what to correct.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Open a PENDING document submission from your student list</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Review the uploaded file or form content</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Choose Approve, Reject, or Request Resubmission and add a remark</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Submit your decision — the student is notified automatically</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="i-applications">
+  <h2 class="section-h2">Company Applications</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/applications</span><br>Review company placement applications submitted by your assigned students. Approve or reject based on eligibility and pre-deployment document completion. Once approved, the student gains access to Attendance and Evaluation modules.</p>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Before approving a placement, ensure the student has completed all required pre-deployment documents.</span></div>
+</section>
+
+<section class="manual-section" id="i-proposals">
+  <h2 class="section-h2">Company Proposals</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/company-proposals</span><br>You are the first reviewer for non-listed company proposals. You have three actions available:</p>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Return for Correction</div><div class="card-desc">Send back to the student with remarks. Status becomes RETURNED_BY_INSTRUCTOR.</div></div>
+    <div class="card"><div class="card-label">Reject</div><div class="card-desc">Reject the proposal outright. Status becomes REJECTED_BY_INSTRUCTOR.</div></div>
+    <div class="card"><div class="card-label">Forward to Coordinator</div><div class="card-desc">Approve for coordinator final review. Status becomes FORWARDED_TO_COORDINATOR.</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="i-students">
+  <h2 class="section-h2">Students</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/students</span><br>View profiles, activity timelines, document completion rates, and placement information for all students assigned to you. Use this view to monitor progress and identify students who need follow-up.</p>
+</section>
+
+<section class="manual-section" id="i-reports">
+  <h2 class="section-h2">Reports</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/reports</span><br>Generate monitoring and compliance reports for your assigned students. Available reports include attendance summaries, document completion rates, and placement status overviews. Export is available where enabled in the UI.</p>
+</section>
+
+<!-- ══════════════════════════════════════════ COORDINATOR -->
+<section class="manual-section" id="coordinator">
+  <span class="section-eye">Portal Guide</span>
+  <h1 class="section-h1">Coordinator <em>Portal</em></h1>
+  <div class="role-banner" style="background:#FAEEDA;border-color:#FAC775">
+    <div class="rb-icon" style="background:rgba(186,117,23,0.15)"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg></div>
+    <div>
+      <div class="rb-name" style="color:#633806">Coordinator</div>
+      <div class="rb-desc" style="color:#633806">Program-wide oversight — students, companies, proposals, announcements, and reporting.</div>
+      <div class="rb-path" style="color:#633806">Base path: /coordinator · 8 modules available</div>
+    </div>
+  </div>
+  <p class="section-lead">Coordinators have the highest level of program oversight. You make final decisions on proposals, manage the partner company list, publish announcements, and generate program-wide reports.</p>
+</section>
+
+<section class="manual-section" id="c-students">
+  <h2 class="section-h2">Students</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/students</span><br>Monitor all students enrolled in the program — not limited to a single instructor's assignment. You can assign or reassign instructors to students, track document compliance, and identify students needing intervention.</p>
+</section>
+
+<section class="manual-section" id="c-companies">
+  <h2 class="section-h2">Companies</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/companies</span><br>Manage the partner company records visible to students for placement applications. Track internship slot capacity and current assignments per company. Add new companies or update existing records as needed.</p>
+</section>
+
+<section class="manual-section" id="c-proposals">
+  <h2 class="section-h2">Company Proposals</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/company-proposals</span><br>You make the <strong>final decision</strong> on all company proposals forwarded by instructors. Proposals appear in your queue only after an instructor has reviewed and forwarded them.</p>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Approve</div><div class="card-desc">Accept the company. May be added to the partner list for future student applications.</div></div>
+    <div class="card"><div class="card-label">Pending External Approval</div><div class="card-desc">Mark as awaiting additional institutional or external sign-off before final decision.</div></div>
+    <div class="card"><div class="card-label">Reject</div><div class="card-desc">Reject with remarks explaining the decision to the student and instructor.</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="c-announcements">
+  <h2 class="section-h2">Announcements</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/announcements</span><br>Create, publish, and manage program announcements targeted to specific user groups. Pinned announcements appear prominently on student and instructor dashboards.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click Create and write the announcement title and body</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Select the target audience (all users, students only, instructors, etc.)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Optionally pin the announcement for prominent display</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Publish — recipients receive notifications immediately</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="c-reports">
+  <h2 class="section-h2">Reports</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/reports</span><br>Generate program-wide operational reports including total placements, pending document counts, compliance rates, and aggregate attendance data. Export to available formats for institutional submission and administration.</p>
+</section>
+
+<!-- ══════════════════════════════════════════ INDUSTRY PARTNER -->
+<section class="manual-section" id="partner">
+  <span class="section-eye">Portal Guide</span>
+  <h1 class="section-h1">Industry Partner <em>Portal</em></h1>
+  <div class="role-banner" style="background:#E6F1FB;border-color:#B5D4F4">
+    <div class="rb-icon" style="background:rgba(24,95,165,0.15)"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg></div>
+    <div>
+      <div class="rb-name" style="color:#0C447C">Industry Partner</div>
+      <div class="rb-desc" style="color:#0C447C">Verify intern attendance and submit structured performance evaluations.</div>
+      <div class="rb-path" style="color:#0C447C">Base path: /industry-partner · 5 modules available</div>
+    </div>
+  </div>
+  <p class="section-lead">As an industry partner, you supervise interns from the institution at your company. Your two primary responsibilities are verifying their daily attendance and submitting performance evaluations.</p>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Interns are assigned to you by the institution's coordinator. You will only see the interns under your direct supervision. Contact the coordinator if an expected intern does not appear in your portal.</span></div>
+</section>
+
+<section class="manual-section" id="p-attendance">
+  <h2 class="section-h2">Attendance Verification</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/attendance</span><br>Review and verify daily attendance entries submitted by your interns. Only approved entries count toward the intern's total completed hours.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Open a PENDING attendance entry and review the date, time, and intern details</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Approve if the entry is accurate, or Reject with a remark explaining why it is invalid</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Submit your verification — the intern is notified of the result</div></div>
+  </div>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Please verify attendance entries promptly and accurately. Delayed verification prevents interns from tracking their progress.</span></div>
+</section>
+
+<section class="manual-section" id="p-evaluations">
+  <h2 class="section-h2">Evaluations</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/evaluations</span><br>Submit structured performance evaluations for your assigned interns. Evaluations are visible to the intern and their instructor once submitted.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to Evaluations and select the intern to evaluate</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in ratings for each defined performance criterion</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Add qualitative comments — be specific, professional, and constructive</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Submit — the intern and instructor are notified immediately</div></div>
+  </div>
+  <div class="info tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Your comments are the most valuable part of the evaluation for the intern's development. Be specific about both strengths and areas for improvement.</span></div>
+</section>
+
+<!-- ══════════════════════════════════════════ ADMIN -->
+<section class="manual-section" id="admin">
+  <span class="section-eye">Portal Guide</span>
+  <h1 class="section-h1">Admin <em>Portal</em></h1>
+  <div class="role-banner" style="background:#FCEBEB;border-color:#F7C1C1">
+    <div class="rb-icon" style="background:rgba(163,45,45,0.12)"><svg viewBox="0 0 24 24" stroke="#A32D2D"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+    <div>
+      <div class="rb-name" style="color:#791F1F">Admin</div>
+      <div class="rb-desc" style="color:#791F1F">Platform-level controls: users, companies, system settings, and maintenance mode.</div>
+      <div class="rb-path" style="color:#791F1F">Base path: /admin · 5 modules available</div>
+    </div>
+  </div>
+  <p class="section-lead">Administrators manage the platform infrastructure. Admin actions often affect all users — proceed carefully, especially for user deletion and maintenance mode.</p>
+  <div class="info warn"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Many admin actions are irreversible. Deleting users may remove associated records. Enabling maintenance mode immediately locks out all non-admin users.</span></div>
+</section>
+
+<section class="manual-section" id="a-users">
+  <h2 class="section-h2">User Management</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/admin/users</span><br>Create, update, deactivate, and remove user accounts for all five roles. When creating a user, assign the appropriate role — the user will be redirected to the correct portal upon login.</p>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Prefer <strong>deactivating</strong> over deleting users. Deactivation suspends access without removing any associated data or records.</span></div>
+  <h3 class="section-h3">Roles you can create</h3>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0">
+    <span class="tag green">Student — /student</span>
+    <span class="tag purple">Instructor — /instructor</span>
+    <span class="tag amber">Coordinator — /coordinator</span>
+    <span class="tag blue">Industry Partner — /industry-partner</span>
+    <span class="tag red">Admin — /admin</span>
+  </div>
+</section>
+
+<section class="manual-section" id="a-companies">
+  <h2 class="section-h2">Company Management</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/admin/companies</span><br>Maintain the master company database. Companies added here become available for student placement applications. Ensure all company details are accurate before saving — students rely on this information when choosing where to apply.</p>
+</section>
+
+<section class="manual-section" id="a-settings">
+  <h2 class="section-h2">Admin Settings</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/admin/settings</span></p>
+  <div class="settings">
+    <div class="setting"><div class="set-ic" style="background:#FCEBEB"><svg viewBox="0 0 24 24" stroke="#A32D2D"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83"/></svg></div><div class="set-name">System Configuration</div><div class="set-desc">Platform-level settings affecting all users and modules</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FCEBEB"><svg viewBox="0 0 24 24" stroke="#A32D2D"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div><div class="set-name">Maintenance Mode</div><div class="set-desc">When enabled, non-admin users see a maintenance page — disable promptly after work</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FCEBEB"><svg viewBox="0 0 24 24" stroke="#A32D2D"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div class="set-name">Export Settings</div><div class="set-desc">Export current admin configuration to a backup file</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FCEBEB"><svg viewBox="0 0 24 24" stroke="#A32D2D"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="set-name">Import Settings</div><div class="set-desc">Restore or apply a previously exported configuration file</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FCEBEB"><svg viewBox="0 0 24 24" stroke="#A32D2D"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div><div class="set-name">NAS / Storage Options</div><div class="set-desc">Manage infrastructure storage options where configured</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ STATUS DEFINITIONS -->
+<section class="manual-section" id="statuses">
+  <span class="section-eye">Reference</span>
+  <h1 class="section-h1">Status <em>Definitions</em></h1>
+  <p class="section-lead">All statuses used across documents, company applications, and partnership proposals in INTRAK.</p>
+
+  <h3 class="section-h3">Document Status</h3>
+  <div class="pill-row">
+    <div class="pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span><span class="pill-note">— submitted, awaiting reviewer action</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span><span class="pill-note">— accepted</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span><span class="pill-note">— not accepted, read remarks</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RESUBMISSION_REQUESTED</span><span class="pill-note">— correction required before approval</span></div>
+  </div>
+
+  <h3 class="section-h3">Company Application Status</h3>
+  <div class="pill-row">
+    <div class="pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#888780"></div><span class="pill-name">WITHDRAWN</span><span class="pill-note">— cancelled by the student</span></div>
+  </div>
+
+  <h3 class="section-h3">Company Proposal Status</h3>
+  <div class="pill-row" style="flex-direction:column;align-items:flex-start;gap:5px">
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">SUBMITTED_TO_INSTRUCTOR</span><span class="pill-note">— student submitted</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">RETURNED_BY_INSTRUCTOR</span><span class="pill-note">— sent back for correction</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED_BY_INSTRUCTOR</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">FORWARDED_TO_COORDINATOR</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">UNDER_COORDINATOR_REVIEW</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">PENDING_EXTERNAL_APPROVAL</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span></div>
+    <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ SECURITY -->
+<section class="manual-section" id="security">
+  <span class="section-eye">Account Security</span>
+  <h1 class="section-h1">Security &amp; <em>Account Settings</em></h1>
+  <p class="section-lead">INTRAK uses a multi-layer security model to protect user accounts and ensure role-based access control.</p>
+
+  <div class="settings">
+    <div class="setting"><div class="set-ic" style="background:#EAF2FF"><svg viewBox="0 0 24 24" stroke="#2563EB"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="set-name">Role-based Route Protection</div><div class="set-desc">All portal routes are guarded — unauthorized users are redirected to login. Access and refresh token session model.</div></div>
+    <div class="setting"><div class="set-ic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="set-name">Two-Factor Authentication (2FA)</div><div class="set-desc">Enable/disable from account settings. Login challenge with one-time email code. Backup code generation and regeneration supported.</div></div>
+    <div class="setting"><div class="set-ic" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div class="set-name">Email Verification</div><div class="set-desc">Verify your account email via token workflow. Check and manage verification status from account settings.</div></div>
+    <div class="setting"><div class="set-ic" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="set-name">Profile Photo Management</div><div class="set-desc">Upload, replace, or remove your photo. Changes reflect across all portal header and profile panels.</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ TROUBLESHOOTING -->
+<section class="manual-section" id="troubleshoot">
+  <span class="section-eye">Help</span>
+  <h1 class="section-h1">Troubleshooting <em>Guide</em></h1>
+  <p class="section-lead">Common issues encountered by all user roles, with step-by-step resolution guidance.</p>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Cannot log in</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Confirm you are entering the correct email and password</div>
+      <div class="issue-item"><div class="issue-dot"></div>Check if your account is still active — contact your instructor or admin if unsure</div>
+      <div class="issue-item"><div class="issue-dot"></div>Use <span class="mono">/forgot-password</span> to reset your password</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Did not receive a verification or 2FA code</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Check your spam or junk mail folder</div>
+      <div class="issue-item"><div class="issue-dot"></div>Wait a moment and use the resend option</div>
+      <div class="issue-item"><div class="issue-dot"></div>Confirm your registered email address is correct under Settings</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Document upload or submission fails</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Verify the file type and size meet the policy requirements</div>
+      <div class="issue-item"><div class="issue-dot"></div>Check if this document type requires form-based submission instead of file upload</div>
+      <div class="issue-item"><div class="issue-dot"></div>Try again on a stable internet connection</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Attendance module is not available</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>You must have an approved placement with a company and supervisor assigned</div>
+      <div class="issue-item"><div class="issue-dot"></div>Check your company application status — it must be APPROVED</div>
+      <div class="issue-item"><div class="issue-dot"></div>Ask your coordinator or instructor to confirm your assignment state</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>A feature or module is not visible</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Some modules are role-based and only appear for specific roles</div>
+      <div class="issue-item"><div class="issue-dot"></div>Some modules have conditions — check your current workflow status</div>
+      <div class="issue-item"><div class="issue-dot"></div>Verify you are logged in with the correct account and role</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Instructor: cannot see a student's documents</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Confirm the student is assigned to you under the Students module</div>
+      <div class="issue-item"><div class="issue-dot"></div>Contact your coordinator to verify the assignment is correct</div>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>Industry Partner: cannot see assigned interns</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Interns are assigned by the institution coordinator — contact them to verify</div>
+      <div class="issue-item"><div class="issue-dot"></div>Confirm your account is active and you are logged in to the correct portal</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ SUPPORT -->
+<section class="manual-section" id="support">
+  <span class="section-eye">Help &amp; Escalation</span>
+  <h1 class="section-h1">Support &amp; <em>Escalation</em></h1>
+  <p class="section-lead">When you need help resolving an issue that cannot be solved through self-service troubleshooting, follow the escalation path below.</p>
+
+  <h3 class="section-h3">Escalation Path</h3>
+  <div class="esc">
+    <div class="esc-node">
+      <div class="esc-circle" style="background:#EAF2FF;border-color:#2563EB;color:#1E3A8A">S</div>
+      <div class="esc-label">Student</div>
+    </div>
+    <div class="esc-arrow">→</div>
+    <div class="esc-node">
+      <div class="esc-circle" style="background:#EEEDFE;border-color:#534AB7;color:#3C3489">I</div>
+      <div class="esc-label">Instructor</div>
+    </div>
+    <div class="esc-arrow">→</div>
+    <div class="esc-node">
+      <div class="esc-circle" style="background:#FAEEDA;border-color:#BA7517;color:#633806">C</div>
+      <div class="esc-label">Coordinator</div>
+    </div>
+    <div class="esc-arrow">→</div>
+    <div class="esc-node">
+      <div class="esc-circle" style="background:#FCEBEB;border-color:#A32D2D;color:#791F1F">A</div>
+      <div class="esc-label">Admin / Tech Team</div>
+    </div>
+  </div>
+
+  <h3 class="section-h3">What to Include in a Support Request</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Your full name and role</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Screenshot or screen recording of the issue</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Date and time the issue occurred</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">The module and full page URL where the issue occurred</div></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">What you expected to happen versus what actually occurred</div></div>
+  </div>
+
+  <div class="info tip"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>The more detail you provide, the faster the issue can be diagnosed and resolved. Screenshots that clearly show the error message or unexpected behavior are especially helpful.</span></div>
+
+  <div class="hr"></div>
+  <p class="prose" style="text-align:center;color:var(--t3);font-size:13px">INTRAK User Manual · Version 2.0 · Manual 2026.03<br>Internship &amp; OJT Tracking and Management System</p>
+</section>
+
+</main>
+
+<!-- RIGHT TOC -->
+<nav class="toc" id="toc">
+  <div class="toc-title">On this page</div>
+  <a href="#intro" class="toc-link active">System Overview</a>
+  <a href="#access" class="toc-link">Access &amp; Login</a>
+  <a href="#navigation" class="toc-link">Navigation</a>
+  <a href="#roles" class="toc-link">Role Access Matrix</a>
+  <a href="#wf-documents" class="toc-link">Document Workflow</a>
+  <a href="#wf-placement" class="toc-link">Placement Workflow</a>
+  <a href="#wf-proposal" class="toc-link">Proposal Workflow</a>
+  <a href="#wf-attendance" class="toc-link">Attendance Workflow</a>
+  <a href="#student" class="toc-link">Student Portal</a>
+  <a href="#s-dashboard" class="toc-link sub">↳ Dashboard</a>
+  <a href="#s-documents" class="toc-link sub">↳ Documents</a>
+  <a href="#s-companies" class="toc-link sub">↳ Companies</a>
+  <a href="#s-attendance" class="toc-link sub">↳ Attendance</a>
+  <a href="#instructor" class="toc-link">Instructor Portal</a>
+  <a href="#coordinator" class="toc-link">Coordinator Portal</a>
+  <a href="#partner" class="toc-link">Industry Partner Portal</a>
+  <a href="#admin" class="toc-link">Admin Portal</a>
+  <a href="#statuses" class="toc-link">Status Definitions</a>
+  <a href="#security" class="toc-link">Security</a>
+  <a href="#troubleshoot" class="toc-link">Troubleshooting</a>
+  <a href="#support" class="toc-link">Support &amp; Escalation</a>
+</nav>
+
+</div><!-- end layout -->
+
+<script>
+// ── HAMBURGER ──
+const ham = document.getElementById('hamburger');
+const sb = document.getElementById('sidebar');
+const ov = document.getElementById('overlay');
+
+ham.addEventListener('click', () => {
+  const open = sb.classList.toggle('open');
+  ov.classList.toggle('show', open);
+  ham.classList.toggle('active', open);
+});
+ov.addEventListener('click', () => {
+  sb.classList.remove('open');
+  ov.classList.remove('show');
+  ham.classList.remove('active');
+});
+
+// close sidebar on link click (mobile)
+document.querySelectorAll('.sb-link, .sb-sub').forEach(link => {
+  link.addEventListener('click', () => {
+    if (window.innerWidth <= 860) {
+      sb.classList.remove('open');
+      ov.classList.remove('show');
+      ham.classList.remove('active');
+    }
+  });
+});
+
+// ── SCROLL SPY ──
+const sections = document.querySelectorAll('section[id]');
+const sbLinks = document.querySelectorAll('.sb-link, .sb-sub');
+const tocLinks = document.querySelectorAll('.toc-link');
+
+function getActiveId() {
+  const scrollY = window.scrollY + 80;
+  let active = sections[0].id;
+  sections.forEach(s => {
+    if (s.offsetTop <= scrollY) active = s.id;
+  });
+  return active;
+}
+
+function updateNav() {
+  const id = getActiveId();
+  sbLinks.forEach(a => {
+    const href = a.getAttribute('href');
+    a.classList.toggle('active', href === '#' + id);
+  });
+  tocLinks.forEach(a => {
+    const href = a.getAttribute('href');
+    a.classList.toggle('active', href === '#' + id);
+  });
+  // scroll active toc link into view
+  const activeToc = document.querySelector('.toc-link.active');
+  if (activeToc) activeToc.scrollIntoView({ block: 'nearest' });
+}
+
+window.addEventListener('scroll', updateNav, { passive: true });
+updateNav();
+
+// ── SIMPLE SEARCH HIGHLIGHT ──
+document.querySelector('.tn-search').addEventListener('click', () => {
+  const q = prompt('Search manual:');
+  if (!q || q.trim() === '') return;
+  const content = document.getElementById('content');
+  // remove old highlights
+  content.querySelectorAll('mark').forEach(m => {
+    const parent = m.parentNode;
+    parent.replaceChild(document.createTextNode(m.textContent), m);
+    parent.normalize();
+  });
+  if (!q.trim()) return;
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  nodes.forEach(node => {
+    if (!re.test(node.textContent)) return;
+    re.lastIndex = 0;
+    const span = document.createElement('span');
+    span.innerHTML = node.textContent.replace(re, m => `<mark style="background:#fef08a;border-radius:2px">${m}</mark>`);
+    node.parentNode.replaceChild(span, node);
+  });
+  const first = content.querySelector('mark');
+  if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+</script>
+</body>
+</html>
