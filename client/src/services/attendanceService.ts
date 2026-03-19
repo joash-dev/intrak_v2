@@ -276,6 +276,7 @@ class AttendanceService {
       throw new Error(error.response?.data?.message || 'Failed to update Saturday preference');
     }
   }
+
 }
 
 export const attendanceService = new AttendanceService();

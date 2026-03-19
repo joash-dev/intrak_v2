@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Loader2,
   Download,
+  Settings2,
   X,
   Building2,
 } from "lucide-react";
@@ -26,37 +27,12 @@ import Skeleton from "../../components/Skeleton";
 import { useOutletContext, useNavigate } from "react-router-dom";
 
 const StudentAttendanceTab: React.FC = () => {
-  const { studentCompany, studentSupervisor } = useOutletContext<{ studentCompany: string | null; studentSupervisor: string | null }>() || { studentCompany: null, studentSupervisor: null };
+  const { studentCompany, studentSupervisor, refreshStudentData } = useOutletContext<{
+    studentCompany: string | null;
+    studentSupervisor: string | null;
+    refreshStudentData?: () => void;
+  }>() || { studentCompany: null, studentSupervisor: null };
   const navigateToCompanies = useNavigate();
-
-  // Guard: If student has no company or no supervisor, show a message
-  if (!studentCompany || !studentSupervisor) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
-        <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-amber-600" />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            {!studentCompany ? "Company Assignment Required" : "Supervisor Assignment Required"}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {!studentCompany
-              ? "You need to be assigned to a company before you can access the attendance feature. Please apply for a company first."
-              : "You have a company but no supervisor has been assigned yet. Please wait for your supervisor to be assigned by the coordinator."}
-          </p>
-          {!studentCompany && (
-            <button
-              onClick={() => navigateToCompanies("/student/companies")}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              Go to Companies
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [showQRModal, setShowQRModal] = useState(false);
@@ -86,11 +62,12 @@ const StudentAttendanceTab: React.FC = () => {
   const [manualTimeIn, setManualTimeIn] = useState("");
   const [manualTimeOut, setManualTimeOut] = useState("");
   const [manualRemarks, setManualRemarks] = useState("");
-  const [companyType, setCompanyType] = useState<'PUBLIC' | 'PRIVATE' | null>(null);
-  const [worksOnSaturday, setWorksOnSaturday] = useState<boolean>(false);
+  const [companyType, setCompanyType] = useState<"PUBLIC" | "PRIVATE" | null>(null);
+  const [worksOnSaturday, setWorksOnSaturday] = useState(false);
   const [workingDays, setWorkingDays] = useState<string[]>([]);
   const [showSaturdayPreferenceModal, setShowSaturdayPreferenceModal] = useState(false);
   const [saturdayPreferenceLoading, setSaturdayPreferenceLoading] = useState(false);
+  const [selectedSaturdayPreference, setSelectedSaturdayPreference] = useState<"yes" | "no" | "">("");
   const [ojtStartDate, setOjtStartDate] = useState<string | null>(null);
 
   const qrGeneratedAtRef = useRef<number>(0);
@@ -149,13 +126,13 @@ const StudentAttendanceTab: React.FC = () => {
 
   const fetchStudentAndCompanyInfo = async () => {
     try {
-      // Fetch student profile to get company info and Saturday preference
+      // Fetch student profile to get company schedule
       const studentProfile = await api.get('/students/profile');
       const profile = studentProfile.data;
-      
-      if (profile.companyType !== undefined) {
-        setCompanyType(profile.companyType);
-      }
+      setCompanyType(profile.companyType || null);
+      setWorksOnSaturday(Boolean(profile.worksOnSaturday));
+      setSelectedSaturdayPreference(Boolean(profile.worksOnSaturday) ? "yes" : "no");
+
       if (profile.workingDays) {
         setWorkingDays(profile.workingDays);
       } else if (profile.companyType === 'PRIVATE') {
@@ -165,12 +142,7 @@ const StudentAttendanceTab: React.FC = () => {
         // Default for public companies
         setWorkingDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
       }
-      if (profile.worksOnSaturday !== undefined) {
-        setWorksOnSaturday(profile.worksOnSaturday);
-      } else if (profile.companyType === 'PRIVATE' && profile.company) {
-        // Show Saturday preference modal if student is in private company and hasn't set preference
-        setShowSaturdayPreferenceModal(true);
-      }
+
       // Store OJT start date
       if (profile.startDate) {
         setOjtStartDate(profile.startDate);
@@ -180,17 +152,22 @@ const StudentAttendanceTab: React.FC = () => {
     }
   };
 
-  const handleSaveSaturdayPreference = async (preference: boolean) => {
+  const handleSaveSaturdayPreference = async () => {
     try {
+      if (!selectedSaturdayPreference) {
+        toast.error("Please select an option");
+        return;
+      }
+
       setSaturdayPreferenceLoading(true);
-      // Get student ID from profile
       const studentProfile = await api.get('/students/profile');
       const studentId = studentProfile.data.id;
-      
+      const preference = selectedSaturdayPreference === "yes";
+
       await attendanceService.updateSaturdayPreference(studentId, preference);
       setWorksOnSaturday(preference);
       setShowSaturdayPreferenceModal(false);
-      toast.success("Saturday work preference saved successfully");
+      toast.success("Saturday preference updated");
     } catch (error: any) {
       console.error("Error saving Saturday preference:", error);
       toast.error(error.message || "Failed to save Saturday preference");
@@ -279,44 +256,56 @@ const StudentAttendanceTab: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedDayLogs, setSelectedDayLogs] = useState<any[]>([]);
 
+  // Guard: keep after hooks to preserve hook order between renders
+  if (!studentCompany || !studentSupervisor) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+        <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-8 h-8 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            {!studentCompany ? "Company Assignment Required" : "Supervisor Assignment Required"}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {!studentCompany
+              ? "You need to be assigned to a company before you can access the attendance feature. Please apply for a company first."
+              : "You have a company but no supervisor has been assigned yet. Please wait for your supervisor to be assigned by the coordinator."}
+          </p>
+          {!studentCompany && (
+            <button
+              onClick={() => navigateToCompanies("/student/companies")}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Go to Companies
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Helper function to check if a day is an expected working day
   const isExpectedWorkingDay = (day: number): boolean => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    const dayOfWeek = date.getDay();
-    
-    // Map day numbers to day names
+    const dayOfWeek = date.getDay(); // 0=Sunday
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[dayOfWeek];
-    
-    // Never treat Sunday as a working day
-    if (dayOfWeek === 0) {
-      return false;
-    }
-    
-    // If no working days are set, default to Mon-Fri (weekdays)
+
+    // Fallback default when schedule is missing
     if (!workingDays || workingDays.length === 0) {
-      // Default to Mon-Fri if no working days set
       return dayOfWeek >= 1 && dayOfWeek <= 5;
     }
 
-    // For private companies, check Saturday preference
-    if (companyType === 'PRIVATE' && dayName === 'Saturday') {
+    if (dayName === "Sunday") return false;
+
+    // Student controls Saturday attendance preference for overtime/work setup
+    if (dayName === "Saturday") {
       return worksOnSaturday;
     }
-    
-    // If workingDays is set, check if the day is explicitly included
-    // But also default weekdays (Mon-Fri) to working days if not explicitly excluded
-    if (workingDays.includes(dayName)) {
-      return true;
-    }
-    
-    // Fallback: if it's a weekday (Mon-Fri) and workingDays is set but doesn't explicitly exclude it,
-    // treat it as a working day (this handles cases where workingDays might be incomplete)
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      return true;
-    }
-    
-    return false;
+
+    // Weekdays follow company schedule
+    return workingDays.includes(dayName);
   };
 
   // Helper function to check if a day is absent (expected but no log)
@@ -326,13 +315,14 @@ const StudentAttendanceTab: React.FC = () => {
     ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     
     const dayDate = new Date(dateStr);
-    const dayOfWeek = dayDate.getDay();
-    
-    // Never mark weekends (Sunday = 0, Saturday = 6) as absent
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
+    const dayOfWeek = dayDate.getDay(); // 0=Sunday, 6=Saturday
+
+    // Saturday is optional and should never be tagged as absent.
+    // Sunday is also never an attendance day.
+    if (dayOfWeek === 6 || dayOfWeek === 0) {
       return false;
     }
-    
+
     // Check if date is in the future - don't mark future dates as absent
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -362,9 +352,7 @@ const StudentAttendanceTab: React.FC = () => {
       return false;
     }
     
-    // Check if it's an expected working day
-    // If workingDays is empty or not set, default to Mon-Fri (weekdays)
-    // If workingDays is set, check if the day is in the array
+    // Check if it's an expected working day from company schedule
     const isWorkingDay = isExpectedWorkingDay(day);
     if (!isWorkingDay) {
       return false;
@@ -783,6 +771,22 @@ const StudentAttendanceTab: React.FC = () => {
             </p>
           </div>
         </button>
+        {companyType && (
+          <button
+            onClick={() => setShowSaturdayPreferenceModal(true)}
+            className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
+          >
+            <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Settings2 className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+              Saturday Preference
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Current: {worksOnSaturday ? "Working on Saturday" : "No Saturday duty"}
+            </p>
+          </button>
+        )}
 
       </div>
 
@@ -852,11 +856,6 @@ const StudentAttendanceTab: React.FC = () => {
 
           <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => {
-              // Hide Saturday if company is public or private company but student doesn't work Saturday
-              const hideSaturday = day === "Sat" && (companyType === 'PUBLIC' || (companyType === 'PRIVATE' && !worksOnSaturday));
-              if (hideSaturday) {
-                return <div key={day} className="hidden"></div>;
-              }
               return (
                 <div
                   key={day}
@@ -871,19 +870,6 @@ const StudentAttendanceTab: React.FC = () => {
               const log = day ? getLogForDay(day) : null;
               const isAbsent = day ? isAbsentDay(day) : false;
               const isExpected = day ? isExpectedWorkingDay(day) : false;
-              
-              // Hide Saturday if company is public or private company but student doesn't work Saturday
-              let hideSaturday = false;
-              if (day) {
-                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                const dayOfWeek = date.getDay();
-                hideSaturday = dayOfWeek === 6 && (companyType === 'PUBLIC' || (companyType === 'PRIVATE' && !worksOnSaturday));
-              }
-              
-              if (hideSaturday) {
-                return <div key={index} className="hidden"></div>;
-              }
-              
               return (
                 <div
                   key={index}
@@ -1213,10 +1199,13 @@ const StudentAttendanceTab: React.FC = () => {
             </p>
             <button
               className="mt-4 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              onClick={() => {
+              onClick={async () => {
                 setShowScanSuccessModal(false);
                 setQrAction(null);
-                window.location.reload();
+                // Avoid full reload to prevent transient context reset.
+                await fetchAttendanceData();
+                await fetchStudentAndCompanyInfo();
+                refreshStudentData?.();
               }}
             >
               Close
@@ -1335,9 +1324,9 @@ const StudentAttendanceTab: React.FC = () => {
       )}
 
       {/* Saturday Work Preference Modal */}
-      {showSaturdayPreferenceModal && companyType === 'PRIVATE' && (
+      {showSaturdayPreferenceModal && companyType && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
           onClick={() => setShowSaturdayPreferenceModal(false)}
         >
@@ -1356,9 +1345,9 @@ const StudentAttendanceTab: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Your company operates on Saturdays. Do you work on Saturdays?
+              Set whether you will report on Saturdays (including overtime).
             </p>
 
             <div className="space-y-3 mb-6">
@@ -1367,8 +1356,9 @@ const StudentAttendanceTab: React.FC = () => {
                   type="radio"
                   name="saturdayPreference"
                   value="yes"
+                  checked={selectedSaturdayPreference === "yes"}
                   className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                  onChange={() => {}}
+                  onChange={() => setSelectedSaturdayPreference("yes")}
                 />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">Yes, I work on Saturdays</span>
               </label>
@@ -1377,8 +1367,9 @@ const StudentAttendanceTab: React.FC = () => {
                   type="radio"
                   name="saturdayPreference"
                   value="no"
+                  checked={selectedSaturdayPreference === "no"}
                   className="w-4 h-4 text-purple-600 focus:ring-purple-500"
-                  onChange={() => {}}
+                  onChange={() => setSelectedSaturdayPreference("no")}
                 />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">No, I don't work on Saturdays</span>
               </label>
@@ -1394,16 +1385,7 @@ const StudentAttendanceTab: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const selected = (document.querySelector('input[name="saturdayPreference"]:checked') as HTMLInputElement)?.value;
-                  if (selected === 'yes') {
-                    handleSaveSaturdayPreference(true);
-                  } else if (selected === 'no') {
-                    handleSaveSaturdayPreference(false);
-                  } else {
-                    toast.error("Please select an option");
-                  }
-                }}
+                onClick={handleSaveSaturdayPreference}
                 disabled={saturdayPreferenceLoading}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
@@ -1420,6 +1402,7 @@ const StudentAttendanceTab: React.FC = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

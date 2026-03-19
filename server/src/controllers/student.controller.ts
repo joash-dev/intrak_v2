@@ -3,7 +3,7 @@ import { NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
-import { calculateExpectedWorkingDays } from '../utils/attendanceUtils';
+import { calculateExpectedWorkingDays, calculateProjectedEndDate } from '../utils/attendanceUtils';
 import { prisma } from '../config/database';
 import { getErrorMessage } from '../utils/errorHandler';
 
@@ -228,6 +228,20 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     const company = student.company || null;
     const companyType = company && (company as any).companyType ? (company as any).companyType : null;
     const workingDays = company && (company as any).workingDays ? (company as any).workingDays : null;
+    const safeWorkingDays = Array.isArray(workingDays) && workingDays.length > 0
+      ? workingDays
+      : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const worksOnSaturday = (student as any).worksOnSaturday || false;
+    const projectedEndDate =
+      !student.endDate && student.startDate
+        ? calculateProjectedEndDate(
+            new Date(student.startDate),
+            student.totalHours || 0,
+            safeWorkingDays,
+            worksOnSaturday,
+            8,
+          )
+        : null;
 
     // Resolve supervisor name: use student.supervisorName first, then fall back to company's linked supervisor account name
     const companySupervisor = (company as any)?.supervisor;
@@ -246,8 +260,13 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       totalHours: student.totalHours || 0,
       completedHours: completedHours,
       startDate: student.startDate ? student.startDate.toISOString() : null,
-      endDate: student.endDate ? student.endDate.toISOString() : null,
-      worksOnSaturday: (student as any).worksOnSaturday || false,
+      endDate: student.endDate
+        ? student.endDate.toISOString()
+        : projectedEndDate
+          ? projectedEndDate.toISOString()
+          : null,
+      projectedEndDate: projectedEndDate ? projectedEndDate.toISOString() : null,
+      worksOnSaturday,
       companyType: companyType,
       workingDays: workingDays
     });
@@ -1569,10 +1588,7 @@ export const updateSaturdayPreference = async (req: AuthRequest, res: Response) 
       return res.status(400).json({ message: 'Student must be assigned to a company to set Saturday preference' });
     }
 
-    // Only allow Saturday preference for private companies
-    if ((student.company as any).companyType !== 'PRIVATE') {
-      return res.status(400).json({ message: 'Saturday work preference is only available for students in private companies' });
-    }
+    // Saturday preference is available for both company types (e.g., overtime in public companies)
 
     // Update student's Saturday preference
     const updatedStudent = await prisma.student.update({

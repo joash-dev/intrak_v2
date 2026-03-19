@@ -336,6 +336,10 @@ model CompanyProposal {
   studentId         String
   instructorId      String?
   companyName       String
+  companyYears      Int?
+  assignedDepartment String?
+  assignedRole      String?
+  hasPsuMoa         Boolean?
   address           String?
   contactPerson     String?
   contactEmail      String?

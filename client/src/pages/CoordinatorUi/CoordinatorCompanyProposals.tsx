@@ -324,6 +324,18 @@ const CoordinatorCompanyProposals = () => {
                       </span>
                     </div>
 
+                    {/* Company Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-[#19191c]/50 rounded-xl p-3 sm:p-4">
+                      <p><strong>Company Years:</strong> {proposal.companyYears ?? '-'}</p>
+                      <p><strong>Department Assigned:</strong> {proposal.assignedDepartment || '-'}</p>
+                      <p><strong>Role Assigned:</strong> {proposal.assignedRole || '-'}</p>
+                      <p><strong>Has PSU MOA:</strong> {proposal.hasPsuMoa == null ? '-' : proposal.hasPsuMoa ? 'Yes' : 'No'}</p>
+                      <p><strong>Address:</strong> {proposal.address || '-'}</p>
+                      <p><strong>Industry:</strong> {proposal.industry || '-'}</p>
+                      <p><strong>Contact Person:</strong> {proposal.contactPerson || '-'}</p>
+                      <p><strong>Contact Email:</strong> {proposal.contactEmail || '-'}</p>
+                    </div>
+
                     {/* Attachments */}
                     <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-[#19191c]/50">
                       <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Proposal Attachments</p>

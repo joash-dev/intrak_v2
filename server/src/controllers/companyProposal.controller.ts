@@ -272,6 +272,10 @@ export const createProposal = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const {
       companyName,
+      companyYears,
+      assignedDepartment,
+      assignedRole,
+      hasPsuMoa,
       address,
       contactPerson,
       contactEmail,
@@ -284,6 +288,48 @@ export const createProposal = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: 'Company name is required' });
     }
 
+    if (
+      assignedDepartment === undefined ||
+      assignedDepartment === null ||
+      typeof assignedDepartment !== 'string' ||
+      !assignedDepartment.trim()
+    ) {
+      return res.status(400).json({ message: 'Assigned department is required' });
+    }
+
+    if (
+      assignedRole === undefined ||
+      assignedRole === null ||
+      typeof assignedRole !== 'string' ||
+      !assignedRole.trim()
+    ) {
+      return res.status(400).json({ message: 'Assigned role is required' });
+    }
+
+    if (companyYears === undefined || companyYears === null || companyYears === '') {
+      return res.status(400).json({ message: 'Company years is required' });
+    }
+    const parsedYears = Number(companyYears);
+    if (!Number.isInteger(parsedYears) || parsedYears < 0) {
+      return res.status(400).json({ message: 'Company years must be a whole number greater than or equal to 0' });
+    }
+
+    let normalizedHasPsuMoa: boolean;
+    if (typeof hasPsuMoa === 'boolean') {
+      normalizedHasPsuMoa = hasPsuMoa;
+    } else if (typeof hasPsuMoa === 'string') {
+      const value = hasPsuMoa.trim().toLowerCase();
+      if (value === 'yes' || value === 'true') {
+        normalizedHasPsuMoa = true;
+      } else if (value === 'no' || value === 'false') {
+        normalizedHasPsuMoa = false;
+      } else {
+        return res.status(400).json({ message: 'MOA status must be yes or no' });
+      }
+    } else {
+      return res.status(400).json({ message: 'MOA status is required' });
+    }
+
     const student = await getStudentByUserId(userId);
     if (!student) {
       return res.status(404).json({ message: 'Student record not found' });
@@ -294,6 +340,10 @@ export const createProposal = async (req: AuthRequest, res: Response) => {
         studentId: student.id,
         instructorId: student.instructorId ?? null,
         companyName: companyName.trim(),
+        companyYears: parsedYears,
+        assignedDepartment: assignedDepartment.trim(),
+        assignedRole: assignedRole.trim(),
+        hasPsuMoa: normalizedHasPsuMoa,
         address: address?.trim() || null,
         contactPerson: contactPerson?.trim() || null,
         contactEmail: contactEmail?.trim() || null,

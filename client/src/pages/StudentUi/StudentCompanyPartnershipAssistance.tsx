@@ -145,6 +145,10 @@ const StudentCompanyPartnershipAssistance = () => {
   const [proposals, setProposals] = useState<CompanyProposal[]>([]);
   const [proposalForm, setProposalForm] = useState({
     companyName: "",
+    companyYears: "",
+    assignedDepartment: "",
+    assignedRole: "",
+    hasPsuMoa: "",
     address: "",
     contactPerson: "",
     contactEmail: "",
@@ -304,10 +308,40 @@ const StudentCompanyPartnershipAssistance = () => {
       return;
     }
 
+    if (!proposalForm.companyYears.trim()) {
+      toast.error("Years of company is required");
+      return;
+    }
+
+    const parsedYears = Number(proposalForm.companyYears);
+    if (!Number.isInteger(parsedYears) || parsedYears < 0) {
+      toast.error("Years of company must be a whole number starting from 0");
+      return;
+    }
+
+    if (!proposalForm.assignedDepartment.trim()) {
+      toast.error("Department assigned is required");
+      return;
+    }
+
+    if (!proposalForm.assignedRole.trim()) {
+      toast.error("Role assigned is required");
+      return;
+    }
+
+    if (!proposalForm.hasPsuMoa) {
+      toast.error("Please select PSU MOA status");
+      return;
+    }
+
     try {
       setCreatingProposal(true);
       await companyProposalService.createProposal({
         companyName: proposalForm.companyName.trim(),
+        companyYears: parsedYears,
+        assignedDepartment: proposalForm.assignedDepartment.trim(),
+        assignedRole: proposalForm.assignedRole.trim(),
+        hasPsuMoa: proposalForm.hasPsuMoa === "yes",
         address: proposalForm.address.trim() || undefined,
         contactPerson: proposalForm.contactPerson.trim() || undefined,
         contactEmail: proposalForm.contactEmail.trim() || undefined,
@@ -319,6 +353,10 @@ const StudentCompanyPartnershipAssistance = () => {
       toast.success("Company proposal submitted to your instructor");
       setProposalForm({
         companyName: "",
+        companyYears: "",
+        assignedDepartment: "",
+        assignedRole: "",
+        hasPsuMoa: "",
         address: "",
         contactPerson: "",
         contactEmail: "",
@@ -602,6 +640,35 @@ const StudentCompanyPartnershipAssistance = () => {
               className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
             />
             <input
+              type="number"
+              min={0}
+              value={proposalForm.companyYears}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, companyYears: e.target.value }))}
+              placeholder="Years of company *"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.assignedDepartment}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, assignedDepartment: e.target.value }))}
+              placeholder="Department assigned *"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <input
+              value={proposalForm.assignedRole}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, assignedRole: e.target.value }))}
+              placeholder="Role assigned *"
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
+            />
+            <select
+              value={proposalForm.hasPsuMoa}
+              onChange={(e) => setProposalForm((prev) => ({ ...prev, hasPsuMoa: e.target.value }))}
+              className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm text-gray-700 dark:text-gray-300"
+            >
+              <option value="">PSU MOA status *</option>
+              <option value="yes">Agency has MOA with PSU</option>
+              <option value="no">Agency has no MOA yet</option>
+            </select>
+            <input
               value={proposalForm.address}
               onChange={(e) => setProposalForm((prev) => ({ ...prev, address: e.target.value }))}
               placeholder="Address"
@@ -685,6 +752,16 @@ const StudentCompanyPartnershipAssistance = () => {
                       <span className={`inline-flex items-center text-sm px-3 py-1.5 rounded-full ${statusClass}`}>
                         {proposal.status.replaceAll("_", " ")}
                       </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-300">
+                      <p><span className="font-medium">Company years:</span> {proposal.companyYears ?? "-"}</p>
+                      <p><span className="font-medium">Department assigned:</span> {proposal.assignedDepartment || "-"}</p>
+                      <p><span className="font-medium">Role assigned:</span> {proposal.assignedRole || "-"}</p>
+                      <p>
+                        <span className="font-medium">Has PSU MOA:</span>{" "}
+                        {proposal.hasPsuMoa == null ? "-" : proposal.hasPsuMoa ? "Yes" : "No"}
+                      </p>
                     </div>
 
                     <div className="mt-3">

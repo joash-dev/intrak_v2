@@ -28,6 +28,10 @@ export interface CompanyProposalAttachment {
 export interface CompanyProposal {
   id: string;
   companyName: string;
+  companyYears?: number | null;
+  assignedDepartment?: string | null;
+  assignedRole?: string | null;
+  hasPsuMoa?: boolean | null;
   address?: string | null;
   contactPerson?: string | null;
   contactEmail?: string | null;
@@ -76,6 +80,10 @@ const uploadAttachment = async (
 export const companyProposalService = {
   async createProposal(payload: {
     companyName: string;
+    companyYears: number;
+    assignedDepartment: string;
+    assignedRole: string;
+    hasPsuMoa: boolean;
     address?: string;
     contactPerson?: string;
     contactEmail?: string;

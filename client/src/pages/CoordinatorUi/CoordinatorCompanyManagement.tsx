@@ -38,6 +38,11 @@ import type { Company, MOA } from "../../services/companyService";
 const normalizeForMatch = (value?: string | null) =>
   (value || "").trim().toLowerCase().replace(/\s+/g, " ");
 
+const getWorkingDaysByType = (companyType: "PUBLIC" | "PRIVATE") =>
+  companyType === "PRIVATE"
+    ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
 const CoordinatorCompanyManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -130,7 +135,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
     radiusMeters: 100,
     maxSlots: "0",
     companyType: "PUBLIC" as "PUBLIC" | "PRIVATE",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as string[],
+    workingDays: getWorkingDaysByType("PUBLIC") as string[],
   });
   const [companyForm, setCompanyForm] = useState(createEmptyCompanyForm);
   const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
@@ -169,9 +174,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
       radiusMeters: company.radiusMeters ?? 100,
       maxSlots: (company.maxSlots ?? 0).toString(),
       companyType: (company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE",
-      workingDays: company.workingDays || (company.companyType === "PRIVATE"
-        ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-        : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]),
+      workingDays: getWorkingDaysByType((company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE"),
     });
     setShowAddCompany(true);
   };
@@ -433,7 +436,8 @@ const CoordinatorCompanyManagement: React.FC = () => {
         radiusMeters: parseInt(companyForm.radiusMeters.toString()),
         maxSlots: Number.isNaN(maxSlotsValue) ? 0 : maxSlotsValue,
         companyType: companyForm.companyType,
-        workingDays: companyForm.workingDays,
+        // Working days are derived from company type in coordinator flow
+        workingDays: getWorkingDaysByType(companyForm.companyType),
       };
 
       if (isEditingCompany && editingCompanyId) {
@@ -1497,9 +1501,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 setCompanyForm((prev) => ({
                                   ...prev,
                                   companyType: newType,
-                                  workingDays: newType === "PRIVATE"
-                                    ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                                    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                                  workingDays: getWorkingDaysByType(newType),
                                 }));
                               }}
                               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
@@ -1517,9 +1519,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                                 setCompanyForm((prev) => ({
                                   ...prev,
                                   companyType: newType,
-                                  workingDays: newType === "PRIVATE"
-                                    ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                                    : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                                  workingDays: getWorkingDaysByType(newType),
                                 }));
                               }}
                               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
@@ -1528,7 +1528,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           </label>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Private companies may include Saturday in working days.
+                          Working days are auto-set by company type.
                         </p>
                       </div>
                     </div>
@@ -1543,29 +1543,19 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
                             <label
                               key={day}
-                              className={`flex items-center space-x-2 p-2 rounded-lg border cursor-pointer transition-colors ${companyForm.workingDays.includes(day)
+                              className={`flex items-center space-x-2 p-2 rounded-lg border transition-colors ${companyForm.workingDays.includes(day)
                                   ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
-                                  : "bg-gray-50 dark:bg-[#212124] border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                } ${companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")
+                                  : "bg-gray-50 dark:bg-[#212124] border-gray-200 dark:border-gray-600"
+                                } ${day === "Sunday"
                                   ? "opacity-50 cursor-not-allowed"
-                                  : ""
+                                  : "cursor-not-allowed opacity-80"
                                 }`}
                             >
                               <input
                                 type="checkbox"
                                 checked={companyForm.workingDays.includes(day)}
-                                onChange={(e) => {
-                                  if (companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")) {
-                                    return; // Disable weekends for public companies
-                                  }
-                                  setCompanyForm((prev) => ({
-                                    ...prev,
-                                    workingDays: e.target.checked
-                                      ? [...prev.workingDays, day]
-                                      : prev.workingDays.filter((d) => d !== day),
-                                  }));
-                                }}
-                                disabled={companyForm.companyType === "PUBLIC" && (day === "Saturday" || day === "Sunday")}
+                                onChange={() => {}}
+                                disabled
                                 className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
                               />
                               <span className="text-sm text-gray-700 dark:text-gray-300">{day}</span>
