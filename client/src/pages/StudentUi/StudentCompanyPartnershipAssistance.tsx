@@ -688,7 +688,10 @@ const StudentCompanyPartnershipAssistance = () => {
             />
             <input
               value={proposalForm.contactNumber}
-              onChange={(e) => setProposalForm((prev) => ({ ...prev, contactNumber: e.target.value }))}
+              onChange={(e) => {
+                const rawValue = e.target.value;
+                setProposalForm((prev) => ({ ...prev, contactNumber: rawValue }));
+              }}
               placeholder="Contact number"
               className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#212124] text-sm"
             />

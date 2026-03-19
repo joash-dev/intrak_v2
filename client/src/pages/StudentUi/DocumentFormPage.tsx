@@ -527,7 +527,13 @@ const DocumentFormPage: React.FC = () => {
   // Computed total field names (read-only)
   const computedFields = new Set(['fy_total', 'sy_total', 'ty_total', '4y_total', 'grand_total']);
 
-  const sanitizeValueByFieldType = (value: string, fieldType: string) => {
+  const isContactLikeField = (fieldName: string) => /contact|phone/i.test(fieldName);
+
+  const sanitizeValueByFieldType = (name: string, value: string, fieldType: string) => {
+    if (isContactLikeField(name)) {
+      // Contact-like fields: allow digits and common phone formatting.
+      return value.replace(/[^0-9+\-\s()]/g, '');
+    }
     if (fieldType === 'number') {
       // Number-like fields: remove alphabetic characters, keep digits and special chars.
       return value.replace(/[A-Za-z]/g, '');
@@ -540,7 +546,7 @@ const DocumentFormPage: React.FC = () => {
   };
 
   const handleChange = (name: string, value: string, fieldType: string = 'text') => {
-    const sanitizedValue = sanitizeValueByFieldType(value, fieldType);
+    const sanitizedValue = sanitizeValueByFieldType(name, value, fieldType);
     let updated = { ...formData, [name]: sanitizedValue };
     // If a unit field changed, recompute totals
     if (actualType === 'CERTIFICATION_UNITS' && name.endsWith('_u')) {
@@ -901,8 +907,8 @@ const DocumentFormPage: React.FC = () => {
                 ) : (
                   <input
                     id={`field-${field.name}`}
-                    type={field.type === 'date' ? 'date' : 'text'}
-                    inputMode={field.type === 'number' ? 'decimal' : undefined}
+                    type={field.type === 'date' ? 'date' : isContactLikeField(field.name) ? 'tel' : 'text'}
+                    inputMode={isContactLikeField(field.name) ? 'numeric' : field.type === 'number' ? 'decimal' : undefined}
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value, field.type)}
                     placeholder={field.placeholder}

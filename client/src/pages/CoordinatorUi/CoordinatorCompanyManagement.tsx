@@ -1471,12 +1471,13 @@ const CoordinatorCompanyManagement: React.FC = () => {
                           type="tel"
                           required
                           value={companyForm.contactNumber}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const rawValue = e.target.value;
                             setCompanyForm((prev) => ({
                               ...prev,
-                              contactNumber: e.target.value,
-                            }))
-                          }
+                              contactNumber: rawValue,
+                            }));
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
                           placeholder="Enter contact number"
                         />
