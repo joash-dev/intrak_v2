@@ -366,6 +366,10 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       action = 'login';
     }
 
+    // Ensure student start date is initialized from the earliest attendance activity.
+    const attendanceReferenceDate = openLog?.timeIn || log.timeIn || new Date();
+    await ensureStudentStartDate(qrToken.studentId, attendanceReferenceDate);
+
     await prisma.qRToken.update({
       where: { id: qrToken.id },
       data: { used: true, usedAt: new Date() }
@@ -442,6 +446,9 @@ export const verifyGPS = async (req: AuthRequest, res: Response) => {
         }
       }
     });
+
+    // GPS time-in should also initialize student start date when missing.
+    await ensureStudentStartDate(studentId, log.timeIn || new Date());
 
     await auditLog(req.user!.id, 'ATTENDANCE_GPS_VERIFIED', { studentId, distanceMeters, withinRange }, req);
 

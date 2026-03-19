@@ -147,3 +147,45 @@ export function calculateProjectedEndDate(
   return cursor;
 }
 
+/**
+ * Dynamic projection using remaining hours and observed average daily hours.
+ * This adapts when a student logs variable daily hours (e.g., 5h, 7h, 8h).
+ */
+export function calculateDynamicProjectedEndDate(
+  projectionStartDate: Date,
+  remainingHours: number,
+  workingDays: string[],
+  worksOnSaturday?: boolean,
+  averageHoursPerDay = 8
+): Date | null {
+  if (!projectionStartDate || Number.isNaN(projectionStartDate.getTime())) return null;
+  if (remainingHours <= 0) return new Date(projectionStartDate);
+
+  const effectiveWorkingDays = normalizeWorkingDays(workingDays, worksOnSaturday);
+  const workingDayNumbers = effectiveWorkingDays
+    .map((day) => DAY_NAME_TO_NUMBER[day])
+    .filter((num) => num !== undefined);
+
+  if (workingDayNumbers.length === 0) return null;
+
+  // Keep projection sane while still adapting to variable logs.
+  const clampedDailyHours = Math.min(8, Math.max(1, averageHoursPerDay || 8));
+  let hoursLeft = remainingHours;
+
+  const cursor = new Date(projectionStartDate);
+  cursor.setHours(0, 0, 0, 0);
+
+  while (hoursLeft > 0) {
+    const dayOfWeek = cursor.getDay();
+    if (workingDayNumbers.includes(dayOfWeek)) {
+      hoursLeft -= clampedDailyHours;
+      if (hoursLeft <= 0) {
+        break;
+      }
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return cursor;
+}
+

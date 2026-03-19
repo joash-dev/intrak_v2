@@ -3,7 +3,7 @@ import { NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
-import { calculateExpectedWorkingDays, calculateProjectedEndDate } from '../utils/attendanceUtils';
+import { calculateExpectedWorkingDays, calculateDynamicProjectedEndDate } from '../utils/attendanceUtils';
 import { prisma } from '../config/database';
 import { getErrorMessage } from '../utils/errorHandler';
 
@@ -199,7 +199,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     try {
       attendanceLogs = await prisma.attendanceLog.findMany({
         where: { studentId: student.id, verified: true },
-        select: { durationMinutes: true }
+        select: { durationMinutes: true, date: true, timeIn: true }
       });
     } catch (attendanceError) {
       console.error('Error fetching attendance logs:', attendanceError);
@@ -223,6 +223,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
     }, 0);
     // Keep decimal precision (e.g., 30 mins = 0.5 hours, not 1.0)
     const completedHours = Math.round((totalMinutes / 60) * 10) / 10;
+    const requiredHours = student.totalHours || 0;
 
     // Safely access company properties
     const company = student.company || null;
@@ -232,14 +233,39 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       ? workingDays
       : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const worksOnSaturday = (student as any).worksOnSaturday || false;
+    const earliestAttendanceDate = attendanceLogs
+      .map((log) => {
+        const candidate = log.timeIn || log.date;
+        return candidate ? new Date(candidate) : null;
+      })
+      .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())[0] || null;
+    const latestAttendanceDate = attendanceLogs
+      .map((log) => {
+        const candidate = log.timeIn || log.date;
+        return candidate ? new Date(candidate) : null;
+      })
+      .filter((value): value is Date => value instanceof Date && !Number.isNaN(value.getTime()))
+      .sort((a, b) => b.getTime() - a.getTime())[0] || null;
+    const resolvedStartDate = student.startDate || earliestAttendanceDate;
+    // Business rule:
+    // - Completed days use actual logged/verified computed hours.
+    // - Future projection always assumes 8 hours per expected working day.
+    const projectionHoursPerDay = 8;
+    const remainingHours = Math.max(0, Number((requiredHours - completedHours).toFixed(2)));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const projectionStartDate = resolvedStartDate && resolvedStartDate > today
+      ? new Date(resolvedStartDate)
+      : today;
     const projectedEndDate =
-      !student.endDate && student.startDate
-        ? calculateProjectedEndDate(
-            new Date(student.startDate),
-            student.totalHours || 0,
+      !student.endDate && resolvedStartDate
+        ? calculateDynamicProjectedEndDate(
+            projectionStartDate,
+            remainingHours,
             safeWorkingDays,
             worksOnSaturday,
-            8,
+            projectionHoursPerDay,
           )
         : null;
 
@@ -257,15 +283,19 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       section: student.section || '',
       company: company?.name || '',
       supervisor: resolvedSupervisor,
-      totalHours: student.totalHours || 0,
+      totalHours: requiredHours,
       completedHours: completedHours,
-      startDate: student.startDate ? student.startDate.toISOString() : null,
+      startDate: resolvedStartDate ? resolvedStartDate.toISOString() : null,
       endDate: student.endDate
         ? student.endDate.toISOString()
         : projectedEndDate
           ? projectedEndDate.toISOString()
           : null,
       projectedEndDate: projectedEndDate ? projectedEndDate.toISOString() : null,
+      projectedFromDate: projectedEndDate ? projectionStartDate.toISOString() : null,
+      projectedAverageHoursPerDay: projectionHoursPerDay,
+      remainingHours,
+      lastAttendanceDate: latestAttendanceDate ? latestAttendanceDate.toISOString() : null,
       worksOnSaturday,
       companyType: companyType,
       workingDays: workingDays
