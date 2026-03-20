@@ -3,6 +3,8 @@ import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
 import { auditLog } from '../services/audit.service';
 import os from 'os';
+import fs from 'fs';
+import path from 'path';
 import checkDiskSpace from 'check-disk-space';
 import { prisma } from '../config/database';
 import { getNASStorageMetrics, getLocalStorageMetrics, getAllStorageAlerts, StorageAlert } from '../services/storageMonitor.service';
@@ -909,9 +911,10 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       ? `${dbSizeGB} GB`
       : `${dbSizeMB} MB`;
 
-    // Get server load (simplified)
+    // Get server load (simplified). On Windows loadavg is [0,0,0]; avoid divide-by-zero.
     const loadAverage = os.loadavg();
-    const serverLoad = Math.round(loadAverage[0] * 100 / cpuCount);
+    const rawLoad = cpuCount > 0 ? (loadAverage[0] * 100) / cpuCount : 0;
+    const serverLoad = Math.round(rawLoad);
     const loadAverage1min = loadAverage[0].toFixed(2);
     const loadAverage5min = loadAverage[1].toFixed(2);
     const loadAverage15min = loadAverage[2].toFixed(2);
@@ -1237,100 +1240,6 @@ export const emergencyDisableMaintenance = async (req: Request, res: Response) =
   }
 };
 
-export const createSystemBackup = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user!.id;
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true }
-    });
-
-    if (!user || user.role !== 'ADMIN') {
-      return res.status(403).json({ message: 'Access denied. Admin role required.' });
-    }
-
-    const [settings, users, companies, documents, activities] = await Promise.all([
-      prisma.adminSettings.findMany(),
-      prisma.user.findMany({
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          active: true,
-          createdAt: true,
-          updatedAt: true,
-        }
-      }),
-      prisma.company.findMany({
-        select: {
-          id: true,
-          name: true,
-          address: true,
-          industry: true,
-          contactPerson: true,
-          contactEmail: true,
-          contactNumber: true,
-          createdAt: true,
-          updatedAt: true,
-          students: {
-            select: { id: true },
-          },
-        },
-      }),
-      prisma.document.findMany({
-        select: {
-          id: true,
-          type: true,
-          filename: true,
-          status: true,
-          studentId: true,
-          uploadedById: true,
-          createdAt: true,
-          reviewedAt: true,
-        },
-      }),
-      prisma.auditLog.findMany({
-        take: 100,
-        orderBy: { createdAt: 'desc' }
-      })
-    ]);
-
-    const backupPayload = {
-      generatedAt: new Date().toISOString(),
-      generatedBy: userId,
-      environment: process.env.NODE_ENV || 'development',
-      stats: {
-        totalUsers: users.length,
-        totalCompanies: companies.length,
-        totalDocuments: documents.length,
-        recentActivities: activities.length
-      },
-      data: {
-        settings,
-        users,
-        companies,
-        documents,
-        activities
-      }
-    };
-
-    const buffer = Buffer.from(JSON.stringify(backupPayload, null, 2));
-    const filename = `intrak-backup-${new Date().toISOString().split('T')[0]}.json`;
-
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(buffer);
-  } catch (error) {
-    console.error('Create system backup error:', error);
-    res.status(500).json({
-      message: 'Failed to create system backup',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
-    });
-  }
-};
-
 export const clearSystemCache = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -1358,6 +1267,279 @@ export const clearSystemCache = async (req: AuthRequest, res: Response) => {
     console.error('Clear system cache error:', error);
     res.status(500).json({
       message: 'Failed to clear system cache',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const previewClearAllNASData = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const config = await getNASRuntimeConfig();
+    applyNASRuntimeConfigToEnv(config);
+
+    if (!config.enabled) {
+      return res.json({
+        available: false,
+        reason: 'NAS is currently disabled.',
+        mountPath: config.mountPath || '',
+        topLevelEntryCount: 0,
+        totalFiles: 0,
+        totalDirectories: 0,
+        totalSizeBytes: 0,
+        entries: []
+      });
+    }
+
+    const isConnected = await validateNASConnection();
+    if (!isConnected) {
+      return res.json({
+        available: false,
+        reason: 'NAS is not connected or not writable. Cannot generate preview.',
+        mountPath: config.mountPath || '',
+        topLevelEntryCount: 0,
+        totalFiles: 0,
+        totalDirectories: 0,
+        totalSizeBytes: 0,
+        entries: []
+      });
+    }
+
+    const mountPath = path.resolve(config.mountPath);
+    const parsedRoot = path.parse(mountPath).root;
+    if (!mountPath || mountPath === parsedRoot) {
+      return res.json({
+        available: false,
+        reason: 'Unsafe NAS mount path. Refusing to scan root directory.',
+        mountPath: mountPath || '',
+        topLevelEntryCount: 0,
+        totalFiles: 0,
+        totalDirectories: 0,
+        totalSizeBytes: 0,
+        entries: []
+      });
+    }
+
+    if (!fs.existsSync(mountPath)) {
+      return res.json({
+        available: false,
+        reason: 'NAS mount path does not exist.',
+        mountPath,
+        topLevelEntryCount: 0,
+        totalFiles: 0,
+        totalDirectories: 0,
+        totalSizeBytes: 0,
+        entries: []
+      });
+    }
+
+    const collectStats = (targetPath: string) => {
+      let files = 0;
+      let directories = 0;
+      let sizeBytes = 0;
+      const stack = [targetPath];
+
+      while (stack.length > 0) {
+        const current = stack.pop()!;
+        const items = fs.readdirSync(current, { withFileTypes: true });
+        for (const item of items) {
+          const itemPath = path.join(current, item.name);
+          if (item.isDirectory()) {
+            directories++;
+            stack.push(itemPath);
+          } else if (item.isFile()) {
+            files++;
+            try {
+              sizeBytes += fs.statSync(itemPath).size;
+            } catch {
+              // Ignore files that fail stat and continue scan.
+            }
+          }
+        }
+      }
+
+      return { files, directories, sizeBytes };
+    };
+
+    const topEntries = fs.readdirSync(mountPath, { withFileTypes: true });
+    const entries = topEntries.map((entry) => {
+      const entryPath = path.join(mountPath, entry.name);
+      if (entry.isDirectory()) {
+        const stats = collectStats(entryPath);
+        return {
+          name: entry.name,
+          type: 'directory' as const,
+          files: stats.files,
+          directories: stats.directories,
+          sizeBytes: stats.sizeBytes
+        };
+      }
+
+      let sizeBytes = 0;
+      try {
+        sizeBytes = fs.statSync(entryPath).size;
+      } catch {
+        // ignore stat failures
+      }
+      return {
+        name: entry.name,
+        type: 'file' as const,
+        files: 1,
+        directories: 0,
+        sizeBytes
+      };
+    });
+
+    const totals = entries.reduce((acc, entry) => {
+      acc.files += entry.files;
+      acc.directories += entry.directories + (entry.type === 'directory' ? 1 : 0);
+      acc.sizeBytes += entry.sizeBytes;
+      return acc;
+    }, { files: 0, directories: 0, sizeBytes: 0 });
+
+    res.json({
+      available: true,
+      mountPath,
+      topLevelEntryCount: entries.length,
+      totalFiles: totals.files,
+      totalDirectories: totals.directories,
+      totalSizeBytes: totals.sizeBytes,
+      entries: entries.sort((a, b) => a.name.localeCompare(b.name))
+    });
+  } catch (error) {
+    console.error('Preview clear NAS data error:', error);
+    res.status(500).json({
+      message: 'Failed to generate NAS clear preview',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
+  }
+};
+
+export const clearAllNASData = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const rawTargets = Array.isArray(req.body?.targets) ? req.body.targets : [];
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const config = await getNASRuntimeConfig();
+    applyNASRuntimeConfigToEnv(config);
+
+    if (!config.enabled) {
+      return res.status(400).json({ message: 'NAS is currently disabled.' });
+    }
+
+    const isConnected = await validateNASConnection();
+    if (!isConnected) {
+      return res.status(400).json({
+        message: 'NAS is not connected or not writable. Aborting clear operation.'
+      });
+    }
+
+    const mountPath = path.resolve(config.mountPath);
+    const parsedRoot = path.parse(mountPath).root;
+    if (!mountPath || mountPath === parsedRoot) {
+      return res.status(400).json({
+        message: 'Unsafe NAS mount path. Refusing to clear root directory.'
+      });
+    }
+
+    if (!fs.existsSync(mountPath)) {
+      return res.status(404).json({ message: 'NAS mount path does not exist.' });
+    }
+
+    const allEntries = fs.readdirSync(mountPath, { withFileTypes: true });
+    const hasTargetFilter = rawTargets.length > 0;
+    const requestedTargets = rawTargets
+      .filter((target: unknown): target is string => typeof target === 'string')
+      .map((target) => target.trim())
+      .filter((target) => target.length > 0);
+
+    if (hasTargetFilter) {
+      const invalidTargets = requestedTargets.filter((target) =>
+        target === '.' ||
+        target === '..' ||
+        target.includes('/') ||
+        target.includes('\\')
+      );
+      if (invalidTargets.length > 0) {
+        return res.status(400).json({
+          message: 'Invalid target paths. Only top-level NAS entry names are allowed.'
+        });
+      }
+    }
+
+    const requestedSet = new Set(requestedTargets);
+    const entries = hasTargetFilter
+      ? allEntries.filter((entry) => requestedSet.has(entry.name))
+      : allEntries;
+
+    if (hasTargetFilter && entries.length === 0) {
+      return res.status(400).json({
+        message: 'None of the selected NAS targets were found.'
+      });
+    }
+
+    let deletedItems = 0;
+    let failedItems = 0;
+    const failedNames: string[] = [];
+    const deletedNames: string[] = [];
+
+    for (const entry of entries) {
+      const entryPath = path.join(mountPath, entry.name);
+      try {
+        fs.rmSync(entryPath, { recursive: true, force: true });
+        deletedItems++;
+        deletedNames.push(entry.name);
+      } catch (error) {
+        failedItems++;
+        failedNames.push(entry.name);
+      }
+    }
+
+    await auditLog(userId, 'ADMIN_CLEAR_ALL_NAS_DATA', {
+      mountPath,
+      mode: hasTargetFilter ? 'selected' : 'all',
+      requestedTargets: hasTargetFilter ? requestedTargets : undefined,
+      deletedItems,
+      failedItems,
+      deletedNames: deletedNames.slice(0, 50),
+      failedNames: failedNames.slice(0, 20)
+    }, req);
+
+    res.json({
+      message: failedItems > 0
+        ? 'NAS clear completed with partial failures.'
+        : 'All NAS data has been cleared successfully.',
+      mode: hasTargetFilter ? 'selected' : 'all',
+      requestedTargets,
+      mountPath,
+      deletedItems,
+      failedItems,
+      deletedNames,
+      failedNames
+    });
+  } catch (error) {
+    console.error('Clear all NAS data error:', error);
+    res.status(500).json({
+      message: 'Failed to clear NAS data',
       error: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }

@@ -829,17 +829,18 @@ class AdminService {
       return data;
     } catch (error) {
       console.error('Error fetching system information:', error);
-      // Return realistic fallback data if API fails
+      // Minimal fallback — omit CPU/memory/disk numbers so the UI does not contradict itself.
       return {
         version: '2.1.3',
         lastUpdated: new Date().toISOString(),
-        databaseSize: '2.3 GB',
-        activeUsers: 156,
-        totalDocuments: 1247,
-        systemUptime: '15 days, 8 hours',
-        serverLoad: 45,
-        memoryUsage: 68,
-        diskUsage: 75
+        databaseSize: '—',
+        activeUsers: 0,
+        totalDocuments: 0,
+        systemUptime: '—',
+        databaseStatus: 'unknown',
+        apiServerStatus: 'unknown',
+        diskUsage: 0,
+        nasAvailable: false
       };
     }
   }
@@ -891,11 +892,50 @@ class AdminService {
     }
   }
 
-  async createSystemBackup(): Promise<Blob> {
-    const response = await api.post('/admin/system/backup', {}, {
-      responseType: 'blob'
-    });
-    return response.data;
+  async clearAllNASData(targets?: string[]): Promise<{
+    message: string;
+    mode: 'all' | 'selected';
+    requestedTargets: string[];
+    mountPath: string;
+    deletedItems: number;
+    failedItems: number;
+    deletedNames: string[];
+    failedNames: string[];
+  }> {
+    try {
+      const response = await api.post('/admin/nas-config/clear-all', {
+        targets: targets && targets.length > 0 ? targets : undefined
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error clearing NAS data:', error);
+      throw new Error(error.response?.data?.message || 'Failed to clear NAS data');
+    }
+  }
+
+  async getClearAllNASPreview(): Promise<{
+    available: boolean;
+    reason?: string;
+    mountPath: string;
+    topLevelEntryCount: number;
+    totalFiles: number;
+    totalDirectories: number;
+    totalSizeBytes: number;
+    entries: Array<{
+      name: string;
+      type: 'file' | 'directory';
+      files: number;
+      directories: number;
+      sizeBytes: number;
+    }>;
+  }> {
+    try {
+      const response = await api.get('/admin/nas-config/clear-all/preview');
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting NAS clear preview:', error);
+      throw new Error(error.response?.data?.message || 'Failed to get NAS clear preview');
+    }
   }
 
   async clearSystemCache(): Promise<void> {

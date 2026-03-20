@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   User,
   Lock,
@@ -25,13 +25,16 @@ import {
   X,
   AlertTriangle,
   Info,
+  RotateCcw,
+  Eraser,
+  Power,
 
 } from "lucide-react";
 import {
   settingsService,
   type AppPreferences,
 } from "../../services/settingsService";
-import { adminService, type NASConfig, type SystemInfo, type SystemAlert } from "../../services/adminService";
+import { adminService, type SystemInfo, type SystemAlert } from "../../services/adminService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
@@ -75,14 +78,179 @@ interface NotificationPreferences {
   pushNotifications: boolean;
 }
 
-interface NASSettingsForm {
-  enabled: boolean;
+interface NASClearPreview {
+  available: boolean;
+  reason?: string;
   mountPath: string;
-  host: string;
-  username: string;
-  shareName: string;
-  password: string;
-  hasPassword: boolean;
+  topLevelEntryCount: number;
+  totalFiles: number;
+  totalDirectories: number;
+  totalSizeBytes: number;
+  entries: Array<{
+    name: string;
+    type: "file" | "directory";
+    files: number;
+    directories: number;
+    sizeBytes: number;
+  }>;
+}
+
+function SystemInformationPanel({ systemInfo }: { systemInfo: SystemInfo }) {
+  const dbOnline = (systemInfo.databaseStatus ?? "online") === "online";
+  const memPct = systemInfo.memoryUsage ?? 0;
+  const memTone =
+    memPct >= 95
+      ? "text-red-600 dark:text-red-400"
+      : memPct >= 85
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-gray-900 dark:text-gray-100";
+  const envLabel = (systemInfo.environment || "production").replace(/_/g, " ");
+
+  const metricTile = (label: string, value: ReactNode) => (
+    <div
+      key={label}
+      className="rounded-xl border border-gray-200/90 dark:border-gray-700 bg-white dark:bg-gray-900/40 px-4 py-3 shadow-sm"
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
+      <div className="mt-1.5 text-sm text-gray-900 dark:text-gray-100 break-words leading-snug">{value}</div>
+    </div>
+  );
+
+  const resourceTiles: { label: string; value: ReactNode }[] = [
+    {
+      label: "Database status",
+      value: (
+        <span className={dbOnline ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 font-medium"}>
+          {dbOnline ? "Online" : "Offline"}
+        </span>
+      ),
+    },
+    { label: "System uptime", value: systemInfo.systemUptime || "—" },
+    {
+      label: "Memory",
+      value: (
+        <span className={memTone}>
+          {memPct}%
+          {systemInfo.usedMemory != null &&
+          systemInfo.totalMemory != null &&
+          systemInfo.totalMemory > 0 ? (
+            <span className="block text-xs font-normal text-gray-600 dark:text-gray-400 mt-1">
+              {systemInfo.usedMemory} GB / {systemInfo.totalMemory} GB
+            </span>
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      label: "Disk",
+      value:
+        systemInfo.usedDisk != null && systemInfo.totalDisk != null
+          ? `${systemInfo.usedDisk} GB / ${systemInfo.totalDisk} GB (${systemInfo.diskUsage ?? 0}%)`
+          : `${systemInfo.diskUsage ?? 0}%`,
+    },
+    {
+      label: "Server load",
+      value: (
+        <>
+          <span className="tabular-nums">{systemInfo.serverLoad ?? 0}%</span>
+          {systemInfo.loadAverage1min != null && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+              Load avg · 1m {systemInfo.loadAverage1min}
+              {systemInfo.loadAverage5min != null && ` · 5m ${systemInfo.loadAverage5min}`}
+              {systemInfo.loadAverage15min != null && ` · 15m ${systemInfo.loadAverage15min}`}
+            </p>
+          )}
+        </>
+      ),
+    },
+    {
+      label: "Database size",
+      value: (
+        <>
+          {systemInfo.databaseSize || "—"}
+          {systemInfo.databaseSizeBytes != null && (
+            <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {Math.round(Number(systemInfo.databaseSizeBytes) / 1024 / 1024)} MB (raw)
+            </span>
+          )}
+        </>
+      ),
+    },
+  ];
+
+  const appTiles: { label: string; value: ReactNode }[] = [
+    {
+      label: "Users & documents",
+      value: (
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Users</p>
+            <p className="tabular-nums text-base font-medium mt-0.5">{systemInfo.activeUsers ?? 0}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Documents</p>
+            <p className="tabular-nums text-base font-medium mt-0.5">
+              {systemInfo.totalDocuments?.toLocaleString() ?? 0}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    { label: "App version", value: systemInfo.version || "—" },
+    { label: "Environment", value: <span className="uppercase tracking-wide">{envLabel}</span> },
+    { label: "Platform", value: `${systemInfo.platform || "—"} · ${systemInfo.arch || "—"}` },
+    { label: "Node.js", value: systemInfo.nodeVersion || "—" },
+    {
+      label: "Metrics refreshed",
+      value: systemInfo.lastUpdated ? new Date(systemInfo.lastUpdated).toLocaleString() : "—",
+    },
+  ];
+
+  return (
+    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-5">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center flex-wrap gap-2">
+        <Database className="w-5 h-5 shrink-0 text-gray-600 dark:text-gray-400" />
+        System Information
+      </h3>
+
+      <div className="space-y-8">
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            Availability & resources
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {resourceTiles.map(({ label, value }) => metricTile(label, value))}
+          </div>
+        </section>
+
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            Processor
+          </p>
+          <div className="rounded-xl border border-gray-200/90 dark:border-gray-700 bg-white dark:bg-gray-900/40 px-4 py-3 shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">CPU</p>
+            <div className="mt-1.5 text-sm text-gray-900 dark:text-gray-100 break-words leading-snug">
+              <span className="break-words">{systemInfo.cpuModel || "—"}</span>
+              {(systemInfo.cpuCount ?? 0) > 0 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{systemInfo.cpuCount} cores</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+            Application & host
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {appTiles.map(({ label, value }) => metricTile(label, value))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
 
 const AdminSettings = () => {
@@ -128,12 +296,12 @@ const AdminSettings = () => {
   const [systemStatus, setSystemStatus] = useState({
     database: "online",
     apiServer: "running",
-    storage: 75,
-    uptime: "15 days, 8 hours",
-    activeUsers: 156,
-    totalDocuments: 1247,
-    databaseSize: "2.3 GB",
-    diskUsageLabel: "0 / 0 GB",
+    storage: 0,
+    uptime: "—",
+    activeUsers: 0,
+    totalDocuments: 0,
+    databaseSize: "—",
+    diskUsageLabel: "",
     nasAvailable: false,
     nasStorage: null as SystemInfo['nasStorage'] | null,
   });
@@ -141,13 +309,13 @@ const AdminSettings = () => {
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({
     version: "2.1.3",
     lastUpdated: new Date().toISOString(),
-    databaseSize: "2.3 GB",
-    activeUsers: 156,
-    totalDocuments: 1247,
-    systemUptime: "15 days, 8 hours",
-    serverLoad: 45,
-    memoryUsage: 68,
-    diskUsage: 75,
+    databaseSize: "—",
+    activeUsers: 0,
+    totalDocuments: 0,
+    systemUptime: "—",
+    serverLoad: 0,
+    memoryUsage: 0,
+    diskUsage: 0,
   });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(
@@ -161,15 +329,11 @@ const AdminSettings = () => {
     success: boolean;
     message: string;
   } | null>(null);
-  const [nasSettings, setNasSettings] = useState<NASSettingsForm>({
-    enabled: false,
-    mountPath: "/mnt/nas/intrak",
-    host: "",
-    username: "",
-    shareName: "files",
-    password: "",
-    hasPassword: false,
-  });
+  const [nasPreviewLoading, setNasPreviewLoading] = useState(false);
+  const [nasClearPreview, setNasClearPreview] = useState<NASClearPreview | null>(
+    null
+  );
+  const [selectedNasTargets, setSelectedNasTargets] = useState<string[]>([]);
 
   // Settings sections for navigation
   const sections = [
@@ -188,7 +352,6 @@ const AdminSettings = () => {
       loadTheme();
       await loadSystemSettings();
       loadSystemInfo();
-      await loadNASSettings();
       loadProfilePhoto();
     };
 
@@ -334,15 +497,28 @@ const AdminSettings = () => {
         ? systemInfoData.nasStorage.percentUsed
         : systemInfoData.diskUsage || 75;
 
-      const diskUsageLabel = systemInfoData.nasAvailable && systemInfoData.nasStorage
-        ? `${systemInfoData.nasStorage.used} / ${systemInfoData.nasStorage.total}`
-        : systemInfoData.usedDisk !== undefined && systemInfoData.totalDisk !== undefined
-          ? `${systemInfoData.usedDisk}GB / ${systemInfoData.totalDisk}GB`
-          : "0 / 0 GB";
+      const diskUsageLabel =
+        systemInfoData.nasAvailable && systemInfoData.nasStorage
+          ? `${systemInfoData.nasStorage.used} / ${systemInfoData.nasStorage.total}`
+          : systemInfoData.usedDisk !== undefined &&
+              systemInfoData.totalDisk !== undefined &&
+              systemInfoData.totalDisk > 0
+            ? `${systemInfoData.usedDisk}GB / ${systemInfoData.totalDisk}GB`
+            : "";
 
       setSystemStatus({
-        database: systemInfoData.databaseStatus || "online",
-        apiServer: systemInfoData.apiServerStatus || "running",
+        database:
+          systemInfoData.databaseStatus === "offline"
+            ? "offline"
+            : systemInfoData.databaseStatus === "unknown"
+              ? "unknown"
+              : "online",
+        apiServer:
+          systemInfoData.apiServerStatus === "unknown"
+            ? "unknown"
+            : systemInfoData.apiServerStatus === "down"
+              ? "down"
+              : "running",
         storage: storagePercent,
         uptime: systemInfoData.systemUptime || "15 days, 8 hours",
         activeUsers: systemInfoData.activeUsers || 156,
@@ -360,89 +536,6 @@ const AdminSettings = () => {
     } catch (error) {
       devLog.error("Error loading system information:", error);
       // Keep the default state if API fails
-    }
-  };
-
-  const loadNASSettings = async () => {
-    try {
-      const response = await adminService.getNASConfig();
-      const config: NASConfig = response.nasConfig;
-      setNasSettings({
-        enabled: config.enabled,
-        mountPath: config.mountPath,
-        host: config.host,
-        username: config.username,
-        shareName: config.shareName,
-        password: "",
-        hasPassword: config.hasPassword,
-      });
-    } catch (error) {
-      devLog.error("Error loading NAS settings:", error);
-    }
-  };
-
-  const handleSaveNASSettings = async () => {
-    try {
-      setSaving(true);
-      const payload: {
-        enabled: boolean;
-        mountPath: string;
-        host: string;
-        username: string;
-        shareName: string;
-        password?: string;
-      } = {
-        enabled: nasSettings.enabled,
-        mountPath: nasSettings.mountPath.trim(),
-        host: nasSettings.host.trim(),
-        username: nasSettings.username.trim(),
-        shareName: nasSettings.shareName.trim(),
-      };
-      if (nasSettings.password.trim()) {
-        payload.password = nasSettings.password.trim();
-      }
-      const response = await adminService.updateNASConfig(payload);
-      setNasSettings((prev) => ({
-        ...prev,
-        hasPassword: response.nasConfig.hasPassword,
-        password: "",
-      }));
-      toast.success("NAS configuration saved");
-      await loadSystemInfo();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save NAS configuration");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleTestNASConnection = async () => {
-    try {
-      setSaving(true);
-      const result = await adminService.testNASConnection();
-      if (result.connected) {
-        toast.success(result.message);
-      } else {
-        toast.error(result.message);
-      }
-      await loadSystemInfo();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to test NAS connection");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSyncNASFromLocal = async () => {
-    try {
-      setSaving(true);
-      const result = await adminService.syncLocalToNAS();
-      toast.success(result.message);
-      await loadSystemInfo();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to sync local files to NAS");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -833,32 +926,6 @@ const AdminSettings = () => {
     event.target.value = "";
   };
 
-  const handleSystemBackup = async () => {
-    try {
-      setSaving(true);
-      toast.loading("Creating system backup...", { id: "backup" });
-
-      const blob = await adminService.createSystemBackup();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `system-backup-${new Date().toISOString().split("T")[0]
-        }.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast.success("System backup completed and downloaded!", {
-        id: "backup",
-      });
-    } catch (error) {
-      toast.error("Backup failed. Please try again.", { id: "backup" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleClearCache = async () => {
     try {
       setSaving(true);
@@ -898,6 +965,106 @@ const AdminSettings = () => {
         setSaving(false);
       }
     }
+  };
+
+  const handleClearAllNASData = async () => {
+    if (!nasClearPreview) {
+      const continueWithoutPreview = confirm(
+        "No NAS preview loaded yet. Generate preview first so you can review what will be deleted. Continue anyway?"
+      );
+      if (!continueWithoutPreview) return;
+    }
+
+    const deletingSelected = selectedNasTargets.length > 0;
+    const confirmed = confirm(
+      deletingSelected
+        ? `This will permanently delete ${selectedNasTargets.length} selected NAS path(s). Continue?`
+        : "This will permanently delete ALL files inside the configured NAS storage path. Continue?"
+    );
+    if (!confirmed) return;
+
+    const secondConfirmed = confirm(
+      "Final warning: this action is irreversible and will remove every file/folder in NAS storage used by the system."
+    );
+    if (!secondConfirmed) return;
+
+    try {
+      setSaving(true);
+      toast.loading("Clearing all NAS data...", { id: "nas-clear-all" });
+
+      const result = await adminService.clearAllNASData(
+        selectedNasTargets.length > 0 ? selectedNasTargets : undefined
+      );
+      const successMessage =
+        result.failedItems > 0
+          ? `NAS cleanup partially completed: ${result.deletedItems} removed, ${result.failedItems} failed.`
+          : `NAS cleanup completed: ${result.deletedItems} item(s) removed.`;
+
+      toast.success(successMessage, { id: "nas-clear-all", duration: 6000 });
+      setSelectedNasTargets([]);
+      await handlePreviewClearAllNASData();
+      await loadSystemInfo();
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to clear NAS data.";
+      toast.error(message, { id: "nas-clear-all" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePreviewClearAllNASData = async () => {
+    try {
+      setNasPreviewLoading(true);
+      toast.loading("Loading NAS delete preview...", { id: "nas-preview" });
+      const preview = await adminService.getClearAllNASPreview();
+      setNasClearPreview(preview);
+      setSelectedNasTargets([]);
+      if (preview.available) {
+        toast.success("NAS preview loaded.", { id: "nas-preview" });
+      } else {
+        toast.error(preview.reason || "NAS preview unavailable.", {
+          id: "nas-preview",
+        });
+      }
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to load NAS preview.";
+      toast.error(message, { id: "nas-preview" });
+    } finally {
+      setNasPreviewLoading(false);
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (!bytes) return "0 B";
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return `${size.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
+  };
+
+  const toggleNasTarget = (name: string) => {
+    setSelectedNasTargets((prev) =>
+      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
+    );
+  };
+
+  const selectAllNasTargets = () => {
+    if (!nasClearPreview?.available) return;
+    setSelectedNasTargets(nasClearPreview.entries.map((entry) => entry.name));
+  };
+
+  const clearNasTargetSelection = () => {
+    setSelectedNasTargets([]);
   };
 
   const refreshSystemStatus = async () => {
@@ -1494,94 +1661,128 @@ const AdminSettings = () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div
-                        className={`p-4 border rounded-lg ${systemStatus.database === "online"
-                          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                          : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                          }`}
-                      >
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div
-                            className={`w-3 h-3 rounded-full animate-pulse ${systemStatus.database === "online"
-                              ? "bg-green-500"
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden divide-y divide-gray-200 dark:divide-gray-700">
+                      {/* Database (connection + PostgreSQL stats) */}
+                      <div className="px-4 py-3.5 flex gap-3">
+                        <div
+                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${systemStatus.database === "online"
+                            ? "bg-green-500"
+                            : systemStatus.database === "unknown"
+                              ? "bg-amber-500"
                               : "bg-red-500"
-                              }`}
-                          ></div>
-                          <span
-                            className={`text-sm font-medium ${systemStatus.database === "online"
-                              ? "text-green-800 dark:text-green-200"
-                              : "text-red-800 dark:text-red-200"
-                              }`}
-                          >
-                            Database
-                          </span>
-                        </div>
-                        <p
-                          className={`text-xs capitalize ${systemStatus.database === "online"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
                             }`}
-                        >
-                          {systemStatus.database}
-                        </p>
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Database
+                            </span>
+                            <span
+                              className={`text-xs font-medium ${systemStatus.database === "online"
+                                ? "text-green-700 dark:text-green-300"
+                                : systemStatus.database === "unknown"
+                                  ? "text-amber-700 dark:text-amber-300"
+                                  : "text-red-700 dark:text-red-300"
+                                }`}
+                            >
+                              {systemStatus.database === "online"
+                                ? "Online"
+                                : systemStatus.database === "unknown"
+                                  ? "Status unknown"
+                                  : "Offline"}
+                            </span>
+                          </div>
+                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                            <div className="flex justify-between gap-3 sm:contents">
+                              <dt className="text-gray-500 dark:text-gray-500">Size</dt>
+                              <dd className="text-gray-900 dark:text-gray-100 sm:text-right">
+                                {systemInfo.databaseSize || "—"}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3 sm:contents">
+                              <dt className="text-gray-500 dark:text-gray-500">Users</dt>
+                              <dd className="text-gray-900 dark:text-gray-100 sm:text-right tabular-nums">
+                                {systemInfo.activeUsers ?? 0}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3 sm:contents sm:col-span-2">
+                              <dt className="text-gray-500 dark:text-gray-500">Documents</dt>
+                              <dd className="text-gray-900 dark:text-gray-100 sm:text-right tabular-nums">
+                                {systemInfo.totalDocuments ?? 0}
+                              </dd>
+                            </div>
+                          </dl>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 italic">
+                            PostgreSQL
+                          </p>
+                        </div>
                       </div>
 
-                      <div
-                        className={`p-4 border rounded-lg ${systemStatus.apiServer === "running"
-                          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                          : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                          }`}
-                      >
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div
-                            className={`w-3 h-3 rounded-full animate-pulse ${systemStatus.apiServer === "running"
-                              ? "bg-green-500"
+                      {/* API Server */}
+                      <div className="px-4 py-3.5 flex gap-3">
+                        <div
+                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${systemStatus.apiServer === "running"
+                            ? "bg-green-500"
+                            : systemStatus.apiServer === "unknown"
+                              ? "bg-amber-500"
                               : "bg-red-500"
-                              }`}
-                          ></div>
-                          <span
-                            className={`text-sm font-medium ${systemStatus.apiServer === "running"
-                              ? "text-green-800 dark:text-green-200"
-                              : "text-red-800 dark:text-red-200"
-                              }`}
-                          >
-                            API Server
-                          </span>
-                        </div>
-                        <p
-                          className={`text-xs capitalize ${systemStatus.apiServer === "running"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
                             }`}
-                        >
-                          {systemStatus.apiServer}
-                        </p>
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              API server
+                            </span>
+                            <span
+                              className={`text-xs font-medium capitalize ${systemStatus.apiServer === "running"
+                                ? "text-green-700 dark:text-green-300"
+                                : systemStatus.apiServer === "unknown"
+                                  ? "text-amber-700 dark:text-amber-300"
+                                  : "text-red-700 dark:text-red-300"
+                                }`}
+                            >
+                              {systemStatus.apiServer === "unknown" ? "Status unknown" : systemStatus.apiServer}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Application backend for this admin session
+                          </p>
+                        </div>
                       </div>
 
-                      <div
-                        className={`p-4 border rounded-lg ${!systemStatus.nasAvailable
-                          ? "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
-                          : systemStatus.storage > 80
-                            ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-                            : systemStatus.storage > 60
-                              ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
-                              : "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
-                          }`}
-                      >
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div
-                            className={`w-3 h-3 rounded-full ${!systemStatus.nasAvailable
-                              ? "bg-orange-500 animate-pulse"
-                              : systemStatus.storage > 80
-                                ? "bg-red-500"
-                                : systemStatus.storage > 60
-                                  ? "bg-yellow-500"
-                                  : "bg-green-500"
-                              }`}
-                          ></div>
-                          <span
-                            className={`text-sm font-medium ${!systemStatus.nasAvailable
+                      {/* Storage */}
+                      <div className="px-4 py-3.5 flex gap-3">
+                        <div
+                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${!systemStatus.nasAvailable
+                            ? "bg-orange-500"
+                            : systemStatus.storage > 80
+                              ? "bg-red-500"
+                              : systemStatus.storage > 60
+                                ? "bg-yellow-500"
+                                : "bg-green-500"
+                            }`}
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              Storage
+                            </span>
+                            {!systemStatus.nasAvailable && (
+                              <span className="rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-800 dark:bg-orange-900/40 dark:text-orange-200">
+                                Fallback
+                              </span>
+                            )}
+                          </div>
+                          {!systemStatus.nasAvailable && (
+                            <p className="text-xs text-amber-800 dark:text-amber-200">
+                              NAS offline — using local storage.
+                            </p>
+                          )}
+                          <p
+                            className={`text-sm ${!systemStatus.nasAvailable
                               ? "text-orange-800 dark:text-orange-200"
                               : systemStatus.storage > 80
                                 ? "text-red-800 dark:text-red-200"
@@ -1590,344 +1791,198 @@ const AdminSettings = () => {
                                   : "text-green-800 dark:text-green-200"
                               }`}
                           >
-                            Storage
-                          </span>
-                          {!systemStatus.nasAvailable && (
-                            <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 rounded">
-                              Fallback Mode
-                            </span>
+                            {systemStatus.storage > 0 || systemStatus.diskUsageLabel
+                              ? `${systemStatus.storage}% used`
+                              : "Usage not reported"}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {systemStatus.diskUsageLabel ? (
+                              <>
+                                {systemStatus.diskUsageLabel}
+                                {systemStatus.nasAvailable && systemStatus.nasStorage ? (
+                                  <span className="text-indigo-600 dark:text-indigo-400"> · NAS</span>
+                                ) : (
+                                  <span className="text-orange-700 dark:text-orange-300"> · Local</span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                Used/total not reported for this path.
+                                {!systemStatus.nasAvailable &&
+                                  " Configure NAS or refresh after metrics load."}
+                              </>
+                            )}
+                          </p>
+                          {systemInfo.nasAvailable && systemInfo.nasStorage && (
+                            <div className="pt-1">
+                              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                <span>NAS volume</span>
+                                <span className="tabular-nums">{systemInfo.nasStorage.percentUsed}%</span>
+                              </div>
+                              <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div
+                                  className="h-1.5 rounded-full bg-indigo-500 transition-all"
+                                  style={{ width: `${systemInfo.nasStorage.percentUsed}%` }}
+                                />
+                              </div>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                {systemInfo.nasStorage.used} / {systemInfo.nasStorage.total}
+                                {systemInfo.nasStorage.free && ` · ${systemInfo.nasStorage.free} free`}
+                              </p>
+                            </div>
+                          )}
+                          {!systemInfo.nasAvailable && (
+                            <div className="pt-1">
+                              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                <span>Local disk</span>
+                                <span className="tabular-nums">{systemInfo.diskUsage ?? 0}%</span>
+                              </div>
+                              <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div
+                                  className="h-1.5 rounded-full bg-emerald-500 transition-all"
+                                  style={{ width: `${systemInfo.diskUsage ?? 0}%` }}
+                                />
+                              </div>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                {systemStatus.diskUsageLabel ||
+                                  (systemInfo.usedDisk !== undefined && systemInfo.totalDisk !== undefined
+                                    ? `${systemInfo.usedDisk} GB / ${systemInfo.totalDisk} GB`
+                                    : "—")}
+                              </p>
+                            </div>
                           )}
                         </div>
-                        {!systemStatus.nasAvailable && (
-                          <div className="mb-2 p-2.5 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-lg text-xs text-orange-800 dark:text-orange-200 leading-relaxed">
-                            ⚠️ NAS Offline - Using Local Storage
+                      </div>
+
+                      {/* Memory */}
+                      <div className="px-4 py-3.5">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Memory
+                          </span>
+                          <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">
+                            {systemInfo.totalMemory != null && systemInfo.totalMemory > 0
+                              ? `${systemInfo.memoryUsage ?? 0}%`
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                          <div
+                            className="h-1.5 rounded-full bg-blue-500 transition-all"
+                            style={{
+                              width: `${systemInfo.totalMemory != null && systemInfo.totalMemory > 0 ? (systemInfo.memoryUsage ?? 0) : 0}%`,
+                            }}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+                          {systemInfo.totalMemory != null && systemInfo.totalMemory > 0
+                            ? `${systemInfo.usedMemory ?? 0} GB / ${systemInfo.totalMemory} GB`
+                            : "Totals appear when system info loads from the server."}
+                        </p>
+                      </div>
+
+                      {/* CPU */}
+                      <div className="px-4 py-3.5">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            CPU
+                          </span>
+                          <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400">
+                            {(systemInfo.cpuCount ?? 0) > 0 ? `${systemInfo.serverLoad ?? 0}%` : "—"}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                          <div
+                            className="h-1.5 rounded-full bg-violet-500 transition-all"
+                            style={{
+                              width: `${(systemInfo.cpuCount ?? 0) > 0 ? (systemInfo.serverLoad ?? 0) : 0}%`,
+                            }}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">
+                          {(systemInfo.cpuCount ?? 0) > 0
+                            ? `${systemInfo.cpuModel || "Processor"} · ${systemInfo.cpuCount} cores · load avg ${systemInfo.loadAverage1min ?? "0.00"}`
+                            : "CPU details load with system info from the API."}
+                        </p>
+                      </div>
+
+                      {/* System / runtime */}
+                      <div className="px-4 py-3.5">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          System
+                        </span>
+                        <dl className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="flex justify-between gap-3 sm:contents">
+                            <dt className="text-gray-500 dark:text-gray-500">Uptime</dt>
+                            <dd className="text-gray-900 dark:text-gray-100 sm:text-right">
+                              {systemInfo.systemUptime || "—"}
+                            </dd>
                           </div>
-                        )}
-                        <p
-                          className={`text-xs ${!systemStatus.nasAvailable
-                            ? "text-orange-600 dark:text-orange-400"
-                            : systemStatus.storage > 80
-                              ? "text-red-600 dark:text-red-400"
-                              : systemStatus.storage > 60
-                                ? "text-yellow-600 dark:text-yellow-400"
-                                : "text-green-600 dark:text-green-400"
-                            }`}
-                        >
-                          {systemStatus.storage}% Used
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {systemStatus.diskUsageLabel}
-                            {systemStatus.nasAvailable && systemStatus.nasStorage ? (
-                              <span className="ml-1 text-blue-600 dark:text-blue-400 font-medium">
-                                (NAS)
-                              </span>
-                            ) : (
-                              <span className="ml-1 text-orange-600 dark:text-orange-400 font-medium">
-                                (Local Fallback)
-                              </span>
-                            )}
+                          <div className="flex justify-between gap-3 sm:contents">
+                            <dt className="text-gray-500 dark:text-gray-500">Version</dt>
+                            <dd className="text-gray-900 dark:text-gray-100 sm:text-right">
+                              {systemInfo.version || "—"}
+                            </dd>
                           </div>
+                          <div className="flex justify-between gap-3 sm:contents sm:col-span-2">
+                            <dt className="text-gray-500 dark:text-gray-500">Environment</dt>
+                            <dd className="text-gray-900 dark:text-gray-100 sm:text-right capitalize">
+                              {systemInfo.environment || "—"}
+                            </dd>
+                          </div>
+                        </dl>
+                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-500 italic">
+                          Runtime since last server restart
                         </p>
                       </div>
                     </div>
 
                     {/* System Alerts */}
                     {systemAlerts && systemAlerts.length > 0 && (
-                      <div className="mt-6">
-                        <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
+                      <div className="mt-5">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
                           <AlertCircle className="w-4 h-4 mr-2 text-yellow-600" />
-                          System Alerts ({systemAlerts.length})
+                          System alerts ({systemAlerts.length})
                         </h4>
-                        <div className="space-y-2">
+                        <ul className="rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700 overflow-hidden">
                           {systemAlerts.map((alert: SystemAlert, index: number) => (
-                            <div
+                            <li
                               key={index}
-                              className={`p-3 border rounded-lg ${alert.type === 'critical'
-                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                : alert.type === 'warning'
-                                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                              className={`flex gap-3 px-4 py-3 ${alert.type === "critical"
+                                ? "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20"
+                                : alert.type === "warning"
+                                  ? "border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
+                                  : "border-l-4 border-l-blue-500 bg-blue-50/40 dark:bg-blue-950/20"
                                 }`}
                             >
-                              <div className="flex items-start space-x-2">
-                                {alert.type === 'critical' ? (
-                                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                                ) : alert.type === 'warning' ? (
-                                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                                ) : (
-                                  <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p
-                                    className={`text-sm font-medium ${alert.type === 'critical'
-                                      ? 'text-red-800 dark:text-red-200'
-                                      : alert.type === 'warning'
-                                        ? 'text-yellow-800 dark:text-yellow-200'
-                                        : 'text-blue-800 dark:text-blue-200'
-                                      }`}
-                                  >
-                                    {alert.message}
-                                  </p>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {alert.component.toUpperCase()} • {new Date(alert.timestamp).toLocaleString()}
-                                  </p>
-                                </div>
+                              {alert.type === "critical" ? (
+                                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                              ) : alert.type === "warning" ? (
+                                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                              ) : (
+                                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className={`text-sm font-medium ${alert.type === "critical"
+                                    ? "text-red-900 dark:text-red-100"
+                                    : alert.type === "warning"
+                                      ? "text-amber-900 dark:text-amber-100"
+                                      : "text-blue-900 dark:text-blue-100"
+                                    }`}
+                                >
+                                  {alert.message}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {alert.component.toUpperCase()} · {new Date(alert.timestamp).toLocaleString()}
+                                </p>
                               </div>
-                            </div>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </div>
                     )}
 
-                    {/* Detailed System Metrics */}
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {/* Memory Usage Card */}
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                            Memory Usage
-                          </span>
-                          <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold">
-                            {systemInfo.memoryUsage || 0}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mb-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{
-                              width: `${systemInfo.memoryUsage || 0}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-blue-600 dark:text-blue-400">
-                          {systemInfo.usedMemory || 0}GB / {systemInfo.totalMemory || 0}GB
-                        </p>
-                        <p className="text-xs text-blue-500 dark:text-blue-500 mt-1 italic">
-                          RAM allocated for system processes
-                        </p>
-                      </div>
-
-                      {/* CPU Load Card */}
-                      <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                            CPU Load
-                          </span>
-                          <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold">
-                            {systemInfo.serverLoad || 0}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2 mb-2">
-                          <div
-                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${systemInfo.serverLoad || 0}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-purple-600 dark:text-purple-400">
-                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
-                        </p>
-                        <p className="text-xs text-purple-500 dark:text-purple-500 mt-1 italic">
-                          Processor utilization (1min avg: {systemInfo.loadAverage1min || "0.00"})
-                        </p>
-                      </div>
-
-                      {/* Database Card */}
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                            Database
-                          </span>
-                          <span className="text-xs text-green-600 dark:text-green-400 font-semibold">
-                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
-                          </span>
-                        </div>
-                        <p className="text-xs text-green-600 dark:text-green-400 mb-1">
-                          Size: {systemInfo.databaseSize || '0 MB'}
-                        </p>
-                        <p className="text-xs text-green-600 dark:text-green-400">
-                          Users: {systemInfo.activeUsers || 0} | Docs: {systemInfo.totalDocuments || 0}
-                        </p>
-                        <p className="text-xs text-green-500 dark:text-green-500 mt-1 italic">
-                          PostgreSQL database storage
-                        </p>
-                      </div>
-
-                      {/* System Uptime Card */}
-                      <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                            System Uptime
-                          </span>
-                          <span className="text-xs text-orange-600 dark:text-orange-400 font-semibold">
-                            {systemInfo.systemUptime || "0 days, 0 hours"}
-                          </span>
-                        </div>
-                        <p className="text-xs text-orange-600 dark:text-orange-400">
-                          Version: {systemInfo.version || "2.1.3"}
-                        </p>
-                        <p className="text-xs text-orange-600 dark:text-orange-400">
-                          Environment: {systemInfo.environment || "production"}
-                        </p>
-                        <p className="text-xs text-orange-500 dark:text-orange-500 mt-1 italic">
-                          Server runtime since last restart
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Storage Information */}
-                    {systemInfo.nasAvailable && systemInfo.nasStorage && (
-                      <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-indigo-800 dark:text-indigo-200">
-                            NAS Storage
-                          </span>
-                          <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
-                            {systemInfo.nasStorage.percentUsed}% Used
-                          </span>
-                        </div>
-                        <div className="w-full bg-indigo-200 dark:bg-indigo-800 rounded-full h-2 mb-2">
-                          <div
-                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${systemInfo.nasStorage.percentUsed}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-indigo-600 dark:text-indigo-400">
-                          {systemInfo.nasStorage.used} / {systemInfo.nasStorage.total}
-                          {systemInfo.nasStorage.free && ` (${systemInfo.nasStorage.free} free)`}
-                        </p>
-                        <p className="text-xs text-indigo-500 dark:text-indigo-500 mt-1 italic">
-                          Network Attached Storage for documents and files
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Disk Usage (if NAS not available) */}
-                    {!systemInfo.nasAvailable && (
-                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                            Disk Usage
-                          </span>
-                          <span className="text-xs text-gray-700 dark:text-gray-400 font-semibold">
-                            {systemInfo.diskUsage || 0}% Used
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 mb-2">
-                          <div
-                            className="bg-green-500 dark:bg-gray-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${systemInfo.diskUsage || 0}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {systemStatus.diskUsageLabel || (systemInfo.usedDisk !== undefined && systemInfo.totalDisk !== undefined
-                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB`
-                            : 'N/A')}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
-                          Local server disk storage
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* NAS Configuration */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-indigo-600" />
-                      RPi NAS Connection
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className="block">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">NAS Host / IP</span>
-                        <input
-                          type="text"
-                          value={nasSettings.host}
-                          onChange={(e) => setNasSettings((prev) => ({ ...prev, host: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                          placeholder="100.93.229.106"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Share Name</span>
-                        <input
-                          type="text"
-                          value={nasSettings.shareName}
-                          onChange={(e) => setNasSettings((prev) => ({ ...prev, shareName: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                          placeholder="files"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">NAS Username</span>
-                        <input
-                          type="text"
-                          value={nasSettings.username}
-                          onChange={(e) => setNasSettings((prev) => ({ ...prev, username: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          NAS Password {nasSettings.hasPassword ? "(saved)" : ""}
-                        </span>
-                        <input
-                          type="password"
-                          value={nasSettings.password}
-                          onChange={(e) => setNasSettings((prev) => ({ ...prev, password: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                          placeholder="Enter only if changing password"
-                        />
-                      </label>
-                      <label className="block md:col-span-2">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Mount Path</span>
-                        <input
-                          type="text"
-                          value={nasSettings.mountPath}
-                          onChange={(e) => setNasSettings((prev) => ({ ...prev, mountPath: e.target.value }))}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                          placeholder="/mnt/nas/intrak"
-                        />
-                      </label>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable NAS Mode</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          If disabled, system forces local storage fallback.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setNasSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${nasSettings.enabled ? "bg-indigo-600" : "bg-gray-600"}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${nasSettings.enabled ? "translate-x-6" : "translate-x-1"}`} />
-                      </button>
-                    </div>
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <button
-                        onClick={handleSaveNASSettings}
-                        disabled={saving}
-                        className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium disabled:opacity-50"
-                      >
-                        Save NAS Config
-                      </button>
-                      <button
-                        onClick={handleTestNASConnection}
-                        disabled={saving}
-                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50"
-                      >
-                        Test Connection
-                      </button>
-                      <button
-                        onClick={handleSyncNASFromLocal}
-                        disabled={saving}
-                        className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium disabled:opacity-50"
-                      >
-                        Sync Local to NAS
-                      </button>
-                    </div>
-                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                      Note: this UI updates app runtime settings. The actual host mount (`/mnt/nas`) still needs to exist on EC2.
-                    </p>
                   </div>
 
                   {/* System Configuration */}
@@ -2057,15 +2112,30 @@ const AdminSettings = () => {
                       Maintenance Control
                     </h3>
 
-                    <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div
+                      className={`flex items-center justify-between p-4 rounded-lg border ${systemSettings.maintenanceMode
+                        ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                        : "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-800"
+                        }`}
+                    >
                       <div>
-                        <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        <p
+                          className={`text-sm font-medium ${systemSettings.maintenanceMode
+                            ? "text-red-800 dark:text-red-200"
+                            : "text-emerald-900 dark:text-emerald-200"
+                            }`}
+                        >
                           System Maintenance Mode
                         </p>
-                        <p className="text-xs text-red-600 dark:text-red-400">
+                        <p
+                          className={`text-xs ${systemSettings.maintenanceMode
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-emerald-700 dark:text-emerald-300"
+                            }`}
+                        >
                           {systemSettings.maintenanceMode
-                            ? "System is currently in maintenance mode"
-                            : "System is running normally"}
+                            ? "Users may be blocked or see a maintenance message."
+                            : "Production mode — end users have normal access."}
                         </p>
                       </div>
                       <button
@@ -2087,29 +2157,13 @@ const AdminSettings = () => {
                       System Actions
                     </h3>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <button
-                        onClick={handleSystemBackup}
-                        disabled={saving}
-                        className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:shadow-md transition-shadow disabled:opacity-50"
-                      >
-                        <Database className="w-5 h-5 text-blue-600" />
-                        <div className="text-left">
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                            Create Backup
-                          </p>
-                          <p className="text-xs text-blue-600 dark:text-blue-400">
-                            Backup system data
-                          </p>
-                        </div>
-                      </button>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <button
                         onClick={handleClearCache}
                         disabled={saving}
                         className="flex items-center space-x-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg hover:shadow-md transition-shadow disabled:opacity-50"
                       >
-                        <SettingsIcon className="w-5 h-5 text-yellow-600" />
+                        <Eraser className="w-5 h-5 shrink-0 text-yellow-600" />
                         <div className="text-left">
                           <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                             Clear Cache
@@ -2125,7 +2179,7 @@ const AdminSettings = () => {
                         disabled={saving}
                         className="flex items-center space-x-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:shadow-md transition-shadow disabled:opacity-50"
                       >
-                        <SettingsIcon className="w-5 h-5 text-red-600" />
+                        <Power className="w-5 h-5 shrink-0 text-red-600" />
                         <div className="text-left">
                           <p className="text-sm font-medium text-red-800 dark:text-red-200">
                             Restart System
@@ -2140,7 +2194,7 @@ const AdminSettings = () => {
                         onClick={() => window.location.reload()}
                         className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:shadow-md transition-shadow"
                       >
-                        <SettingsIcon className="w-5 h-5 text-green-600" />
+                        <RotateCcw className="w-5 h-5 shrink-0 text-green-600" />
                         <div className="text-left">
                           <p className="text-sm font-medium text-green-800 dark:text-green-200">
                             Refresh Page
@@ -2151,6 +2205,105 @@ const AdminSettings = () => {
                         </div>
                       </button>
                     </div>
+                  </div>
+
+                  {/* NAS storage — danger zone */}
+                  <div className="border border-rose-300 dark:border-rose-800 rounded-lg p-4 bg-rose-50/60 dark:bg-rose-900/10">
+                    <h3 className="text-lg font-semibold text-rose-900 dark:text-rose-200 mb-2 flex items-center">
+                      <AlertTriangle className="w-5 h-5 mr-2 text-rose-600" />
+                      NAS Danger Zone
+                    </h3>
+                    <p className="text-sm text-rose-700 dark:text-rose-300 mb-4">
+                      Permanently delete all files and folders in your configured NAS storage path.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={handlePreviewClearAllNASData}
+                        disabled={saving || nasPreviewLoading}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-white dark:bg-rose-950/30 border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 rounded-lg text-sm font-medium transition-colors hover:bg-rose-100 dark:hover:bg-rose-900/30 disabled:opacity-50"
+                      >
+                        <Info className="w-4 h-4" />
+                        <span>{nasPreviewLoading ? "Loading Preview..." : "Preview Deletions"}</span>
+                      </button>
+                      <button
+                        onClick={handleClearAllNASData}
+                        disabled={saving}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                      >
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>
+                          {selectedNasTargets.length > 0
+                            ? `Clear Selected (${selectedNasTargets.length})`
+                            : "Clear All NAS Data"}
+                        </span>
+                      </button>
+                    </div>
+
+                    {nasClearPreview && (
+                      <div className="mt-4 rounded-lg border border-rose-200 dark:border-rose-800 bg-white/70 dark:bg-rose-950/20 p-3">
+                        {!nasClearPreview.available && (
+                          <p className="text-xs text-rose-700 dark:text-rose-300 mb-3">
+                            {nasClearPreview.reason || "NAS preview unavailable."}
+                          </p>
+                        )}
+                        <p className="text-xs text-rose-700 dark:text-rose-300 mb-2">
+                          Path: <span className="font-medium">{nasClearPreview.mountPath}</span>
+                        </p>
+                        <p className="text-xs text-rose-700 dark:text-rose-300 mb-3">
+                          Top-level: {nasClearPreview.topLevelEntryCount} | Files: {nasClearPreview.totalFiles} | Folders: {nasClearPreview.totalDirectories} | Size: {formatBytes(nasClearPreview.totalSizeBytes)}
+                        </p>
+                        {nasClearPreview.available && nasClearPreview.entries.length > 0 && (
+                          <div className="mb-3 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={selectAllNasTargets}
+                              className="px-2.5 py-1 text-xs rounded border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/30"
+                            >
+                              Select All
+                            </button>
+                            <button
+                              type="button"
+                              onClick={clearNasTargetSelection}
+                              className="px-2.5 py-1 text-xs rounded border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-200 hover:bg-rose-100 dark:hover:bg-rose-900/30"
+                            >
+                              Clear Selection
+                            </button>
+                            <span className="text-xs text-rose-700 dark:text-rose-300">
+                              Selected: {selectedNasTargets.length}
+                            </span>
+                          </div>
+                        )}
+                        <div className="max-h-44 overflow-y-auto space-y-1 pr-1">
+                          {nasClearPreview.entries.length === 0 ? (
+                            <p className="text-xs text-rose-600 dark:text-rose-300">No NAS entries found.</p>
+                          ) : (
+                            nasClearPreview.entries.map((entry) => (
+                              <div
+                                key={entry.name}
+                                className="text-xs text-rose-800 dark:text-rose-200 flex items-center justify-between gap-3"
+                              >
+                                <label className="truncate inline-flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedNasTargets.includes(entry.name)}
+                                    onChange={() => toggleNasTarget(entry.name)}
+                                    className="rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                                  />
+                                  <span className="truncate">
+                                    {entry.type === "directory" ? "DIR" : "FILE"} - {entry.name}
+                                  </span>
+                                </label>
+                                <span className="shrink-0 opacity-80">
+                                  {entry.type === "directory"
+                                    ? `${entry.files} files, ${entry.directories} subfolders`
+                                    : formatBytes(entry.sizeBytes)}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Data Management */}
@@ -2198,10 +2351,10 @@ const AdminSettings = () => {
                   </div>
 
                   {/* Email Testing Section */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                        <Mail className="w-5 h-5 mr-2 text-purple-600" />
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center flex-wrap gap-2">
+                        <Mail className="w-5 h-5 shrink-0 text-purple-600" />
                         Email Service Testing
                       </h3>
                     </div>
@@ -2212,7 +2365,7 @@ const AdminSettings = () => {
 
                     <div className="space-y-4">
                       {/* Test Connection Button */}
-                      <div className="flex items-center space-x-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                         <button
                           onClick={async () => {
                             try {
@@ -2264,7 +2417,7 @@ const AdminSettings = () => {
                             }
                           }}
                           disabled={emailTesting}
-                          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="inline-flex w-full sm:w-auto shrink-0 justify-center items-center space-x-2 px-4 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           {emailTesting ? (
                             <>
@@ -2280,14 +2433,16 @@ const AdminSettings = () => {
                         </button>
 
                         {emailTestResult?.type === "connection" && (
-                          <div className={`flex items-center space-x-2 ${emailTestResult.success ? "text-green-600" : "text-red-600"
-                            }`}>
+                          <div
+                            className={`flex items-start gap-2 min-w-0 ${emailTestResult.success ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                              }`}
+                          >
                             {emailTestResult.success ? (
-                              <CheckCircle className="w-5 h-5" />
+                              <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
                             ) : (
-                              <AlertCircle className="w-5 h-5" />
+                              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                             )}
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium break-words">
                               {emailTestResult.message}
                             </span>
                           </div>
@@ -2299,13 +2454,13 @@ const AdminSettings = () => {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Send Test Email
                         </label>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                           <input
                             type="email"
                             value={emailTestEmail}
                             onChange={(e) => setEmailTestEmail(e.target.value)}
                             placeholder="Enter email address to test"
-                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                            className="w-full min-w-0 px-4 py-2.5 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                           />
                           <button
                             onClick={async () => {
@@ -2366,7 +2521,7 @@ const AdminSettings = () => {
                               }
                             }}
                             disabled={emailTesting || !emailTestEmail}
-                            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="inline-flex w-full sm:w-auto shrink-0 justify-center items-center space-x-2 px-4 py-2.5 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             {emailTesting ? (
                               <>
@@ -2383,16 +2538,16 @@ const AdminSettings = () => {
                         </div>
 
                         {emailTestResult?.type === "send" && (
-                          <div className={`flex items-center space-x-2 p-3 rounded-lg ${emailTestResult.success
+                          <div className={`flex items-start gap-2 p-3 rounded-lg min-w-0 ${emailTestResult.success
                             ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
                             : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
                             }`}>
                             {emailTestResult.success ? (
-                              <CheckCircle className="w-5 h-5" />
+                              <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
                             ) : (
-                              <AlertCircle className="w-5 h-5" />
+                              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                             )}
-                            <span className="text-sm font-medium">
+                            <span className="text-sm font-medium break-words">
                               {emailTestResult.message}
                             </span>
                           </div>
@@ -2405,99 +2560,7 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  {/* System Information */}
-
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Database className="w-5 h-5 mr-2 text-gray-600" />
-                      System Information
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        <p>
-                          <span className="font-medium">Version:</span>{" "}
-                          {systemInfo.version || "2.1.3"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Last Updated:</span>{" "}
-                          {systemInfo.lastUpdated
-                            ? new Date(systemInfo.lastUpdated).toLocaleString()
-                            : "N/A"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Database Size:</span>{" "}
-                          {systemInfo.databaseSize || "0 MB"}
-                          {systemInfo.databaseSizeBytes && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({Math.round(systemInfo.databaseSizeBytes / 1024 / 1024)} MB)
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">Database Status:</span>{" "}
-                          <span className={systemInfo.databaseStatus === 'online' ? 'text-green-600' : 'text-red-600'}>
-                            {systemInfo.databaseStatus === 'online' ? '✓ Online' : '✗ Offline'}
-                          </span>
-                        </p>
-                        <p>
-                          <span className="font-medium">Server Load:</span>{" "}
-                          {systemInfo.serverLoad || 0}%
-                          {systemInfo.loadAverage1min && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              (1min: {systemInfo.loadAverage1min}, 5min: {systemInfo.loadAverage5min}, 15min: {systemInfo.loadAverage15min})
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">CPU:</span>{" "}
-                          {systemInfo.cpuModel || "Unknown"} ({systemInfo.cpuCount || 0} cores)
-                        </p>
-                      </div>
-                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        <p>
-                          <span className="font-medium">Active Users:</span>{" "}
-                          {systemInfo.activeUsers || 0}
-                        </p>
-                        <p>
-                          <span className="font-medium">Total Documents:</span>{" "}
-                          {systemInfo.totalDocuments?.toLocaleString() || 0}
-                        </p>
-                        <p>
-                          <span className="font-medium">System Uptime:</span>{" "}
-                          {systemInfo.systemUptime || "0 days, 0 hours"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Memory Usage:</span>{" "}
-                          {systemInfo.memoryUsage || 0}%
-                          {systemInfo.usedMemory !== undefined && systemInfo.totalMemory !== undefined && (
-                            <span className="text-xs text-gray-500 ml-1">
-                              ({systemInfo.usedMemory}GB / {systemInfo.totalMemory}GB)
-                            </span>
-                          )}
-                        </p>
-                        <p>
-                          <span className="font-medium">Disk Usage:</span>{" "}
-                          {systemInfo.usedDisk !== undefined &&
-                            systemInfo.totalDisk !== undefined
-                            ? `${systemInfo.usedDisk}GB / ${systemInfo.totalDisk}GB (${systemInfo.diskUsage || 0}%)`
-                            : `${systemInfo.diskUsage || 0}%`}
-                        </p>
-                        <p>
-                          <span className="font-medium">Platform:</span>{" "}
-                          {systemInfo.platform || "Unknown"} ({systemInfo.arch || "Unknown"})
-                        </p>
-                        <p>
-                          <span className="font-medium">Node.js:</span>{" "}
-                          {systemInfo.nodeVersion || "Unknown"}
-                        </p>
-                        <p>
-                          <span className="font-medium">Environment:</span>{" "}
-                          <span className="uppercase">{systemInfo.environment || "production"}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <SystemInformationPanel systemInfo={systemInfo} />
 
                   <div className="flex justify-end">
                     <button
@@ -2778,7 +2841,7 @@ const AdminSettings = () => {
                 </div>
 
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     System Information
                   </h3>
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -2875,8 +2938,8 @@ const AdminHelpModalContent = ({
                   Where can I monitor system health?
                 </p>
                 <p className="mt-1 text-gray-600 dark:text-gray-400">
-                  Open Admin Settings → System to view live metrics, trigger
-                  backups, clear cache, or restart services.
+                  Open Admin Settings → System to view live metrics, clear
+                  cache, or restart services.
                 </p>
               </li>
               <li>
@@ -2909,8 +2972,9 @@ const AdminHelpModalContent = ({
               <div>
                 <p className="font-semibold">3. Protect your data</p>
                 <p className="mt-1 text-gray-600 dark:text-gray-400">
-                  Schedule backups from System Actions and store them securely.
+                  Export or archive admin settings when you need a copy.
                   Clear cache or restart backend services after major updates.
+                  Use your database provider or standard DB backups for full recovery.
                 </p>
               </div>
             </div>
@@ -2922,8 +2986,8 @@ const AdminHelpModalContent = ({
                 <p className="font-semibold">Data retention</p>
                 <p className="mt-1 text-gray-600 dark:text-gray-400">
                   INTRAK stores academic and placement records in encrypted
-                  databases hosted on Render. Backups are generated manually via
-                  the System tab.
+                  databases hosted on Render. Full database backups are handled
+                  by your hosting or DBA process, not inside this app.
                 </p>
               </div>
               <div>
