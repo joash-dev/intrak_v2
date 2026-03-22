@@ -93,6 +93,7 @@ interface NASClearPreview {
     directories: number;
     sizeBytes: number;
   }>;
+  deletesFilesOnly?: boolean;
 }
 
 function SystemInformationPanel({ systemInfo }: { systemInfo: SystemInfo }) {
@@ -978,27 +979,27 @@ const AdminSettings = () => {
     const deletingSelected = selectedNasTargets.length > 0;
     const confirmed = confirm(
       deletingSelected
-        ? `This will permanently delete ${selectedNasTargets.length} selected NAS path(s). Continue?`
-        : "This will permanently delete ALL files inside the configured NAS storage path. Continue?"
+        ? `This will permanently delete all FILES under ${selectedNasTargets.length} selected top-level folder(s) (folders stay). Continue?`
+        : "This will permanently delete ALL FILES under the NAS storage path (folders stay, possibly empty). Continue?"
     );
     if (!confirmed) return;
 
     const secondConfirmed = confirm(
-      "Final warning: this action is irreversible and will remove every file/folder in NAS storage used by the system."
+      "Final warning: only files are removed — directory names remain. This cannot be undone."
     );
     if (!secondConfirmed) return;
 
     try {
       setSaving(true);
-      toast.loading("Clearing all NAS data...", { id: "nas-clear-all" });
+      toast.loading("Removing NAS files...", { id: "nas-clear-all" });
 
       const result = await adminService.clearAllNASData(
         selectedNasTargets.length > 0 ? selectedNasTargets : undefined
       );
       const successMessage =
         result.failedItems > 0
-          ? `NAS cleanup partially completed: ${result.deletedItems} removed, ${result.failedItems} failed.`
-          : `NAS cleanup completed: ${result.deletedItems} item(s) removed.`;
+          ? `NAS file cleanup partial: ${result.deletedItems} file(s) removed, ${result.failedItems} operation(s) failed.`
+          : `NAS file cleanup done: ${result.deletedItems} file(s) removed (folders kept).`;
 
       toast.success(successMessage, { id: "nas-clear-all", duration: 6000 });
       setSelectedNasTargets([]);
@@ -2214,7 +2215,7 @@ const AdminSettings = () => {
                       NAS Danger Zone
                     </h3>
                     <p className="text-sm text-rose-700 dark:text-rose-300 mb-4">
-                      Permanently delete all files and folders in your configured NAS storage path.
+                      Permanently delete <strong>files only</strong> under your NAS path. Folder names stay (they may be empty afterward). Use checkboxes to limit which top-level folders are cleaned.
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <button
@@ -2233,8 +2234,8 @@ const AdminSettings = () => {
                         <AlertTriangle className="w-4 h-4" />
                         <span>
                           {selectedNasTargets.length > 0
-                            ? `Clear Selected (${selectedNasTargets.length})`
-                            : "Clear All NAS Data"}
+                            ? `Remove files in selected (${selectedNasTargets.length})`
+                            : "Remove all NAS files"}
                         </span>
                       </button>
                     </div>
@@ -2249,8 +2250,11 @@ const AdminSettings = () => {
                         <p className="text-xs text-rose-700 dark:text-rose-300 mb-2">
                           Path: <span className="font-medium">{nasClearPreview.mountPath}</span>
                         </p>
-                        <p className="text-xs text-rose-700 dark:text-rose-300 mb-3">
+                        <p className="text-xs text-rose-700 dark:text-rose-300 mb-1">
                           Top-level: {nasClearPreview.topLevelEntryCount} | Files: {nasClearPreview.totalFiles} | Folders: {nasClearPreview.totalDirectories} | Size: {formatBytes(nasClearPreview.totalSizeBytes)}
+                        </p>
+                        <p className="text-xs text-rose-600/90 dark:text-rose-300/90 mb-3">
+                          Clear removes files inside these paths only — directories are not deleted.
                         </p>
                         {nasClearPreview.available && nasClearPreview.entries.length > 0 && (
                           <div className="mb-3 flex items-center gap-2">

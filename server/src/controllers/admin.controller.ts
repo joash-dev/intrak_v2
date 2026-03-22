@@ -1272,6 +1272,63 @@ export const clearSystemCache = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/** Delete every file under rootPath; directories and symlinks-to-directories are not removed (dirs may end up empty). */
+function deleteNasFilesOnlyUnder(
+  rootPath: string,
+  mountPath: string
+): {
+  deletedFiles: number;
+  failedFiles: number;
+  deletedSamples: string[];
+  failedSamples: string[];
+} {
+  let deletedFiles = 0;
+  let failedFiles = 0;
+  const deletedSamples: string[] = [];
+  const failedSamples: string[] = [];
+  const maxDeletedSamples = 50;
+  const maxFailedSamples = 20;
+
+  const rel = (abs: string) => path.relative(mountPath, abs) || abs;
+
+  const walk = (dir: string) => {
+    let names: string[];
+    try {
+      names = fs.readdirSync(dir);
+    } catch {
+      failedFiles++;
+      if (failedSamples.length < maxFailedSamples) failedSamples.push(rel(dir));
+      return;
+    }
+    for (const name of names) {
+      const full = path.join(dir, name);
+      let st: fs.Stats;
+      try {
+        st = fs.lstatSync(full);
+      } catch {
+        failedFiles++;
+        if (failedSamples.length < maxFailedSamples) failedSamples.push(rel(full));
+        continue;
+      }
+      try {
+        if (st.isDirectory() && !st.isSymbolicLink()) {
+          walk(full);
+        } else if (st.isFile() || st.isSymbolicLink()) {
+          fs.unlinkSync(full);
+          deletedFiles++;
+          if (deletedSamples.length < maxDeletedSamples) deletedSamples.push(rel(full));
+        }
+      } catch {
+        failedFiles++;
+        if (failedSamples.length < maxFailedSamples) failedSamples.push(rel(full));
+      }
+    }
+  };
+
+  walk(rootPath);
+  return { deletedFiles, failedFiles, deletedSamples, failedSamples };
+}
+
 export const previewClearAllNASData = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -1297,7 +1354,8 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
         totalFiles: 0,
         totalDirectories: 0,
         totalSizeBytes: 0,
-        entries: []
+        entries: [],
+        deletesFilesOnly: true
       });
     }
 
@@ -1311,7 +1369,8 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
         totalFiles: 0,
         totalDirectories: 0,
         totalSizeBytes: 0,
-        entries: []
+        entries: [],
+        deletesFilesOnly: true
       });
     }
 
@@ -1326,7 +1385,8 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
         totalFiles: 0,
         totalDirectories: 0,
         totalSizeBytes: 0,
-        entries: []
+        entries: [],
+        deletesFilesOnly: true
       });
     }
 
@@ -1339,7 +1399,8 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
         totalFiles: 0,
         totalDirectories: 0,
         totalSizeBytes: 0,
-        entries: []
+        entries: [],
+        deletesFilesOnly: true
       });
     }
 
@@ -1414,7 +1475,8 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
       totalFiles: totals.files,
       totalDirectories: totals.directories,
       totalSizeBytes: totals.sizeBytes,
-      entries: entries.sort((a, b) => a.name.localeCompare(b.name))
+      entries: entries.sort((a, b) => a.name.localeCompare(b.name)),
+      deletesFilesOnly: true
     });
   } catch (error) {
     console.error('Preview clear NAS data error:', error);
@@ -1502,15 +1564,46 @@ export const clearAllNASData = async (req: AuthRequest, res: Response) => {
     const failedNames: string[] = [];
     const deletedNames: string[] = [];
 
-    for (const entry of entries) {
-      const entryPath = path.join(mountPath, entry.name);
-      try {
-        fs.rmSync(entryPath, { recursive: true, force: true });
-        deletedItems++;
-        deletedNames.push(entry.name);
-      } catch (error) {
-        failedItems++;
-        failedNames.push(entry.name);
+    const mergeSamples = (arr: string[], incoming: string[], cap: number) => {
+      for (const s of incoming) {
+        if (arr.length >= cap) break;
+        arr.push(s);
+      }
+    };
+
+    if (!hasTargetFilter) {
+      const r = deleteNasFilesOnlyUnder(mountPath, mountPath);
+      deletedItems = r.deletedFiles;
+      failedItems = r.failedFiles;
+      deletedNames.push(...r.deletedSamples);
+      failedNames.push(...r.failedSamples);
+    } else {
+      for (const entry of entries) {
+        const entryPath = path.join(mountPath, entry.name);
+        let st: fs.Stats;
+        try {
+          st = fs.lstatSync(entryPath);
+        } catch {
+          failedItems++;
+          failedNames.push(entry.name);
+          continue;
+        }
+        try {
+          if (st.isDirectory() && !st.isSymbolicLink()) {
+            const r = deleteNasFilesOnlyUnder(entryPath, mountPath);
+            deletedItems += r.deletedFiles;
+            failedItems += r.failedFiles;
+            mergeSamples(deletedNames, r.deletedSamples, 50);
+            mergeSamples(failedNames, r.failedSamples, 20);
+          } else if (st.isFile() || st.isSymbolicLink()) {
+            fs.unlinkSync(entryPath);
+            deletedItems++;
+            mergeSamples(deletedNames, [path.relative(mountPath, entryPath) || entry.name], 50);
+          }
+        } catch {
+          failedItems++;
+          if (failedNames.length < 20) failedNames.push(entry.name);
+        }
       }
     }
 
@@ -1518,19 +1611,21 @@ export const clearAllNASData = async (req: AuthRequest, res: Response) => {
       mountPath,
       mode: hasTargetFilter ? 'selected' : 'all',
       requestedTargets: hasTargetFilter ? requestedTargets : undefined,
-      deletedItems,
-      failedItems,
-      deletedNames: deletedNames.slice(0, 50),
-      failedNames: failedNames.slice(0, 20)
+      deletesFilesOnly: true,
+      deletedFiles: deletedItems,
+      failedFileOps: failedItems,
+      deletedSamples: deletedNames.slice(0, 50),
+      failedSamples: failedNames.slice(0, 20)
     }, req);
 
     res.json({
       message: failedItems > 0
-        ? 'NAS clear completed with partial failures.'
-        : 'All NAS data has been cleared successfully.',
+        ? 'NAS file cleanup completed with partial failures (folders were not removed).'
+        : 'All files under the NAS path were removed successfully (folders kept).',
       mode: hasTargetFilter ? 'selected' : 'all',
       requestedTargets,
       mountPath,
+      deletesFilesOnly: true,
       deletedItems,
       failedItems,
       deletedNames,

@@ -899,6 +899,7 @@ class AdminService {
     mode: 'all' | 'selected';
     requestedTargets: string[];
     mountPath: string;
+    deletesFilesOnly?: boolean;
     deletedItems: number;
     failedItems: number;
     deletedNames: string[];
@@ -930,6 +931,7 @@ class AdminService {
       directories: number;
       sizeBytes: number;
     }>;
+    deletesFilesOnly?: boolean;
   }> {
     try {
       const response = await api.get('/admin/nas-config/clear-all/preview');
