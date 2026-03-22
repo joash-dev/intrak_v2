@@ -837,6 +837,8 @@ class AdminService {
         activeUsers: 0,
         totalDocuments: 0,
         systemUptime: '—',
+        serverLoad: 0,
+        memoryUsage: 0,
         databaseStatus: 'unknown',
         apiServerStatus: 'unknown',
         diskUsage: 0,
