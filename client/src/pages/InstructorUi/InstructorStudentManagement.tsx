@@ -143,6 +143,22 @@ const InstructorStudentManagement: React.FC = () => {
   const [bulkFileLoading, setBulkFileLoading] = useState(false);
 
   // CSV parser (reusable for paste or file upload)
+  /** Blank CSV matching bulk import — instructors can share with students to fill, then merge & upload here. */
+  const downloadBulkStudentTemplate = () => {
+    const header = "studentNumber,name,email,year,phone";
+    const csv = `${header}\n`;
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "intrak-student-import-template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded — share with students to fill in.");
+  };
+
   const parseCsvText = (text: string) => {
     setBulkErrors(null);
     try {
@@ -1430,11 +1446,27 @@ const InstructorStudentManagement: React.FC = () => {
             </div>
 
             <div className="space-y-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
-              <p>Paste CSV with headers: <span className="font-semibold">studentNumber,name,email,year,phone</span></p>
-              <pre className="bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg overflow-x-auto scrollbar-slim">
-                22-UR-0592,Juan Dela Cruz,juan@example.com,4,+63 912 345 6789
-                22-UR-0123,Ana Rodriguez,ana@example.com,3,+63 987 654 3210</pre>
-              <div className="flex items-center gap-3">
+              <p>
+                <span className="font-medium text-gray-800 dark:text-gray-200">Workflow:</span> Download the system template →
+                give it to students → they add one row each (or per section you define) → collect files → combine into one CSV
+                (same header, many data rows) → paste or upload here → Preview → Add Students.
+              </p>
+              <p>
+                Required columns: <span className="font-semibold">studentNumber,name,email,year,phone</span>
+                <span className="block mt-1 text-xs text-gray-500 dark:text-gray-500">
+                  Student number format: <code className="rounded bg-gray-100 dark:bg-gray-700 px-1">22-UR-0592</code>
+                  · Avoid commas inside name (or the row may split wrong).
+                </span>
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={downloadBulkStudentTemplate}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Download CSV template
+                </button>
                 <label className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <input
                     type="file"
@@ -1450,10 +1482,15 @@ const InstructorStudentManagement: React.FC = () => {
                       reader.readAsText(file);
                     }}
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Upload CSV</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Upload filled CSV</span>
                 </label>
                 {bulkFileLoading && <span className="text-xs text-gray-500">Reading file…</span>}
               </div>
+              <pre className="bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg overflow-x-auto scrollbar-slim text-xs whitespace-pre-wrap">
+{`Example rows (not in template — for reference only):
+22-UR-0592,Juan Dela Cruz,juan@example.com,4,+63 912 345 6789
+22-UR-0123,Ana Rodriguez,ana@example.com,3,+63 987 654 3210`}
+              </pre>
             </div>
 
             {bulkErrors && (
