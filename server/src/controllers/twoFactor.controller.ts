@@ -3,6 +3,40 @@ import { twoFactorService } from '../services/twoFactor.service';
 import { prisma } from '../config/database';
 import bcrypt from 'bcrypt';
 
+const getIndustryPartnerCompanyInfo = async (userId: string) => {
+    const company = await prisma.company.findFirst({
+        where: { supervisorId: userId },
+        select: {
+            id: true,
+            name: true,
+            address: true,
+            contactPerson: true,
+            contactEmail: true,
+            contactNumber: true
+        }
+    });
+
+    if (!company) {
+        return {
+            id: null,
+            name: null,
+            address: null,
+            contactPerson: null,
+            contactEmail: null,
+            contactNumber: null
+        };
+    }
+
+    return {
+        id: company.id,
+        name: company.name,
+        address: company.address,
+        contactPerson: company.contactPerson,
+        contactEmail: company.contactEmail,
+        contactNumber: company.contactNumber
+    };
+};
+
 interface AuthRequest extends Request {
     user?: {
         id: string;
@@ -64,44 +98,6 @@ export const disable2FA = async (req: AuthRequest, res: Response) => {
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
-        }
-
-        let companyInfo: {
-            id: string | null;
-            name: string | null;
-            address: string | null;
-            contactPerson?: string | null;
-            contactEmail?: string | null;
-            contactNumber?: string | null;
-        } | null = null;
-
-        if (user.role === 'INDUSTRY_PARTNER') {
-            const company = await prisma.company.findFirst({
-                where: { supervisorId: user.id },
-                select: {
-                    id: true,
-                    name: true,
-                    address: true,
-                    contactPerson: true,
-                    contactEmail: true,
-                    contactNumber: true
-                }
-            });
-
-            companyInfo = company
-                ? {
-                    id: company.id,
-                    name: company.name,
-                    address: company.address,
-                    contactPerson: company.contactPerson,
-                    contactEmail: company.contactEmail,
-                    contactNumber: company.contactNumber
-                }
-                : {
-                    id: null,
-                    name: null,
-                    address: null
-                };
         }
 
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
@@ -213,6 +209,10 @@ export const verify2FACode = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const companyInfo = user.role === 'INDUSTRY_PARTNER'
+            ? await getIndustryPartnerCompanyInfo(user.id)
+            : null;
+
         // Generate tokens
         const { generateTokens } = await import('../utils/jwt');
         const { accessToken, refreshToken } = generateTokens(user);
@@ -321,44 +321,6 @@ export const regenerateBackupCodes = async (req: AuthRequest, res: Response) => 
             return res.status(404).json({ message: 'User not found' });
         }
 
-        let companyInfo: {
-            id: string | null;
-            name: string | null;
-            address: string | null;
-            contactPerson?: string | null;
-            contactEmail?: string | null;
-            contactNumber?: string | null;
-        } | null = null;
-
-        if (user.role === 'INDUSTRY_PARTNER') {
-            const company = await prisma.company.findFirst({
-                where: { supervisorId: user.id },
-                select: {
-                    id: true,
-                    name: true,
-                    address: true,
-                    contactPerson: true,
-                    contactEmail: true,
-                    contactNumber: true
-                }
-            });
-
-            companyInfo = company
-                ? {
-                    id: company.id,
-                    name: company.name,
-                    address: company.address,
-                    contactPerson: company.contactPerson,
-                    contactEmail: company.contactEmail,
-                    contactNumber: company.contactNumber
-                }
-                : {
-                    id: null,
-                    name: null,
-                    address: null
-                };
-        }
-
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
         if (!isValidPassword) {
             return res.status(401).json({ message: 'Invalid password' });
@@ -412,6 +374,10 @@ export const verifyBackupCode = async (req: Request, res: Response) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        const companyInfo = user.role === 'INDUSTRY_PARTNER'
+            ? await getIndustryPartnerCompanyInfo(user.id)
+            : null;
 
         // Generate tokens
         const { generateTokens } = await import('../utils/jwt');
