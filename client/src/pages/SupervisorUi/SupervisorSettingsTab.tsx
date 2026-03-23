@@ -149,9 +149,9 @@ const SupervisorSettings = () => {
         setProfileData({
           name: user.name || "",
           email: user.email || "",
-          phone: user.phone || "",
-          company: user.company || "",
-          address: user.address || "",
+          phone: user.phone || user.companyContactNumber || "",
+          company: user.companyName || user.company || user.company?.name || "",
+          address: user.companyAddress || user.address || "",
         });
       }
     } catch (error) {

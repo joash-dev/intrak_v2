@@ -14,6 +14,11 @@ export interface AdminUser {
   department?: string | null;
   office?: string | null;
   profilePhoto?: string | null;
+  companiesSupervised?: Array<{
+    id: string;
+    name: string;
+    contactNumber: string;
+  }>;
   student?: {
     id: string;  // Student record ID (different from user ID)
     studentNumber: string;
@@ -540,6 +545,8 @@ class AdminService {
     email?: string;
     password?: string;
     active?: boolean;
+    phone?: string;
+    company?: string;
   }): Promise<{ user: AdminUser }> {
     try {
       const response = await api.put(`/users/${id}`, userData);

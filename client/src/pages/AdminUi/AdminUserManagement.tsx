@@ -278,7 +278,13 @@ const AdminUserManagement = () => {
     if (!selectedUser) return;
 
     try {
-      await adminService.updateUser(selectedUser.id, formData);
+      await adminService.updateUser(selectedUser.id, {
+        name: formData.name,
+        email: formData.email,
+        active: formData.status === "ACTIVE",
+        phone: formData.phone,
+        company: formData.company,
+      });
       const successMsg = "User updated successfully";
       toast.success(successMsg);
       alert(successMsg);
@@ -369,6 +375,7 @@ const AdminUserManagement = () => {
   };
 
   const openEditModal = (user: AdminUser) => {
+    const linkedCompany = user.companiesSupervised?.[0];
     setSelectedUser(user);
     setFormData({
       name: user.name,
@@ -377,9 +384,9 @@ const AdminUserManagement = () => {
       studentNumber: user.student?.studentNumber || "",
       program: user.role === "STUDENT" ? "Computer Engineering" : (user.student?.program || ""),
       year: user.student?.year?.toString() || "",
-      company: user.student?.company?.name || "",
+      company: linkedCompany?.name || user.student?.company?.name || "",
       department: "",
-      phone: "",
+      phone: linkedCompany?.contactNumber || user.phone || "",
       position: "",
       status: user.active ? "ACTIVE" : "INACTIVE",
     });

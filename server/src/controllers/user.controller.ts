@@ -35,6 +35,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
           name: true,
           role: true,
           active: true,
+          phone: true,
           profilePhoto: true,
           createdAt: true,
           _count: {
@@ -55,6 +56,14 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
                 }
               }
             }
+          },
+          companiesSupervised: {
+            select: {
+              id: true,
+              name: true,
+              contactNumber: true
+            },
+            take: 1
           }
         },
         skip,
@@ -91,7 +100,16 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
         role: true,
         active: true,
         createdAt: true,
-        student: true
+        phone: true,
+        student: true,
+        companiesSupervised: {
+          select: {
+            id: true,
+            name: true,
+            contactNumber: true
+          },
+          take: 1
+        }
       }
     });
 
@@ -108,10 +126,25 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, password, active } = req.body;
+    const { name, email, password, active, phone, company } = req.body;
 
     if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
       return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        role: true,
+        companiesSupervised: {
+          select: { id: true },
+          take: 1
+        }
+      }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const data: any = {};
@@ -119,6 +152,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (email) data.email = email;
     if (password) data.passwordHash = await bcrypt.hash(password, 12);
     if (active !== undefined && req.user!.role === 'ADMIN') data.active = active;
+    if (phone !== undefined && req.user!.role === 'ADMIN') data.phone = phone;
 
     const user = await prisma.user.update({
       where: { id },
@@ -128,9 +162,35 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         email: true,
         name: true,
         role: true,
-        active: true
+        active: true,
+        phone: true
       }
     });
+
+    // Admin can update the linked company name/contact number for industry partners.
+    if (
+      req.user!.role === 'ADMIN' &&
+      existingUser.role === 'INDUSTRY_PARTNER' &&
+      (company !== undefined || phone !== undefined)
+    ) {
+      const targetCompany = existingUser.companiesSupervised[0];
+      if (targetCompany) {
+        const companyData: any = {};
+        if (typeof company === 'string' && company.trim()) {
+          companyData.name = company.trim();
+        }
+        if (phone !== undefined && typeof phone === 'string') {
+          companyData.contactNumber = phone.trim();
+        }
+
+        if (Object.keys(companyData).length > 0) {
+          await prisma.company.update({
+            where: { id: targetCompany.id },
+            data: companyData
+          });
+        }
+      }
+    }
 
     // Log activity
     await logActivity({
