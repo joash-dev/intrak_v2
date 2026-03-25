@@ -535,12 +535,14 @@ const DocumentFormPage: React.FC = () => {
       return value.replace(/[^0-9+\-\s()]/g, '');
     }
     if (fieldType === 'number') {
-      // Number-like fields: remove alphabetic characters, keep digits and special chars.
-      return value.replace(/[A-Za-z]/g, '');
+      // Number-like fields: keep digits and numeric punctuation only.
+      // (We still render these inputs as `type="text"` for broader compatibility.)
+      return value.replace(/[^0-9+\-.,]/g, '');
     }
     if (fieldType === 'text' || fieldType === 'textarea') {
-      // Text-like fields: remove digits, keep letters, spaces, and special chars.
-      return value.replace(/\d/g, '');
+      // Text fields frequently contain digits too (addresses, year ranges, certificate no.).
+      // Preserve digits; any stricter validation belongs in the backend/template rules.
+      return value;
     }
     return value;
   };
