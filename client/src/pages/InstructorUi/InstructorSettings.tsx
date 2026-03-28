@@ -27,7 +27,7 @@ import AboutUsSection from "../../components/settings/AboutUsSection";
 // External help links (update these to your live URLs when available)
 const HELP_LINKS = {
   faq: "https://intrak.site/faq",
-  coordinatorGuide: "https://intrak.site/coordinator-guide",
+  instructorGuide: "https://intrak.site/instructor-guide",
   privacy: "https://intrak.site/privacy",
   supportEmail: "intraksystem@gmail.com",
 };
@@ -757,50 +757,6 @@ const InstructorSettings = () => {
                         />
                       </div>
 
-                      {/* Section Divider */}
-                      <div className="md:col-span-2">
-                        <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                        <h3 className="mt-3 sm:mt-4 mb-2 text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
-                          Emergency Contact
-                        </h3>
-                      </div>
-
-                      {/* Emergency Contact (to match coordinator UI) */}
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                          Emergency Contact Name
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Optional"
-                          onChange={(e) =>
-                            setProfile({
-                              ...profile,
-                              // store alongside profile to avoid type explosion
-                              // @ts-expect-error dynamic field for UI only
-                              emergencyName: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                          Emergency Contact Number
-                        </label>
-                        <input
-                          type="tel"
-                          placeholder="Optional"
-                          onChange={(e) =>
-                            setProfile({
-                              ...profile,
-                              // @ts-expect-error dynamic field for UI only
-                              emergencyContact: e.target.value,
-                            })
-                          }
-                          className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white"
-                        />
-                      </div>
                     </div>
 
                     <div className="flex justify-end">
@@ -1491,7 +1447,7 @@ const InstructorSettings = () => {
                     </div>
                   </a>
 
-                  {/* Coordinator Guide */}
+                  {/* Instructor Guide */}
                   <button
                     type="button"
                     onClick={() => setHelpModal("guide")}
@@ -1502,9 +1458,9 @@ const InstructorSettings = () => {
                         <Book className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-emerald-900 dark:text-emerald-100">Coordinator Guide</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-emerald-900 dark:text-emerald-100">Instructor Guide</h3>
                         <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300">
-                          Learn how to use coordinator features
+                          Learn how to use instructor features
                         </p>
                       </div>
                     </div>
@@ -1532,16 +1488,16 @@ const InstructorSettings = () => {
 
                 {/* App Information */}
                 <div className="pt-2">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-200">App Information</h3>
-                  <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-300">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-200">App Information</h3>
+                  <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                     <p>
-                      <span className="text-gray-400">Version:</span> 2.0.0
+                      <span className="text-gray-500 dark:text-gray-400">Version:</span> 2.0.0
                     </p>
                     <p>
-                      <span className="text-gray-400">Last Updated:</span> February 2026
+                      <span className="text-gray-500 dark:text-gray-400">Last Updated:</span> February 2026
                     </p>
                     <p>
-                      <span className="text-gray-400">License:</span> Educational Use
+                      <span className="text-gray-500 dark:text-gray-400">License:</span> Educational Use
                     </p>
                   </div>
                 </div>
@@ -1608,24 +1564,31 @@ const InstructorHelpModalContent = ({
         {variant === "faq" && (
           <ul className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-3 sm:space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             <li>
-              <p className="font-semibold">How do I upload document templates?</p>
+              <p className="font-semibold">How do I review and approve student documents?</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                Go to Templates, click "Upload Template", choose the category and document type,
-                then upload one or more files. You can rename files before submitting.
+                Open Documents, choose a student, review each submission, then approve or request
+                resubmission with clear remarks so students can correct issues quickly.
               </p>
             </li>
             <li>
-              <p className="font-semibold">Where can I verify attendance?</p>
+              <p className="font-semibold">Where can I check attendance hours and progress?</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                Open Student Monitoring, select a student, then review their recent activities and
-                attendance trend. Use the details modal for weekly breakdowns.
+                Go to Reports and click "View Report" for a student to see verified logs, total
+                hours, and progress. Use date filters for weekly or monthly checks.
               </p>
             </li>
             <li>
-              <p className="font-semibold">How do I submit or edit evaluations?</p>
+              <p className="font-semibold">How can I message students from the instructor portal?</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                Go to Evaluations from the sidebar, pick a student, complete the form, and submit.
-                You can return to update until it's marked as finalized.
+                Open Messages from the sidebar, select a student thread, and send updates directly.
+                You can track conversation history in the same thread.
+              </p>
+            </li>
+            <li>
+              <p className="font-semibold">How do I publish announcements?</p>
+              <p className="mt-1 text-gray-600 dark:text-gray-400">
+                Go to Announcements, create a post, choose the target audience, and publish.
+                Students and other roles will receive it based on your selected visibility.
               </p>
             </li>
           </ul>
@@ -1643,7 +1606,7 @@ const InstructorHelpModalContent = ({
             <div>
               <p className="font-semibold">2. Manage documents and templates</p>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                Use Documents to review submissions; upload common formats in Templates to guide students.
+                Use Documents to review student submissions and give actionable feedback.
               </p>
             </div>
             <div>

@@ -10,6 +10,7 @@ import {
     LogOut,
     Home,
     MessageSquare,
+    MessageCircle,
     Loader2,
     FileUp,
 } from "lucide-react";
@@ -202,6 +203,7 @@ const CoordinatorLayout: React.FC = () => {
         { id: "companies", label: t("dashboard.nav.companies"), icon: Building2, path: "/coordinator/companies" },
         { id: "company-proposals", label: "Company Proposals", icon: FileUp, path: "/coordinator/company-proposals" },
         { id: "announcements", label: t("dashboard.nav.announcements"), icon: MessageSquare, path: "/coordinator/announcements" },
+        { id: "messages", label: "Messages", icon: MessageCircle, path: "/coordinator/messages" },
         { id: "reports", label: "Reports", icon: BarChart3, path: "/coordinator/reports" },
         { id: "notifications", label: "Notifications", icon: Bell, path: "/coordinator/notifications" },
     ];

@@ -10,6 +10,7 @@ import {
     BarChart3,
     Loader2,
     FileUp,
+    MessageCircle,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -47,6 +48,7 @@ const InstructorLayout = () => {
         if (path.includes("/instructor/documents")) return "documents";
         if (path.includes("/instructor/applications")) return "applications";
         if (path.includes("/instructor/company-proposals")) return "company-proposals";
+        if (path.includes("/instructor/messages")) return "messages";
         if (path.includes("/instructor/reports")) return "reports";
         if (path.includes("/instructor/settings")) return "settings";
         if (path.includes("/instructor/notifications")) return "notifications";
@@ -146,6 +148,35 @@ const InstructorLayout = () => {
         if (notificationsData) setLocalNotifications(notificationsData);
     }, [notificationsData]);
 
+    // Real-time-ish notifications: poll periodically and refresh on tab focus.
+    useEffect(() => {
+        let mounted = true;
+
+        const refreshNotifications = async () => {
+            try {
+                const fresh = await notificationService.getNotifications({ limit: 15 });
+                if (mounted) setLocalNotifications(fresh);
+            } catch (error) {
+                console.error("Failed to refresh notifications", error);
+            }
+        };
+
+        const intervalId = window.setInterval(refreshNotifications, 5000);
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                refreshNotifications();
+            }
+        };
+
+        document.addEventListener("visibilitychange", onVisibilityChange);
+
+        return () => {
+            mounted = false;
+            window.clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+        };
+    }, []);
+
     // --- Handlers ---
 
     const handleLogout = async () => {
@@ -170,6 +201,7 @@ const InstructorLayout = () => {
         { id: "applications", icon: Building2, label: "Company Applications", path: "/instructor/applications" },
         { id: "company-proposals", icon: FileUp, label: "Company Proposals", path: "/instructor/company-proposals" },
         { id: "students", icon: Users, label: "Students", path: "/instructor/students" },
+        { id: "messages", icon: MessageCircle, label: "Messages", path: "/instructor/messages" },
         { id: "reports", icon: BarChart3, label: "Reports", path: "/instructor/reports" },
     ];
 

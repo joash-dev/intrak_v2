@@ -139,6 +139,8 @@ model User {
   active       Boolean  @default(true)
   profilePhoto String?
   phone        String?
+  emergencyContact String?
+  emergencyName    String?
   department   String?
   office       String?
   failedLoginAttempts Int       @default(0)
@@ -672,6 +674,22 @@ model PartnershipMessage {
 
   @@index([studentId])
   @@map("partnership_messages")
+}
+
+model MessageTemplate {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  category    String
+  targetRoles Role[]
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([category])
+  @@map("message_templates")
 }
 
 model SupervisorFeedback {

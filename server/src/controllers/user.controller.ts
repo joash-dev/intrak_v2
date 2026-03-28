@@ -101,6 +101,8 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
         active: true,
         createdAt: true,
         phone: true,
+        emergencyContact: true,
+        emergencyName: true,
         student: true,
         companiesSupervised: {
           select: {
@@ -126,7 +128,7 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, password, active, phone, company } = req.body;
+    const { name, email, password, active, phone, company, emergencyContact, emergencyName } = req.body;
 
     if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
       return res.status(403).json({ message: 'Forbidden' });
@@ -152,7 +154,15 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (email) data.email = email;
     if (password) data.passwordHash = await bcrypt.hash(password, 12);
     if (active !== undefined && req.user!.role === 'ADMIN') data.active = active;
-    if (phone !== undefined && req.user!.role === 'ADMIN') data.phone = phone;
+    // Allow users to update their own phone number; keep admin ability too.
+    if (phone !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) data.phone = phone;
+    // Allow users to update their own emergency fields; keep admin ability too.
+    if (emergencyContact !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) {
+      data.emergencyContact = emergencyContact;
+    }
+    if (emergencyName !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) {
+      data.emergencyName = emergencyName;
+    }
 
     const user = await prisma.user.update({
       where: { id },
@@ -163,7 +173,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         name: true,
         role: true,
         active: true,
-        phone: true
+        phone: true,
+        emergencyContact: true,
+        emergencyName: true,
       }
     });
 

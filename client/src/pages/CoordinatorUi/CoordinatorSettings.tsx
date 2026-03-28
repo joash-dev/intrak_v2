@@ -1327,7 +1327,7 @@ const CoordinatorSettingsTab = () => {
                           <option value="INSTRUCTORS">
                             {t("settings.coordinator.announcement.instructorsOnly")}
                           </option>
-                          <option value="INDUSTRY_PARTNERS">
+                          <option value="PARTNERS">
                             {t("settings.coordinator.announcement.industryPartnersOnly")}
                           </option>
                         </select>

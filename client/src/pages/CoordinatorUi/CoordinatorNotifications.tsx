@@ -43,15 +43,10 @@ const CoordinatorNotifications: React.FC = () => {
                 refreshLocalNotifications();
             }
 
-            // Handle message notifications
+            // Handle message notifications - open the messages tab (preferred)
             if (notification.title === "New Message from Student" && notification.link) {
-                const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
-                const studentId = urlParams.get('studentId');
-                if (studentId) {
-                    sessionStorage.setItem('openStudentId', studentId);
-                    navigate('/coordinator/students');
-                    return;
-                }
+                navigate(notification.link);
+                return;
             }
 
             if (notification.type === "DOCUMENT") {
@@ -64,15 +59,6 @@ const CoordinatorNotifications: React.FC = () => {
                     const normalizedLink = link.startsWith("/") ? link : `/${link}`;
                     if (normalizedLink.startsWith("/login")) {
                         navigate("/coordinator/dashboard");
-                    } else if (normalizedLink.includes('/coordinator/students')) {
-                        const urlParams = new URLSearchParams(link.split('?')[1] || '');
-                        const studentId = urlParams.get('studentId');
-                        if (studentId) {
-                            sessionStorage.setItem('openStudentId', studentId);
-                            navigate('/coordinator/students');
-                            return;
-                        }
-                        navigate(normalizedLink);
                     } else {
                         // Translate generic document links to coordinator-specific route
                         let finalLink = normalizedLink;

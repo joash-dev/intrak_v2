@@ -4,7 +4,8 @@ export interface Announcement {
   id: string;
   title: string;
   content: string;
-  audience: 'ALL' | 'STUDENTS' | 'COORDINATORS' | 'INSTRUCTORS' | 'INDUSTRY_PARTNERS';
+  // Keep in sync with server Prisma enum `AnnouncementAudience`
+  audience: 'ALL' | 'STUDENTS' | 'COORDINATORS' | 'INSTRUCTORS' | 'PARTNERS';
   type: 'info' | 'warning' | 'success' | 'urgent';
   createdAt: string;
   updatedAt: string;
@@ -22,7 +23,7 @@ export interface Announcement {
 export interface CreateAnnouncementRequest {
   title: string;
   content: string;
-  audience: 'ALL' | 'STUDENTS' | 'COORDINATORS' | 'INSTRUCTORS' | 'INDUSTRY_PARTNERS';
+  audience: 'ALL' | 'STUDENTS' | 'COORDINATORS' | 'INSTRUCTORS' | 'PARTNERS';
   type?: 'info' | 'warning' | 'success' | 'urgent';
   isPinned?: boolean;
 }

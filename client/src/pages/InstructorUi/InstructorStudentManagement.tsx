@@ -34,7 +34,6 @@ import {
   type InstructorStudent,
   type TimelineEntry,
 } from "../../services/instructorService";
-import PartnershipMessageThread from "../../components/PartnershipMessageThread";
 import toast from "react-hot-toast";
 import { devLog } from "../../utils/devLog";
 import { formatStudentId } from "../../utils/formatStudentId";
@@ -1964,16 +1963,6 @@ const InstructorStudentManagement: React.FC = () => {
                 )}
               </div>
 
-              {/* Partnership Communication */}
-              {selectedStudent && (
-                <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                  <PartnershipMessageThread
-                    studentId={selectedStudent.id}
-                    studentName={selectedStudent.name}
-                    currentUserRole="INSTRUCTOR"
-                  />
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">

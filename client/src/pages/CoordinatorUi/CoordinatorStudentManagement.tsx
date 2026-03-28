@@ -23,7 +23,6 @@ import {
 } from "../../services/coordinatorService";
 import { instructorService } from "../../services/instructorService";
 import type { Company } from "../../services/companyService";
-import PartnershipMessageThread from "../../components/PartnershipMessageThread";
 import { documentService } from "../../services/documentService";
 import type { Document } from "../../services/documentService";
 import api from "../../services/api";
@@ -734,16 +733,6 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
                 <PartnershipDocumentsSection studentId={detailStudent.id} studentName={detailStudent.name} />
               )}
 
-              {/* Partnership Communication */}
-              {detailStudent && (
-                <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                  <PartnershipMessageThread
-                    studentId={detailStudent.id}
-                    studentName={detailStudent.name}
-                    currentUserRole="COORDINATOR"
-                  />
-                </div>
-              )}
             </div>
 
             <div className="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">

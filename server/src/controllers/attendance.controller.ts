@@ -70,13 +70,32 @@ const getOrdinalSuffix = (num: number): string => {
   return 'th';
 };
 
+const MAX_SEGMENTS_PER_DAY = 2;
+
+const getManilaDayRangeUtc = (date: Date | string) => {
+  // Convert a date (or date string) into the UTC range that corresponds to the
+  // Asia/Manila calendar day. This avoids UTC/PHT boundary bugs near midnight.
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const yyyyMmDd = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d); // YYYY-MM-DD
+
+  const start = new Date(`${yyyyMmDd}T00:00:00.000+08:00`);
+  const end = new Date(`${yyyyMmDd}T23:59:59.999+08:00`);
+  return { start, end, yyyyMmDd };
+};
+
 // Log Attendance (manual time-in/time-out)
 export const logAttendance = async (req: AuthRequest, res: Response) => {
   try {
     let { studentId, date, timeIn, timeOut, action } = req.body;
+    const isStudentSelfLog = req.user?.role === 'STUDENT';
 
     // If studentId is "me", get the student ID from the authenticated user
-    if (studentId === 'me' || !studentId) {
+    if (studentId === 'me' || !studentId || isStudentSelfLog) {
       const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: 'User not authenticated' });
@@ -97,6 +116,38 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
     let log;
 
     if (action === 'time-in') {
+      // Students must use server-detected time; prevent backdating and inconsistent sequences.
+      // Non-students can still backdate via provided timestamps.
+      const now = new Date();
+      if (isStudentSelfLog) {
+        date = now.toISOString();
+        timeIn = now.toISOString();
+      }
+
+      // Enforce max segments/day (PHT day boundary) before creating a new segment.
+      // Use timeIn if provided, else fall back to date.
+      const timeInDate = timeIn ? new Date(timeIn) : new Date(date);
+      const { start, end, yyyyMmDd } = getManilaDayRangeUtc(timeInDate);
+
+      const segmentsToday = await prisma.attendanceLog.count({
+        where: {
+          studentId,
+          timeIn: {
+            gte: start,
+            lte: end,
+          },
+        },
+      });
+
+      if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
+        return res.status(400).json({
+          message: `You already have ${MAX_SEGMENTS_PER_DAY} attendance session(s) for ${yyyyMmDd}. Additional time-in is not allowed.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: MAX_SEGMENTS_PER_DAY,
+        });
+      }
+
       // Prevent overlapping segments: ensure there's no open log for this student
       const openLog = await prisma.attendanceLog.findFirst({
         where: {
@@ -139,7 +190,8 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ message: 'No open time-in record found to close' });
       }
 
-      const timeOutDate = new Date(timeOut);
+      // Students must use server-detected time for time-out as well.
+      const timeOutDate = isStudentSelfLog ? new Date() : new Date(timeOut);
       const durationMinutes = Math.floor(
         (timeOutDate.getTime() - existingLog.timeIn!.getTime()) / 60000
       );
@@ -348,6 +400,24 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       });
       action = 'logout';
     } else {
+      // Enforce max segments/day (PHT) for new QR time-in.
+      const now = new Date();
+      const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
+      const segmentsToday = await prisma.attendanceLog.count({
+        where: {
+          studentId: qrToken.studentId,
+          timeIn: { gte: start, lte: end },
+        },
+      });
+      if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
+        return res.status(400).json({
+          message: `Daily attendance limit reached for ${yyyyMmDd}.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: MAX_SEGMENTS_PER_DAY,
+        });
+      }
+
       log = await prisma.attendanceLog.create({
         data: {
           studentId: qrToken.studentId,
@@ -431,6 +501,24 @@ export const verifyGPS = async (req: AuthRequest, res: Response) => {
     );
 
     const withinRange = distanceMeters <= student.company.radiusMeters;
+
+    // Enforce max segments/day (PHT) for GPS time-in.
+    const now = new Date();
+    const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
+    const segmentsToday = await prisma.attendanceLog.count({
+      where: {
+        studentId,
+        timeIn: { gte: start, lte: end },
+      },
+    });
+    if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
+      return res.status(400).json({
+        message: `Daily attendance limit reached for ${yyyyMmDd}.`,
+        code: 'MAX_DAILY_SEGMENTS_REACHED',
+        date: yyyyMmDd,
+        maxSegments: MAX_SEGMENTS_PER_DAY,
+      });
+    }
 
     const log = await prisma.attendanceLog.create({
       data: {

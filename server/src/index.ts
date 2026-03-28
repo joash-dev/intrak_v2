@@ -35,6 +35,7 @@ import companyProposalRoutes from './routes/companyProposal.routes';
 import notificationRoutes from './routes/notification.routes';
 import coordinatorRoutes from './routes/coordinator.routes';
 import aiRoutes from './routes/ai.routes';
+import messageTemplateRoutes from './routes/messageTemplate.routes';
 
 dotenv.config();
 
@@ -238,6 +239,7 @@ app.use('/api/company-proposals', companyProposalRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/coordinator', coordinatorRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/message-templates', messageTemplateRoutes);
 
 // 404 handler
 app.use((req, res) => {

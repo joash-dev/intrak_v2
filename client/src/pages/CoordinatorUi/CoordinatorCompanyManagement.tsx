@@ -297,21 +297,28 @@ const CoordinatorCompanyManagement: React.FC = () => {
       (company.contactEmail || "")
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
-    // Since companies don't have a status field in the current schema, we'll show all
-    return matchesSearch;
+
+    // MOA filter should filter the company cards list by MOA status.
+    // - "all": don't filter by MOA status
+    // - "NO_MOA": show only companies with zero MOAs
+    // - Otherwise: show only companies that have at least one MOA with that status.
+    const hasAnyMOAForCompany = (moas || []).some(
+      (moa) => moa.student?.company?.id === company.id
+    );
+    const matchesMoaStatus =
+      moaStatusFilter === "all" ||
+      (moaStatusFilter === "NO_MOA" && !hasAnyMOAForCompany) ||
+      (moas || []).some(
+        (moa) =>
+          moa.student?.company?.id === company.id &&
+          (moa.status || "") === moaStatusFilter
+      );
+
+    return matchesSearch && matchesMoaStatus;
   });
 
-  // Filter MOAs based on search and status
-  // const filteredMOAs = (moas || []).filter((moa) => {
-  //   const matchesSearch =
-  //     (moa.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     (moa.student?.company?.name || "")
-  //       .toLowerCase()
-  //       .includes(searchQuery.toLowerCase());
-  //   const matchesStatus =
-  //     moaStatusFilter === "all" || moa.status === moaStatusFilter;
-  //   return matchesSearch && matchesStatus;
-  // });
+  // Note: We intentionally do not filter the per-company MOA list by the dropdown.
+  // The dropdown is meant to filter which company cards are shown.
 
   // Get status color and icon
   const getStatusInfo = (status: string) => {
@@ -866,6 +873,7 @@ const CoordinatorCompanyManagement: React.FC = () => {
                     className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white text-sm font-medium min-w-[120px]"
                   >
                     <option value="all">All MOAs</option>
+                    <option value="NO_MOA">No MOA</option>
                     <option value="APPROVED">Approved</option>
                     <option value="PENDING">Pending</option>
                     <option value="REJECTED">Rejected</option>

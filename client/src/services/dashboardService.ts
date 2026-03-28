@@ -89,8 +89,10 @@ export const dashboardService = {
   // Get student documents
   async getStudentDocuments(): Promise<Document[]> {
     try {
-      const response = await api.get('/documents');
-      return response.data.documents || response.data || [];
+      // IMPORTANT: Student dashboard must use the same source of truth as the Student Documents page.
+      // `/documents` is paginated and may not match the student's full list.
+      const response = await api.get('/documents/student');
+      return response.data.documents || [];
     } catch (error) {
       console.error('Error fetching documents:', error);
       return [];
@@ -135,7 +137,11 @@ export const dashboardService = {
   async getAnnouncements(): Promise<Announcement[]> {
     try {
       const response = await api.get('/announcements');
-      return response.data.announcements || response.data || [];
+      const announcements = response.data.announcements || response.data || [];
+      // Student dashboard should only see ALL + STUDENTS announcements
+      return (announcements || []).filter((a: any) =>
+        a?.audience === 'ALL' || a?.audience === 'STUDENTS'
+      );
     } catch (error) {
       console.error('Error fetching announcements:', error);
       return [];

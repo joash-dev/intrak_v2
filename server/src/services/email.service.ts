@@ -8,6 +8,14 @@ interface EmailOptions {
   text?: string;
 }
 
+interface NotificationEmailTemplateInput {
+  recipientName: string;
+  title: string;
+  message: string;
+  linkPath?: string | null;
+  notificationType?: string;
+}
+
 class EmailService {
   private transporter: nodemailer.Transporter | null = null;
   private resend: Resend | null = null;
@@ -661,6 +669,174 @@ This is an automated message from INTRAK System. Please do not reply to this ema
       subject,
       html,
       text
+    });
+  }
+
+  async sendInAppNotificationEmail(
+    recipientEmail: string,
+    recipientName: string,
+    title: string,
+    message: string,
+    linkPath?: string | null,
+  ): Promise<{ success: boolean; error?: string }> {
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
+    const targetUrl = linkPath
+      ? `${clientUrl}${linkPath.startsWith('/') ? linkPath : `/${linkPath}`}`
+      : `${clientUrl}/notifications`;
+    const subject = `INTRAK Notification - ${title}`;
+
+    const content = `
+      <p>Hello ${recipientName}!</p>
+      <p>You have a new notification in INTRAK:</p>
+      <div class="credentials-box">
+        <p><strong>${title}</strong></p>
+        <p>${message}</p>
+      </div>
+      <a href="${targetUrl}" class="login-button">View Notification</a>
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${targetUrl}</span></p>
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      'New Notification',
+      'https://img.icons8.com/ios-filled/50/ffffff/appointment-reminders.png'
+    );
+
+    const text = `
+INTRAK Notification - ${title}
+
+Hello ${recipientName}!
+
+${message}
+
+View notification: ${targetUrl}
+    `.trim();
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+      text,
+    });
+  }
+
+  private buildNotificationTemplate(input: NotificationEmailTemplateInput): {
+    subject: string;
+    bannerText: string;
+    bannerIcon: string;
+    ctaLabel: string;
+    targetUrl: string;
+  } {
+    const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
+    const targetUrl = input.linkPath
+      ? `${clientUrl}${input.linkPath.startsWith('/') ? input.linkPath : `/${input.linkPath}`}`
+      : `${clientUrl}/notifications`;
+
+    const lowerTitle = input.title.toLowerCase();
+    const lowerLink = (input.linkPath || '').toLowerCase();
+    const type = (input.notificationType || '').toUpperCase();
+
+    const isMessage =
+      lowerTitle.includes('message') || lowerLink.includes('/messages');
+    const isCompanyProposal =
+      lowerTitle.includes('proposal') || lowerLink.includes('/company-proposals');
+    const isDocument =
+      type === 'DOCUMENT' || lowerTitle.includes('document') || lowerLink.includes('/documents');
+    const isAnnouncement =
+      lowerTitle.includes('announcement') || lowerLink.includes('/announcements');
+
+    if (isMessage) {
+      return {
+        subject: `INTRAK Message Alert - ${input.title}`,
+        bannerText: 'New Message',
+        bannerIcon: 'https://img.icons8.com/ios-filled/50/ffffff/chat-message--v1.png',
+        ctaLabel: 'Open Messages',
+        targetUrl,
+      };
+    }
+
+    if (isCompanyProposal) {
+      return {
+        subject: `INTRAK Company Proposal Update - ${input.title}`,
+        bannerText: 'Company Proposal Update',
+        bannerIcon: 'https://img.icons8.com/ios-filled/50/ffffff/document.png',
+        ctaLabel: 'View Proposal',
+        targetUrl,
+      };
+    }
+
+    if (isDocument) {
+      return {
+        subject: `INTRAK Document Update - ${input.title}`,
+        bannerText: 'Document Update',
+        bannerIcon: 'https://img.icons8.com/ios-filled/50/ffffff/folder-invoices--v1.png',
+        ctaLabel: 'View Documents',
+        targetUrl,
+      };
+    }
+
+    if (isAnnouncement) {
+      return {
+        subject: `INTRAK Announcement - ${input.title}`,
+        bannerText: 'New Announcement',
+        bannerIcon: 'https://img.icons8.com/ios-filled/50/ffffff/megaphone.png',
+        ctaLabel: 'View Announcement',
+        targetUrl,
+      };
+    }
+
+    return {
+      subject: `INTRAK Notification - ${input.title}`,
+      bannerText: 'New Notification',
+      bannerIcon: 'https://img.icons8.com/ios-filled/50/ffffff/appointment-reminders.png',
+      ctaLabel: 'View Notification',
+      targetUrl,
+    };
+  }
+
+  async sendTypedNotificationEmail(
+    recipientEmail: string,
+    notification: NotificationEmailTemplateInput,
+  ): Promise<{ success: boolean; error?: string }> {
+    const template = this.buildNotificationTemplate(notification);
+
+    const content = `
+      <p>Hello ${notification.recipientName}!</p>
+      <p>You have a new update in INTRAK:</p>
+      <div class="credentials-box">
+        <p><strong>${notification.title}</strong></p>
+        <p>${notification.message}</p>
+      </div>
+      <a href="${template.targetUrl}" class="login-button">${template.ctaLabel}</a>
+      <p class="note">If the button above does not work, copy and paste this link into your browser:<br>
+      <span style="word-break: break-all;">${template.targetUrl}</span></p>
+      <p><br><strong>– INTRAK System</strong></p>
+    `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      template.bannerText,
+      template.bannerIcon
+    );
+
+    const text = `
+${template.subject}
+
+Hello ${notification.recipientName}!
+
+${notification.title}
+${notification.message}
+
+Open in INTRAK: ${template.targetUrl}
+    `.trim();
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject: template.subject,
+      html,
+      text,
     });
   }
 

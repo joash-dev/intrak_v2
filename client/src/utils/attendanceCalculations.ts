@@ -165,7 +165,9 @@ export function formatDuration(minutes: number): string {
  * Format date for display
  */
 export function formatAttendanceDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString();
+  // Display dates in Asia/Manila to avoid day shifts when values are stored in UTC.
+  // Keep format simple/consistent; richer formatting can be handled by localeService if needed.
+  return new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila" }).format(new Date(dateString));
 }
 
 /**
@@ -173,8 +175,10 @@ export function formatAttendanceDate(dateString: string): string {
  */
 export function formatAttendanceTime(dateString: string | null): string {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
+  return new Intl.DateTimeFormat("en-PH", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(dateString));
 }

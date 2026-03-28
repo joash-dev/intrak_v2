@@ -75,6 +75,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
@@ -119,12 +121,21 @@ api.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        const response = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
-          { refreshToken }
-        );
+        // Single-flight refresh: prevent concurrent refresh calls from racing
+        // and invalidating each other's rotated refresh tokens.
+        if (!refreshPromise) {
+          refreshPromise = axios
+            .post(
+              `${API_BASE_URL}/auth/refresh`,
+              { refreshToken }
+            )
+            .then((response) => response.data)
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = await refreshPromise;
 
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', newRefreshToken);

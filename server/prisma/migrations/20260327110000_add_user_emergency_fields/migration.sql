@@ -1,0 +1,2 @@
+-- Migration intentionally left empty.
+-- This file is restored to satisfy Prisma migration history consistency.

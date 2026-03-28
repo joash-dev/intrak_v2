@@ -354,8 +354,7 @@ class InstructorService {
       // Filter announcements that are relevant to instructors
       const instructorAnnouncements = allAnnouncements.filter(announcement =>
         announcement.audience === 'ALL' ||
-        announcement.audience === 'INSTRUCTORS' ||
-        announcement.audience === 'COORDINATORS' // Instructors might also want to see coordinator announcements
+        announcement.audience === 'INSTRUCTORS'
       );
 
       // Transform announcements for display

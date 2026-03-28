@@ -36,7 +36,7 @@ type AudienceOption =
   | "STUDENTS"
   | "COORDINATORS"
   | "INSTRUCTORS"
-  | "INDUSTRY_PARTNERS";
+  | "PARTNERS";
 
 interface CoordinatorAnnouncementsTabProps {
   defaultAudience?: AudienceOption;
@@ -49,7 +49,7 @@ const AUDIENCE_LABELS: Record<string, string> = {
   STUDENTS: "Students",
   COORDINATORS: "Coordinators",
   INSTRUCTORS: "Instructors",
-  INDUSTRY_PARTNERS: "Industry Partners",
+  PARTNERS: "Industry Partners",
 };
 
 const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = ({
@@ -640,7 +640,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
             <option value="STUDENTS">Students</option>
             <option value="COORDINATORS">Coordinators</option>
             <option value="INSTRUCTORS">Instructors</option>
-            <option value="INDUSTRY_PARTNERS">Industry Partners</option>
+            <option value="PARTNERS">Industry Partners</option>
           </select>
         </div>
       </div>
@@ -848,7 +848,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                     <option value="STUDENTS">Students Only</option>
                     <option value="COORDINATORS">Coordinators Only</option>
                     <option value="INSTRUCTORS">Instructors Only</option>
-                    <option value="INDUSTRY_PARTNERS">Industry Partners Only</option>
+                    <option value="PARTNERS">Industry Partners Only</option>
                   </select>
                 </div>
               </div>
@@ -1006,7 +1006,7 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                     <option value="STUDENTS">Students Only</option>
                     <option value="COORDINATORS">Coordinators Only</option>
                     <option value="INSTRUCTORS">Instructors Only</option>
-                    <option value="INDUSTRY_PARTNERS">Industry Partners Only</option>
+                    <option value="PARTNERS">Industry Partners Only</option>
                   </select>
                 </div>
               </div>

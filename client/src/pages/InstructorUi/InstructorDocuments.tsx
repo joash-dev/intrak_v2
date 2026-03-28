@@ -129,10 +129,12 @@ const InstructorDocumentsTab = () => {
 
   const getStudentProgress = (studentId: string) => {
     const studentDocs = getStudentDocuments(studentId);
-    const totalRequired = DOCUMENT_REQUIREMENTS.filter(r => r.required).length;
+    // UI requirement: show progress as x/20 (approved required documents out of 20 total items).
+    const totalRequired = 20;
 
-    // Count unique required documents that are approved
+    // Count required documents that are approved (exclude optional rows so approved/total stay aligned)
     const approvedCount = DOCUMENT_REQUIREMENTS.filter(req => {
+      if (!req.required) return false;
       let doc = studentDocs.find(d => d.documentType === req.type);
       if (!doc && req.type === 'ENDORSEMENT_LETTER') {
         doc = studentDocs.find(d => d.documentType === 'ENDORSEMENT_LETTER_MULTI');

@@ -19,9 +19,7 @@ import {
 } from "lucide-react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { documentService } from "../../services/documentService";
-import type { Document, DocumentStats } from "../../services/documentService";
-import { templateService } from "../../services/templateService";
-import type { DocumentTemplate } from "../../services/templateService";
+import type { Document } from "../../services/documentService";
 import Skeleton from "../../components/Skeleton";
 import { toast } from "react-hot-toast";
 import PDFViewer from "../../components/document/PDFViewer";
@@ -30,7 +28,6 @@ const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -211,13 +208,9 @@ const StudentDocumentsTab: React.FC = () => {
     try {
       setLoading(true);
 
-      const [docs, fetchedTemplates] = await Promise.all([
-        documentService.getStudentDocuments(),
-        templateService.getTemplates(undefined, true)
-      ]);
+      const docs = await documentService.getStudentDocuments();
 
       setDocuments(docs);
-      setTemplates(fetchedTemplates);
 
       // Notify parent component about document changes
       refreshStudentData();
@@ -241,8 +234,37 @@ const StudentDocumentsTab: React.FC = () => {
   const activeDocs = useMemo(() =>
     documents.filter(d => d.sharedStatus !== 'PENDING_ACCEPTANCE' && d.sharedStatus !== 'WAITING_FOR_ACCEPTANCE'), [documents]);
 
-  const stats: DocumentStats = useMemo(() => {
-    return documentService.calculateStats(activeDocs);
+  const getDocsForRequirement = (docType: string) => {
+    if (docType === "ENDORSEMENT_LETTER") {
+      return activeDocs.filter(
+        (d) => d.type === "ENDORSEMENT_LETTER" || d.type === "ENDORSEMENT_LETTER_MULTI"
+      );
+    }
+    return activeDocs.filter((d) => d.type === docType);
+  };
+
+  const stats = useMemo(() => {
+    const requiredRequirements = documentTypes.filter((dt) => dt.required);
+    const total = requiredRequirements.length;
+
+    let approved = 0;
+    let pending = 0;
+
+    requiredRequirements.forEach((req) => {
+      const requirementDocs = getDocsForRequirement(req.value);
+      const hasApproved = requirementDocs.some((doc) => doc.status === "APPROVED");
+      const hasPending = requirementDocs.some(
+        (doc) => doc.status === "PENDING" || doc.status === "RESUBMISSION_REQUESTED"
+      );
+
+      if (hasApproved) {
+        approved += 1;
+      } else if (hasPending) {
+        pending += 1;
+      }
+    });
+
+    return { total, approved, pending };
   }, [activeDocs]);
 
   // Accept/Decline shared document handlers
@@ -646,7 +668,7 @@ const StudentDocumentsTab: React.FC = () => {
             </div>
             <div className="w-px h-8 bg-gray-200 dark:bg-gray-700"></div>
             <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Required</p>
               <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.total}</p>
             </div>
           </div>

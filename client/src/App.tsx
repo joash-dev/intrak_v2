@@ -15,7 +15,7 @@ const StudentLayout = React.lazy(() => import("./pages/StudentUi/StudentLayout")
 const StudentOverview = React.lazy(() => import("./pages/StudentUi/StudentOverview"));
 const StudentDocumentsTab = React.lazy(() => import("./pages/StudentUi/StudentDocumentsTab"));
 const DocumentFormPage = React.lazy(() => import("./pages/StudentUi/DocumentFormPage"));
-const StudentTemplates = React.lazy(() => import("./pages/StudentUi/StudentTemplates"));
+const StudentMessages = React.lazy(() => import("./pages/StudentUi/StudentMessages"));
 const StudentCompanySelection = React.lazy(() => import("./pages/StudentUi/StudentCompanySelection"));
 const StudentCompanyPartnershipAssistance = React.lazy(() => import("./pages/StudentUi/StudentCompanyPartnershipAssistance"));
 const StudentAttendanceTab = React.lazy(() => import("./pages/StudentUi/StudentAttendance"));
@@ -60,6 +60,8 @@ const InstructorReportsTab = React.lazy(() => import("./pages/InstructorUi/Instr
 const InstructorSettings = React.lazy(() => import("./pages/InstructorUi/InstructorSettings"));
 const InstructorNotifications = React.lazy(() => import("./pages/InstructorUi/InstructorNotifications"));
 const InstructorCompanyProposals = React.lazy(() => import("./pages/InstructorUi/InstructorCompanyProposals"));
+const InstructorMessages = React.lazy(() => import("./pages/InstructorUi/InstructorMessages"));
+const CoordinatorMessages = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorMessages"));
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -164,7 +166,7 @@ const App: React.FC = () => {
                 <Route path="dashboard" element={<StudentOverview />} />
                 <Route path="documents" element={<StudentDocumentsTab />} />
                 <Route path="documents/form/:type" element={<DocumentFormPage />} />
-                <Route path="templates" element={<StudentTemplates />} />
+                <Route path="messages" element={<StudentMessages />} />
                 <Route path="companies" element={<StudentCompanySelection />} />
                 <Route path="partnership-assistance" element={<StudentCompanyPartnershipAssistance />} />
                 <Route path="attendance" element={<StudentAttendanceTab />} />
@@ -191,6 +193,7 @@ const App: React.FC = () => {
                 <Route path="companies" element={<CoordinatorCompanyManagement />} />
                 <Route path="company-proposals" element={<CoordinatorCompanyProposals />} />
                 <Route path="announcements" element={<CoordinatorAnnouncementsTab />} />
+                <Route path="messages" element={<CoordinatorMessages />} />
                 <Route path="reports" element={<CoordinatorReportsTab />} />
                 <Route path="settings" element={<CoordinatorSettingsTab />} />
                 <Route path="notifications" element={<CoordinatorNotifications />} />
@@ -215,6 +218,7 @@ const App: React.FC = () => {
                 <Route path="checklist" element={<DocumentChecklistTab />} />
                 <Route path="monitoring" element={<Navigate to="/instructor/students" replace />} />
                 <Route path="reports" element={<InstructorReportsTab />} />
+                <Route path="messages" element={<InstructorMessages />} />
                 <Route path="settings" element={<InstructorSettings />} />
                 <Route path="notifications" element={<InstructorNotifications />} />
               </Route>

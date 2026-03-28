@@ -6,7 +6,7 @@ import { prisma } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createLocalBackup, ensureNASDirectoryExists, getStoragePathWithFallback, resolveFilePath } from '../config/nas';
 import { logActivity } from './activity.controller';
-import { emailService } from '../services/email.service';
+import { notificationService } from '../services/notification.service';
 
 const STUDENT_UPLOADABLE_STATUSES: CompanyProposalStatus[] = [
   'SUBMITTED_TO_INSTRUCTOR',
@@ -66,50 +66,13 @@ const includeProposal = {
 };
 
 const notifyUser = async (userId: string, title: string, message: string, link: string) => {
-  // 1. Create in-app notification
-  await prisma.notification.create({
-    data: {
-      userId,
-      title,
-      message,
-      link,
-      type: NotificationType.OTHER,
-      read: false,
-    },
-  });
-
-  // 2. Send email notification (fire-and-forget so it doesn't block the response)
-  sendProposalEmailToUser(userId, title, message, link).catch((err) => {
-    console.error('[Email] Failed to send proposal email notification:', err);
-  });
-};
-
-/**
- * Look up the user's email and send a formatted company-proposal email.
- * Runs as fire-and-forget - failures are logged but never block the caller.
- */
-const sendProposalEmailToUser = async (
-  userId: string,
-  title: string,
-  body: string,
-  linkPath: string,
-) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true, name: true },
-  });
-  if (!user) return;
-
-  const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
-  const fullLink = `${clientUrl}${linkPath}`;
-
-  await emailService.sendCompanyProposalEmail(
-    user.email,
-    user.name,
+  await notificationService.createNotification({
+    userId,
     title,
-    body,
-    fullLink,
-  );
+    message,
+    link,
+    type: NotificationType.OTHER,
+  });
 };
 
 const proposalLink = (proposalId: string, role: Role): string => {

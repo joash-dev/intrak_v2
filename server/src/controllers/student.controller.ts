@@ -7,6 +7,40 @@ import { calculateExpectedWorkingDays, calculateDynamicProjectedEndDate } from '
 import { prisma } from '../config/database';
 import { getErrorMessage } from '../utils/errorHandler';
 
+const REPLY_PREFIX = '__reply__:';
+
+const decodeSafe = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+const getNotificationMessagePreview = (raw: string): string => {
+  const text = (raw || '').trim();
+  if (!text.startsWith(REPLY_PREFIX)) return text;
+
+  const newlineIndex = text.indexOf('\n');
+  if (newlineIndex === -1) return text;
+
+  const header = text.slice(REPLY_PREFIX.length, newlineIndex);
+  const body = text.slice(newlineIndex + 1).trim();
+
+  const firstColon = header.indexOf(':');
+  const secondColon = header.indexOf(':', firstColon + 1);
+  if (firstColon === -1 || secondColon === -1) return body || text;
+  const thirdColon = header.indexOf(':', secondColon + 1);
+  if (thirdColon === -1) return body || text;
+
+  const senderEncoded = header.slice(firstColon + 1, secondColon);
+  const contentEncoded = header.slice(thirdColon + 1);
+  const senderName = decodeSafe(senderEncoded);
+  const repliedText = decodeSafe(contentEncoded);
+
+  return body || `${senderName}: ${repliedText}`;
+};
+
 export const getStudents = async (req: AuthRequest, res: Response) => {
   try {
     const { companyId, userId, instructorId, search, page = 1, limit = 20 } = req.query;
@@ -989,8 +1023,8 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
           }
         }
 
-        // Get actual attendance days (only on expected working days)
-        const presentDays = await prisma.attendanceLog.count({
+        // Get actual attendance days (distinct dates only; multiple logs in one day count once)
+        const presentDayLogs = await prisma.attendanceLog.findMany({
           where: {
             studentId: student.id,
             verified: true,
@@ -999,8 +1033,11 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
               gte: startDate,
               lte: effectiveEndDate
             }
-          }
+          },
+          select: { date: true },
+          distinct: ['date']
         });
+        const presentDays = presentDayLogs.length;
 
         // Calculate attendance rate
         if (expectedWorkingDays > 0) {
@@ -1010,19 +1047,24 @@ export const getMyAssignedStudents = async (req: AuthRequest, res: Response) => 
         }
       } else {
         // Fallback: calculate based on available attendance logs
-        const totalAttendanceLogs = await prisma.attendanceLog.count({
+        const totalAttendanceDays = await prisma.attendanceLog.findMany({
           where: { studentId: student.id, verified: true }
+          , select: { date: true }
+          , distinct: ['date']
         });
 
-        const presentDays = await prisma.attendanceLog.count({
+        const presentDayLogs = await prisma.attendanceLog.findMany({
           where: {
             studentId: student.id,
             verified: true,
             timeIn: { not: null }
-          }
+          },
+          select: { date: true },
+          distinct: ['date']
         });
+        const presentDays = presentDayLogs.length;
 
-        attendanceRate = totalAttendanceLogs > 0 ? Math.round((presentDays / totalAttendanceLogs) * 100) : 0;
+        attendanceRate = totalAttendanceDays.length > 0 ? Math.round((presentDays / totalAttendanceDays.length) * 100) : 0;
       }
 
       // Calculate completed hours
@@ -1464,6 +1506,8 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
     });
 
     // Create notifications for relevant parties
+    const messagePreview = getNotificationMessagePreview(content);
+    const shortPreview = `${messagePreview.substring(0, 100)}${messagePreview.length > 100 ? '...' : ''}`;
     const notifications: Array<{ userId: string; title: string; message: string; link: string | null; type: NotificationType }> = [];
 
     if (req.user!.role === 'STUDENT') {
@@ -1472,8 +1516,8 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
         notifications.push({
           userId: student.instructorId,
           title: 'New Message from Student',
-          message: `${student.user.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
-          link: `/instructor/students?studentId=${studentId}`,
+          message: `${student.user.name}: ${shortPreview}`,
+          link: `/instructor/messages?studentId=${studentId}`,
           type: NotificationType.SYSTEM
         });
       }
@@ -1487,8 +1531,8 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
         notifications.push({
           userId: coordinator.id,
           title: 'New Message from Student',
-          message: `${student.user.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
-          link: `/coordinator/students?studentId=${studentId}`,
+          message: `${student.user.name}: ${shortPreview}`,
+          link: `/coordinator/messages?studentId=${studentId}`,
           type: NotificationType.SYSTEM
         });
       });
@@ -1497,8 +1541,8 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
       notifications.push({
         userId: student.userId,
         title: 'New Message from ' + (req.user!.role === 'INSTRUCTOR' ? 'Instructor' : 'Coordinator'),
-        message: `${req.user!.name}: ${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`,
-        link: `/student/dashboard?tab=partnership-assistance`,
+        message: `${req.user!.name}: ${shortPreview}`,
+        link: `/student/messages`,
         type: NotificationType.SYSTEM
       });
     }

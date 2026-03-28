@@ -11,6 +11,7 @@ import {
     LogOut,
     Loader2,
     Lock,
+    MessageCircle,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -51,7 +52,7 @@ const StudentLayout = () => {
     // Determine active tab based on current path
     const getActiveTab = (path: string) => {
         if (path.includes("/student/documents")) return "documents";
-        if (path.includes("/student/templates")) return "templates";
+        if (path.includes("/student/messages")) return "messages";
         if (path.includes("/student/companies")) return "companies";
         if (path.includes("/student/partnership-assistance")) return "partnership-assistance";
         if (path.includes("/student/attendance")) return "attendance";
@@ -208,6 +209,7 @@ const StudentLayout = () => {
     const navItems = [
         { id: "dashboard", icon: Home, label: "Overview", path: "/student/dashboard" },
         { id: "documents", icon: FileText, label: "Documents", path: "/student/documents" },
+        { id: "messages", icon: MessageCircle, label: "Messages", path: "/student/messages" },
         { id: "companies", icon: Building2, label: "Companies", path: "/student/companies" },
         { id: "partnership-assistance", icon: Search, label: "Find Company", path: "/student/partnership-assistance", disabled: isFindCompanyDisabled, disabledTitle: "You already have a company or a pending application" },
         { id: "attendance", icon: Clock, label: "Attendance", path: "/student/attendance", disabled: isAttendanceDisabled, disabledTitle: "You need a company and supervisor assignment before accessing attendance" },

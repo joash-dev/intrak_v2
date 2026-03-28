@@ -6,8 +6,10 @@ export interface NotificationItem {
   message: string;
   type: "DOCUMENT" | "ATTENDANCE" | "SYSTEM" | "ALERT" | "OTHER" | string;
   link?: string | null;
+  notificationCount?: number;
   read: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 class NotificationService {

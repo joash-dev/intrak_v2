@@ -45,8 +45,29 @@ class SettingsService {
       const userString = localStorage.getItem('user');
       if (userString) {
         const user = JSON.parse(userString);
+        const userId = user.id || "";
+        // Prefer server as source of truth when available
+        if (userId) {
+          try {
+            const response = await api.get(`/users/${userId}`);
+            const u = response.data?.user;
+            if (u) {
+              return {
+                id: u.id || userId,
+                name: u.name || user.name || "",
+                email: u.email || user.email || "",
+                phone: u.phone || "",
+                emergencyContact: u.emergencyContact || "",
+                emergencyName: u.emergencyName || "",
+              };
+            }
+          } catch (e) {
+            // Fallback to localStorage if API fails (offline, auth, etc.)
+          }
+        }
+
         return {
-          id: user.id || "",
+          id: userId,
           name: user.name || "Dr. Cruz",
           email: user.email || "coordinator@intrak.edu",
           phone: user.phone || "",
@@ -232,8 +253,19 @@ class SettingsService {
 
   // Validate phone number format (basic validation)
   validatePhone(phone: string): boolean {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
+    const raw = (phone || "").trim();
+    if (!raw) return true; // optional field
+
+    // Accept common PH formats:
+    // - 09XXXXXXXXX (11 digits)
+    // - +639XXXXXXXXX (13 chars incl +)
+    // - 639XXXXXXXXX (12 digits)
+    const cleaned = raw.replace(/[\s()-]/g, "");
+    if (/^09\d{9}$/.test(cleaned)) return true;
+    if (/^\+639\d{9}$/.test(cleaned)) return true;
+    if (/^639\d{9}$/.test(cleaned)) return true;
+
+    return false;
   }
 
   // Upload profile photo to server

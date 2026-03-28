@@ -98,7 +98,7 @@ export const updateCoordinatorSettings = async (req: AuthRequest, res: Response)
 
     if (
       defaultAnnouncementAudience &&
-      !['ALL', 'STUDENTS', 'COORDINATORS', 'INSTRUCTORS', 'INDUSTRY_PARTNERS'].includes(defaultAnnouncementAudience)
+      !['ALL', 'STUDENTS', 'COORDINATORS', 'INSTRUCTORS', 'PARTNERS'].includes(defaultAnnouncementAudience)
     ) {
       return res.status(400).json({ message: 'defaultAnnouncementAudience is invalid' });
     }

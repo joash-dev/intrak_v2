@@ -66,8 +66,6 @@ const StudentSettingsTab = () => {
     name: "",
     email: "",
     phone: "",
-    emergencyContact: "",
-    emergencyName: "",
   });
 
   const [passwordData, setPasswordData] = useState<PasswordChangeData>({
@@ -218,8 +216,6 @@ const StudentSettingsTab = () => {
         name: profileData.name,
         email: profileData.email,
         phone: profileData.phone,
-        emergencyContact: profileData.emergencyContact,
-        emergencyName: profileData.emergencyName,
       });
 
       // Update localStorage with new user data immediately
@@ -499,20 +495,22 @@ const StudentSettingsTab = () => {
         </div>
       )}
 
-      {/* Error Messages */}
-      {Object.keys(errors).length > 0 && (
+      {/* Error Messages (global only; field-level errors are shown inline) */}
+      {Object.keys(errors).some((k) => k === "form" || k === "server") && (
         <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg p-4">
           <div className="flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-red-600" />
             <div>
-              {Object.entries(errors).map(([field, message]) => (
-                <p
-                  key={field}
-                  className="text-sm text-red-800 dark:text-red-200 font-medium"
-                >
-                  {message}
-                </p>
-              ))}
+              {Object.entries(errors)
+                .filter(([field]) => field === "form" || field === "server")
+                .map(([field, message]) => (
+                  <p
+                    key={field}
+                    className="text-sm text-red-800 dark:text-red-200 font-medium"
+                  >
+                    {message}
+                  </p>
+                ))}
             </div>
           </div>
         </div>
@@ -707,60 +705,19 @@ const StudentSettingsTab = () => {
                           phone: e.target.value,
                         })
                       }
+                      inputMode="tel"
                       className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.phone
-                        ? "border-red-500"
+                        ? "border-red-500 focus:ring-red-500"
                         : "border-gray-300 dark:border-gray-600"
                         }`}
-                      placeholder="Optional"
+                      placeholder="e.g. 09XXXXXXXXX or +639XXXXXXXXX"
                     />
                     {errors.phone && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.phone}
-                      </p>
+                      <div className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+                        <p className="font-semibold">Invalid phone number format</p>
+                        <p className="mt-0.5">Use `09XXXXXXXXX` or `+639XXXXXXXXX`.</p>
+                      </div>
                     )}
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Emergency Contact
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profileData.emergencyName || ""}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            emergencyName: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Optional"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Contact Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={profileData.emergencyContact || ""}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            emergencyContact: e.target.value,
-                          })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Optional"
-                      />
-                    </div>
                   </div>
                 </div>
 

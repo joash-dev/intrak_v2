@@ -47,7 +47,7 @@ class AttendanceService {
 
   // Log manual attendance
   async logAttendance(data: {
-    date: string;
+    date?: string;
     timeIn?: string;
     timeOut?: string;
     action: 'time-in' | 'time-out';

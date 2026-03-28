@@ -66,7 +66,12 @@ export const useSessionTimeout = (config?: SessionTimeoutConfig) => {
       // Refresh token to reset session timer
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
-        await api.post('/auth/refresh', { refreshToken });
+        const response = await api.post('/auth/refresh', { refreshToken });
+        const { accessToken, refreshToken: newRefreshToken } = response.data || {};
+        if (accessToken && newRefreshToken) {
+          localStorage.setItem('accessToken', accessToken);
+          localStorage.setItem('refreshToken', newRefreshToken);
+        }
         setTimeRemaining(null);
         setIsWarning(false);
         setIsExpired(false);

@@ -40,6 +40,8 @@ const StudentAttendanceTab: React.FC = () => {
   const [qrAction, setQrAction] = useState<'login' | 'logout' | null>(null);
   const [polling, setPolling] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
+  const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
+  const [dailyLimitMessage, setDailyLimitMessage] = useState<string>("");
   const [qrCode, setQrCode] = useState("");
   const [qrToken, setQrToken] = useState<string>("");
   const [qrExpiresAt, setQrExpiresAt] = useState<string>("");
@@ -55,12 +57,6 @@ const StudentAttendanceTab: React.FC = () => {
   const [qrLoading, setQrLoading] = useState(false);
   const [manualLoading, setManualLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [hasTimeInToday, setHasTimeInToday] = useState(false);
-  const [manualDate, setManualDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [manualTimeIn, setManualTimeIn] = useState("");
-  const [manualTimeOut, setManualTimeOut] = useState("");
   const [manualRemarks, setManualRemarks] = useState("");
   const [companyType, setCompanyType] = useState<"PUBLIC" | "PRIVATE" | null>(null);
   const [worksOnSaturday, setWorksOnSaturday] = useState(false);
@@ -90,9 +86,9 @@ const StudentAttendanceTab: React.FC = () => {
   // Check time-in status when manual modal opens
   useEffect(() => {
     if (showManualModal) {
-      checkTimeInStatus();
+      // No-op: manual logging is auto-detected by server time.
     }
-  }, [showManualModal, manualDate]);
+  }, [showManualModal]);
 
   const fetchAttendanceData = async () => {
     try {
@@ -178,58 +174,62 @@ const StudentAttendanceTab: React.FC = () => {
 
   const progress =
     stats.totalHours > 0 ? (stats.completedHours / stats.totalHours) * 100 : 0;
+  const cappedProgress = Math.min(progress, 100);
 
-  const checkTimeInStatus = async () => {
-    try {
-      const hasTimeIn = await attendanceService.checkTimeInStatus(manualDate);
-      setHasTimeInToday(hasTimeIn);
-    } catch (error) {
-      console.error("Error checking time-in status:", error);
-    }
+  const getManilaToday = () =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+      new Date()
+    ); // YYYY-MM-DD
+
+  const hasOpenLogToday = () => {
+    const today = getManilaToday();
+    return attendanceLogs.some((l) => {
+      const logDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Manila",
+      }).format(new Date(l.date));
+      return logDate === today && l.timeIn && !l.timeOut;
+    });
   };
 
   const handleManualLog = async (action: "time-in" | "time-out") => {
     try {
       setManualLoading(true);
 
-      const logData: any = {
-        studentId: "me", // Server will resolve this to the actual student ID
-        date: manualDate,
+      await attendanceService.logAttendance({
         action,
         remarks: manualRemarks || undefined,
-      };
-
-      if (action === "time-in") {
-        logData.timeIn = `${manualDate}T${manualTimeIn}:00`;
-      } else {
-        logData.timeOut = `${manualDate}T${manualTimeOut}:00`;
-      }
-
-      await attendanceService.logAttendance(logData);
+      });
 
       toast.success(
         `${action === "time-in" ? "Time-in" : "Time-out"} logged successfully`
       );
       setShowManualModal(false);
       setManualRemarks("");
-      setManualTimeIn("");
-      setManualTimeOut("");
 
       // Refresh attendance data
       await fetchAttendanceData();
     } catch (error) {
       console.error(`Error logging ${action}:`, error);
-      toast.error(`Failed to log ${action}`);
+      const code = (error as any)?.response?.data?.code;
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        `Failed to log ${action}`;
+
+      if (code === "MAX_DAILY_SEGMENTS_REACHED") {
+        setDailyLimitMessage(
+          message || "Daily attendance sessions are complete for today."
+        );
+        setShowDailyLimitModal(true);
+      } else {
+        toast.error(message);
+      }
     } finally {
       setManualLoading(false);
     }
   };
 
   const handleOpenManualModal = () => {
-    const today = new Date().toISOString().split("T")[0];
-    setManualDate(today);
-    setManualTimeIn("");
-    setManualTimeOut("");
     setManualRemarks("");
     setShowManualModal(true);
   };
@@ -699,16 +699,16 @@ const StudentAttendanceTab: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
-            <span className="text-2xl font-bold text-green-600">
-              {progress.toFixed(1)}%
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <span className="text-2xl font-bold text-blue-600">
+              {cappedProgress.toFixed(1)}%
             </span>
           </div>
         </div>
         <div className="w-full bg-gray-200 dark:bg-[#212124] rounded-full h-4">
           <div
             className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${cappedProgress}%` }}
           />
         </div>
       </div>
@@ -743,10 +743,10 @@ const StudentAttendanceTab: React.FC = () => {
             <Clock className="w-6 h-6 text-white" />
           </div>
           <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-            Manual Log
+            Time In / Out
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Enter time manually
+            Auto-detected time (Asia/Manila)
           </p>
         </button>
 
@@ -1219,51 +1219,14 @@ const StudentAttendanceTab: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
           <div className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Manual Attendance Log
+              Attendance Log
             </h2>
             <div className="space-y-4">
-              {/* Date Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={manualDate}
-                  onChange={(e) => setManualDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
-                />
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Time is auto-detected by the system (Asia/Manila).
+                </p>
               </div>
-
-              {/* Time-in Section */}
-              {!hasTimeInToday && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Time In
-                  </label>
-                  <input
-                    type="time"
-                    value={manualTimeIn}
-                    onChange={(e) => setManualTimeIn(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
-                  />
-                </div>
-              )}
-
-              {/* Time-out Section */}
-              {hasTimeInToday && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Time Out
-                  </label>
-                  <input
-                    type="time"
-                    value={manualTimeOut}
-                    onChange={(e) => setManualTimeOut(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
-                  />
-                </div>
-              )}
 
               {/* Remarks */}
               <div>
@@ -1282,9 +1245,9 @@ const StudentAttendanceTab: React.FC = () => {
               {/* Status Indicator */}
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
-                  {hasTimeInToday
-                    ? "You have already logged time-in for this date. Log time-out to complete your attendance."
-                    : "Log your time-in for this date."}
+                  {hasOpenLogToday()
+                    ? "You currently have an active time-in. Log time-out to complete the session."
+                    : "Log time-in to start a new session."}
                 </p>
               </div>
 
@@ -1298,11 +1261,10 @@ const StudentAttendanceTab: React.FC = () => {
                 </button>
                 <button
                   onClick={() =>
-                    handleManualLog(hasTimeInToday ? "time-out" : "time-in")
+                    handleManualLog(hasOpenLogToday() ? "time-out" : "time-in")
                   }
                   disabled={
-                    manualLoading ||
-                    (hasTimeInToday ? !manualTimeOut : !manualTimeIn)
+                    manualLoading
                   }
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
@@ -1311,7 +1273,7 @@ const StudentAttendanceTab: React.FC = () => {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Logging...
                     </>
-                  ) : hasTimeInToday ? (
+                  ) : hasOpenLogToday() ? (
                     "Log Time Out"
                   ) : (
                     "Log Time In"
@@ -1319,6 +1281,36 @@ const StudentAttendanceTab: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Limit Modal (3rd session blocked) */}
+      {showDailyLimitModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => setShowDailyLimitModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-14 h-14 mx-auto rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mb-3">
+              <AlertCircle className="w-7 h-7 text-amber-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center">
+              Attendance for today is finished
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mt-2 text-center">
+              {dailyLimitMessage || "You already completed the maximum sessions for today."}
+            </p>
+            <button
+              className="mt-5 w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              onClick={() => setShowDailyLimitModal(false)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

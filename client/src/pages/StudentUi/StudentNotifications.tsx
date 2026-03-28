@@ -74,6 +74,9 @@ const StudentNotifications = () => {
                 if (link.startsWith("/documents")) {
                     link = "/student/documents";
                 }
+                if (link.startsWith("/student/dashboard") && link.includes("tab=partnership-assistance")) {
+                    link = "/student/messages";
+                }
                 navigate(link);
             }
         }

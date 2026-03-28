@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { PrismaClient, Role, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
 
@@ -66,11 +67,15 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
   try {
     const { title, content, audience, isPinned, type } = req.body;
 
+    // Backward compatibility: older clients may send INDUSTRY_PARTNERS, but DB enum is PARTNERS.
+    const normalizedAudience =
+      audience === 'INDUSTRY_PARTNERS' ? 'PARTNERS' : (audience || 'ALL');
+
     const announcement = await prisma.announcement.create({
       data: {
         title,
         content,
-        audience: audience || 'ALL',
+        audience: normalizedAudience,
         type: type || 'info',
         isPinned: isPinned || false,
         createdById: req.user!.id
@@ -83,10 +88,11 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
       STUDENTS: [Role.STUDENT],
       COORDINATORS: [Role.COORDINATOR],
       INSTRUCTORS: [Role.INSTRUCTOR],
-      INDUSTRY_PARTNERS: [Role.INDUSTRY_PARTNER],
+      PARTNERS: [Role.INDUSTRY_PARTNER],
     };
 
-    const targetRoles = audienceRoleMap[audience || 'ALL'] || audienceRoleMap.ALL;
+    const targetRoles =
+      audienceRoleMap[normalizedAudience] || audienceRoleMap.ALL;
 
     if (targetRoles.length > 0) {
       const usersToNotify = await prisma.user.findMany({
@@ -95,15 +101,17 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
       });
 
       if (usersToNotify.length > 0) {
-        await prisma.notification.createMany({
-          data: usersToNotify.map((user) => ({
-            userId: user.id,
-            title,
-            message: content,
-            type: NotificationType.SYSTEM,
-            link: null,
-          })),
-        });
+        await Promise.all(
+          usersToNotify.map((user) =>
+            notificationService.createNotification({
+              userId: user.id,
+              title,
+              message: content,
+              type: NotificationType.SYSTEM,
+              link: null,
+            })
+          )
+        );
       }
     }
 

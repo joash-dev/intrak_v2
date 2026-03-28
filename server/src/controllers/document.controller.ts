@@ -1137,14 +1137,12 @@ export const acceptSharedDocument = async (req: AuthRequest, res: Response) => {
         });
 
         // Notify the submitter that all students accepted and the PDF is ready
-        await prisma.notification.create({
-          data: {
-            userId: parentDoc.student.user.id,
-            title: 'Endorsement Letter - PDF Generated!',
-            message: `All students have accepted your multi-student endorsement letter. The PDF has been generated and submitted for review.`,
-            type: 'DOCUMENT',
-            link: '/documents',
-          },
+        await notificationService.createNotification({
+          userId: parentDoc.student.user.id,
+          title: 'Endorsement Letter - PDF Generated!',
+          message: `All students have accepted your multi-student endorsement letter. The PDF has been generated and submitted for review.`,
+          type: 'DOCUMENT',
+          link: '/documents',
         });
 
         // Emit real-time events for all students
@@ -1212,14 +1210,12 @@ export const declineSharedDocument = async (req: AuthRequest, res: Response) => 
       });
 
       if (parentDoc) {
-        await prisma.notification.create({
-          data: {
-            userId: parentDoc.student.user.id,
-            title: 'Endorsement Letter - Student Declined',
-            message: `${declinedStudentName} has declined the multi-student endorsement letter. They will not be included in the final document.`,
-            type: 'DOCUMENT',
-            link: '/documents',
-          },
+        await notificationService.createNotification({
+          userId: parentDoc.student.user.id,
+          title: 'Endorsement Letter - Student Declined',
+          message: `${declinedStudentName} has declined the multi-student endorsement letter. They will not be included in the final document.`,
+          type: 'DOCUMENT',
+          link: '/documents',
         });
 
         // Check if remaining children have ALL accepted
@@ -1271,14 +1267,12 @@ export const declineSharedDocument = async (req: AuthRequest, res: Response) => 
                 data: { filepath, fileSize: buffer.length, sharedStatus: null },
               });
 
-              await prisma.notification.create({
-                data: {
-                  userId: parentDoc.student.user.id,
-                  title: 'Endorsement Letter - PDF Generated!',
-                  message: `All remaining students have accepted. The PDF has been generated and submitted for review (without ${declinedStudentName}).`,
-                  type: 'DOCUMENT',
-                  link: '/documents',
-                },
+              await notificationService.createNotification({
+                userId: parentDoc.student.user.id,
+                title: 'Endorsement Letter - PDF Generated!',
+                message: `All remaining students have accepted. The PDF has been generated and submitted for review (without ${declinedStudentName}).`,
+                type: 'DOCUMENT',
+                link: '/documents',
               });
 
               console.log(`[Document] PDF generated after decline - ${allNames.length} students included.`);
@@ -1770,14 +1764,12 @@ export const finalizeDocument = async (req: AuthRequest, res: Response) => {
               });
 
               // Notify the included student
-              await prisma.notification.create({
-                data: {
-                  userId: otherStudent.user.id,
-                  title: 'Endorsement Letter - Action Required',
-                  message: `${student.user.name} has included you in a multi-student endorsement letter. Please review and accept or decline it in your Documents tab.`,
-                  type: 'DOCUMENT',
-                  link: '/documents',
-                },
+              await notificationService.createNotification({
+                userId: otherStudent.user.id,
+                title: 'Endorsement Letter - Action Required',
+                message: `${student.user.name} has included you in a multi-student endorsement letter. Please review and accept or decline it in your Documents tab.`,
+                type: 'DOCUMENT',
+                link: '/documents',
               });
 
               // Emit real-time event

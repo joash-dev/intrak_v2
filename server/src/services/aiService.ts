@@ -628,7 +628,7 @@ Write in a professional, supportive tone. Focus on growth opportunities.`;
           ? 'instructors'
           : audience === 'COORDINATORS'
             ? 'coordinators'
-            : audience === 'INDUSTRY_PARTNERS'
+            : audience === 'PARTNERS' || audience === 'INDUSTRY_PARTNERS'
               ? 'industry partners/supervisors'
               : audience.toLowerCase();
 

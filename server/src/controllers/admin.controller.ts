@@ -1490,7 +1490,9 @@ export const previewClearAllNASData = async (req: AuthRequest, res: Response) =>
 export const clearAllNASData = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const rawTargets = Array.isArray(req.body?.targets) ? req.body.targets : [];
+    const rawTargets: unknown[] = Array.isArray(req.body?.targets)
+      ? req.body.targets
+      : [];
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

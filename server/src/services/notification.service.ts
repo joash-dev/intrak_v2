@@ -1,5 +1,6 @@
 import { NotificationType } from '@prisma/client';
 import { prisma } from '../config/database';
+import { emailService } from './email.service';
 
 export interface CreateNotificationInput {
   userId: string;
@@ -12,8 +13,10 @@ export interface CreateNotificationInput {
 export const notificationService = {
   async createNotification(input: CreateNotificationInput) {
     const { userId, title, message, link = null, type = NotificationType.OTHER } = input;
-
-    return prisma.notification.create({
+    const looksLikeMessageNotification =
+      title.toLowerCase().includes('new message') ||
+      (link || '').toLowerCase().includes('/messages');
+    const notification = await prisma.notification.create({
       data: {
         userId,
         title,
@@ -22,6 +25,53 @@ export const notificationService = {
         type,
       },
     });
+
+    // Best-effort email mirror for in-app notifications.
+    // Message notifications are throttled to once per recipient per day.
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true, active: true },
+      });
+
+      if (user?.active && user.email) {
+        let shouldSendEmail = true;
+
+        if (looksLikeMessageNotification) {
+          const dayStart = new Date();
+          dayStart.setHours(0, 0, 0, 0);
+
+          const sentEarlierToday = await prisma.notification.findFirst({
+            where: {
+              userId,
+              id: { not: notification.id },
+              createdAt: { gte: dayStart },
+              OR: [
+                { title: { contains: 'New Message', mode: 'insensitive' } },
+                { link: { contains: '/messages', mode: 'insensitive' } },
+              ],
+            },
+            select: { id: true },
+          });
+
+          shouldSendEmail = !sentEarlierToday;
+        }
+
+        if (shouldSendEmail) {
+          await emailService.sendTypedNotificationEmail(user.email, {
+            recipientName: user.name || 'User',
+            title,
+            message,
+            linkPath: link,
+            notificationType: type,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[NotificationEmail] Failed to send notification email:', error);
+    }
+
+    return notification;
   },
 
   async markAsRead(notificationId: string, userId: string) {

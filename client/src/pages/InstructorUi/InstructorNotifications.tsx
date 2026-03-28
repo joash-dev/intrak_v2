@@ -18,19 +18,41 @@ const InstructorNotifications = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Initialize with context notifications if available, otherwise fetch
+        // Seed once from parent context to avoid empty flash, then page polling owns updates.
         if (contextNotifications && contextNotifications.length > 0) {
             setNotifications(contextNotifications);
-        } else {
-            fetchNotifications();
         }
-    }, [contextNotifications]);
+        fetchNotifications();
+        // Intentionally run once on mount to prevent context/list ping-pong flicker.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            fetchNotifications();
+        }, 5000);
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") {
+                fetchNotifications();
+            }
+        };
+
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+        };
+    }, []);
 
     const fetchNotifications = async () => {
         setLoading(true);
         try {
             const data = await notificationService.getNotifications({ limit: 50 });
             setNotifications(data);
+            if (setParentNotifications) {
+                setParentNotifications(data);
+            }
         } catch (error) {
             console.error("Failed to fetch notifications", error);
         } finally {
@@ -81,15 +103,10 @@ const InstructorNotifications = () => {
             await handleMarkAsRead(notification.id);
         }
 
-        // Handle message notifications - navigate to student management and open chat
+        // Handle message notifications - open the messages tab (preferred)
         if (notification.title === "New Message from Student" && notification.link) {
-            const urlParams = new URLSearchParams(notification.link.split('?')[1] || '');
-            const studentId = urlParams.get('studentId');
-            if (studentId) {
-                sessionStorage.setItem('openStudentId', studentId);
-                navigate('/instructor/students');
-                return;
-            }
+            navigate(notification.link);
+            return;
         }
 
         if (notification.link) {

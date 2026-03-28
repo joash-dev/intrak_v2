@@ -81,13 +81,17 @@ export const getAttendanceReportData = async (
     orderBy: { date: 'asc' },
   });
 
-  const totalMinutes = logs.reduce(
-    (sum, log) => sum + (log.durationMinutes || 0),
-    0
-  );
-
   const verifiedLogs = logs.filter((log) => log.verified).length;
   const pendingLogs = logs.length - verifiedLogs;
+  const roundToOfficialTime = (minutes: number): number => {
+    if (minutes < 30) return 0;
+    return Math.floor(minutes / 30) * 30;
+  };
+
+  // Report summary hours should reflect verified attendance only.
+  const totalMinutes = logs
+    .filter((log) => log.verified)
+    .reduce((sum, log) => sum + roundToOfficialTime(log.durationMinutes || 0), 0);
 
   const summary = {
     totalLogs: logs.length,
@@ -96,7 +100,7 @@ export const getAttendanceReportData = async (
     verifiedLogs,
     pendingLogs,
     averageHoursPerDay:
-      logs.length > 0 ? Number((totalMinutes / 60 / logs.length).toFixed(2)) : 0,
+      verifiedLogs > 0 ? Number((totalMinutes / 60 / verifiedLogs).toFixed(2)) : 0,
   };
 
   return {
@@ -194,34 +198,36 @@ export const generateAttendanceReportPDF = async (
     doc.moveDown(0.5);
 
     const tableTop = doc.y;
+    const tableLeft = 40;
+    const tableWidth = 515; // A4 width (595) minus 40pt left/right margins
     const columnWidths = {
-      date: 80,
-      timeIn: 70,
-      timeOut: 70,
-      duration: 70,
-      method: 80,
-      status: 60,
-      remarks: 120,
+      date: 70,
+      timeIn: 55,
+      timeOut: 55,
+      duration: 60,
+      method: 70,
+      status: 50,
+      remarks: 155,
     };
 
     const drawTableHeader = (y: number) => {
       doc
         .font('Helvetica-Bold')
         .fontSize(9)
-        .text('Date', 40, y, { width: columnWidths.date })
-        .text('Time In', 40 + columnWidths.date, y, { width: columnWidths.timeIn })
-        .text('Time Out', 40 + columnWidths.date + columnWidths.timeIn, y, {
+        .text('Date', tableLeft, y, { width: columnWidths.date })
+        .text('Time In', tableLeft + columnWidths.date, y, { width: columnWidths.timeIn })
+        .text('Time Out', tableLeft + columnWidths.date + columnWidths.timeIn, y, {
           width: columnWidths.timeOut,
         })
         .text(
           'Duration (hrs)',
-          40 + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut,
+          tableLeft + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut,
           y,
           { width: columnWidths.duration }
         )
         .text(
           'Method',
-          40 +
+          tableLeft +
             columnWidths.date +
             columnWidths.timeIn +
             columnWidths.timeOut +
@@ -231,7 +237,7 @@ export const generateAttendanceReportPDF = async (
         )
         .text(
           'Status',
-          40 +
+          tableLeft +
             columnWidths.date +
             columnWidths.timeIn +
             columnWidths.timeOut +
@@ -242,7 +248,7 @@ export const generateAttendanceReportPDF = async (
         )
         .text(
           'Remarks',
-          40 +
+          tableLeft +
             columnWidths.date +
             columnWidths.timeIn +
             columnWidths.timeOut +
@@ -253,7 +259,7 @@ export const generateAttendanceReportPDF = async (
           { width: columnWidths.remarks }
         );
 
-      doc.moveTo(40, y - 2).lineTo(40 + Object.values(columnWidths).reduce((a, b) => a + b, 0), y - 2).stroke();
+      doc.moveTo(tableLeft, y - 2).lineTo(tableLeft + tableWidth, y - 2).stroke();
       doc.moveDown(0.5);
       doc.font('Helvetica');
     };
@@ -261,8 +267,14 @@ export const generateAttendanceReportPDF = async (
     drawTableHeader(tableTop);
     let currentY = doc.y;
 
-    const formatDate = (value: Date | null) =>
-      value ? new Date(value).toLocaleString() : '-';
+    const formatTimeOnly = (value: Date | null) =>
+      value
+        ? new Date(value).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+          })
+        : '-';
 
     data.logs.forEach((log, index) => {
       if (currentY > 720) {
@@ -278,31 +290,31 @@ export const generateAttendanceReportPDF = async (
 
       doc
         .fontSize(9)
-        .text(new Date(log.date).toLocaleDateString(), 40, currentY, {
+        .text(new Date(log.date).toLocaleDateString('en-US'), tableLeft, currentY, {
           width: columnWidths.date,
         })
-        .text(formatDate(log.timeIn), 40 + columnWidths.date, currentY, {
+        .text(formatTimeOnly(log.timeIn), tableLeft + columnWidths.date, currentY, {
           width: columnWidths.timeIn,
         })
-        .text(formatDate(log.timeOut), 40 + columnWidths.date + columnWidths.timeIn, currentY, {
+        .text(formatTimeOnly(log.timeOut), tableLeft + columnWidths.date + columnWidths.timeIn, currentY, {
           width: columnWidths.timeOut,
         })
-        .text(durationHours, 40 + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut, currentY, {
+        .text(durationHours, tableLeft + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut, currentY, {
           width: columnWidths.duration,
         })
-        .text(methodLabel, 40 + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration, currentY, {
+        .text(methodLabel, tableLeft + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration, currentY, {
           width: columnWidths.method,
         })
-        .text(statusLabel, 40 + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration + columnWidths.method, currentY, {
+        .text(statusLabel, tableLeft + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration + columnWidths.method, currentY, {
           width: columnWidths.status,
         })
-        .text(log.remarks || '-', 40 + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration + columnWidths.method + columnWidths.status, currentY, {
+        .text(log.remarks || '-', tableLeft + columnWidths.date + columnWidths.timeIn + columnWidths.timeOut + columnWidths.duration + columnWidths.method + columnWidths.status, currentY, {
           width: columnWidths.remarks,
         });
 
       currentY = doc.y;
       if (index < data.logs.length - 1) {
-        doc.moveTo(40, currentY).lineTo(40 + Object.values(columnWidths).reduce((a, b) => a + b, 0), currentY).strokeColor('#dddddd');
+        doc.moveTo(tableLeft, currentY).lineTo(tableLeft + tableWidth, currentY).strokeColor('#dddddd');
         doc.stroke();
         doc.strokeColor('#000000');
       }
@@ -479,6 +491,30 @@ export const getComplianceReportData = async (
       },
     });
 
+    // Use verified attendance logs as the source of truth for completed hours,
+    // with official 30-minute rounding applied per log (matches Student UI and attendance report).
+    const roundToOfficialTime = (minutes: number): number => {
+      if (minutes < 30) return 0;
+      return Math.floor(minutes / 30) * 30;
+    };
+
+    const studentIds = students.map((s) => s.id);
+    const verifiedLogs = studentIds.length
+      ? await prisma.attendanceLog.findMany({
+          where: { studentId: { in: studentIds }, verified: true },
+          select: { studentId: true, durationMinutes: true },
+        })
+      : [];
+
+    const verifiedMinutesByStudent = new Map<string, number>();
+    for (const log of verifiedLogs) {
+      const current = verifiedMinutesByStudent.get(log.studentId) || 0;
+      verifiedMinutesByStudent.set(
+        log.studentId,
+        current + roundToOfficialTime(log.durationMinutes || 0)
+      );
+    }
+
     const items: ComplianceReportDataItem[] = students.map((student) => {
       const approvedDocuments = student.documents.filter(
         (doc) => doc.status === 'APPROVED'
@@ -489,16 +525,19 @@ export const getComplianceReportData = async (
             student.evaluations.length
           : null;
 
+      const verifiedMinutes = verifiedMinutesByStudent.get(student.id) || 0;
+      const completedHours = Math.floor(verifiedMinutes / 60);
+
       return {
         studentName: student.user.name,
         studentNumber: student.studentNumber,
         email: student.user.email,
         companyName: student.company?.name || null,
-        completedHours: student.completedHours,
+        completedHours,
         totalHours: student.totalHours,
         progress:
           student.totalHours > 0
-            ? Number(((student.completedHours / student.totalHours) * 100).toFixed(1))
+            ? Number(((completedHours / student.totalHours) * 100).toFixed(1))
             : 0,
         documentsSubmitted: student.documents.length,
         documentsApproved: approvedDocuments.length,

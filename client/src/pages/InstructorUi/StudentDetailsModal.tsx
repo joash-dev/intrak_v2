@@ -1,7 +1,6 @@
 import React from "react";
 import { X, Award, Activity, Clock } from "lucide-react";
 import { type InstructorStudent } from "../../services/instructorService";
-import PartnershipMessageThread from "../../components/PartnershipMessageThread";
 import { formatStudentId } from "../../utils/formatStudentId";
 
 interface StudentDetailsModalProps {
@@ -15,6 +14,18 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     onClose,
     onViewDocuments,
 }) => {
+    const formatDisplayDate = (value?: string | null): string => {
+        if (!value) return "Not set";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "Not set";
+        return new Intl.DateTimeFormat("en-PH", {
+            timeZone: "Asia/Manila",
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+        }).format(date);
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -62,7 +73,7 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                                 <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
                                     <div
                                         className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
-                                        style={{ width: `${selectedStudent.attendanceRate}%` }}
+                                        style={{ width: `${Math.min(selectedStudent.attendanceRate, 100)}%` }}
                                     />
                                 </div>
                             </div>
@@ -191,7 +202,7 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                                         Start Date:
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {selectedStudent.startDate}
+                                        {formatDisplayDate(selectedStudent.startDate)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -199,20 +210,11 @@ const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                                         End Date:
                                     </span>
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        {selectedStudent.endDate}
+                                        {formatDisplayDate(selectedStudent.endDate)}
                                     </span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Partnership Communication */}
-                    <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-                        <PartnershipMessageThread
-                            studentId={selectedStudent.id}
-                            studentName={selectedStudent.name}
-                            currentUserRole="INSTRUCTOR"
-                        />
                     </div>
 
                     {/* Action Buttons */}

@@ -581,6 +581,111 @@ async function main() {
     ]
   });
 
+  // Create backend-managed chat quick action templates
+  const quickActionTemplateTitles = [
+    'Follow-up on document review',
+    'Request clarification on rejected requirement',
+    'Attendance concern report',
+    'Progress update request',
+    'Revision request for submitted file',
+    'Acknowledgement and pending review',
+    'Schedule a short consultation',
+    'Process timeline update',
+    'Missing details request',
+  ];
+
+  await prisma.messageTemplate.deleteMany({
+    where: {
+      title: { in: quickActionTemplateTitles },
+    },
+  });
+
+  await prisma.messageTemplate.createMany({
+    data: [
+      {
+        title: 'Follow-up on document review',
+        content:
+          'Good day, I would like to follow up on the review status of my submitted requirement.',
+        category: 'DOCUMENTS',
+        targetRoles: ['STUDENT'],
+        isActive: true,
+        sortOrder: 1,
+      },
+      {
+        title: 'Request clarification on rejected requirement',
+        content:
+          'Good day, may I kindly ask for clarification on the corrections needed for my rejected requirement?',
+        category: 'DOCUMENTS',
+        targetRoles: ['STUDENT'],
+        isActive: true,
+        sortOrder: 2,
+      },
+      {
+        title: 'Attendance concern report',
+        content:
+          'Good day, I would like to report an attendance concern and request guidance on the proper next steps.',
+        category: 'ATTENDANCE',
+        targetRoles: ['STUDENT'],
+        isActive: true,
+        sortOrder: 3,
+      },
+      {
+        title: 'Progress update request',
+        content:
+          'Good day, may I request a progress update regarding my internship requirements and current standing?',
+        category: 'GENERAL',
+        targetRoles: ['STUDENT'],
+        isActive: true,
+        sortOrder: 4,
+      },
+      {
+        title: 'Revision request for submitted file',
+        content:
+          'Hello, please revise your submitted requirement based on the noted feedback and re-upload the updated file.',
+        category: 'DOCUMENTS',
+        targetRoles: ['INSTRUCTOR', 'COORDINATOR'],
+        isActive: true,
+        sortOrder: 5,
+      },
+      {
+        title: 'Acknowledgement and pending review',
+        content:
+          'Hello, your submission has been received. It is currently pending review. We will update you once evaluation is complete.',
+        category: 'GENERAL',
+        targetRoles: ['INSTRUCTOR', 'COORDINATOR'],
+        isActive: true,
+        sortOrder: 6,
+      },
+      {
+        title: 'Schedule a short consultation',
+        content:
+          'Hello, please provide your available schedule so we can arrange a short consultation regarding your internship concerns.',
+        category: 'GENERAL',
+        targetRoles: ['INSTRUCTOR', 'COORDINATOR'],
+        isActive: true,
+        sortOrder: 7,
+      },
+      {
+        title: 'Process timeline update',
+        content:
+          'Hello, this is an update on your request timeline. Your concern is in progress and we will notify you of the next action.',
+        category: 'GENERAL',
+        targetRoles: ['COORDINATOR'],
+        isActive: true,
+        sortOrder: 8,
+      },
+      {
+        title: 'Missing details request',
+        content:
+          'Hello, please provide the missing details needed so we can proceed with your request efficiently.',
+        category: 'GENERAL',
+        targetRoles: ['COORDINATOR'],
+        isActive: true,
+        sortOrder: 9,
+      },
+    ],
+  });
+
   console.log('✅ Database seeded successfully!');
   console.log('\nSample accounts:');
   console.log('Admin: admin@example.com / Password123!');
@@ -600,6 +705,7 @@ async function main() {
   console.log(`- ${8} attendance logs with different verification methods`);
   console.log(`- ${4} evaluations from different evaluators`);
   console.log(`- ${5} announcements for students`);
+  console.log(`- ${9} backend-managed quick action message templates`);
 }
 
 main()
