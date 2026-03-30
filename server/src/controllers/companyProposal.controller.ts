@@ -7,14 +7,13 @@ import { AuthRequest } from '../middleware/auth';
 import { createLocalBackup, ensureNASDirectoryExists, getStoragePathWithFallback, resolveFilePath } from '../config/nas';
 import { logActivity } from './activity.controller';
 import { notificationService } from '../services/notification.service';
+import { emitStudentPortalSync } from '../utils/socketEmitters';
 
-const STUDENT_UPLOADABLE_STATUSES: CompanyProposalStatus[] = [
-  'SUBMITTED_TO_INSTRUCTOR',
-  'RETURNED_BY_INSTRUCTOR',
-];
+const STUDENT_UPLOADABLE_STATUSES: CompanyProposalStatus[] = ['DRAFT', 'RETURNED_BY_INSTRUCTOR'];
 
+/** Student may delete only before the proposal is waiting on the instructor (draft, returned, or rejected by instructor). */
 const STUDENT_DELETABLE_STATUSES: CompanyProposalStatus[] = [
-  'SUBMITTED_TO_INSTRUCTOR',
+  'DRAFT',
   'RETURNED_BY_INSTRUCTOR',
   'REJECTED_BY_INSTRUCTOR',
 ];
@@ -76,7 +75,9 @@ const notifyUser = async (userId: string, title: string, message: string, link: 
 };
 
 const proposalLink = (proposalId: string, role: Role): string => {
-  if (role === 'STUDENT') return `/student/partnership-assistance`;
+  if (role === 'STUDENT') {
+    return `/student/partnership-assistance?proposal=${encodeURIComponent(proposalId)}`;
+  }
   if (role === 'INSTRUCTOR') return `/instructor/company-proposals`;
   return `/coordinator/company-proposals`;
 };
@@ -313,6 +314,65 @@ export const createProposal = async (req: AuthRequest, res: Response) => {
         contactNumber: contactNumber?.trim() || null,
         industry: industry?.trim() || null,
         remarks: remarks?.trim() || null,
+        status: 'DRAFT',
+      },
+      include: includeProposal,
+    });
+
+    await logActivity({
+      type: 'DOCUMENT_UPLOADED',
+      description: `${student.user.name} created company proposal draft: ${proposal.companyName}`,
+      userId,
+      userName: student.user.name,
+      ipAddress: req.ip,
+    });
+
+    return res.status(201).json({
+      message:
+        'Company proposal saved as draft. You can submit when ready; add proposal files if your instructor asks for them.',
+      proposal,
+    });
+  } catch (error) {
+    console.error('Error creating company proposal:', error);
+    return res.status(500).json({ message: 'Failed to submit company proposal' });
+  }
+};
+
+/** Student submits a draft to their instructor (DRAFT → SUBMITTED_TO_INSTRUCTOR). */
+export const studentSubmitDraftToInstructor = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const student = await getStudentByUserId(req.user!.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    const proposal = await prisma.companyProposal.findUnique({
+      where: { id },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!proposal || proposal.studentId !== student.id) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    if (proposal.status !== 'DRAFT') {
+      return res.status(400).json({
+        message: 'Only draft proposals can be submitted to your instructor this way',
+      });
+    }
+
+    const updatedProposal = await prisma.companyProposal.update({
+      where: { id },
+      data: {
         status: 'SUBMITTED_TO_INSTRUCTOR',
       },
       include: includeProposal,
@@ -323,25 +383,27 @@ export const createProposal = async (req: AuthRequest, res: Response) => {
         student.instructorId,
         'New Company Proposal',
         `${student.user.name} submitted a company proposal for ${proposal.companyName}.`,
-        proposalLink(proposal.id, 'INSTRUCTOR'),
+        proposalLink(id, 'INSTRUCTOR'),
       );
     }
 
     await logActivity({
       type: 'DOCUMENT_UPLOADED',
-      description: `${student.user.name} submitted company proposal: ${proposal.companyName}`,
-      userId,
+      description: `${student.user.name} submitted company proposal to instructor: ${proposal.companyName}`,
+      userId: req.user!.id,
       userName: student.user.name,
       ipAddress: req.ip,
     });
 
-    return res.status(201).json({
-      message: 'Company proposal submitted successfully',
-      proposal,
+    emitStudentPortalSync(student.user.id, { reason: 'company_proposal_submitted_to_instructor' });
+
+    return res.json({
+      message: 'Proposal submitted to your instructor',
+      proposal: updatedProposal,
     });
   } catch (error) {
-    console.error('Error creating company proposal:', error);
-    return res.status(500).json({ message: 'Failed to submit company proposal' });
+    console.error('Error submitting draft proposal:', error);
+    return res.status(500).json({ message: 'Failed to submit proposal' });
   }
 };
 
@@ -429,18 +491,86 @@ export const deleteMyProposal = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/** Student sends a returned proposal back to the instructor for review (status → SUBMITTED_TO_INSTRUCTOR) */
+export const studentResubmitProposal = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const student = await getStudentByUserId(req.user!.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    const proposal = await prisma.companyProposal.findUnique({
+      where: { id },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!proposal || proposal.studentId !== student.id) {
+      return res.status(404).json({ message: 'Proposal not found' });
+    }
+
+    if (proposal.status !== 'RETURNED_BY_INSTRUCTOR') {
+      return res.status(400).json({
+        message: 'Only proposals returned by your instructor can be resubmitted for review',
+      });
+    }
+
+    const updatedProposal = await prisma.companyProposal.update({
+      where: { id },
+      data: {
+        status: 'SUBMITTED_TO_INSTRUCTOR',
+      },
+      include: includeProposal,
+    });
+
+    if (student.instructorId) {
+      await notifyUser(
+        student.instructorId,
+        'Company proposal resubmitted',
+        `${student.user.name} resubmitted "${proposal.companyName}" for your review after revision.`,
+        proposalLink(id, 'INSTRUCTOR'),
+      );
+    }
+
+    await logActivity({
+      type: 'DOCUMENT_UPLOADED',
+      description: `${student.user.name} resubmitted company proposal for review: ${proposal.companyName}`,
+      userId: req.user!.id,
+      userName: student.user.name,
+      ipAddress: req.ip,
+    });
+
+    emitStudentPortalSync(student.user.id, { reason: 'company_proposal_resubmitted' });
+
+    return res.json({
+      message: 'Proposal resubmitted for instructor review',
+      proposal: updatedProposal,
+    });
+  } catch (error) {
+    console.error('Error resubmitting company proposal:', error);
+    return res.status(500).json({ message: 'Failed to resubmit proposal' });
+  }
+};
+
 export const getInstructorProposals = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { status } = req.query;
 
     const where: any = {
-      OR: [{ instructorId: userId }, { student: { instructorId: userId } }],
+      AND: [
+        { OR: [{ instructorId: userId }, { student: { instructorId: userId } }] },
+        status && status !== 'all' ? { status } : { status: { not: 'DRAFT' } },
+      ],
     };
-
-    if (status && status !== 'all') {
-      where.status = status;
-    }
 
     const proposals = await prisma.companyProposal.findMany({
       where,
@@ -458,11 +588,8 @@ export const getInstructorProposals = async (req: AuthRequest, res: Response) =>
 export const getCoordinatorProposals = async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.query;
-    const where: any = {};
-
-    if (status && status !== 'all') {
-      where.status = status;
-    }
+    const where: any =
+      status && status !== 'all' ? { status } : { status: { not: 'DRAFT' } };
 
     const proposals = await prisma.companyProposal.findMany({
       where,
@@ -621,6 +748,105 @@ export const downloadAttachment = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const deleteProposalAttachment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { attachmentId } = req.params;
+    const attachment = await prisma.companyProposalAttachment.findUnique({
+      where: { id: attachmentId },
+      include: {
+        proposal: {
+          include: {
+            student: {
+              include: {
+                user: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!attachment) {
+      return res.status(404).json({ message: 'Attachment not found' });
+    }
+
+    const access = await ensureProposalAccess(req, attachment.proposalId);
+    if (access.error) {
+      return res.status(access.error.status).json({ message: access.error.message });
+    }
+
+    const proposal = attachment.proposal;
+    const user = req.user!;
+    const userRole = user.role as Role;
+
+    if (userRole === 'STUDENT') {
+      if (proposal.student.userId !== user.id) {
+        return res.status(403).json({ message: 'You can only manage attachments on your own proposals' });
+      }
+      if (attachment.role !== 'STUDENT') {
+        return res.status(403).json({ message: 'You can only delete files you uploaded' });
+      }
+      if (!STUDENT_UPLOADABLE_STATUSES.includes(proposal.status)) {
+        return res.status(400).json({
+          message: 'You cannot delete files while this proposal is not open for your edits',
+        });
+      }
+    } else if (userRole === 'INSTRUCTOR') {
+      if (!(proposal.instructorId === user.id || proposal.student.instructorId === user.id)) {
+        return res.status(403).json({ message: 'You are not assigned to this proposal' });
+      }
+      if (attachment.role !== 'INSTRUCTOR') {
+        return res.status(403).json({ message: 'You can only delete instructor files' });
+      }
+      if (!INSTRUCTOR_ACTIONABLE_STATUSES.includes(proposal.status)) {
+        return res.status(400).json({ message: 'Cannot delete attachments at this stage' });
+      }
+    } else if (userRole === 'COORDINATOR') {
+      if (attachment.role !== 'COORDINATOR') {
+        return res.status(403).json({ message: 'You can only delete coordinator-uploaded files' });
+      }
+      if (!COORDINATOR_ACTIONABLE_STATUSES.includes(proposal.status)) {
+        return res.status(400).json({ message: 'Cannot delete attachments at this stage' });
+      }
+    } else if (userRole !== 'ADMIN') {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
+
+    const resolvedPath = resolveFilePath(attachment.filepath);
+
+    await prisma.companyProposalAttachment.delete({
+      where: { id: attachmentId },
+    });
+
+    if (resolvedPath && fs.existsSync(resolvedPath)) {
+      try {
+        fs.unlinkSync(resolvedPath);
+      } catch (unlinkErr) {
+        console.warn(`Unable to remove proposal attachment file: ${resolvedPath}`, unlinkErr);
+      }
+    }
+
+    await logActivity({
+      type: 'DOCUMENT_REJECTED',
+      description: `${user.name} removed attachment "${attachment.filename}" from proposal ${proposal.companyName}`,
+      userId: user.id,
+      userName: user.name,
+      ipAddress: req.ip,
+    });
+
+    if (userRole === 'STUDENT') {
+      emitStudentPortalSync(proposal.student.userId, { reason: 'company_proposal_attachment_deleted' });
+    }
+
+    return res.json({ message: 'Attachment removed' });
+  } catch (error) {
+    console.error('Error deleting proposal attachment:', error);
+    return res.status(500).json({ message: 'Failed to delete attachment' });
+  }
+};
+
 export const instructorForwardProposal = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -680,6 +906,8 @@ export const instructorForwardProposal = async (req: AuthRequest, res: Response)
       proposalLink(id, 'STUDENT'),
     );
 
+    emitStudentPortalSync(proposal.student.userId, { reason: 'company_proposal_forwarded' });
+
     return res.json({ message: 'Proposal forwarded to coordinator', proposal: updatedProposal });
   } catch (error) {
     console.error('Error forwarding proposal:', error);
@@ -724,14 +952,23 @@ export const instructorRejectOrReturnProposal = async (req: AuthRequest, res: Re
       include: includeProposal,
     });
 
-    await notifyUser(
-      proposal.student.userId,
-      decision === 'RETURNED_BY_INSTRUCTOR' ? 'Company Proposal Returned' : 'Company Proposal Rejected',
-      decision === 'RETURNED_BY_INSTRUCTOR'
-        ? `Your proposal for ${proposal.companyName} was returned by your instructor for revision.`
-        : `Your proposal for ${proposal.companyName} was rejected by your instructor.`,
-      proposalLink(id, 'STUDENT'),
-    );
+    const instructorName = updatedProposal.instructor?.name?.trim() || 'Your instructor';
+    const isReturn = decision === 'RETURNED_BY_INSTRUCTOR';
+    const title = isReturn
+      ? `Proposal returned: ${proposal.companyName}`
+      : `Proposal rejected: ${proposal.companyName}`;
+    const message = [
+      `${instructorName} ${isReturn ? 'returned your company proposal for revision' : 'rejected your company proposal'}.`,
+      `Company: "${proposal.companyName}"`,
+      `Proposal ID: ${id}`,
+      '',
+      'Instructor remarks:',
+      remarks.trim(),
+    ].join('\n');
+
+    await notifyUser(proposal.student.userId, title, message, proposalLink(id, 'STUDENT'));
+
+    emitStudentPortalSync(proposal.student.userId, { reason: 'company_proposal_instructor_decision' });
 
     return res.json({
       message:
@@ -834,6 +1071,8 @@ export const coordinatorMarkExternalPending = async (req: AuthRequest, res: Resp
       );
     }
 
+    emitStudentPortalSync(proposal.student.userId, { reason: 'company_proposal_external_pending' });
+
     return res.json({
       message: 'Proposal moved to pending external approval',
       proposal: updatedProposal,
@@ -913,6 +1152,8 @@ export const coordinatorFinalizeProposal = async (req: AuthRequest, res: Respons
         proposalLink(id, 'INSTRUCTOR'),
       );
     }
+
+    emitStudentPortalSync(proposal.student.userId, { reason: `company_proposal_finalize_${decision.toLowerCase()}` });
 
     return res.json({
       message: `Proposal ${decision.toLowerCase()} successfully`,

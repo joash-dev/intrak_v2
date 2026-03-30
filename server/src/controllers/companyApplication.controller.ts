@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
+import { emitStudentPortalSync } from '../utils/socketEmitters';
 
 // Get all applications (for instructors/coordinators)
 export const getAllApplications = async (req: AuthRequest, res: Response) => {
@@ -203,8 +204,8 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
         return res.status(400).json({ message: 'You already have a pending application to this company' });
       } else if (existingApplication.status === 'APPROVED') {
         return res.status(400).json({ message: 'Your application to this company was already approved' });
-      } else if (existingApplication.status === 'REJECTED') {
-        // Allow reapplication if previously rejected
+      } else if (existingApplication.status === 'REJECTED' || existingApplication.status === 'WITHDRAWN') {
+        // Reuse row: re-apply after rejection or student withdrawal (unique studentId+companyId)
         const application = await prisma.companyApplication.update({
           where: { id: existingApplication.id },
           data: {
@@ -220,7 +221,6 @@ export const applyToCompany = async (req: AuthRequest, res: Response) => {
           }
         });
 
-        // Log activity
         await logActivity({
           type: 'DOCUMENT_UPLOADED',
           description: `${student.user.name} reapplied to ${company.name}`,
@@ -384,6 +384,8 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
+    emitStudentPortalSync(application.student.user.id, { reason: 'company_application_approved' });
+
     res.json({
       application: result,
       message: 'Application approved and student assigned to company successfully'
@@ -460,6 +462,8 @@ export const rejectApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
+    emitStudentPortalSync(application.student.user.id, { reason: 'company_application_rejected' });
+
     res.json({
       application: updatedApplication,
       message: 'Application rejected successfully'
@@ -526,6 +530,8 @@ export const withdrawApplication = async (req: AuthRequest, res: Response) => {
       ipAddress: req.ip
     });
 
+    emitStudentPortalSync(userId, { reason: 'company_application_withdrawn' });
+
     res.json({
       application: updatedApplication,
       message: 'Application withdrawn successfully'
@@ -533,6 +539,86 @@ export const withdrawApplication = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error withdrawing application:', error);
     res.status(500).json({ message: 'Failed to withdraw application', error: (error instanceof Error ? error.message : String(error)) });
+  }
+};
+
+/** Student leaves an approved internship placement (clears company assignment). */
+export const resignFromPlacement = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const student = await prisma.student.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    if (!student.companyId) {
+      return res.status(400).json({ message: 'You do not have an active company placement to resign from' });
+    }
+
+    const application = await prisma.companyApplication.findFirst({
+      where: {
+        studentId: student.id,
+        companyId: student.companyId,
+        status: 'APPROVED',
+      },
+      include: { company: true },
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        message:
+          'No approved application matches your current assignment. Please contact your coordinator if you need to change companies.',
+      });
+    }
+
+    const companyName = application.company.name;
+
+    await prisma.$transaction(async (tx) => {
+      await tx.student.update({
+        where: { id: student.id },
+        data: {
+          companyId: null,
+          supervisorName: null,
+          startDate: null,
+          endDate: null,
+          completedHours: 0,
+          jobDescription: null,
+        },
+      });
+
+      await tx.companyApplication.update({
+        where: { id: application.id },
+        data: {
+          status: 'WITHDRAWN',
+          rejectionReason: 'Student resigned from internship placement',
+        },
+      });
+    });
+
+    await logActivity({
+      type: 'USER_UPDATED',
+      description: `${student.user.name} resigned from internship placement at ${companyName}`,
+      userId,
+      userName: student.user.name,
+      ipAddress: req.ip,
+    });
+
+    emitStudentPortalSync(userId, { reason: 'student_resigned_placement' });
+
+    res.json({
+      message: 'You have resigned from your internship placement. You may apply to companies again.',
+    });
+  } catch (error) {
+    console.error('Error resigning from placement:', error);
+    res.status(500).json({
+      message: 'Failed to resign from placement',
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 

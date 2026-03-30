@@ -434,10 +434,19 @@ const StudentOverview = () => {
 
             {/* Announcements */}
             <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Bell className="w-5 h-5 mr-2 text-blue-600" />
-                    Recent Announcements
-                </h3>
+                <div className="flex items-center justify-between gap-2 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                        <Bell className="w-5 h-5 mr-2 text-blue-600" />
+                        Recent Announcements
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/student/announcements")}
+                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline shrink-0"
+                    >
+                        View all
+                    </button>
+                </div>
                 <div className="space-y-3">
                     {Array.isArray(data.announcements) && data.announcements.length > 0 ? (
                         data.announcements.map((announcement) => (

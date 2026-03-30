@@ -407,9 +407,9 @@ const InstructorApplications: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center">
-                          <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">{application.company.address}</span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-start gap-1">
+                          <MapPin className="w-3 h-3 mr-1 flex-shrink-0 mt-0.5" />
+                          <span className="min-w-0 break-words">{application.company.address}</span>
                         </p>
                         <div className="mt-1.5">
                           {availableSlots > 0 ? (
@@ -430,8 +430,8 @@ const InstructorApplications: React.FC = () => {
 
                   {/* Application Message */}
                   {application.message && (
-                    <div className="mt-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-lg p-2.5">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <div className="mt-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-52 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
                         <span className="font-semibold text-blue-700 dark:text-blue-300">Message: </span>
                         {application.message}
                       </p>
@@ -440,8 +440,8 @@ const InstructorApplications: React.FC = () => {
 
                   {/* Rejection Reason */}
                   {application.rejectionReason && (
-                    <div className="mt-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/50 rounded-lg p-2.5">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <div className="mt-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-40 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
                         <span className="font-semibold text-red-700 dark:text-red-300">Rejection Reason: </span>
                         {application.rejectionReason}
                       </p>
@@ -538,8 +538,8 @@ const InstructorApplications: React.FC = () => {
 
       {/* Approve Modal */}
       {showApproveModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 overflow-y-auto" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 max-h-[min(90vh,100%)] overflow-y-auto overscroll-contain my-auto">
             <div className="flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
               <CheckCircle className="w-7 h-7 text-green-600" />
             </div>
@@ -595,8 +595,8 @@ const InstructorApplications: React.FC = () => {
 
       {/* Reject Modal */}
       {showRejectModal && selectedApplication && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 overflow-y-auto" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 max-h-[min(90vh,100%)] overflow-y-auto overscroll-contain my-auto">
             <div className="flex items-center justify-center w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-4">
               <XCircle className="w-7 h-7 text-red-600" />
             </div>
@@ -623,7 +623,8 @@ const InstructorApplications: React.FC = () => {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Please provide a reason for rejection..."
                 rows={3}
-                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                maxLength={4000}
+                className="w-full min-h-[4.5rem] max-h-52 resize-y overflow-y-auto px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent break-words"
               />
             </div>
 

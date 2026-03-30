@@ -265,6 +265,7 @@ enum ApplicationStatus {
 }
 
 enum CompanyProposalStatus {
+  DRAFT
   SUBMITTED_TO_INSTRUCTOR
   RETURNED_BY_INSTRUCTOR
   REJECTED_BY_INSTRUCTOR
@@ -350,7 +351,7 @@ model CompanyProposal {
   remarks           String?
   coordinatorRemarks String?
   externalReference String?
-  status            CompanyProposalStatus @default(SUBMITTED_TO_INSTRUCTOR)
+  status            CompanyProposalStatus @default(DRAFT)
   submittedAt       DateTime              @default(now())
   instructorReviewedAt DateTime?
   coordinatorReviewedAt DateTime?

@@ -21,6 +21,8 @@ export interface UploadDocumentRequest {
   file: File;
   type: string;
   studentId?: string;
+  /** 0–100 from XMLHttpRequest upload progress */
+  onUploadProgress?: (percentLoaded: number) => void;
 }
 
 export interface WeekData {
@@ -78,6 +80,11 @@ class DocumentService {
     const response = await api.post('/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (evt) => {
+        if (!data.onUploadProgress || !evt.total) return;
+        const pct = Math.min(100, Math.round((evt.loaded * 100) / evt.total));
+        data.onUploadProgress(pct);
       },
     });
     return response.data.document;

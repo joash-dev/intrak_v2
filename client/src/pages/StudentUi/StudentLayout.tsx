@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import {
     Home,
     FileText,
@@ -12,6 +12,7 @@ import {
     Loader2,
     Lock,
     MessageCircle,
+    MessageSquare,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -21,6 +22,8 @@ import { dashboardService } from "../../services/dashboardService";
 import api from "../../services/api";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
 import toast from "react-hot-toast";
+import { useSocketContext } from "../../contexts/SocketContext";
+import { SOCKET_EVENTS } from "../../services/socketService";
 
 const StudentLayout = () => {
     const navigate = useNavigate();
@@ -41,16 +44,36 @@ const StudentLayout = () => {
     const [studentCompany, setStudentCompany] = useState<string | null>(null);
     const [studentSupervisor, setStudentSupervisor] = useState<string | null>(null);
 
-    // Notifications State
-    const { data: notificationsData } = useOptimizedData<NotificationItem[]>(
+    // Notifications State (refresh pulls fresh list so socket + cache stay in sync)
+    const { data: notificationsData, refresh: refreshNotifications } = useOptimizedData<NotificationItem[]>(
         () => notificationService.getNotifications({ limit: 15 }),
         [],
         { ttl: 60 * 1000 }
     );
     const [localNotifications, setLocalNotifications] = useState<NotificationItem[]>([]);
+    const refreshNotificationsRef = useRef(refreshNotifications);
+    refreshNotificationsRef.current = refreshNotifications;
+
+    const { socket } = useSocketContext();
+
+    const bumpNotifications = () => {
+        window.dispatchEvent(new CustomEvent("intrak:notifications-refresh"));
+    };
+
+    // When returning to the tab, resync in case the socket missed updates
+    useEffect(() => {
+        const onVis = () => {
+            if (document.visibilityState !== "visible") return;
+            void refreshNotificationsRef.current?.();
+            bumpNotifications();
+        };
+        document.addEventListener("visibilitychange", onVis);
+        return () => document.removeEventListener("visibilitychange", onVis);
+    }, []);
 
     // Determine active tab based on current path
     const getActiveTab = (path: string) => {
+        if (path.includes("/student/announcements")) return "announcements";
         if (path.includes("/student/documents")) return "documents";
         if (path.includes("/student/messages")) return "messages";
         if (path.includes("/student/companies")) return "companies";
@@ -110,6 +133,8 @@ const StudentLayout = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    const loadUserDataRef = useRef<() => Promise<void>>(async () => {});
+
     const loadUserData = async () => {
         try {
             const userData = localStorage.getItem("user");
@@ -140,6 +165,48 @@ const StudentLayout = () => {
             setPhotoLoading(false);
         }
     };
+
+    loadUserDataRef.current = loadUserData;
+
+    useEffect(() => {
+        if (!socket) return;
+        const onPortalSync = () => {
+            void loadUserDataRef.current();
+            void refreshNotificationsRef.current?.();
+            bumpNotifications();
+            window.dispatchEvent(new CustomEvent("intrak:student-portal-sync"));
+        };
+        const onNotificationNew = (payload: {
+            notificationId: string;
+            title: string;
+            message: string;
+            link?: string;
+            createdAt: string;
+            type?: string;
+        }) => {
+            setLocalNotifications((prev) => [
+                {
+                    id: payload.notificationId,
+                    title: payload.title,
+                    message: payload.message,
+                    link: payload.link ?? null,
+                    read: false,
+                    createdAt: payload.createdAt,
+                    type: (payload.type as NotificationItem["type"]) || "OTHER",
+                },
+                ...prev.filter((n) => n.id !== payload.notificationId),
+            ]);
+            void refreshNotificationsRef.current?.();
+            bumpNotifications();
+            toast(payload.title, { icon: "🔔", duration: 4500 });
+        };
+        socket.on(SOCKET_EVENTS.STUDENT_PORTAL_SYNC, onPortalSync);
+        socket.on(SOCKET_EVENTS.NOTIFICATION_NEW, onNotificationNew);
+        return () => {
+            socket.off(SOCKET_EVENTS.STUDENT_PORTAL_SYNC, onPortalSync);
+            socket.off(SOCKET_EVENTS.NOTIFICATION_NEW, onNotificationNew);
+        };
+    }, [socket]);
 
     // Load User Data & Company Status
     useEffect(() => {
@@ -208,6 +275,7 @@ const StudentLayout = () => {
     // Navigation Items
     const navItems = [
         { id: "dashboard", icon: Home, label: "Overview", path: "/student/dashboard" },
+        { id: "announcements", icon: MessageSquare, label: "Announcements", path: "/student/announcements" },
         { id: "documents", icon: FileText, label: "Documents", path: "/student/documents" },
         { id: "messages", icon: MessageCircle, label: "Messages", path: "/student/messages" },
         { id: "companies", icon: Building2, label: "Companies", path: "/student/companies" },

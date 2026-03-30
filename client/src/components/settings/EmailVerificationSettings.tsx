@@ -5,7 +5,17 @@ import toast from 'react-hot-toast';
 
 const outfitFont = { fontFamily: "'Outfit', sans-serif" };
 
-const EmailVerificationSettings: React.FC = () => {
+export interface EmailVerificationSettingsProps {
+    /** Called when verification status is loaded or updated (e.g. for gating password change). */
+    onVerificationStatusChange?: (emailVerified: boolean) => void;
+    /** When false, omits top border/padding so the block can sit directly under a heading or info card. */
+    showTopSeparator?: boolean;
+}
+
+const EmailVerificationSettings: React.FC<EmailVerificationSettingsProps> = ({
+    onVerificationStatusChange,
+    showTopSeparator = true,
+}) => {
     const [emailVerified, setEmailVerified] = useState(false);
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -26,10 +36,13 @@ const EmailVerificationSettings: React.FC = () => {
     const loadStatus = async () => {
         try {
             const response = await api.get('/auth/email/status');
-            setEmailVerified(response.data.emailVerified);
+            const verified = response.data?.emailVerified === true;
+            setEmailVerified(verified);
             setEmail(response.data.email);
+            onVerificationStatusChange?.(verified);
         } catch (error) {
             console.error("Failed to load email verification status");
+            onVerificationStatusChange?.(false);
         } finally {
             setLoadingStatus(false);
         }
@@ -62,42 +75,49 @@ const EmailVerificationSettings: React.FC = () => {
     }
 
     return (
-        <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div
+            className={
+                showTopSeparator
+                    ? "pt-6 border-t border-gray-200 dark:border-gray-700"
+                    : ""
+            }
+        >
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2" style={outfitFont}>
                 <Mail className="w-5 h-5 text-blue-500" />
                 Email Verification
             </h3>
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <div>
-                    <p className="font-medium text-gray-900 dark:text-white" style={outfitFont}>
+            <div className="flex flex-col gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-medium text-gray-900 dark:text-white break-all sm:break-words" style={outfitFont}>
                         {email}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400" style={outfitFont}>
                         {emailVerified
-                            ? "Your email is verified. You can enable 2FA."
-                            : "Verify your email to enable security features like 2FA."}
+                            ? "Your email is verified. You can change your password and use 2FA."
+                            : "Verify your email to change your password and enable 2FA."}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end sm:gap-3 sm:shrink-0">
                     {emailVerified ? (
-                        <span className="flex items-center gap-1 text-sm text-green-600 bg-green-100 dark:bg-green-900/50 px-3 py-1 rounded-full" style={outfitFont}>
-                            <Check className="w-4 h-4" /> Verified
+                        <span className="inline-flex items-center gap-1 text-sm text-green-600 bg-green-100 dark:bg-green-900/50 px-3 py-1.5 rounded-full" style={outfitFont}>
+                            <Check className="w-4 h-4 shrink-0" /> Verified
                         </span>
                     ) : (
                         <>
-                            <span className="flex items-center gap-1 text-sm text-amber-600 bg-amber-100 dark:bg-amber-900/50 px-3 py-1 rounded-full" style={outfitFont}>
-                                <AlertCircle className="w-4 h-4" /> Not Verified
+                            <span className="inline-flex items-center gap-1 text-sm text-amber-600 bg-amber-100 dark:bg-amber-900/50 px-3 py-1.5 rounded-full shrink-0" style={outfitFont}>
+                                <AlertCircle className="w-4 h-4 shrink-0" /> Not Verified
                             </span>
                             <button
+                                type="button"
                                 onClick={handleSendVerification}
                                 disabled={loading || resendCooldown > 0}
-                                className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                                className="inline-flex min-w-0 max-w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:px-4"
                                 style={outfitFont}
                             >
                                 {loading ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
                                 ) : (
-                                    <Send className="w-4 h-4" />
+                                    <Send className="h-4 w-4 shrink-0" />
                                 )}
                                 {resendCooldown > 0
                                     ? `Resend in ${resendCooldown}s`

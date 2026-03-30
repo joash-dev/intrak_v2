@@ -11,6 +11,7 @@ router.use(authenticate);
 // Student routes
 router.get('/my-applications', companyApplicationController.getMyApplications);
 router.post('/apply', companyApplicationController.applyToCompany);
+router.post('/resign-placement', companyApplicationController.resignFromPlacement);
 router.patch('/:id/withdraw', companyApplicationController.withdrawApplication);
 
 // Instructor/Coordinator/Admin routes

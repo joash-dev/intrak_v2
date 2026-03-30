@@ -108,6 +108,9 @@ export const SOCKET_EVENTS = {
     // Notifications
     NOTIFICATION_NEW: 'notification:new',
 
+    /** Student refetch: company applications, assignment, proposal-dependent UI */
+    STUDENT_PORTAL_SYNC: 'student:portal:sync',
+
     // Errors
     ERROR: 'error',
 } as const;

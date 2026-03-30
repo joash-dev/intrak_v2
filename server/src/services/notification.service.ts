@@ -1,6 +1,7 @@
 import { NotificationType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { emailService } from './email.service';
+import { emitNotification as emitNotificationSocket } from '../utils/socketEmitters';
 
 export interface CreateNotificationInput {
   userId: string;
@@ -26,8 +27,26 @@ export const notificationService = {
       },
     });
 
-    // Best-effort email mirror for in-app notifications.
-    // Message notifications are throttled to once per recipient per day.
+    try {
+      emitNotificationSocket({
+        notificationId: notification.id,
+        userId: notification.userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        link: notification.link ?? undefined,
+        createdAt: notification.createdAt.toISOString(),
+      });
+    } catch {
+      /* socket optional */
+    }
+
+    // Chat / partnership messages: in-app notification only (no email).
+    if (looksLikeMessageNotification) {
+      return notification;
+    }
+
+    // Best-effort email mirror for other in-app notifications.
     try {
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -35,37 +54,13 @@ export const notificationService = {
       });
 
       if (user?.active && user.email) {
-        let shouldSendEmail = true;
-
-        if (looksLikeMessageNotification) {
-          const dayStart = new Date();
-          dayStart.setHours(0, 0, 0, 0);
-
-          const sentEarlierToday = await prisma.notification.findFirst({
-            where: {
-              userId,
-              id: { not: notification.id },
-              createdAt: { gte: dayStart },
-              OR: [
-                { title: { contains: 'New Message', mode: 'insensitive' } },
-                { link: { contains: '/messages', mode: 'insensitive' } },
-              ],
-            },
-            select: { id: true },
-          });
-
-          shouldSendEmail = !sentEarlierToday;
-        }
-
-        if (shouldSendEmail) {
-          await emailService.sendTypedNotificationEmail(user.email, {
-            recipientName: user.name || 'User',
-            title,
-            message,
-            linkPath: link,
-            notificationType: type,
-          });
-        }
+        await emailService.sendTypedNotificationEmail(user.email, {
+          recipientName: user.name || 'User',
+          title,
+          message,
+          linkPath: link,
+          notificationType: type,
+        });
       }
     } catch (error) {
       console.error('[NotificationEmail] Failed to send notification email:', error);

@@ -37,6 +37,7 @@ export const useWalkthrough = (role: WalkthroughRole) => {
                 steps = [
                     sidebarStep,
                     { element: '#tour-nav-dashboard', popover: { title: 'Overview', description: 'View your internship progress and status.' } },
+                    { element: '#tour-nav-announcements', popover: { title: 'Announcements', description: 'Read official updates from your school and coordinators.' } },
                     { element: '#tour-nav-documents', popover: { title: 'Documents', description: 'Upload and manage your internship requirements.' } },
                     { element: '#tour-nav-companies', popover: { title: 'Companies', description: 'Browse partner companies.' } },
                     { element: '#tour-nav-partnership-assistance', popover: { title: 'Find Company', description: 'Apply for internships here.' } },
@@ -49,6 +50,7 @@ export const useWalkthrough = (role: WalkthroughRole) => {
                 steps = [
                     sidebarStep,
                     { element: '#tour-nav-dashboard', popover: { title: 'Dashboard', description: 'Overview of your assigned students.' } },
+                    { element: '#tour-nav-announcements', popover: { title: 'Announcements', description: 'Read program updates for instructors.' } },
                     { element: '#tour-nav-documents', popover: { title: 'Student Documents', description: 'Review and approve student submissions.' } },
                     { element: '#tour-nav-students', popover: { title: 'Students', description: 'Manage, monitor, and track your students.' } },
                     { element: '#tour-nav-reports', popover: { title: 'Reports', description: 'Generate performance reports.' } },
@@ -70,6 +72,7 @@ export const useWalkthrough = (role: WalkthroughRole) => {
                 steps = [
                     sidebarStep,
                     { element: '#tour-nav-dashboard', popover: { title: 'Dashboard', description: 'Overview of interns in your company.' } },
+                    { element: '#tour-nav-announcements', popover: { title: 'Announcements', description: 'Read updates for industry partners.' } },
                     { element: '#tour-nav-attendance', popover: { title: 'Attendance', description: 'Approve or review intern attendance.' } },
                     { element: '#tour-nav-evaluations', popover: { title: 'Evaluations', description: 'Submit performance evaluations.' } },
                     { element: '#tour-nav-documents', popover: { title: 'Documents', description: 'Review relevant documents.' } },

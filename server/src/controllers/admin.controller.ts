@@ -210,7 +210,7 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
     console.log('[Admin] Looking up user with ID:', userId);
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, passwordHash: true, email: true }
+      select: { role: true, passwordHash: true, email: true, emailVerified: true }
     });
 
     if (!user) {
@@ -221,6 +221,12 @@ export const changeAdminPassword = async (req: AuthRequest, res: Response) => {
     if (user.role !== 'ADMIN') {
       console.log('[Admin] User is not admin. Role:', user.role);
       return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: 'Verify your email before changing your password. Use the Email verification section in Security settings.'
+      });
     }
 
     // Verify current password

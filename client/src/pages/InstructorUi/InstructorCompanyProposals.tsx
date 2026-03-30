@@ -9,6 +9,7 @@ import {
 import Skeleton from '../../components/Skeleton';
 
 const statusLabel: Record<CompanyProposalStatus, string> = {
+  DRAFT: 'Draft',
   SUBMITTED_TO_INSTRUCTOR: 'Submitted to Instructor',
   RETURNED_BY_INSTRUCTOR: 'Returned by Instructor',
   REJECTED_BY_INSTRUCTOR: 'Rejected by Instructor',
@@ -20,6 +21,7 @@ const statusLabel: Record<CompanyProposalStatus, string> = {
 };
 
 const statusClass: Record<CompanyProposalStatus, string> = {
+  DRAFT: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300',
   SUBMITTED_TO_INSTRUCTOR: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   RETURNED_BY_INSTRUCTOR: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   REJECTED_BY_INSTRUCTOR: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
@@ -33,6 +35,7 @@ const statusClass: Record<CompanyProposalStatus, string> = {
 const actionStatuses: CompanyProposalStatus[] = ['SUBMITTED_TO_INSTRUCTOR', 'RETURNED_BY_INSTRUCTOR'];
 
 const getInstructorDecisionLabel = (status: CompanyProposalStatus): string => {
+  if (status === 'DRAFT') return 'Draft';
   if (status === 'RETURNED_BY_INSTRUCTOR') return 'Returned to Student';
   if (status === 'REJECTED_BY_INSTRUCTOR') return 'Rejected by Instructor';
   if (

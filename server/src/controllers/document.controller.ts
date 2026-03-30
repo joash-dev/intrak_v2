@@ -14,10 +14,40 @@ import { prisma } from '../config/database';
 // Note: uploadPath is now determined dynamically with fallback in uploadDocument
 const uploadPath = getStoragePath(); // Fallback for other uses
 
+/** Pre-deployment types other than RECORD_FILE — Record File checklist row shows ✔ last (after these exist). */
+const PRE_DEPLOYMENT_TYPES_EXCEPT_RECORD_FILE = [
+  'APPLICATION_INTERNSHIP',
+  'MEDICAL_CERTIFICATE',
+  'CERTIFICATION_UNITS',
+  'INTERNSHIP_RESUME',
+  'CONSENT_FORM',
+  'ENDORSEMENT_LETTER',
+  'INTERNSHIP_RELEASE',
+] as const;
+
+/** Each inner array is one required slot; at least one APPROVED document per slot (endorsement: single or multi). */
+const PRE_DEPLOYMENT_APPROVAL_SLOTS: readonly (readonly string[])[] = [
+  ['APPLICATION_INTERNSHIP'],
+  ['MEDICAL_CERTIFICATE'],
+  ['CERTIFICATION_UNITS'],
+  ['INTERNSHIP_RESUME'],
+  ['CONSENT_FORM'],
+  ['ENDORSEMENT_LETTER', 'ENDORSEMENT_LETTER_MULTI'],
+  ['INTERNSHIP_RELEASE'],
+  ['RECORD_FILE'],
+];
+
+function isAllPreDeploymentSlotsApproved(approvedTypes: Set<string>): boolean {
+  return PRE_DEPLOYMENT_APPROVAL_SLOTS.every((slot) => slot.some((t) => approvedTypes.has(t)));
+}
+
 /**
  * For RECORD_FILE documents, compute the checklist status values
  * by querying which document types the student has already submitted (any status).
  * Returns an object like { status_APPLICATION_INTERNSHIP: '✔', status_MOA: '', ... }
+ *
+ * Row "Record File" (status_RECORD_FILE) only shows ✔ when a RECORD_FILE exists and every other
+ * pre-deployment item has been submitted — so it appears as the last checklist item to comply.
  */
 const computeRecordFileStatuses = async (studentId: string): Promise<Record<string, string>> => {
   const submittedDocs = await prisma.document.findMany({
@@ -26,6 +56,13 @@ const computeRecordFileStatuses = async (studentId: string): Promise<Record<stri
   });
 
   const submittedTypes = new Set(submittedDocs.map(d => d.type));
+
+  const hasSubmitted = (docType: string): boolean => {
+    if (docType === 'ENDORSEMENT_LETTER') {
+      return submittedTypes.has('ENDORSEMENT_LETTER') || submittedTypes.has('ENDORSEMENT_LETTER_MULTI');
+    }
+    return submittedTypes.has(docType as any);
+  };
 
   const allDocTypes = [
     'RECORD_FILE', 'APPLICATION_INTERNSHIP', 'MEDICAL_CERTIFICATE',
@@ -39,6 +76,13 @@ const computeRecordFileStatuses = async (studentId: string): Promise<Record<stri
 
   const statuses: Record<string, string> = {};
   allDocTypes.forEach(docType => {
+    if (docType === 'RECORD_FILE') {
+      const othersComplete = PRE_DEPLOYMENT_TYPES_EXCEPT_RECORD_FILE.every((t) => hasSubmitted(t));
+      const hasRecordFile = submittedTypes.has('RECORD_FILE');
+      statuses['status_RECORD_FILE'] = hasRecordFile && othersComplete ? '✔' : '';
+      return;
+    }
+
     let hasDoc = submittedTypes.has(docType as any);
     // Also count ENDORSEMENT_LETTER_MULTI as fulfilling ENDORSEMENT_LETTER
     if (!hasDoc && docType === 'ENDORSEMENT_LETTER') {
@@ -577,6 +621,13 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    const priorApproved = await prisma.document.findMany({
+      where: { studentId: existing.studentId, status: 'APPROVED' },
+      select: { type: true },
+    });
+    const priorApprovedTypes = new Set(priorApproved.map((d) => d.type));
+    const wasPreDeploymentComplete = isAllPreDeploymentSlotsApproved(priorApprovedTypes);
+
     const document = await prisma.document.update({
       where: { id },
       data: {
@@ -656,6 +707,27 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
           type: NotificationType.DOCUMENT,
         });
       }
+    }
+
+    const postApproved = await prisma.document.findMany({
+      where: { studentId: existing.studentId, status: 'APPROVED' },
+      select: { type: true },
+    });
+    const postApprovedTypes = new Set(postApproved.map((d) => d.type));
+    const nowPreDeploymentComplete = isAllPreDeploymentSlotsApproved(postApprovedTypes);
+
+    if (
+      studentUserId &&
+      !wasPreDeploymentComplete &&
+      nowPreDeploymentComplete
+    ) {
+      await dispatchNotification(new Set([studentUserId]), {
+        title: "You're all set for deployment",
+        message:
+          'All required pre-deployment documents have been approved. Good luck with your internship.',
+        link: '/student/documents',
+        type: NotificationType.DOCUMENT,
+      });
     }
 
     res.json({ document });

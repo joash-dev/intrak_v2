@@ -1,13 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
-  MessageSquare,
   Send,
   CheckCircle2,
   XCircle,
   Search,
   FileCheck,
   Briefcase,
-  ChevronDown,
   Eye,
   Download,
   FileText,
@@ -15,22 +13,13 @@ import {
   FileUp,
   PlusCircle,
   Trash2,
+  Loader2,
 } from "lucide-react";
-import { useOutletContext, Link } from "react-router-dom";
-import api from "../../services/api";
+import { useOutletContext, Link, useSearchParams } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document as AppDocument } from "../../services/documentService";
 import { companyProposalService, type CompanyProposal } from "../../services/companyProposalService";
 import toast from "react-hot-toast";
-
-interface PartnershipMessage {
-  id: string;
-  content: string;
-  senderId: string;
-  senderName: string;
-  senderRole: string;
-  createdAt: string;
-}
 
 interface PartnershipDocument {
   id: string;
@@ -68,17 +57,8 @@ const StudentCompanyPartnershipAssistance = () => {
     );
   }
 
-  const [messages, setMessages] = useState<PartnershipMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [lastMessageCount, setLastMessageCount] = useState(0);
   const [showStepsModal, setShowStepsModal] = useState(false);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Pre-deployment required documents (uploaded in Documents tab)
   const [preDeploymentDocuments, setPreDeploymentDocuments] = useState<PartnershipDocument[]>([
@@ -158,13 +138,39 @@ const StudentCompanyPartnershipAssistance = () => {
   });
   const [creatingProposal, setCreatingProposal] = useState(false);
   const [uploadingProposalId, setUploadingProposalId] = useState<string | null>(null);
+  const [proposalUploadProgress, setProposalUploadProgress] = useState(0);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+  const [attachmentToRemove, setAttachmentToRemove] = useState<{
+    attachmentId: string;
+    filename: string;
+  } | null>(null);
+  const [proposalToDelete, setProposalToDelete] = useState<CompanyProposal | null>(null);
+  const [resubmittingProposalId, setResubmittingProposalId] = useState<string | null>(null);
+  const [submittingDraftProposalId, setSubmittingDraftProposalId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const highlightProposalId = searchParams.get("proposal");
+
+  useEffect(() => {
+    if (!highlightProposalId || proposals.length === 0) return;
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(`company-proposal-${highlightProposalId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-blue-500", "ring-offset-2", "dark:ring-offset-[#212124]");
+        window.setTimeout(() => {
+          el.classList.remove("ring-2", "ring-blue-500", "ring-offset-2", "dark:ring-offset-[#212124]");
+        }, 3500);
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [highlightProposalId, proposals]);
 
   useEffect(() => {
     loadData();
 
-    // Set up polling for real-time updates (poll every 3 seconds)
     const pollInterval = setInterval(() => {
-      loadMessages(false); // Don't show loading state on polling
+      void loadPartnershipDocuments();
+      void loadCompanyProposals();
     }, 3000);
 
     return () => {
@@ -173,94 +179,9 @@ const StudentCompanyPartnershipAssistance = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Initial scroll position check after messages load
-  useEffect(() => {
-    if (messages.length > 0 && !loading) {
-      setTimeout(() => {
-        checkIfAtBottom();
-      }, 200);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
-
-  // Check scroll position when messages change
-  useEffect(() => {
-    // Check if user sent a new message (message count increased and last message is from student)
-    const userSentMessage = messages.length > lastMessageCount &&
-      messages.length > 0 &&
-      messages[messages.length - 1].senderRole === "STUDENT";
-
-    if (userSentMessage) {
-      // User sent a message - auto scroll to bottom
-      scrollToBottom();
-      setShowScrollToBottom(false);
-    } else if (messages.length > lastMessageCount) {
-      // New message arrived - check if user is at bottom
-      setTimeout(() => {
-        checkIfAtBottom();
-      }, 100);
-    }
-
-    setLastMessageCount(messages.length);
-  }, [messages, lastMessageCount]);
-
-  // Handle scroll events to show/hide scrollbar
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      setIsScrolling(true);
-      checkIfAtBottom();
-
-      // Clear existing timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      // Hide scrollbar after 1 second of no scrolling
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 1000);
-    };
-
-    const handleMouseEnter = () => {
-      setIsScrolling(true);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-
-    const handleMouseLeave = () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 1000);
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      container.removeEventListener('mouseenter', handleMouseEnter);
-      container.removeEventListener('mouseleave', handleMouseLeave);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const loadData = async () => {
     try {
       setLoading(true);
-      // Load partnership messages
-      await loadMessages(true);
-
-      // Load partnership documents
       await loadPartnershipDocuments();
       await loadCompanyProposals();
     } catch (error: any) {
@@ -350,7 +271,7 @@ const StudentCompanyPartnershipAssistance = () => {
         remarks: proposalForm.remarks.trim() || undefined,
       });
 
-      toast.success("Company proposal submitted to your instructor");
+      toast.success("Draft saved. Submit when ready; add files if your instructor requests them.");
       setProposalForm({
         companyName: "",
         companyYears: "",
@@ -377,7 +298,10 @@ const StudentCompanyPartnershipAssistance = () => {
     if (!file) return;
     try {
       setUploadingProposalId(proposalId);
-      await companyProposalService.uploadAttachment(proposalId, file, "STUDENT_PROPOSAL");
+      setProposalUploadProgress(0);
+      await companyProposalService.uploadAttachment(proposalId, file, "STUDENT_PROPOSAL", {
+        onUploadProgress: (pct) => setProposalUploadProgress(pct),
+      });
       toast.success("Proposal file uploaded");
       await loadCompanyProposals();
     } catch (error: any) {
@@ -385,6 +309,35 @@ const StudentCompanyPartnershipAssistance = () => {
       toast.error(error.response?.data?.message || "Failed to upload file");
     } finally {
       setUploadingProposalId(null);
+      setProposalUploadProgress(0);
+    }
+  };
+
+  const handleSubmitDraftToInstructor = async (proposal: CompanyProposal) => {
+    try {
+      setSubmittingDraftProposalId(proposal.id);
+      await companyProposalService.submitDraftToInstructor(proposal.id);
+      toast.success("Submitted to your instructor");
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error submitting draft:", error);
+      toast.error(error.response?.data?.message || "Failed to submit");
+    } finally {
+      setSubmittingDraftProposalId(null);
+    }
+  };
+
+  const handleResubmitProposal = async (proposal: CompanyProposal) => {
+    try {
+      setResubmittingProposalId(proposal.id);
+      await companyProposalService.studentResubmit(proposal.id);
+      toast.success("Resubmitted for instructor review");
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error resubmitting proposal:", error);
+      toast.error(error.response?.data?.message || "Failed to resubmit");
+    } finally {
+      setResubmittingProposalId(null);
     }
   };
 
@@ -397,6 +350,23 @@ const StudentCompanyPartnershipAssistance = () => {
     } catch (error: any) {
       console.error("Error previewing proposal attachment:", error);
       toast.error(`Failed to preview ${filename}`);
+    }
+  };
+
+  const confirmRemoveAttachment = async () => {
+    if (!attachmentToRemove) return;
+    const { attachmentId } = attachmentToRemove;
+    try {
+      setDeletingAttachmentId(attachmentId);
+      await companyProposalService.deleteAttachment(attachmentId);
+      toast.success("File removed");
+      setAttachmentToRemove(null);
+      await loadCompanyProposals();
+    } catch (error: any) {
+      console.error("Error deleting proposal attachment:", error);
+      toast.error(error.response?.data?.message || "Failed to remove file");
+    } finally {
+      setDeletingAttachmentId(null);
     }
   };
 
@@ -417,26 +387,23 @@ const StudentCompanyPartnershipAssistance = () => {
     }
   };
 
-  const handleDeleteProposal = async (proposal: CompanyProposal) => {
-    const deletableStatuses = [
-      "SUBMITTED_TO_INSTRUCTOR",
-      "RETURNED_BY_INSTRUCTOR",
-      "REJECTED_BY_INSTRUCTOR",
-    ];
+  const requestDeleteProposal = (proposal: CompanyProposal) => {
+    const deletableStatuses = ["DRAFT", "RETURNED_BY_INSTRUCTOR", "REJECTED_BY_INSTRUCTOR"];
 
     if (!deletableStatuses.includes(proposal.status)) {
       toast.error("This proposal can no longer be deleted.");
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete proposal for "${proposal.companyName}"? This will also remove uploaded proposal files.`,
-    );
-    if (!confirmed) return;
+    setProposalToDelete(proposal);
+  };
 
+  const confirmDeleteProposal = async () => {
+    if (!proposalToDelete) return;
     try {
-      await companyProposalService.deleteProposal(proposal.id);
+      await companyProposalService.deleteProposal(proposalToDelete.id);
       toast.success("Proposal deleted");
+      setProposalToDelete(null);
       await loadCompanyProposals();
     } catch (error: any) {
       console.error("Error deleting proposal:", error);
@@ -474,124 +441,6 @@ const StudentCompanyPartnershipAssistance = () => {
     }
   };
 
-  const loadMessages = async (showLoading = true) => {
-    try {
-      if (showLoading) {
-        setLoading(true);
-      }
-      const messagesResponse = await api.get("/students/partnership-messages");
-      const newMessages = messagesResponse.data.messages || [];
-
-      // Update messages - React will handle re-rendering only if changed
-      const hasNewMessages = messages.length !== newMessages.length ||
-        messages.some((msg, idx) => !newMessages[idx] || msg.id !== newMessages[idx].id);
-
-      setMessages(prevMessages => {
-        // Only update if the message count or IDs have changed
-        if (prevMessages.length !== newMessages.length) {
-          return newMessages;
-        }
-        // Check if any message IDs are different
-        const hasChanges = prevMessages.some((msg, idx) =>
-          !newMessages[idx] || msg.id !== newMessages[idx].id
-        );
-        return hasChanges ? newMessages : prevMessages;
-      });
-
-      // Check scroll position after messages update (if there were changes)
-      if (hasNewMessages) {
-        setTimeout(() => {
-          checkIfAtBottom();
-        }, 100);
-      }
-    } catch (error: any) {
-      if (error.response?.status !== 404 && showLoading) {
-        console.error("Error loading messages:", error);
-      }
-      if (showLoading) {
-        setMessages([]);
-      }
-    } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-
-    try {
-      setSending(true);
-      const response = await api.post("/students/partnership-messages", {
-        content: newMessage,
-      });
-
-      // Add the new message immediately for instant feedback
-      const updatedMessages = [...messages, response.data.message];
-      setMessages(updatedMessages);
-      setNewMessage("");
-      toast.success("Message sent successfully");
-
-      // Auto-scroll to bottom when user sends a message
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-
-      // Reload messages to get the latest from server (in case of any sync issues)
-      setTimeout(() => {
-        loadMessages(false);
-      }, 500);
-    } catch (error: any) {
-      console.error("Error sending message:", error);
-      toast.error(error.response?.data?.message || "Failed to send message");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    setTimeout(() => {
-      checkIfAtBottom();
-    }, 300);
-  };
-
-  const checkIfAtBottom = () => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const threshold = 100; // 100px threshold
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-
-    setShowScrollToBottom(!isAtBottom && messages.length > 0);
-  };
-
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    const colors: Record<string, string> = {
-      STUDENT: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
-      INSTRUCTOR: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
-      COORDINATOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
-    };
-    return colors[role] || "bg-gray-100 text-gray-700 dark:bg-[#212124] dark:text-gray-300";
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -611,13 +460,15 @@ const StudentCompanyPartnershipAssistance = () => {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Company Partnership Assistance</h2>
             <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-              Get guidance from your instructor and coordinator on finding a company
+              Submit a company proposal, upload supporting files, and track each approval stage.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+        <div className="lg:col-span-3 min-w-0">
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700 space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Company Proposals</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -709,7 +560,7 @@ const StudentCompanyPartnershipAssistance = () => {
             className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 inline-flex items-center gap-2"
           >
             <PlusCircle className="w-4 h-4" />
-            {creatingProposal ? "Submitting..." : "Submit Proposal"}
+            {creatingProposal ? "Saving…" : "Save draft"}
           </button>
         </div>
 
@@ -725,12 +576,17 @@ const StudentCompanyPartnershipAssistance = () => {
           ) : (
             <div className="space-y-3">
               {proposals.map((proposal) => {
-                const isDeletable =
-                  proposal.status === "SUBMITTED_TO_INSTRUCTOR" ||
+                const canStudentUpload =
+                  proposal.status === "DRAFT" || proposal.status === "RETURNED_BY_INSTRUCTOR";
+                const canStudentDelete =
+                  proposal.status === "DRAFT" ||
                   proposal.status === "RETURNED_BY_INSTRUCTOR" ||
                   proposal.status === "REJECTED_BY_INSTRUCTOR";
+                const submittedToInstructor = proposal.status === "SUBMITTED_TO_INSTRUCTOR";
                 const statusClass =
-                  proposal.status === "APPROVED"
+                  proposal.status === "DRAFT"
+                    ? "bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300"
+                    : proposal.status === "APPROVED"
                     ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                     : proposal.status.includes("REJECTED")
                       ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
@@ -743,19 +599,106 @@ const StudentCompanyPartnershipAssistance = () => {
                 return (
                   <div
                     key={proposal.id}
-                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-[#212124]"
+                    id={`company-proposal-${proposal.id}`}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-[#212124] transition-shadow"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">{proposal.companyName}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                          Submitted {new Date(proposal.createdAt).toLocaleDateString()}
+                          {proposal.status === "DRAFT" ? "Created" : "Submitted"}{" "}
+                          {new Date(proposal.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 font-mono">
+                          ID: {proposal.id}
                         </p>
                       </div>
                       <span className={`inline-flex items-center text-sm px-3 py-1.5 rounded-full ${statusClass}`}>
                         {proposal.status.replaceAll("_", " ")}
                       </span>
                     </div>
+
+                    {(proposal.status === "RETURNED_BY_INSTRUCTOR" ||
+                      proposal.status === "REJECTED_BY_INSTRUCTOR") &&
+                      proposal.remarks?.trim() && (
+                        <div
+                          className={`mt-3 rounded-lg border p-3 text-sm ${proposal.status === "REJECTED_BY_INSTRUCTOR"
+                            ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20"
+                            : "border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-900/20"
+                            }`}
+                        >
+                          <p
+                            className={`text-xs font-semibold uppercase tracking-wide mb-1 ${proposal.status === "REJECTED_BY_INSTRUCTOR"
+                              ? "text-red-900 dark:text-red-200"
+                              : "text-amber-900 dark:text-amber-100"
+                              }`}
+                          >
+                            Instructor remarks
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+                            {proposal.remarks.trim()}
+                          </p>
+                        </div>
+                      )}
+
+                    {proposal.status === "DRAFT" && (
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/90 dark:border-slate-700 dark:bg-slate-900/40 p-3 text-sm">
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">
+                          This proposal is a <span className="font-semibold">draft</span>. You do not need to attach files
+                          yet unless your instructor has asked for specific documents. When ready, use{" "}
+                          <span className="font-semibold">Submit to instructor</span>. After submission, uploads stay off
+                          until your instructor returns this proposal for revision (if needed).
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleSubmitDraftToInstructor(proposal)}
+                          disabled={submittingDraftProposalId === proposal.id}
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Send className="w-4 h-4" />
+                          {submittingDraftProposalId === proposal.id
+                            ? "Submitting…"
+                            : "Submit to instructor"}
+                        </button>
+                      </div>
+                    )}
+
+                    {proposal.status === "RETURNED_BY_INSTRUCTOR" && (
+                      <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50/80 dark:border-indigo-800/60 dark:bg-indigo-950/30 p-3 text-sm">
+                        <p className="text-gray-700 dark:text-gray-300 mb-2">
+                          Follow your instructor&apos;s remarks above. Upload files only if they asked for specific
+                          documents; otherwise you can resubmit when you are ready. Use{" "}
+                          <span className="font-semibold">Resubmit for review</span> so your instructor sees it in their
+                          queue again.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleResubmitProposal(proposal)}
+                          disabled={resubmittingProposalId === proposal.id}
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Send className="w-4 h-4" />
+                          {resubmittingProposalId === proposal.id ? "Resubmitting…" : "Resubmit for review"}
+                        </button>
+                      </div>
+                    )}
+
+                    {(proposal.status === "APPROVED" || proposal.status === "REJECTED") &&
+                      proposal.coordinatorRemarks?.trim() && (
+                        <div
+                          className={`mt-3 rounded-lg border p-3 text-sm ${proposal.status === "REJECTED"
+                            ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20"
+                            : "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
+                            }`}
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wide mb-1 text-gray-800 dark:text-gray-200">
+                            Coordinator decision notes
+                          </p>
+                          <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words">
+                            {proposal.coordinatorRemarks.trim()}
+                          </p>
+                        </div>
+                      )}
 
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-300">
                       <p><span className="font-medium">Company years:</span> {proposal.companyYears ?? "-"}</p>
@@ -798,6 +741,26 @@ const StudentCompanyPartnershipAssistance = () => {
                                 >
                                   <Download className="w-4 h-4" />
                                 </button>
+                                {canStudentUpload && attachment.role === "STUDENT" && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setAttachmentToRemove({
+                                        attachmentId: attachment.id,
+                                        filename: attachment.filename,
+                                      })
+                                    }
+                                    disabled={deletingAttachmentId === attachment.id}
+                                    className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 disabled:opacity-50"
+                                    title="Remove file"
+                                  >
+                                    {deletingAttachmentId === attachment.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -805,27 +768,52 @@ const StudentCompanyPartnershipAssistance = () => {
                       )}
                     </div>
 
+                    {submittedToInstructor && (
+                      <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50/90 dark:border-blue-900/50 dark:bg-blue-950/30 px-3 py-2 text-sm text-blue-900 dark:text-blue-100">
+                        <span className="font-medium">Submitted to your instructor.</span>{" "}
+                        Upload is disabled until your instructor returns this proposal for revision or rejects it.
+                      </div>
+                    )}
+
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-[#19191c]">
-                        <FileUp className="w-4 h-4" />
-                        Upload File
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => handleUploadProposalFile(proposal.id, e.target.files?.[0] || null)}
-                        />
-                      </label>
-                      <button
-                        onClick={() => handleDeleteProposal(proposal)}
-                        disabled={!isDeletable}
-                        className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm bg-red-600 text-white disabled:opacity-40"
-                        title={isDeletable ? "Delete proposal" : "Cannot delete at this stage"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
+                      {canStudentUpload ? (
+                        <label
+                          className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm hover:bg-gray-50 dark:hover:bg-[#19191c] ${uploadingProposalId === proposal.id ? "opacity-60 cursor-wait pointer-events-none" : "cursor-pointer"}`}
+                        >
+                          <FileUp className="w-4 h-4" />
+                          Upload File
+                          <input
+                            type="file"
+                            className="hidden"
+                            disabled={uploadingProposalId === proposal.id}
+                            onChange={(e) => handleUploadProposalFile(proposal.id, e.target.files?.[0] || null)}
+                          />
+                        </label>
+                      ) : null}
+                      {canStudentDelete ? (
+                        <button
+                          type="button"
+                          onClick={() => requestDeleteProposal(proposal)}
+                          className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm bg-red-600 text-white hover:bg-red-700"
+                          title="Delete proposal"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      ) : null}
                       {uploadingProposalId === proposal.id && (
-                        <p className="text-sm text-indigo-600 dark:text-indigo-400">Uploading...</p>
+                        <div className="w-full min-w-[140px] space-y-1.5">
+                          <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400">
+                            <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                            <span>Uploading… {proposalUploadProgress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-indigo-600 dark:bg-indigo-500 transition-[width] duration-150"
+                              style={{ width: `${proposalUploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -834,145 +822,10 @@ const StudentCompanyPartnershipAssistance = () => {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
-        {/* Left Column - Communication */}
-        <div className="lg:col-span-3 flex order-first lg:order-none">
-          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col w-full min-h-[400px] lg:min-h-[600px]">
-            {/* Header Section */}
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Communication</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      Get guidance from your instructor and coordinator
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col p-4 sm:p-6 flex-1 min-h-0">
-
-              {/* Messages */}
-              <div className="relative mb-4 flex-1" style={{ minHeight: '200px' }}>
-                <div
-                  ref={messagesContainerRef}
-                  className={`h-full w-full overflow-y-auto transition-all duration-300 bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 shadow-inner ${isScrolling ? 'scrollbar-visible' : 'scrollbar-hidden'
-                    }`}
-                  style={{ maxHeight: '350px' }}
-                >
-                  {messages.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No messages yet</p>
-                      <p className="text-xs mt-1">Start a conversation with your instructor or coordinator</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-3 py-2">
-                        {messages.map((message) => {
-                          const isStudent = message.senderRole === "STUDENT";
-                          return (
-                            <div
-                              key={message.id}
-                              className={`flex flex-col ${isStudent ? "items-end" : "items-start"}`}
-                            >
-                              <div className={`flex items-start space-x-2 max-w-[90%] sm:max-w-[85%] ${isStudent ? "flex-row-reverse space-x-reverse" : ""}`}>
-                                {/* Avatar */}
-                                <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-semibold ${message.senderRole === "STUDENT"
-                                  ? "bg-blue-500 text-white"
-                                  : message.senderRole === "INSTRUCTOR"
-                                    ? "bg-green-500 text-white"
-                                    : "bg-purple-500 text-white"
-                                  }`}>
-                                  {message.senderName.charAt(0).toUpperCase()}
-                                </div>
-
-                                {/* Message Bubble */}
-                                <div className="flex flex-col space-y-1">
-                                  <div className="flex items-center space-x-2 mb-1 flex-wrap">
-                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                      {message.senderName}
-                                    </span>
-                                    <span
-                                      className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${getRoleBadgeColor(
-                                        message.senderRole
-                                      )}`}
-                                    >
-                                      {message.senderRole}
-                                    </span>
-                                  </div>
-                                  <div
-                                    className={`rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm ${isStudent
-                                      ? "bg-indigo-600 text-white rounded-br-sm"
-                                      : "bg-white dark:bg-[#212124] text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-bl-sm"
-                                      }`}
-                                  >
-                                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                      {message.content}
-                                    </p>
-                                  </div>
-                                  <span className={`text-[10px] text-gray-500 dark:text-gray-400 px-1 ${isStudent ? "text-right" : "text-left"}`}>
-                                    {formatDate(message.createdAt)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <div ref={messagesEndRef} />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Scroll to Bottom Button */}
-                {showScrollToBottom && (
-                  <button
-                    onClick={scrollToBottom}
-                    className="absolute bottom-16 sm:bottom-20 right-4 sm:right-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10 animate-bounce"
-                    title="Scroll to latest message"
-                  >
-                    <ChevronDown className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Message Input */}
-              <div className="flex space-x-2 sm:space-x-3 items-end bg-gray-50 dark:bg-[#19191c]/50 rounded-xl p-2 sm:p-3 border border-gray-200 dark:border-gray-700">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm text-sm"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={sending || !newMessage.trim()}
-                  className="px-4 sm:px-5 py-2 sm:py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-md hover:shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Right Column - Documents Checklist & Steps */}
-        <div className="lg:col-span-2 space-y-6 flex flex-col">
+        <div className="lg:col-span-2 min-w-0 w-full space-y-6 lg:sticky lg:top-6 self-start">
           {/* Documents Checklist */}
           <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
@@ -999,7 +852,7 @@ const StudentCompanyPartnershipAssistance = () => {
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Documents uploaded in the Documents tab will appear here
+                Documents you fill up in the Documents tab will appear here
               </p>
             </div>
 
@@ -1090,7 +943,15 @@ const StudentCompanyPartnershipAssistance = () => {
                       ) : (
                         <div className="mt-3 p-2 bg-white dark:bg-[#212124] rounded border border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                            Not uploaded yet. Upload in <strong>Documents</strong> tab.
+                            {doc.type === "MEDICAL_CERTIFICATE" ? (
+                              <>
+                                Not uploaded yet. Upload in the <strong>Documents</strong> tab.
+                              </>
+                            ) : (
+                              <>
+                                Not filled up yet. Fill up in the <strong>Documents</strong> tab.
+                              </>
+                            )}
                           </p>
                         </div>
                       )}
@@ -1119,6 +980,113 @@ const StudentCompanyPartnershipAssistance = () => {
           </div>
         </div>
       </div>
+
+      {/* Remove attachment confirmation */}
+      {attachmentToRemove && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[80] p-4"
+          style={{ marginTop: 0 }}
+          onClick={() => !deletingAttachmentId && setAttachmentToRemove(null)}
+          role="presentation"
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-attachment-title"
+          >
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 id="remove-attachment-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+                Remove file?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 break-words">
+                Remove{" "}
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {attachmentToRemove.filename}
+                </span>{" "}
+                from this proposal? This cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAttachmentToRemove(null)}
+                disabled={!!deletingAttachmentId}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmRemoveAttachment()}
+                disabled={!!deletingAttachmentId}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deletingAttachmentId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Removing…
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Remove file
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete proposal confirmation */}
+      {proposalToDelete && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[80] p-4"
+          style={{ marginTop: 0 }}
+          onClick={() => setProposalToDelete(null)}
+          role="presentation"
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-proposal-title"
+          >
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 id="delete-proposal-title" className="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete proposal?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Delete proposal for{" "}
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {proposalToDelete.companyName}
+                </span>
+                ? All uploaded proposal files will be removed. This cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 py-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setProposalToDelete(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDeleteProposal()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete proposal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Document Preview Modal */}
       {previewDoc && previewUrl && (

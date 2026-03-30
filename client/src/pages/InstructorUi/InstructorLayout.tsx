@@ -11,6 +11,7 @@ import {
     Loader2,
     FileUp,
     MessageCircle,
+    MessageSquare,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
@@ -44,6 +45,7 @@ const InstructorLayout = () => {
 
     // Determine active tab based on current path
     const getActiveTab = (path: string) => {
+        if (path.includes("/instructor/announcements")) return "announcements";
         if (path.includes("/instructor/students")) return "students";
         if (path.includes("/instructor/documents")) return "documents";
         if (path.includes("/instructor/applications")) return "applications";
@@ -196,6 +198,7 @@ const InstructorLayout = () => {
     // Navigation Items
     const navItems = [
         { id: "dashboard", icon: Home, label: "Dashboard", path: "/instructor/dashboard" },
+        { id: "announcements", icon: MessageSquare, label: "Announcements", path: "/instructor/announcements" },
         { id: "notifications", icon: Bell, label: "Notifications", path: "/instructor/notifications" },
         { id: "documents", icon: FileCheck, label: "Student Documents", path: "/instructor/documents" },
         { id: "applications", icon: Building2, label: "Company Applications", path: "/instructor/applications" },

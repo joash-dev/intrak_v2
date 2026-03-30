@@ -8,6 +8,16 @@ import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
 import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 
+/** Strip non-digits; preserve optional leading + (e.g. +639…). */
+function normalizePhoneForStorage(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const trimmed = phone.trimStart();
+  if (trimmed.startsWith('+') && digits.length > 0) {
+    return `+${digits}`;
+  }
+  return digits;
+}
+
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
     const { role, search, page = 1, limit = 20, email } = req.query;
@@ -155,7 +165,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (password) data.passwordHash = await bcrypt.hash(password, 12);
     if (active !== undefined && req.user!.role === 'ADMIN') data.active = active;
     // Allow users to update their own phone number; keep admin ability too.
-    if (phone !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) data.phone = phone;
+    if (phone !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) {
+      data.phone = typeof phone === 'string' ? normalizePhoneForStorage(phone) : phone;
+    }
     // Allow users to update their own emergency fields; keep admin ability too.
     if (emergencyContact !== undefined && (req.user!.role === 'ADMIN' || req.user!.id === id)) {
       data.emergencyContact = emergencyContact;
@@ -192,7 +204,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
           companyData.name = company.trim();
         }
         if (phone !== undefined && typeof phone === 'string') {
-          companyData.contactNumber = phone.trim();
+          companyData.contactNumber = normalizePhoneForStorage(phone);
         }
 
         if (Object.keys(companyData).length > 0) {
@@ -242,11 +254,17 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     // Get user with current password hash
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { passwordHash: true, email: true }
+      select: { passwordHash: true, email: true, emailVerified: true }
     });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        message: 'Verify your email before changing your password. Use Email verification below or resend the link from your account settings.'
+      });
     }
 
     // Verify current password
@@ -255,6 +273,13 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     if (!isCurrentPasswordValid) {
       return res.status(400).json({
         message: 'Current password is incorrect. Please enter your current password correctly.'
+      });
+    }
+
+    const isSameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
+    if (isSameAsCurrent) {
+      return res.status(400).json({
+        message: 'New password must be different from your current password.'
       });
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   User,
   Lock,
@@ -39,6 +39,72 @@ import {
 } from "../../services/settingsService";
 import toast from "react-hot-toast";
 
+/** Human-readable checklist for password update (student settings). */
+function getStudentPasswordReadiness(
+  emailVerifiedForPassword: boolean | null,
+  data: PasswordChangeData
+): { items: { ok: boolean; label: string }[]; ready: boolean } {
+  const items: { ok: boolean; label: string }[] = [];
+
+  if (emailVerifiedForPassword === null) {
+    items.push({ ok: false, label: "Checking whether your email is verified…" });
+  } else if (emailVerifiedForPassword === false) {
+    items.push({
+      ok: false,
+      label: "Verify your email first — use “Send verification” in the section above.",
+    });
+  } else {
+    items.push({ ok: true, label: "Email is verified." });
+  }
+
+  if (!data.currentPassword.trim()) {
+    items.push({ ok: false, label: "Enter your current password." });
+  } else {
+    items.push({ ok: true, label: "Current password is filled in." });
+  }
+
+  const strength = settingsService.validatePassword(data.newPassword);
+  if (!data.newPassword.trim()) {
+    items.push({
+      ok: false,
+      label: "Choose a new password (8+ characters, uppercase, lowercase, and a number).",
+    });
+  } else if (!strength.isValid) {
+    items.push({
+      ok: false,
+      label: strength.errors.length ? strength.errors.join(" ") : "New password does not meet requirements.",
+    });
+  } else {
+    items.push({ ok: true, label: "New password meets strength rules." });
+  }
+
+  if (
+    data.currentPassword.trim() &&
+    data.newPassword.trim() &&
+    data.currentPassword === data.newPassword
+  ) {
+    items.push({
+      ok: false,
+      label: "New password must be different from your current password.",
+    });
+  } else if (data.currentPassword.trim() && data.newPassword.trim()) {
+    items.push({
+      ok: true,
+      label: "New password is different from your current password.",
+    });
+  }
+
+  if (!data.confirmPassword.trim()) {
+    items.push({ ok: false, label: "Type the same new password again in Confirm." });
+  } else if (data.newPassword !== data.confirmPassword) {
+    items.push({ ok: false, label: "New password and confirmation must match." });
+  } else {
+    items.push({ ok: true, label: "Confirmation matches the new password." });
+  }
+
+  return { items, ready: items.every((i) => i.ok) };
+}
+
 const StudentSettingsTab = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
 
@@ -54,6 +120,8 @@ const StudentSettingsTab = () => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  /** Used with Email verification to gate password change (null = status not loaded yet). */
+  const [emailVerifiedForPassword, setEmailVerifiedForPassword] = useState<boolean | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
     null
@@ -149,6 +217,13 @@ const StudentSettingsTab = () => {
         ...userProfile,
         name: userProfile.name,
       });
+
+      try {
+        const verified = await settingsService.getEmailVerificationStatus();
+        setEmailVerifiedForPassword(verified);
+      } catch {
+        setEmailVerifiedForPassword(false);
+      }
 
       // Load profile photo from server
       try {
@@ -251,24 +326,52 @@ const StudentSettingsTab = () => {
     }
   };
 
+  const passwordReadiness = useMemo(
+    () => getStudentPasswordReadiness(emailVerifiedForPassword, passwordData),
+    [emailVerifiedForPassword, passwordData]
+  );
+
   const handleChangePassword = async () => {
+    if (emailVerifiedForPassword !== true) {
+      toast.error(
+        emailVerifiedForPassword === null
+          ? "Still checking email verification. Wait a second and try again."
+          : "Verify your email before changing your password."
+      );
+      return;
+    }
+
+    if (!passwordData.currentPassword.trim()) {
+      setErrors({ currentPassword: "Enter your current password" });
+      toast.error("Enter your current password.");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setErrors({ confirmPassword: "Passwords do not match" });
+      toast.error("New password and confirmation must match.");
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setErrors({
+        newPassword: "New password must be different from your current password.",
+      });
+      toast.error("Choose a password that is different from your current one.");
+      return;
+    }
+
+    const passwordValidation = settingsService.validatePassword(passwordData.newPassword);
+    if (!passwordValidation.isValid) {
+      const msg = passwordValidation.errors.join(" ") || "New password does not meet requirements.";
+      setErrors({ newPassword: msg });
+      toast.error(msg);
+      return;
+    }
+
     try {
       setSaving(true);
       setErrors({});
-
-      // Validate passwords
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setErrors({ confirmPassword: "Passwords do not match" });
-        return;
-      }
-
-      const passwordValidation = settingsService.validatePassword(
-        passwordData.newPassword
-      );
-      if (!passwordValidation.isValid) {
-        setErrors({ newPassword: passwordValidation.errors.join(", ") });
-        return;
-      }
 
       await settingsService.changePassword(passwordData);
 
@@ -280,9 +383,22 @@ const StudentSettingsTab = () => {
       });
       toast.success("Password changed successfully");
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error changing password:", error);
-      toast.error(error.response?.data?.message || "Failed to change password");
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Failed to change password";
+      if (
+        /different from your current password/i.test(msg) ||
+        /must be different/i.test(msg)
+      ) {
+        setErrors({
+          newPassword:
+            "New password must be different from your current password.",
+        });
+      }
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -702,10 +818,12 @@ const StudentSettingsTab = () => {
                       onChange={(e) =>
                         setProfileData({
                           ...profileData,
-                          phone: e.target.value,
+                          phone: settingsService.sanitizePhoneInput(e.target.value),
                         })
                       }
                       inputMode="tel"
+                      autoComplete="tel"
+                      pattern="[0-9+]*"
                       className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.phone
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-300 dark:border-gray-600"
@@ -764,8 +882,25 @@ const StudentSettingsTab = () => {
                   </div>
                 </div>
 
-                {/* Password Form */}
-                <div className="space-y-4 sm:space-y-6">
+                <EmailVerificationSettings
+                  showTopSeparator={false}
+                  onVerificationStatusChange={setEmailVerifiedForPassword}
+                />
+
+                {emailVerifiedForPassword === false && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                    <p className="text-sm text-amber-900 dark:text-amber-100">
+                      <strong>Email verification required.</strong> Send a verification link above, then open it from
+                      your inbox before you can update your password.
+                    </p>
+                  </div>
+                )}
+
+                {/* Password Form — disabled until email is verified */}
+                <fieldset
+                  disabled={emailVerifiedForPassword !== true}
+                  className="min-w-0 space-y-4 sm:space-y-6 border-0 p-0"
+                >
                   {/* Current Password */}
                   <div className="space-y-2">
                     <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
@@ -775,14 +910,16 @@ const StudentSettingsTab = () => {
                       <input
                         type={showCurrentPassword ? "text" : "password"}
                         value={passwordData.currentPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            currentPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPasswordData({ ...passwordData, currentPassword: v });
+                          if (errors.currentPassword) {
+                            setErrors((prev) => ({ ...prev, currentPassword: "" }));
+                          }
+                        }}
                         placeholder="Enter your current password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className={`w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60 ${errors.currentPassword ? "border-red-500 focus:ring-red-500" : "border-gray-200 dark:border-gray-600"
+                          }`}
                       />
                       <button
                         type="button"
@@ -798,6 +935,9 @@ const StudentSettingsTab = () => {
                         )}
                       </button>
                     </div>
+                    {errors.currentPassword && (
+                      <p className="text-xs text-red-600 dark:text-red-400">{errors.currentPassword}</p>
+                    )}
                   </div>
 
                   {/* New Password */}
@@ -809,14 +949,16 @@ const StudentSettingsTab = () => {
                       <input
                         type={showNewPassword ? "text" : "password"}
                         value={passwordData.newPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            newPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPasswordData({ ...passwordData, newPassword: v });
+                          if (errors.newPassword) {
+                            setErrors((prev) => ({ ...prev, newPassword: "" }));
+                          }
+                        }}
                         placeholder="Enter your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className={`w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60 ${errors.newPassword ? "border-red-500 focus:ring-red-500" : "border-gray-200 dark:border-gray-600"
+                          }`}
                       />
                       <button
                         type="button"
@@ -832,6 +974,20 @@ const StudentSettingsTab = () => {
                     </div>
                     {/* Password Strength Indicator */}
                     <PasswordStrengthMeter password={passwordData.newPassword} />
+                    {passwordData.currentPassword &&
+                      passwordData.newPassword &&
+                      passwordData.currentPassword === passwordData.newPassword && (
+                        <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-900/25 dark:text-amber-100">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                          <p>
+                            <span className="font-semibold">Same as current password.</span> Choose a
+                            new password that is different from the one you use now.
+                          </p>
+                        </div>
+                      )}
+                    {errors.newPassword && (
+                      <p className="text-xs text-red-600 dark:text-red-400">{errors.newPassword}</p>
+                    )}
                   </div>
 
                   {/* Confirm Password */}
@@ -843,14 +999,16 @@ const StudentSettingsTab = () => {
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         value={passwordData.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPasswordData({ ...passwordData, confirmPassword: v });
+                          if (errors.confirmPassword) {
+                            setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                          }
+                        }}
                         placeholder="Confirm your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className={`w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60 ${errors.confirmPassword ? "border-red-500 focus:ring-red-500" : "border-gray-200 dark:border-gray-600"
+                          }`}
                       />
                       <button
                         type="button"
@@ -866,52 +1024,103 @@ const StudentSettingsTab = () => {
                         )}
                       </button>
                     </div>
+                    {errors.confirmPassword && (
+                      <p className="text-xs text-red-600 dark:text-red-400">{errors.confirmPassword}</p>
+                    )}
                     {/* Password Match Indicator */}
                     {passwordData.confirmPassword && (
                       <div className="flex items-center space-x-2">
-                        {passwordData.newPassword ===
-                          passwordData.confirmPassword ? (
+                        {passwordData.newPassword !==
+                        passwordData.confirmPassword ? (
                           <>
-                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
-                            <span className="text-xs sm:text-sm text-green-600">
-                              Passwords match
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
+                            <span className="text-xs sm:text-sm text-red-600 dark:text-red-400">
+                              Passwords do not match
+                            </span>
+                          </>
+                        ) : passwordData.currentPassword &&
+                          passwordData.newPassword &&
+                          passwordData.currentPassword ===
+                            passwordData.newPassword ? (
+                          <>
+                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400" />
+                            <span className="text-xs sm:text-sm text-amber-700 dark:text-amber-200">
+                              Same as your current password — choose a different new password.
                             </span>
                           </>
                         ) : (
                           <>
-                            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-500" />
-                            <span className="text-xs sm:text-sm text-red-600">
-                              Passwords do not match
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                            <span className="text-xs sm:text-sm text-green-600 dark:text-green-400">
+                              Passwords match
                             </span>
                           </>
                         )}
                       </div>
                     )}
                   </div>
+                </fieldset>
 
-                  {/* Action Button */}
-                  <div className="pt-4">
-                    <button
-                      onClick={handleChangePassword}
-                      disabled={
-                        saving ||
-                        passwordData.newPassword !==
-                        passwordData.confirmPassword ||
-                        passwordData.newPassword.length < 8
-                      }
-                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                      ) : (
-                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                      )}
-                      <span>Update Password</span>
-                    </button>
-                  </div>
+                <div
+                  className={`rounded-xl border p-3 sm:p-4 ${passwordReadiness.ready
+                    ? "border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20"
+                    : "border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-800/50"
+                    }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">
+                    {passwordReadiness.ready ? "Ready to update" : "Before you can update your password"}
+                  </p>
+                  <ul className="space-y-1.5 text-sm">
+                    {passwordReadiness.items.map((row, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        {row.ok ? (
+                          <CheckCircle className="w-4 h-4 text-green-600 shrink-0 mt-0.5" aria-hidden />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden />
+                        )}
+                        <span
+                          className={
+                            row.ok
+                              ? "text-green-800 dark:text-green-200"
+                              : "text-gray-800 dark:text-gray-200"
+                          }
+                        >
+                          {row.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
-                <EmailVerificationSettings />
+                {/* Outside fieldset so the button stays clickable when inputs are gated (fieldset disabled quirks). */}
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={saving || emailVerifiedForPassword !== true || !passwordReadiness.ready}
+                    title={
+                      emailVerifiedForPassword !== true
+                        ? "Verify your email first"
+                        : passwordReadiness.ready
+                          ? "Save your new password"
+                          : "Fix the items listed above, then click again"
+                    }
+                    className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                    ) : (
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    )}
+                    <span>{saving ? "Updating…" : "Update Password"}</span>
+                  </button>
+                  {emailVerifiedForPassword === true && !passwordReadiness.ready && !saving && (
+                    <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                      Fix the checklist above — the button will send your new password to the server when everything is green.
+                    </p>
+                  )}
+                </div>
+
                 <TwoFactorSettings />
                 <LastLoginInfo />
               </div>
@@ -1185,11 +1394,11 @@ const StudentSettingsTab = () => {
                     App Preferences
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                    Language and format settings
+                    Language and date format
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Language
@@ -1219,22 +1428,6 @@ const StudentSettingsTab = () => {
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                       <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
-                      Time Format
-                    </label>
-                    <select
-                      value={preferences.timeFormat}
-                      onChange={(e) =>
-                        setPreferences({ ...preferences, timeFormat: e.target.value })
-                      }
-                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-[#212124] dark:text-white"
-                    >
-                      <option value="12hr">12 Hour</option>
-                      <option value="24hr">24 Hour</option>
                     </select>
                   </div>
                 </div>

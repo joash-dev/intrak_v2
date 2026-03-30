@@ -58,6 +58,7 @@ const SupervisorSettings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailVerifiedForPassword, setEmailVerifiedForPassword] = useState<boolean | null>(null);
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [helpModal, setHelpModal] = useState<"faq" | "guide" | "privacy" | null>(null);
 
@@ -153,6 +154,13 @@ const SupervisorSettings = () => {
           company: user.companyName || user.company || user.company?.name || "",
           address: user.companyAddress || user.address || "",
         });
+      }
+
+      try {
+        const verified = await settingsService.getEmailVerificationStatus();
+        setEmailVerifiedForPassword(verified);
+      } catch {
+        setEmailVerifiedForPassword(false);
       }
     } catch (error) {
       devLog.error("Error loading user data:", error);
@@ -273,6 +281,10 @@ const SupervisorSettings = () => {
   };
 
   const handleChangePassword = async () => {
+    if (emailVerifiedForPassword !== true) {
+      toast.error("Verify your email before changing your password.");
+      return;
+    }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("New passwords do not match");
       return;
@@ -689,8 +701,25 @@ const SupervisorSettings = () => {
                   </div>
                 </div>
 
+                <EmailVerificationSettings
+                  showTopSeparator={false}
+                  onVerificationStatusChange={setEmailVerifiedForPassword}
+                />
+
+                {emailVerifiedForPassword === false && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                    <p className="text-sm text-amber-900 dark:text-amber-100">
+                      <strong>Email verification required.</strong> Send a verification link above, then open it from
+                      your inbox before you can update your password.
+                    </p>
+                  </div>
+                )}
+
                 {/* Password Form */}
-                <div className="space-y-4 sm:space-y-6">
+                <fieldset
+                  disabled={emailVerifiedForPassword !== true}
+                  className="min-w-0 space-y-4 sm:space-y-6 border-0 p-0"
+                >
                   {/* Current Password */}
                   <div className="space-y-2">
                     <label className="block text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
@@ -707,7 +736,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Enter your current password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60"
                       />
                       <button
                         type="button"
@@ -741,7 +770,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Enter your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60"
                       />
                       <button
                         type="button"
@@ -775,7 +804,7 @@ const SupervisorSettings = () => {
                           })
                         }
                         placeholder="Confirm your new password"
-                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#212124] dark:text-white transition-all duration-200 disabled:opacity-60"
                       />
                       <button
                         type="button"
@@ -813,30 +842,30 @@ const SupervisorSettings = () => {
                       </div>
                     )}
                   </div>
+                </fieldset>
 
-                  {/* Action Button */}
-                  <div className="pt-4">
-                    <button
-                      onClick={handleChangePassword}
-                      disabled={
-                        saving ||
-                        passwordData.newPassword !==
-                        passwordData.confirmPassword ||
-                        passwordData.newPassword.length < 8
-                      }
-                      className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-xl hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
-                    >
-                      {saving ? (
-                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                      ) : (
-                        <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
-                      )}
-                      <span>Update Password</span>
-                    </button>
-                  </div>
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={
+                      saving ||
+                      emailVerifiedForPassword !== true ||
+                      passwordData.newPassword !==
+                      passwordData.confirmPassword ||
+                      passwordData.newPassword.length < 8
+                    }
+                    className="w-full flex items-center justify-center space-x-2 sm:space-x-3 px-4 py-3 sm:px-6 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-600 text-white rounded-xl hover:from-blue-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                  >
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                    ) : (
+                      <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    )}
+                    <span>Update Password</span>
+                  </button>
                 </div>
 
-                <EmailVerificationSettings />
                 <TwoFactorSettings />
                 <LastLoginInfo />
               </div>

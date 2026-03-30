@@ -4,7 +4,7 @@
   "description": "INTRAK Backend API - Internship Tracking System",
   "main": "dist/src/index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "nodemon",
     "build": "npx prisma generate && tsc",
     "build:prod": "npx prisma generate && npx prisma migrate deploy && tsc",
     "start": "bash scripts/aws-start.sh",

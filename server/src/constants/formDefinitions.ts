@@ -15,6 +15,10 @@ export interface FormField {
   repeatGroup?: string;   // Group key for repeatable rows (e.g., 'work_experience')
   repeatIndex?: number;   // 1-based index within the repeat group
   repeatMax?: number;     // Max number of rows in the repeat group (only needed on first field)
+  /** Used when type === 'number' (HTML min / validation). */
+  min?: number;
+  max?: number;
+  step?: number | string;
 }
 
 export interface FormDefinition {
@@ -337,9 +341,9 @@ export const formDefinitions: Record<string, FormDefinition> = {
 
       // Personal Background
       { name: 'nickname', label: 'Nickname', type: 'text', required: false, section: 'Personal Background', placeholder: 'Nickname' },
-      { name: 'height', label: 'Height', type: 'text', required: false, section: 'Personal Background', placeholder: "e.g., 5'6\"" },
-      { name: 'age', label: 'Age', type: 'number', required: false, section: 'Personal Background', placeholder: 'e.g., 21' },
-      { name: 'weight', label: 'Weight', type: 'text', required: false, section: 'Personal Background', placeholder: 'e.g., 60kg' },
+      { name: 'height', label: 'Height (cm)', type: 'number', required: false, section: 'Personal Background', placeholder: 'e.g., 168', min: 50, max: 280, step: 1 },
+      { name: 'age', label: 'Age', type: 'number', required: false, section: 'Personal Background', placeholder: 'e.g., 21', min: 10, max: 120, step: 1 },
+      { name: 'weight', label: 'Weight (kg)', type: 'number', required: false, section: 'Personal Background', placeholder: 'e.g., 60', min: 20, max: 400, step: 0.1 },
       { name: 'gender', label: 'Gender', type: 'select', required: false, section: 'Personal Background', options: [
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },

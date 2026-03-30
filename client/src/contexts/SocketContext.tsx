@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
 import { socketService } from '../services/socketService';
+
+const getStoredAuthToken = (): string | null =>
+    localStorage.getItem('accessToken') || localStorage.getItem('token');
 
 interface SocketContextType {
     socket: Socket | null;
@@ -27,24 +30,31 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    const connect = () => {
-        const token = localStorage.getItem('token');
+    const connect = useCallback(() => {
+        const token = getStoredAuthToken();
         if (!token) {
-            console.warn('No authentication token found. Cannot connect to socket.');
             return;
         }
 
+        if (socketService.getSocket()?.connected) {
+            setSocket(socketService.getSocket());
+            setIsConnected(true);
+            return;
+        }
+
+        socketService.disconnect();
         const newSocket = socketService.connect(token);
         setSocket(newSocket);
 
+        newSocket.off('connect');
+        newSocket.off('disconnect');
         newSocket.on('connect', () => {
             setIsConnected(true);
         });
-
         newSocket.on('disconnect', () => {
             setIsConnected(false);
         });
-    };
+    }, []);
 
     const disconnect = () => {
         socketService.disconnect();
@@ -52,18 +62,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setIsConnected(false);
     };
 
-    // Auto-connect when token is available
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token && !socket) {
-            connect();
-        }
+        connect();
 
-        // Cleanup on unmount
+        const onTokenChanged = () => {
+            connect();
+        };
+        window.addEventListener('intrak:auth-token-changed', onTokenChanged);
+
         return () => {
+            window.removeEventListener('intrak:auth-token-changed', onTokenChanged);
             disconnect();
         };
-    }, []);
+    }, [connect]);
 
     const value: SocketContextType = {
         socket,

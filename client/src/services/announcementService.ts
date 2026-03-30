@@ -35,6 +35,22 @@ export interface AnnouncementStats {
   avgViews: number;
 }
 
+/** Roles that use the read-only announcements page (not coordinator/admin CRUD). */
+export type AnnouncementReaderRole = 'student' | 'instructor' | 'supervisor';
+
+export function filterAnnouncementsForRole(
+  announcements: Announcement[],
+  role: AnnouncementReaderRole
+): Announcement[] {
+  const audiences =
+    role === 'student'
+      ? new Set<Announcement['audience']>(['ALL', 'STUDENTS'])
+      : role === 'instructor'
+        ? new Set<Announcement['audience']>(['ALL', 'INSTRUCTORS'])
+        : new Set<Announcement['audience']>(['ALL', 'PARTNERS']);
+  return announcements.filter((a) => audiences.has(a.audience));
+}
+
 class AnnouncementService {
   // Get all announcements
   async getAnnouncements(): Promise<{ announcements: Announcement[] }> {

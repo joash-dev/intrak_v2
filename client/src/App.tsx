@@ -22,6 +22,7 @@ const StudentAttendanceTab = React.lazy(() => import("./pages/StudentUi/StudentA
 const StudentEvaluationsTab = React.lazy(() => import("./pages/StudentUi/StudentEvaluation"));
 const StudentSettings = React.lazy(() => import("./pages/StudentUi/Settings"));
 const StudentNotifications = React.lazy(() => import("./pages/StudentUi/StudentNotifications"));
+const StudentAnnouncementsPage = React.lazy(() => import("./pages/StudentUi/StudentAnnouncementsPage"));
 const CoordinatorLayout = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorLayout"));
 const CoordinatorOverview = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorOverview"));
 const CoordinatorDocumentsTab = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorDocumentsTab"));
@@ -39,6 +40,7 @@ const SupervisorDocumentsTab = React.lazy(() => import("./pages/SupervisorUi/Sup
 const SupervisorEvaluationsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorEvaluationsTab"));
 const SupervisorSettingsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorSettingsTab"));
 const SupervisorNotifications = React.lazy(() => import("./pages/SupervisorUi/SupervisorNotifications"));
+const SupervisorAnnouncementsPage = React.lazy(() => import("./pages/SupervisorUi/SupervisorAnnouncementsPage"));
 const AdminLayout = React.lazy(() => import("./pages/AdminUi/AdminLayout"));
 const AdminOverview = React.lazy(() => import("./pages/AdminUi/AdminOverview"));
 const AdminUserManagement = React.lazy(() => import("./pages/AdminUi/AdminUserManagement"));
@@ -61,6 +63,7 @@ const InstructorSettings = React.lazy(() => import("./pages/InstructorUi/Instruc
 const InstructorNotifications = React.lazy(() => import("./pages/InstructorUi/InstructorNotifications"));
 const InstructorCompanyProposals = React.lazy(() => import("./pages/InstructorUi/InstructorCompanyProposals"));
 const InstructorMessages = React.lazy(() => import("./pages/InstructorUi/InstructorMessages"));
+const InstructorAnnouncementsPage = React.lazy(() => import("./pages/InstructorUi/InstructorAnnouncementsPage"));
 const CoordinatorMessages = React.lazy(() => import("./pages/CoordinatorUi/CoordinatorMessages"));
 
 type ProtectedRouteProps = {
@@ -164,6 +167,7 @@ const App: React.FC = () => {
               >
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<StudentOverview />} />
+                <Route path="announcements" element={<StudentAnnouncementsPage />} />
                 <Route path="documents" element={<StudentDocumentsTab />} />
                 <Route path="documents/form/:type" element={<DocumentFormPage />} />
                 <Route path="messages" element={<StudentMessages />} />
@@ -211,6 +215,7 @@ const App: React.FC = () => {
               >
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<InstructorOverview />} />
+                <Route path="announcements" element={<InstructorAnnouncementsPage />} />
                 <Route path="students" element={<InstructorStudentManagement />} />
                 <Route path="documents" element={<InstructorDocumentsTab />} />
                 <Route path="applications" element={<InstructorApplications />} />
@@ -235,6 +240,7 @@ const App: React.FC = () => {
               >
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<SupervisorOverview />} />
+                <Route path="announcements" element={<SupervisorAnnouncementsPage />} />
                 <Route path="attendance" element={<SupervisorAttendanceTab />} />
                 <Route path="documents" element={<SupervisorDocumentsTab />} />
                 <Route path="evaluations" element={<SupervisorEvaluationsTab />} />

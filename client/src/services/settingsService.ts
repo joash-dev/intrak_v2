@@ -115,6 +115,12 @@ class SettingsService {
       };
   }
 
+  /** Server truth for whether the signed-in user's email is verified (password change / 2FA gating). */
+  async getEmailVerificationStatus(): Promise<boolean> {
+    const response = await api.get('/auth/email/status');
+    return response.data?.emailVerified === true;
+  }
+
   // Update user profile
   async updateProfile(data: Partial<UserProfile>): Promise<UserProfile> {
     const userId = await this.getCurrentUserId();
@@ -249,6 +255,17 @@ class SettingsService {
   validateEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  }
+
+  /** Digits only, optional leading + for international (e.g. +639…). Strips letters and symbols as the user types. */
+  sanitizePhoneInput(value: string): string {
+    const digits = value.replace(/\D/g, "");
+    const trimmed = value.trimStart();
+    if (trimmed.startsWith("+")) {
+      if (digits.length === 0) return "+";
+      return `+${digits}`;
+    }
+    return digits;
   }
 
   // Validate phone number format (basic validation)

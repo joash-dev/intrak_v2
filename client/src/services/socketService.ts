@@ -26,6 +26,8 @@ export const SOCKET_EVENTS = {
     // Notifications
     NOTIFICATION_NEW: 'notification:new',
 
+    STUDENT_PORTAL_SYNC: 'student:portal:sync',
+
     ERROR: 'error',
 } as const;
 

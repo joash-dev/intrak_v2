@@ -17,6 +17,21 @@ router.use(authenticate);
 // Student endpoints
 router.post('/', authorize(['STUDENT']), companyProposalController.createProposal);
 router.get('/my', authorize(['STUDENT']), companyProposalController.getMyProposals);
+router.patch(
+  '/:id/student/submit-to-instructor',
+  authorize(['STUDENT']),
+  companyProposalController.studentSubmitDraftToInstructor,
+);
+router.patch(
+  '/:id/student/resubmit',
+  authorize(['STUDENT']),
+  companyProposalController.studentResubmitProposal,
+);
+router.delete(
+  '/attachments/:attachmentId',
+  authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR', 'ADMIN']),
+  companyProposalController.deleteProposalAttachment,
+);
 router.delete('/:id', authorize(['STUDENT']), companyProposalController.deleteMyProposal);
 
 // Instructor and coordinator proposal lists

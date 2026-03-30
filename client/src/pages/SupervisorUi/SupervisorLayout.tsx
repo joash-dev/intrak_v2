@@ -8,6 +8,7 @@ import {
     Home,
     FileText,
     Loader2,
+    MessageSquare,
 } from "lucide-react";
 import { useNavigate, useLocation, Outlet, useOutletContext } from "react-router-dom";
 import { settingsService } from "../../services/settingsService";
@@ -238,6 +239,7 @@ const SupervisorLayout: React.FC = () => {
 
     const navItems = [
         { id: "dashboard", label: "Dashboard", icon: Home, path: "/industry-partner/dashboard" },
+        { id: "announcements", label: "Announcements", icon: MessageSquare, path: "/industry-partner/announcements" },
         { id: "attendance", label: "Attendance", icon: Clock, path: "/industry-partner/attendance" },
         { id: "documents", label: "Documents", icon: FileText, path: "/industry-partner/documents" },
         { id: "evaluations", label: "Evaluations", icon: Award, path: "/industry-partner/evaluations" },

@@ -62,6 +62,7 @@ const CoordinatorSettingsTab = () => {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [emailVerifiedForPassword, setEmailVerifiedForPassword] = useState<boolean | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(
     null
@@ -139,6 +140,13 @@ const CoordinatorSettingsTab = () => {
         ...userProfile,
         name: userProfile.name,
       });
+
+      try {
+        const verified = await settingsService.getEmailVerificationStatus();
+        setEmailVerifiedForPassword(verified);
+      } catch {
+        setEmailVerifiedForPassword(false);
+      }
 
       // Load profile photo from server
       try {
@@ -266,6 +274,10 @@ const CoordinatorSettingsTab = () => {
   };
 
   const handleChangePassword = async () => {
+    if (emailVerifiedForPassword !== true) {
+      toast.error("Verify your email before changing your password.");
+      return;
+    }
     try {
       setSaving(true);
       setErrors({});
@@ -766,7 +778,24 @@ const CoordinatorSettingsTab = () => {
                   </p>
                 </div>
 
-                <div className="space-y-4">
+                <EmailVerificationSettings
+                  showTopSeparator={false}
+                  onVerificationStatusChange={setEmailVerifiedForPassword}
+                />
+
+                {emailVerifiedForPassword === false && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                    <p className="text-sm text-amber-900 dark:text-amber-100">
+                      <strong>Email verification required.</strong> Send a verification link above, then open it from
+                      your inbox before you can update your password.
+                    </p>
+                  </div>
+                )}
+
+                <fieldset
+                  disabled={emailVerifiedForPassword !== true}
+                  className="min-w-0 space-y-4 border-0 p-0"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {t("settings.security.currentPassword")}
@@ -781,7 +810,7 @@ const CoordinatorSettingsTab = () => {
                             currentPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                       />
                       <button
                         onClick={() =>
@@ -812,7 +841,7 @@ const CoordinatorSettingsTab = () => {
                             newPassword: e.target.value,
                           })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                       />
                       <button
                         onClick={() => setShowNewPassword(!showNewPassword)}
@@ -841,15 +870,17 @@ const CoordinatorSettingsTab = () => {
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                     />
                   </div>
-                </div>
 
-                <div className="flex justify-end">
+                </fieldset>
+
+                <div className="flex justify-end pt-2">
                   <button
+                    type="button"
                     onClick={handleChangePassword}
-                    disabled={saving}
+                    disabled={saving || emailVerifiedForPassword !== true}
                     className="flex items-center space-x-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (
@@ -866,7 +897,6 @@ const CoordinatorSettingsTab = () => {
                   </button>
                 </div>
 
-                <EmailVerificationSettings />
                 <TwoFactorSettings />
                 <LastLoginInfo />
               </div>

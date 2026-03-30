@@ -163,6 +163,7 @@ const Login: React.FC = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
+      window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
       // Normalize role for consistency
       const normalizedRole = user.role.toLowerCase();
@@ -228,6 +229,7 @@ const Login: React.FC = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
+      window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
       // Navigate to admin dashboard
       navigate("/admin");
@@ -291,6 +293,7 @@ const Login: React.FC = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
+      window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
       // Navigate based on user role
       const roleRoutes: Record<string, string> = {

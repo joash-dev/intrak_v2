@@ -270,6 +270,7 @@ const AdminSettings = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [emailVerifiedForPassword, setEmailVerifiedForPassword] = useState<boolean | null>(null);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     maintenanceMode: false,
     emailNotifications: true,
@@ -441,6 +442,13 @@ const AdminSettings = () => {
         } catch (error) {
           devLog.log("No profile photo found");
         }
+      }
+
+      try {
+        const verified = await settingsService.getEmailVerificationStatus();
+        setEmailVerifiedForPassword(verified);
+      } catch {
+        setEmailVerifiedForPassword(false);
       }
     } catch (error) {
       devLog.error("Error loading profile:", error);
@@ -619,6 +627,10 @@ const AdminSettings = () => {
   };
 
   const handlePasswordChange = async () => {
+    if (emailVerifiedForPassword !== true) {
+      toast.error("Verify your email before changing your password.");
+      return;
+    }
     // Clear previous errors
     setErrors({});
 
@@ -1462,7 +1474,24 @@ const AdminSettings = () => {
                   </p>
                 </div>
 
-                <div className="space-y-4 max-w-xl">
+                <EmailVerificationSettings
+                  showTopSeparator={false}
+                  onVerificationStatusChange={setEmailVerifiedForPassword}
+                />
+
+                {emailVerifiedForPassword === false && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20 max-w-xl">
+                    <p className="text-sm text-amber-900 dark:text-amber-100">
+                      <strong>Email verification required.</strong> Send a verification link above, then open it from
+                      your inbox before you can update your password.
+                    </p>
+                  </div>
+                )}
+
+                <fieldset
+                  disabled={emailVerifiedForPassword !== true}
+                  className="min-w-0 space-y-4 max-w-xl border-0 p-0"
+                >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
@@ -1480,7 +1509,7 @@ const AdminSettings = () => {
                             setErrors({ ...errors, currentPassword: "" });
                           }
                         }}
-                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.currentPassword
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-60 ${errors.currentPassword
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
                           }`}
@@ -1523,7 +1552,7 @@ const AdminSettings = () => {
                             setErrors({ ...errors, newPassword: "" });
                           }
                         }}
-                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.newPassword
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-60 ${errors.newPassword
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
                           }`}
@@ -1565,7 +1594,7 @@ const AdminSettings = () => {
                             setErrors({ ...errors, confirmPassword: "" });
                           }
                         }}
-                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 ${errors.confirmPassword
+                        className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 disabled:opacity-60 ${errors.confirmPassword
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-600"
                           }`}
@@ -1590,10 +1619,7 @@ const AdminSettings = () => {
                       </p>
                     )}
                   </div>
-                </div>
-
-                {/* Email Verification Section - Must verify email before enabling 2FA */}
-                <EmailVerificationSettings />
+                </fieldset>
 
                 {/* Two-Factor Authentication Section */}
                 <TwoFactorSettings />
@@ -1607,8 +1633,9 @@ const AdminSettings = () => {
                 <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
 
                   <button
+                    type="button"
                     onClick={handlePasswordChange}
-                    disabled={saving}
+                    disabled={saving || emailVerifiedForPassword !== true}
                     className="flex items-center space-x-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? (

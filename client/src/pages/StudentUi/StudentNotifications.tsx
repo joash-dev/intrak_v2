@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Bell, Activity, Loader2 } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
@@ -7,35 +7,45 @@ import toast from "react-hot-toast";
 const StudentNotifications = () => {
     const navigate = useNavigate();
     const {
-        notifications: contextNotifications,
-        setLocalNotifications: setParentNotifications
+        setLocalNotifications: setParentNotifications,
     } = useOutletContext<{
         notifications: NotificationItem[],
         setLocalNotifications?: React.Dispatch<React.SetStateAction<NotificationItem[]>>
-    }>() || { notifications: [] };
+    }>() || {};
+
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (contextNotifications && contextNotifications.length > 0) {
-            setNotifications(contextNotifications);
-        } else {
-            fetchNotifications();
-        }
-    }, [contextNotifications]);
-
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         try {
             setLoading(true);
             const items = await notificationService.getNotifications({ limit: 50 });
-            setNotifications(Array.isArray(items) ? items : []);
+            const list = Array.isArray(items) ? items : [];
+            setNotifications(list);
+            setParentNotifications?.((_) => list.slice(0, 15));
         } catch (error) {
             console.error("Failed to load notifications", error);
             toast.error("Failed to load notifications");
         } finally {
             setLoading(false);
         }
-    };
+    }, [setParentNotifications]);
+
+    useEffect(() => {
+        void fetchNotifications();
+    }, [fetchNotifications]);
+
+    useEffect(() => {
+        const onRefresh = () => {
+            void fetchNotifications();
+        };
+        window.addEventListener("intrak:notifications-refresh", onRefresh);
+        window.addEventListener("intrak:student-portal-sync", onRefresh);
+        return () => {
+            window.removeEventListener("intrak:notifications-refresh", onRefresh);
+            window.removeEventListener("intrak:student-portal-sync", onRefresh);
+        };
+    }, [fetchNotifications]);
 
     const handleMarkAllRead = async () => {
         try {
@@ -130,7 +140,7 @@ const StudentNotifications = () => {
                                                 <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">
                                             {notification.message}
                                         </p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">

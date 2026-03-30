@@ -1,6 +1,7 @@
 import api from './api';
 
 export type CompanyProposalStatus =
+  | 'DRAFT'
   | 'SUBMITTED_TO_INSTRUCTOR'
   | 'RETURNED_BY_INSTRUCTOR'
   | 'REJECTED_BY_INSTRUCTOR'
@@ -41,6 +42,7 @@ export interface CompanyProposal {
   coordinatorRemarks?: string | null;
   externalReference?: string | null;
   status: CompanyProposalStatus;
+  instructorReviewedAt?: string | null;
   submittedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -64,6 +66,7 @@ const uploadAttachment = async (
   proposalId: string,
   file: File,
   documentType: string,
+  options?: { onUploadProgress?: (percentLoaded: number) => void },
 ): Promise<CompanyProposalAttachment> => {
   const formData = new FormData();
   formData.append('file', file);
@@ -72,6 +75,11 @@ const uploadAttachment = async (
   const response = await api.post(`/company-proposals/${proposalId}/attachments`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (evt) => {
+      if (!options?.onUploadProgress || !evt.total) return;
+      const pct = Math.min(100, Math.round((evt.loaded * 100) / evt.total));
+      options.onUploadProgress(pct);
     },
   });
   return response.data.attachment;
@@ -104,6 +112,16 @@ export const companyProposalService = {
     await api.delete(`/company-proposals/${id}`);
   },
 
+  async submitDraftToInstructor(id: string): Promise<CompanyProposal> {
+    const response = await api.patch(`/company-proposals/${id}/student/submit-to-instructor`);
+    return response.data.proposal;
+  },
+
+  async studentResubmit(id: string): Promise<CompanyProposal> {
+    const response = await api.patch(`/company-proposals/${id}/student/resubmit`);
+    return response.data.proposal;
+  },
+
   async getInstructorProposals(status: string = 'all'): Promise<CompanyProposal[]> {
     const response = await api.get('/company-proposals/instructor', {
       params: { status: status === 'all' ? undefined : status },
@@ -125,6 +143,10 @@ export const companyProposalService = {
       responseType: 'blob',
     });
     return response.data;
+  },
+
+  async deleteAttachment(attachmentId: string): Promise<void> {
+    await api.delete(`/company-proposals/attachments/${attachmentId}`);
   },
 
   async instructorForward(id: string, remarks?: string): Promise<CompanyProposal> {

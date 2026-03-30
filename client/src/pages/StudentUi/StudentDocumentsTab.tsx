@@ -16,6 +16,7 @@ import {
   UserCheck,
   UserX,
   Users,
+  Info,
 } from "lucide-react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { documentService } from "../../services/documentService";
@@ -66,13 +67,7 @@ const StudentDocumentsTab: React.FC = () => {
   }, [previewFileUrl]);
 
   const documentTypes = [
-    // I. PRE-DEPLOYMENT Requirements
-    {
-      value: "RECORD_FILE",
-      label: "Record File",
-      required: true,
-      category: "PRE_DEPLOYMENT",
-    },
+    // I. PRE-DEPLOYMENT Requirements (Record File last — finalize after other pre-deployment docs)
     {
       value: "APPLICATION_INTERNSHIP",
       label: "Application for Internship (Form FM-AA-INT-01)",
@@ -112,6 +107,12 @@ const StudentDocumentsTab: React.FC = () => {
     {
       value: "INTERNSHIP_RELEASE",
       label: "Internship Release Form (Form FM-AA-INT-12)",
+      required: true,
+      category: "PRE_DEPLOYMENT",
+    },
+    {
+      value: "RECORD_FILE",
+      label: "Record File",
       required: true,
       category: "PRE_DEPLOYMENT",
     },
@@ -243,6 +244,17 @@ const StudentDocumentsTab: React.FC = () => {
     return activeDocs.filter((d) => d.type === docType);
   };
 
+  /** All pre-deployment items except Record File are instructor-approved (Record File is last on the checklist). */
+  const preDeploymentOthersApproved = useMemo(() => {
+    const others = documentTypes.filter(
+      (dt) => dt.category === "PRE_DEPLOYMENT" && dt.required && dt.value !== "RECORD_FILE"
+    );
+    return others.every((req) => {
+      const requirementDocs = getDocsForRequirement(req.value);
+      return requirementDocs.some((doc) => doc.status === "APPROVED");
+    });
+  }, [activeDocs]);
+
   const stats = useMemo(() => {
     const requiredRequirements = documentTypes.filter((dt) => dt.required);
     const total = requiredRequirements.length;
@@ -257,7 +269,10 @@ const StudentDocumentsTab: React.FC = () => {
         (doc) => doc.status === "PENDING" || doc.status === "RESUBMISSION_REQUESTED"
       );
 
-      if (hasApproved) {
+      const countsAsApproved =
+        req.value === "RECORD_FILE" ? hasApproved && preDeploymentOthersApproved : hasApproved;
+
+      if (countsAsApproved) {
         approved += 1;
       } else if (hasPending) {
         pending += 1;
@@ -265,7 +280,7 @@ const StudentDocumentsTab: React.FC = () => {
     });
 
     return { total, approved, pending };
-  }, [activeDocs]);
+  }, [activeDocs, preDeploymentOthersApproved]);
 
   // Accept/Decline shared document handlers
   const [processingSharedId, setProcessingSharedId] = useState<string | null>(null);
@@ -455,24 +470,13 @@ const StudentDocumentsTab: React.FC = () => {
       setUploading(true);
       setUploadProgress(0);
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
       await documentService.uploadDocument({
         file: selectedFile,
         type: selectedType,
+        onUploadProgress: (pct) => setUploadProgress(pct),
       });
 
       setUploadProgress(100);
-      clearInterval(progressInterval);
 
       toast.success("Document uploaded successfully");
 
@@ -613,6 +617,27 @@ const StudentDocumentsTab: React.FC = () => {
       default:
         return null;
     }
+  };
+
+  /** Record File checklist completes last — badge clarifies when it is approved but others are not yet. */
+  const getRequirementRowStatusBadge = (
+    reqValue: string,
+    doc: Document | undefined,
+    required: boolean
+  ) => {
+    if (
+      reqValue === "RECORD_FILE" &&
+      doc?.status === "APPROVED" &&
+      !preDeploymentOthersApproved
+    ) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200">
+          <Clock className="w-3 h-3 mr-1 shrink-0" />
+          Approved — complete other pre-deployment items first
+        </span>
+      );
+    }
+    return getStatusBadge(doc, required);
   };
 
   if (loading) {
@@ -880,7 +905,10 @@ const StudentDocumentsTab: React.FC = () => {
                   <div className="divide-y divide-gray-100 dark:divide-gray-700">
                     {requirements.map((req) => {
                       const doc = findDocForType(req.value);
-                      const isCompleted = doc?.status === "APPROVED";
+                      const isCompleted =
+                        req.value === "RECORD_FILE"
+                          ? doc?.status === "APPROVED" && preDeploymentOthersApproved
+                          : doc?.status === "APPROVED";
 
                       return (
                         <div key={req.value} className={`p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${isCompleted ? 'bg-green-50/30 dark:bg-green-900/5' : ''}`}>
@@ -900,7 +928,7 @@ const StudentDocumentsTab: React.FC = () => {
                                       {req.label}
                                     </h4>
                                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                      {getStatusBadge(doc, req.required)}
+                                      {getRequirementRowStatusBadge(req.value, doc, req.required)}
                                       {doc && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                           Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'N/A'}
@@ -911,6 +939,17 @@ const StudentDocumentsTab: React.FC = () => {
                                       <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 rounded-lg text-sm text-yellow-800 dark:text-yellow-200 flex items-start gap-2">
                                         <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                         <span>{doc.remarks}</span>
+                                      </div>
+                                    )}
+                                    {req.value === "RECORD_FILE" && (
+                                      <div className="mt-2 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50/90 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-950 dark:text-amber-100 flex gap-2 items-start">
+                                        <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-300 mt-0.5" aria-hidden />
+                                        <span>
+                                          <span className="font-semibold">Tip:</span> It’s best to fill out and finalize the{" "}
+                                          <strong className="font-semibold">Record File last</strong>, after your other
+                                          pre-deployment forms are on file, so the checklist in the PDF matches your
+                                          progress.
+                                        </span>
                                       </div>
                                     )}
                                   </div>
@@ -1118,6 +1157,7 @@ const StudentDocumentsTab: React.FC = () => {
                       src={previewFileUrl}
                       className="w-full h-full border-0"
                       title="PDF Preview"
+                      loading="lazy"
                     />
                   </div>
                 </div>
@@ -1125,13 +1165,16 @@ const StudentDocumentsTab: React.FC = () => {
 
               {uploading && (
                 <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Uploading… {uploadProgress}%</span>
+                  </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-600 transition-all duration-300"
+                      className="h-full bg-purple-600 transition-[width] duration-150"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
-                  <p className="text-xs text-center text-gray-500">Uploading... {uploadProgress}%</p>
                 </div>
               )}
 
@@ -1204,6 +1247,7 @@ const StudentDocumentsTab: React.FC = () => {
                     <img
                       src={previewUrl}
                       alt="Document"
+                      loading="lazy"
                       className="max-w-full max-h-full object-contain shadow-sm rounded-lg border border-gray-200 dark:border-gray-700"
                     />
                   ) : (
@@ -1215,6 +1259,7 @@ const StudentDocumentsTab: React.FC = () => {
                           src={previewUrl}
                           className="w-full h-full rounded-lg shadow-sm bg-white border border-gray-200 dark:border-gray-700"
                           title="Document Preview"
+                          loading="lazy"
                         />
                       )}
                     </div>

@@ -108,3 +108,10 @@ export const emitNotification = (payload: NotificationPayload) => {
     // Emit to the specific user
     socket.emitToUser(payload.userId, SOCKET_EVENTS.NOTIFICATION_NEW, payload);
 };
+
+/** Push student clients to refetch dashboard, applications, proposals without full reload */
+export const emitStudentPortalSync = (userId: string, data?: { reason?: string }) => {
+    const socket = getSocket();
+    if (!socket) return;
+    socket.emitToUser(userId, SOCKET_EVENTS.STUDENT_PORTAL_SYNC, data ?? {});
+};

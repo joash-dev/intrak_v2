@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, FileCheck, Edit3, Loader2, CheckCircle, AlertCircle, Save, PlusCircle, MinusCircle, ImagePlus, X, Search, Users, UserPlus, Trash2, User, FileText } from 'lucide-react';
+import { ArrowLeft, Eye, FileCheck, Edit3, Loader2, CheckCircle, AlertCircle, Save, PlusCircle, MinusCircle, ImagePlus, X, Search, Users, UserPlus, Trash2, User, FileText, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { documentService } from '../../services/documentService';
 import StudentWeeklyReport from './StudentWeeklyReport';
@@ -387,6 +387,9 @@ interface FormField {
   repeatGroup?: string;
   repeatIndex?: number;
   repeatMax?: number;
+  min?: number;
+  max?: number;
+  step?: number | string;
 }
 
 const DocumentFormPage: React.FC = () => {
@@ -413,6 +416,22 @@ const DocumentFormPage: React.FC = () => {
   const [repeatCounts, setRepeatCounts] = useState<Record<string, number>>({});
   const [imageLoading, setImageLoading] = useState<Record<string, boolean>>({});
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const [isMobileLayout, setIsMobileLayout] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const onChange = () => setIsMobileLayout(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (step === 'preview' || step === 'done') {
+      window.scrollTo(0, 0);
+    }
+  }, [step]);
 
   // Multi-student endorsement letter
   const [selectedStudents, setSelectedStudents] = useState<PickerStudent[]>([]);
@@ -535,9 +554,12 @@ const DocumentFormPage: React.FC = () => {
       return value.replace(/[^0-9+\-\s()]/g, '');
     }
     if (fieldType === 'number') {
-      // Number-like fields: keep digits and numeric punctuation only.
-      // (We still render these inputs as `type="text"` for broader compatibility.)
-      return value.replace(/[^0-9+\-.,]/g, '');
+      let v = value.replace(/[^0-9.]/g, '');
+      const dot = v.indexOf('.');
+      if (dot !== -1) {
+        v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+      }
+      return v;
     }
     if (fieldType === 'text' || fieldType === 'textarea') {
       // Text fields frequently contain digits too (addresses, year ranges, certificate no.).
@@ -637,13 +659,26 @@ const DocumentFormPage: React.FC = () => {
     handleChange(fieldName, '', 'image');
   };
 
-  const validate = (): boolean => {
+  /** Returns number of validation errors (0 = valid). */
+  const validate = (): number => {
     const newErrors: Record<string, string> = {};
     fields.forEach(field => {
       // Skip selected_students field validation for multi-endorsement — we handle it separately
       if (isMultiEndorsement && field.name === 'selected_students') return;
-      if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
+      const raw = (formData[field.name] ?? '').trim();
+      if (field.required && raw === '') {
         newErrors[field.name] = `${field.label} is required`;
+        return;
+      }
+      if (field.type === 'number' && raw !== '') {
+        const num = Number(raw);
+        if (!Number.isFinite(num)) {
+          newErrors[field.name] = `${field.label} must be a valid number`;
+        } else if (field.min !== undefined && num < field.min) {
+          newErrors[field.name] = `${field.label} must be at least ${field.min}`;
+        } else if (field.max !== undefined && num > field.max) {
+          newErrors[field.name] = `${field.label} must be at most ${field.max}`;
+        }
       }
     });
     // For multi-endorsement, validate that at least 1 student is selected (+ current user)
@@ -651,7 +686,36 @@ const DocumentFormPage: React.FC = () => {
       newErrors['selected_students'] = 'Please add at least one additional student';
     }
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const keys = Object.keys(newErrors);
+    if (keys.length > 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          for (const key of keys) {
+            const el = document.getElementById(`field-${key}`);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              if (
+                el instanceof HTMLInputElement ||
+                el instanceof HTMLSelectElement ||
+                el instanceof HTMLTextAreaElement
+              ) {
+                try {
+                  el.focus({ preventScroll: true });
+                } catch {
+                  el.focus();
+                }
+              }
+              return;
+            }
+          }
+          document.querySelector(".form-validation-summary")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      });
+    }
+    return keys.length;
   };
 
   // Build final form data for multi-student endorsement (inject selected_students JSON + IDs)
@@ -669,8 +733,13 @@ const DocumentFormPage: React.FC = () => {
   };
 
   const handlePreview = async () => {
-    if (!validate()) {
-      toast.error('Please fill in all required fields');
+    const errCount = validate();
+    if (errCount > 0) {
+      toast.error(
+        errCount === 1
+          ? "Please fix the highlighted field below."
+          : `Please fix ${errCount} highlighted fields below.`
+      );
       return;
     }
     if (!actualType) return;
@@ -691,6 +760,17 @@ const DocumentFormPage: React.FC = () => {
 
   const handleFinalize = async () => {
     if (!actualType) return;
+
+    const errCount = validate();
+    if (errCount > 0) {
+      setStep("fill");
+      toast.error(
+        errCount === 1
+          ? "Please fix the highlighted field before finalizing."
+          : `Please fix ${errCount} highlighted fields before finalizing.`
+      );
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -763,7 +843,9 @@ const DocumentFormPage: React.FC = () => {
   }
 
   return (
-    <div className="document-form-page">
+    <div
+      className={`document-form-page${isMobileLayout && step === 'preview' ? ' document-form-page--preview-mobile-dock' : ''}`}
+    >
       {/* Polished Header Card */}
       <div className="dfp-header-card">
         <button onClick={() => step === 'fill' ? navigate('/student/documents') : setStep('fill')} className="dfp-back-btn">
@@ -820,9 +902,23 @@ const DocumentFormPage: React.FC = () => {
             </div>
           )}
 
+          {Object.keys(errors).length > 0 && (
+            <div className="form-validation-summary" role="alert" aria-live="polite">
+              <AlertCircle size={20} className="form-validation-summary-icon shrink-0" aria-hidden />
+              <div className="min-w-0">
+                <p className="form-validation-summary-title">Please correct the following:</p>
+                <ul className="form-validation-summary-list">
+                  {Object.entries(errors).map(([key, message]) => (
+                    <li key={key}>{message}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Student Picker for Multi-Student Endorsement Letter */}
           {isMultiEndorsement && (
-            <>
+            <div id="field-selected_students" className="multi-endorsement-anchor">
               <StudentPicker
                 selectedStudents={selectedStudents}
                 onAddStudent={(student) => {
@@ -835,11 +931,11 @@ const DocumentFormPage: React.FC = () => {
                 currentStudentName={currentStudentName}
               />
               {errors['selected_students'] && (
-                <div className="field-error" style={{ marginTop: '-8px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertCircle size={14} /> {errors['selected_students']}
+                <div className="field-error field-error-block">
+                  <AlertCircle size={14} aria-hidden /> {errors['selected_students']}
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {Object.entries(groupedFields()).map(([section, sectionFields]) => {
@@ -859,22 +955,45 @@ const DocumentFormPage: React.FC = () => {
                 </label>
                 {field.type === 'image' ? (
                   <div className="image-upload-area">
-                    {imageLoading[field.name] ? (
-                      <div className="image-loading">
-                        <Loader2 className="spin" size={28} />
-                        <span>Uploading photo...</span>
+                    {!formData[field.name] && imageLoading[field.name] ? (
+                      <div className="image-loading" role="status" aria-live="polite" aria-busy="true">
+                        <Loader2 className="spin" size={28} aria-hidden />
+                        <span>Uploading photo…</span>
                       </div>
                     ) : formData[field.name] ? (
-                      <div className="image-preview-wrapper">
-                        <img src={formData[field.name]} alt="Uploaded photo" className="image-preview" />
-                        <button type="button" className="image-remove-btn" onClick={() => handleRemoveImage(field.name)}>
-                          <X size={14} />
-                        </button>
-                        <label htmlFor={`field-${field.name}`} className="image-change-btn">Change Photo</label>
+                      <div className="image-preview-stack">
+                        <div
+                          className={`image-preview-thumb ${imageLoading[field.name] ? 'image-preview-thumb--busy' : ''}`}
+                          aria-busy={imageLoading[field.name] || undefined}
+                        >
+                          <img src={formData[field.name]} alt="Uploaded photo" className="image-preview" />
+                          <button
+                            type="button"
+                            className="image-remove-btn"
+                            disabled={!!imageLoading[field.name]}
+                            onClick={() => handleRemoveImage(field.name)}
+                            aria-label="Remove photo"
+                          >
+                            <X size={14} />
+                          </button>
+                          {imageLoading[field.name] ? (
+                            <div className="image-upload-overlay" role="status" aria-live="polite" aria-busy="true">
+                              <Loader2 className="spin" size={28} aria-hidden />
+                              <span>Uploading photo…</span>
+                            </div>
+                          ) : null}
+                        </div>
+                        <label
+                          htmlFor={`field-${field.name}`}
+                          className={`image-change-btn ${imageLoading[field.name] ? 'image-change-btn--disabled' : ''}`}
+                          aria-disabled={imageLoading[field.name] || undefined}
+                        >
+                          Change Photo
+                        </label>
                       </div>
                     ) : (
                       <label htmlFor={`field-${field.name}`} className="image-upload-label">
-                        <ImagePlus size={28} />
+                        <ImagePlus size={28} aria-hidden />
                         <span>Click to upload 2x2 photo</span>
                         <span className="image-hint">JPG or PNG, max 2MB</span>
                       </label>
@@ -883,6 +1002,7 @@ const DocumentFormPage: React.FC = () => {
                       id={`field-${field.name}`}
                       type="file"
                       accept="image/jpeg,image/png,image/jpg"
+                      disabled={!!imageLoading[field.name]}
                       onChange={(e) => handleImageUpload(field.name, e.target.files?.[0] || null)}
                       style={{ display: 'none' }}
                     />
@@ -909,8 +1029,25 @@ const DocumentFormPage: React.FC = () => {
                 ) : (
                   <input
                     id={`field-${field.name}`}
-                    type={field.type === 'date' ? 'date' : isContactLikeField(field.name) ? 'tel' : 'text'}
-                    inputMode={isContactLikeField(field.name) ? 'numeric' : field.type === 'number' ? 'decimal' : undefined}
+                    type={
+                      field.type === 'date'
+                        ? 'date'
+                        : isContactLikeField(field.name)
+                          ? 'tel'
+                          : field.type === 'number'
+                            ? 'number'
+                            : 'text'
+                    }
+                    inputMode={
+                      isContactLikeField(field.name)
+                        ? 'numeric'
+                        : field.type === 'number'
+                          ? 'decimal'
+                          : undefined
+                    }
+                    min={field.type === 'number' && typeof field.min === 'number' ? field.min : undefined}
+                    max={field.type === 'number' && typeof field.max === 'number' ? field.max : undefined}
+                    step={field.type === 'number' && field.step !== undefined ? field.step : field.type === 'number' ? 'any' : undefined}
                     value={formData[field.name] || ''}
                     onChange={(e) => handleChange(field.name, e.target.value, field.type)}
                     placeholder={field.placeholder}
@@ -918,7 +1055,9 @@ const DocumentFormPage: React.FC = () => {
                     style={computedFields.has(field.name) ? { background: '#f0fdf4', fontWeight: 700, color: '#166534', cursor: 'default' } : undefined}
                   />
                 )}
-                {errors[field.name] && <span className="field-error">{errors[field.name]}</span>}
+                {errors[field.name] && (
+                  <span className="field-error field-error-block">{errors[field.name]}</span>
+                )}
               </div>
             );
 
@@ -978,19 +1117,30 @@ const DocumentFormPage: React.FC = () => {
       {step === 'preview' && (
         <div className="form-preview-step">
           <div className="preview-toolbar">
-            <p className="preview-note">Review your document carefully. If everything looks good, click <strong>Finalize</strong> to submit.</p>
-            <div className="preview-actions">
-              <button onClick={() => setStep('fill')} className="btn-secondary">
-                <Edit3 size={16} /> Edit Form
-              </button>
-              <button onClick={handleFinalize} className="btn-success" disabled={submitting}>
-                {submitting ? (
-                  <><Loader2 className="spin" size={16} /> Generating PDF...</>
-                ) : (
-                  <><FileCheck size={16} /> Finalize & Submit</>
-                )}
-              </button>
+            <div className="preview-toolbar-text">
+              <p className="preview-note">
+                Review your document carefully. If everything looks good, click <strong>Finalize</strong> to submit.
+              </p>
+              {isMobileLayout && (
+                <p className="preview-mobile-hint">
+                  Scroll the preview to read your document. Use the bar below when you’re ready to edit or submit.
+                </p>
+              )}
             </div>
+            {!isMobileLayout && (
+              <div className="preview-actions">
+                <button type="button" onClick={() => setStep('fill')} className="btn-secondary">
+                  <Edit3 size={16} /> Edit Form
+                </button>
+                <button type="button" onClick={handleFinalize} className="btn-success" disabled={submitting}>
+                  {submitting ? (
+                    <><Loader2 className="spin" size={16} /> Generating PDF...</>
+                  ) : (
+                    <><FileCheck size={16} /> Finalize & Submit</>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="preview-container">
@@ -1000,6 +1150,21 @@ const DocumentFormPage: React.FC = () => {
               className="preview-iframe"
             />
           </div>
+
+          {isMobileLayout && (
+            <div className="preview-actions preview-actions--mobileDock" role="toolbar" aria-label="Document preview actions">
+              <button type="button" onClick={() => setStep('fill')} className="btn-secondary">
+                <Edit3 size={16} /> Edit Form
+              </button>
+              <button type="button" onClick={handleFinalize} className="btn-success" disabled={submitting}>
+                {submitting ? (
+                  <><Loader2 className="spin" size={16} /> Generating PDF...</>
+                ) : (
+                  <><FileCheck size={16} /> Finalize</>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1035,6 +1200,10 @@ const DocumentFormPage: React.FC = () => {
           max-width: 900px;
           margin: 0 auto;
           padding: 24px;
+        }
+
+        .document-form-page--preview-mobile-dock {
+          padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
         }
 
         .form-loading {
@@ -1189,10 +1358,19 @@ const DocumentFormPage: React.FC = () => {
           .form-actions .btn-secondary,
           .form-actions .btn-success { width: 100%; justify-content: center; }
           .preview-toolbar { flex-direction: column; align-items: stretch; }
-          .preview-actions { justify-content: stretch; }
-          .preview-actions .btn-secondary,
-          .preview-actions .btn-success { flex: 1; justify-content: center; }
+          .preview-actions:not(.preview-actions--mobileDock) {
+            justify-content: stretch;
+            width: 100%;
+          }
+          .preview-actions:not(.preview-actions--mobileDock) .btn-secondary,
+          .preview-actions:not(.preview-actions--mobileDock) .btn-success {
+            flex: 1;
+            justify-content: center;
+          }
           .done-card { padding: 24px 16px; margin: 0 8px; }
+          .preview-iframe {
+            min-height: min(58vh, 800px);
+          }
         }
 
         /* ── Template Selector Grid ── */
@@ -1366,14 +1544,68 @@ const DocumentFormPage: React.FC = () => {
         }
 
         .form-field.has-error input,
-        .form-field.has-error textarea {
+        .form-field.has-error textarea,
+        .form-field.has-error select {
           border-color: #ef4444;
           background: #fef2f2;
         }
 
+        .form-field.has-error .image-upload-label {
+          border-color: #ef4444;
+          background: #fef2f2;
+          color: #991b1b;
+        }
+
         .field-error {
-          font-size: 12px;
+          font-size: 13px;
           color: #ef4444;
+        }
+
+        .field-error-block {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          margin-top: 8px;
+          font-weight: 500;
+          line-height: 1.45;
+        }
+
+        .multi-endorsement-anchor {
+          margin-bottom: 8px;
+        }
+
+        .form-validation-summary {
+          display: flex;
+          gap: 12px;
+          align-items: flex-start;
+          padding: 14px 16px;
+          margin-bottom: 20px;
+          border-radius: 10px;
+          border: 1px solid #fecaca;
+          background: #fef2f2;
+          color: #991b1b;
+        }
+
+        .form-validation-summary-icon {
+          color: #dc2626;
+          margin-top: 2px;
+        }
+
+        .form-validation-summary-title {
+          font-weight: 700;
+          font-size: 14px;
+          margin: 0 0 8px 0;
+        }
+
+        .form-validation-summary-list {
+          margin: 0;
+          padding-left: 1.15rem;
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .form-validation-summary-list li {
+          margin-bottom: 4px;
         }
 
         .form-field textarea {
@@ -1447,21 +1679,58 @@ const DocumentFormPage: React.FC = () => {
 
         .preview-toolbar {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
           gap: 16px;
           flex-wrap: wrap;
+        }
+
+        .preview-toolbar-text {
+          flex: 1;
+          min-width: 0;
         }
 
         .preview-note {
           font-size: 14px;
           color: #6b7280;
           margin: 0;
+          line-height: 1.5;
+        }
+
+        .preview-mobile-hint {
+          font-size: 12px;
+          color: #9ca3af;
+          margin: 10px 0 0 0;
+          line-height: 1.45;
         }
 
         .preview-actions {
           display: flex;
           gap: 8px;
+          flex-shrink: 0;
+        }
+
+        .preview-actions--mobileDock {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 50;
+          display: flex;
+          gap: 10px;
+          padding: 12px 16px;
+          padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+          margin: 0;
+          background: #ffffff;
+          border-top: 1px solid #e5e7eb;
+          box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-actions--mobileDock .btn-secondary,
+        .preview-actions--mobileDock .btn-success {
+          flex: 1;
+          justify-content: center;
+          min-height: 46px;
         }
 
         .preview-container {
@@ -1554,10 +1823,19 @@ const DocumentFormPage: React.FC = () => {
           opacity: 0.7;
         }
 
-        .image-preview-wrapper {
+        .image-preview-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          max-width: 100%;
+        }
+
+        .image-preview-thumb {
           position: relative;
           width: 160px;
           height: 160px;
+          flex-shrink: 0;
         }
 
         .image-preview {
@@ -1586,9 +1864,31 @@ const DocumentFormPage: React.FC = () => {
           transition: transform 0.15s;
         }
 
-        .image-remove-btn:hover {
+        .image-remove-btn:hover:not(:disabled) {
           transform: scale(1.1);
           background: #dc2626;
+        }
+
+        .image-remove-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .image-upload-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 3;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.9);
+          color: #4361ee;
+          font-size: 12px;
+          font-weight: 600;
         }
 
         .image-loading {
@@ -1607,18 +1907,26 @@ const DocumentFormPage: React.FC = () => {
         }
 
         .image-change-btn {
-          display: block;
+          display: inline-block;
           text-align: center;
-          margin-top: 6px;
+          padding: 4px 8px;
           font-size: 12px;
           color: #4361ee;
           cursor: pointer;
           font-weight: 500;
           text-decoration: underline;
+          white-space: nowrap;
+          line-height: 1.3;
         }
 
-        .image-change-btn:hover {
+        .image-change-btn:hover:not(.image-change-btn--disabled) {
           color: #3a56d4;
+        }
+
+        .image-change-btn--disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          pointer-events: none;
         }
 
         /* Repeatable Groups */
@@ -1688,6 +1996,15 @@ const DocumentFormPage: React.FC = () => {
         .dfp-action-purple { color: #8b5cf6; }
 
         /* Draft saved notice */
+        .form-notice-record-tip {
+          align-items: flex-start;
+          background: #fffbeb;
+          border-color: #fcd34d;
+          color: #92400e;
+        }
+
+        .form-notice-record-tip strong { font-weight: 600; }
+
         .form-notice-draft {
           background: #e8f5e9;
           border-color: #4caf50;
@@ -1722,6 +2039,11 @@ const DocumentFormPage: React.FC = () => {
           background: rgba(76,175,80,0.08);
           border-color: rgba(76,175,80,0.3);
           color: #81c784;
+        }
+        .dark .form-notice-record-tip {
+          background: rgba(251,191,36,0.12);
+          border-color: rgba(251,191,36,0.35);
+          color: #fcd34d;
         }
         .dark .draft-clear-btn { color: #ef9a9a; }
 
@@ -1802,12 +2124,27 @@ const DocumentFormPage: React.FC = () => {
         }
 
         .dark .form-field.has-error input,
-        .dark .form-field.has-error textarea {
+        .dark .form-field.has-error textarea,
+        .dark .form-field.has-error select {
           border-color: #f87171;
           background: rgba(239,68,68,0.08);
         }
 
+        .dark .form-field.has-error .image-upload-label {
+          border-color: #f87171;
+          background: rgba(239,68,68,0.08);
+          color: #fecaca;
+        }
+
         .dark .field-error { color: #f87171; }
+
+        .dark .form-validation-summary {
+          border-color: rgba(248, 113, 113, 0.45);
+          background: rgba(239, 68, 68, 0.12);
+          color: #fecaca;
+        }
+
+        .dark .form-validation-summary-icon { color: #f87171; }
 
         /* Buttons */
         .dark .btn-secondary {
@@ -1819,10 +2156,16 @@ const DocumentFormPage: React.FC = () => {
 
         /* Preview */
         .dark .preview-note { color: #9ca3af; }
+        .dark .preview-mobile-hint { color: #6b7280; }
         .dark .preview-container {
           border-color: #374151;
           background: #1a1a1d;
           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .dark .preview-actions--mobileDock {
+          background: #212124;
+          border-top-color: #374151;
+          box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
         }
 
         /* Done Card */
@@ -1851,7 +2194,11 @@ const DocumentFormPage: React.FC = () => {
           background: rgba(67,97,238,0.1);
         }
         .dark .image-change-btn { color: #6d8cff; }
-        .dark .image-change-btn:hover { color: #818cf8; }
+        .dark .image-change-btn:hover:not(.image-change-btn--disabled) { color: #818cf8; }
+        .dark .image-upload-overlay {
+          background: rgba(26, 26, 29, 0.92);
+          color: #93a8ff;
+        }
 
         /* Repeatable Groups */
         .dark .repeat-entry { border-bottom-color: #374151; }

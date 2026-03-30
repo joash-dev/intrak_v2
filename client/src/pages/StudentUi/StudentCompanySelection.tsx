@@ -14,6 +14,7 @@ import {
   Send,
   X,
   Info,
+  UserMinus,
 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import { companyService, type Company } from "../../services/companyService";
@@ -58,10 +59,20 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
   const [applicationMessage, setApplicationMessage] = useState("");
   const [companyDetails, setCompanyDetails] = useState<Company | null>(null);
   const [loadingCompanyDetails, setLoadingCompanyDetails] = useState(false);
+  const [resigning, setResigning] = useState(false);
+  const [showResignModal, setShowResignModal] = useState(false);
 
   // Load companies, applications, and current student data
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const onSync = () => {
+      void loadData();
+    };
+    window.addEventListener("intrak:student-portal-sync", onSync);
+    return () => window.removeEventListener("intrak:student-portal-sync", onSync);
   }, []);
 
   // Load company details when student has a company
@@ -161,11 +172,34 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
       await api.patch(`/company-applications/${applicationId}/withdraw`);
       toast.success("Application withdrawn successfully");
       await loadData();
+      if (refreshStudentData) {
+        refreshStudentData();
+      }
     } catch (error: any) {
       console.error("Error withdrawing application:", error);
       toast.error(
         error.response?.data?.message || "Failed to withdraw application"
       );
+    }
+  };
+
+  const handleResignFromPlacement = async () => {
+    try {
+      setResigning(true);
+      await api.post("/company-applications/resign-placement");
+      toast.success("You have resigned from your placement.");
+      setShowResignModal(false);
+      await loadData();
+      if (refreshStudentData) {
+        refreshStudentData();
+      }
+    } catch (error: any) {
+      console.error("Error resigning from placement:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to resign from placement"
+      );
+    } finally {
+      setResigning(false);
     }
   };
 
@@ -268,6 +302,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
       : 0;
 
     return (
+      <>
       <div className="space-y-6">
         <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-center mb-4">
@@ -422,16 +457,90 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
             </div>
           )}
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-            <div className="flex items-start space-x-2">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                If you need to change your company, please contact your instructor.
-              </p>
+          <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <div className="flex items-start space-x-2">
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  You can resign to leave this placement and apply elsewhere, or contact your instructor if you need help.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowResignModal(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <UserMinus className="w-4 h-4" />
+              Resign from placement
+            </button>
           </div>
         </div>
       </div>
+
+      {showResignModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4 overflow-y-auto"
+          style={{ margin: "0" }}
+        >
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6 max-h-[min(90vh,100%)] overflow-y-auto overscroll-contain my-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white pr-2">
+                Resign from placement
+              </h3>
+              <button
+                type="button"
+                onClick={() => !resigning && setShowResignModal(false)}
+                disabled={resigning}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 shrink-0"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-900 dark:text-amber-100">
+                  Resign from this internship placement? Your assignment will be
+                  cleared and you can apply to companies again.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:space-x-3 sm:space-y-0 space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowResignModal(false)}
+                disabled={resigning}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleResignFromPlacement}
+                disabled={resigning}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                {resigning ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Resigning…
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className="w-4 h-4" />
+                    Yes, resign
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     );
   }
 
@@ -439,12 +548,19 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Company Applications
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Browse available companies and apply for your internship
-        </p>
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Building2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Company Applications
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+              Browse available companies and apply for your internship
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* My Applications Section */}
@@ -459,22 +575,24 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
                 key={application.id}
                 className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-1 break-words">
                       {application.company.name}
                     </h4>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{application.company.address}</span>
+                    <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span className="min-w-0 break-words">
+                        {application.company.address}
+                      </span>
                     </div>
                     {application.message && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 max-h-48 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
                         <strong>Message:</strong> {application.message}
                       </p>
                     )}
                     {application.rejectionReason && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
+                      <p className="text-sm text-red-600 dark:text-red-400 max-h-40 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
                         <strong>Rejection Reason:</strong>{" "}
                         {application.rejectionReason}
                       </p>
@@ -540,7 +658,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
       </div>
 
       {/* Companies List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         {filteredCompanies.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Building2 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -552,101 +670,116 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
           filteredCompanies.map((company) => {
             const availableSlots = getAvailableSlots(company);
             const application = getApplicationStatus(company.id);
-            const hasApplied = !!application;
-            const canApply = !hasApplied && availableSlots > 0;
+            const blocksReapply =
+              application?.status === "PENDING" ||
+              application?.status === "APPROVED";
+            const canApply = !blocksReapply && availableSlots > 0;
 
             return (
               <div
                 key={company.id}
-                className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow"
+                className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow flex flex-col h-full"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                      <Building2 className="w-6 h-6 text-white" />
+                <div className="flex-1 min-h-0">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {company.name}
+                        </h3>
+                        {company.industry && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {company.industry}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {company.name}
-                      </h3>
-                      {company.industry && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {company.industry}
-                        </span>
-                      )}
+                  </div>
+
+                  {company.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                      {company.description}
+                    </p>
+                  )}
+
+                  <div className="space-y-2">
+                  <div className="flex items-start space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span className="min-w-0 break-words">{company.address}</span>
+                  </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Phone className="w-4 h-4" />
+                      <span>{company.contactNumber}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Mail className="w-4 h-4" />
+                      <span>{company.contactEmail}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Users className="w-4 h-4" />
+                      <span>
+                        {availableSlots > 0 ? (
+                          <span className="text-green-600 dark:text-green-400 font-semibold">
+                            {availableSlots} slot{availableSlots !== 1 ? "s" : ""}{" "}
+                            available
+                          </span>
+                        ) : (
+                          <span className="text-red-600 dark:text-red-400 font-semibold">
+                            No slots available
+                          </span>
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {company.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                    {company.description}
-                  </p>
-                )}
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <MapPin className="w-4 h-4" />
-                    <span>{company.address}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Phone className="w-4 h-4" />
-                    <span>{company.contactNumber}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Mail className="w-4 h-4" />
-                    <span>{company.contactEmail}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Users className="w-4 h-4" />
-                    <span>
-                      {availableSlots > 0 ? (
-                        <span className="text-green-600 dark:text-green-400 font-semibold">
-                          {availableSlots} slot{availableSlots !== 1 ? "s" : ""}{" "}
-                          available
-                        </span>
-                      ) : (
-                        <span className="text-red-600 dark:text-red-400 font-semibold">
-                          No slots available
+                <div className="pt-4 shrink-0">
+                  {blocksReapply ? (
+                    <div className="flex items-center justify-center space-x-2 text-sm">
+                      {application!.status === "PENDING" && (
+                        <span className="inline-flex items-center px-3 py-2 rounded-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 w-full justify-center">
+                          <Clock className="w-4 h-4 mr-2" />
+                          Application Pending
                         </span>
                       )}
-                    </span>
-                  </div>
+                      {application!.status === "APPROVED" && (
+                        <span className="inline-flex items-center px-3 py-2 rounded-lg bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 w-full justify-center">
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Approved
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {application?.status === "REJECTED" && (
+                        <span className="inline-flex items-center px-3 py-2 rounded-lg bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 w-full justify-center text-sm">
+                          <XCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                          Rejected — you can apply again
+                        </span>
+                      )}
+                      {application?.status === "WITHDRAWN" && (
+                        <span className="inline-flex items-center px-3 py-2 rounded-lg bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 w-full justify-center text-sm">
+                          <X className="w-4 h-4 mr-2 flex-shrink-0" />
+                          Withdrawn — you can apply again
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleApply(company)}
+                        disabled={!canApply}
+                        className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${canApply
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-gray-300 dark:bg-[#212124] text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          }`}
+                      >
+                        {availableSlots > 0 ? "Apply Now" : "No Slots"}
+                      </button>
+                    </div>
+                  )}
                 </div>
-
-                {hasApplied ? (
-                  <div className="flex items-center justify-center space-x-2 text-sm">
-                    {application.status === "PENDING" && (
-                      <span className="inline-flex items-center px-3 py-2 rounded-lg bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 w-full justify-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        Application Pending
-                      </span>
-                    )}
-                    {application.status === "APPROVED" && (
-                      <span className="inline-flex items-center px-3 py-2 rounded-lg bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 w-full justify-center">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Approved
-                      </span>
-                    )}
-                    {application.status === "REJECTED" && (
-                      <span className="inline-flex items-center px-3 py-2 rounded-lg bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 w-full justify-center">
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Rejected
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleApply(company)}
-                    disabled={!canApply}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${canApply
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-300 dark:bg-[#212124] text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                      }`}
-                  >
-                    {availableSlots > 0 ? "Apply Now" : "No Slots"}
-                  </button>
-                )}
               </div>
             );
           })
@@ -655,8 +788,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
 
       {/* Application Modal */}
       {showApplicationModal && selectedCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4 overflow-y-auto" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-md w-full p-6 max-h-[min(90vh,100%)] overflow-y-auto overscroll-contain my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Apply to {selectedCompany.name}
@@ -688,7 +821,8 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
                 onChange={(e) => setApplicationMessage(e.target.value)}
                 placeholder="Why do you want to intern at this company? (Optional)"
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                maxLength={4000}
+                className="w-full min-h-[6rem] max-h-60 resize-y overflow-y-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent break-words"
               />
             </div>
 

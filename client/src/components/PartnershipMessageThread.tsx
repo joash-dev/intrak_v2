@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageSquare, Send, ChevronDown, CornerUpLeft, X, Loader2 } from "lucide-react";
 import api from "../services/api";
 import toast from "react-hot-toast";
@@ -92,6 +92,20 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+
+  const syncComposerHeight = useCallback(() => {
+    const ta = composerRef.current;
+    if (!ta) return;
+    ta.style.height = "0px";
+    ta.style.height = `${ta.scrollHeight}px`;
+    ta.style.overflowX = "hidden";
+    ta.style.overflowY = "hidden";
+  }, []);
+
+  useEffect(() => {
+    syncComposerHeight();
+  }, [newMessage, syncComposerHeight]);
 
   useEffect(() => {
     if (studentId) {
@@ -361,7 +375,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
                     key={message.id}
                     className={`group/message flex ${isCurrentUser ? "justify-end" : "justify-start"} ${isSameSenderAsPrev ? "mt-1" : "mt-3"}`}
                   >
-                    <div className={`max-w-[90%] sm:max-w-[80%] flex items-center gap-2 ${isCurrentUser ? "justify-end" : ""}`}>
+                    <div className={`min-w-0 max-w-[90%] sm:max-w-[80%] flex items-center gap-2 ${isCurrentUser ? "justify-end" : ""}`}>
                       {isCurrentUser && (
                         <button
                           onClick={() =>
@@ -386,7 +400,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
                         </div>
                       )}
 
-                      <div className={`group relative flex flex-col ${isCurrentUser ? "items-end" : "items-start"} space-y-1`}>
+                      <div className={`group relative flex min-w-0 max-w-full flex-col ${isCurrentUser ? "items-end" : "items-start"} space-y-1`}>
                         {!isCurrentUser && (
                           <div className="flex items-center gap-2 justify-start">
                             <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
@@ -402,7 +416,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
                           </div>
                         )}
                         <div
-                          className={`rounded-2xl px-4 py-2.5 shadow-sm ${
+                          className={`rounded-2xl px-4 py-2.5 shadow-sm min-w-0 max-w-full ${
                             isCurrentUser
                               ? "bg-blue-600 text-white rounded-br-sm"
                               : message.senderRole === "STUDENT"
@@ -411,23 +425,30 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
                           }`}
                         >
                           {parsed.reply && (
-                            <div className={`mb-2 rounded-lg px-2.5 py-1.5 text-xs border ${
+                            <div className={`mb-2 rounded-lg px-2.5 py-1.5 text-xs border min-w-0 ${
                               isCurrentUser
                                 ? "bg-white/15 border-white/25 text-blue-50"
                                 : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300"
                             }`}>
-                              <div className="flex items-center gap-1.5">
-                                <p className="font-semibold truncate">{parsed.reply.senderName}</p>
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${getRoleBadgeColor(parsed.reply.senderRole)}`}>
+                              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                <p className="font-semibold min-w-0 break-words">{parsed.reply.senderName}</p>
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${getRoleBadgeColor(parsed.reply.senderRole)}`}>
                                   {parsed.reply.senderRole}
                                 </span>
                               </div>
-                              <p className="truncate">{parsed.reply.content}</p>
+                              <p
+                                className="mt-1 line-clamp-3 break-words"
+                                title={parsed.reply.content}
+                              >
+                                {parsed.reply.content}
+                              </p>
                             </div>
                           )}
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                            {parsed.body}
-                          </p>
+                          <div className="min-w-0 max-w-full overflow-x-hidden">
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
+                              {parsed.body}
+                            </p>
+                          </div>
                         </div>
                         <span
                           className={`absolute text-[10px] text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap ${
@@ -487,7 +508,10 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
                   <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                     Replying to {replyTo.senderName}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  <p
+                    className="text-xs text-gray-500 dark:text-gray-400 line-clamp-3 break-words"
+                    title={replyTo.content}
+                  >
                     {replyTo.content}
                   </p>
                 </div>
@@ -501,8 +525,9 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
               </div>
             )}
 
-            <div className="flex items-center">
+            <div className="flex min-w-0 items-end gap-2">
             <textarea
+              ref={composerRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => {
@@ -513,12 +538,15 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
               }}
               placeholder="Type your message..."
               rows={1}
-              className="w-full px-2 py-1.5 bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 border-0 outline-none focus:outline-none resize-none max-h-28 leading-5"
+              spellCheck={false}
+              autoComplete="off"
+              wrap="soft"
+              className="min-h-[2.75rem] min-w-0 flex-1 resize-none overflow-x-hidden whitespace-pre-wrap px-2 py-1.5 bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 border-0 outline-none focus:outline-none leading-5 [overflow-wrap:anywhere]"
             />
             <button
               onClick={handleSendMessage}
               disabled={sending || !newMessage.trim()}
-              className="ml-2 h-9 w-9 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0"
+              className="h-9 w-9 shrink-0 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               aria-label="Send message"
             >
               {sending ? (
