@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Eye, FileCheck, Edit3, Loader2, CheckCircle, AlertCircle, Save, PlusCircle, MinusCircle, ImagePlus, X, Search, Users, UserPlus, Trash2, User, FileText, Info } from 'lucide-react';
+import { ArrowLeft, Eye, FileCheck, Edit3, Loader2, CheckCircle, AlertCircle, Save, PlusCircle, MinusCircle, ImagePlus, X, Search, Users, UserPlus, Trash2, User, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { documentService } from '../../services/documentService';
 import StudentWeeklyReport from './StudentWeeklyReport';
