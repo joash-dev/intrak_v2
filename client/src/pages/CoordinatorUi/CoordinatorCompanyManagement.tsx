@@ -20,6 +20,7 @@ import {
   UserPlus,
   MailCheck,
   SquarePen,
+  Users,
 } from "lucide-react";
 import { coordinatorService } from "../../services/coordinatorService";
 import { formatDate } from "../../services/localeService";
@@ -60,6 +61,19 @@ const CoordinatorCompanyManagement: React.FC = () => {
     null
   );
   const [companyMOAsSnapshot, setCompanyMOAsSnapshot] = useState<MOA[]>([]);
+  const [showCompanyStudentsModal, setShowCompanyStudentsModal] = useState(false);
+  const [companyForStudentsModal, setCompanyForStudentsModal] =
+    useState<Company | null>(null);
+  const [companyStudentsSnapshot, setCompanyStudentsSnapshot] = useState<
+    Array<{
+      id: string;
+      name: string;
+      studentNumber: string;
+      program?: string;
+      status?: string;
+      source: "assigned" | "proposal";
+    }>
+  >([]);
   const [loadingCompanyMOAs, setLoadingCompanyMOAs] = useState(false);
   const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
   const [previewMimeType, setPreviewMimeType] = useState<string | null>(null);
@@ -652,6 +666,77 @@ const CoordinatorCompanyManagement: React.FC = () => {
     setLoadingCompanyMOAs(false);
   };
 
+  const closeCompanyStudentsModal = () => {
+    setShowCompanyStudentsModal(false);
+    setCompanyForStudentsModal(null);
+    setCompanyStudentsSnapshot([]);
+  };
+
+  const handleViewCompanyStudents = (company: Company) => {
+    const assignedStudents: Array<{
+      id: string;
+      name: string;
+      studentNumber: string;
+      program?: string;
+      status?: string;
+      source: "assigned" | "proposal";
+    }> = (studentsWithCompanies || [])
+      .filter((student) => student.companyId === company.id)
+      .map((student) => ({
+        id: student.id,
+        name: student.name,
+        studentNumber: student.studentNumber,
+        program: student.program,
+        status: student.status,
+        source: "assigned" as const,
+      }));
+
+    // Include students from approved proposals for this company (if not already assigned)
+    const proposalApplicants: Array<{
+      id: string;
+      name: string;
+      studentNumber: string;
+      program?: string;
+      status?: string;
+      source: "assigned" | "proposal";
+    }> = (approvedCompanyProposals || [])
+      .filter((proposal) => {
+        const matchesName =
+          normalizeForMatch(proposal.companyName) === normalizeForMatch(company.name);
+        const matchesEmail =
+          proposal.contactEmail &&
+          company.contactEmail &&
+          normalizeForMatch(proposal.contactEmail) ===
+            normalizeForMatch(company.contactEmail);
+        return matchesName || matchesEmail;
+      })
+      .map((proposal) => {
+        const matchedStudent = (students || []).find(
+          (s) => s.id === proposal.student.id
+        );
+        return {
+          id: proposal.student.id,
+          name: proposal.student.user.name,
+          studentNumber: matchedStudent?.studentNumber || "N/A",
+          program: matchedStudent?.program,
+          status: matchedStudent?.status,
+          source: "proposal" as const,
+        };
+      });
+
+    const merged = [...assignedStudents];
+    const existingIds = new Set(assignedStudents.map((s) => s.id));
+    for (const applicant of proposalApplicants) {
+      if (!existingIds.has(applicant.id)) {
+        merged.push(applicant);
+      }
+    }
+
+    setCompanyForStudentsModal(company);
+    setCompanyStudentsSnapshot(merged);
+    setShowCompanyStudentsModal(true);
+  };
+
   const handleViewAllCompanyMOAs = async (company: Company) => {
     try {
       setLoadingCompanyMOAs(true);
@@ -1177,25 +1262,35 @@ const CoordinatorCompanyManagement: React.FC = () => {
                               </span>
                             )}
                           </h5>
-                          <button
-                            type="button"
-                            onClick={() => handleViewAllCompanyMOAs(company)}
-                            className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium inline-flex items-center space-x-1 disabled:opacity-60 flex-shrink-0"
-                            disabled={
-                              loadingCompanyMOAs &&
-                              companyForMOAModal?.id === company.id
-                            }
-                          >
-                            {loadingCompanyMOAs &&
-                              companyForMOAModal?.id === company.id ? (
-                              <>
-                                <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
-                                <span>Loading…</span>
-                              </>
-                            ) : (
-                              <span>View All</span>
-                            )}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleViewCompanyStudents(company)}
+                              className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1 flex-shrink-0"
+                            >
+                              <Users className="w-3 h-3" />
+                              <span>View Students</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleViewAllCompanyMOAs(company)}
+                              className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium inline-flex items-center space-x-1 disabled:opacity-60 flex-shrink-0"
+                              disabled={
+                                loadingCompanyMOAs &&
+                                companyForMOAModal?.id === company.id
+                              }
+                            >
+                              {loadingCompanyMOAs &&
+                                companyForMOAModal?.id === company.id ? (
+                                <>
+                                  <Loader2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 animate-spin" />
+                                  <span>Loading…</span>
+                                </>
+                              ) : (
+                                <span>View All</span>
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         {companyMOAs.length > 0 ? (
@@ -1766,6 +1861,84 @@ const CoordinatorCompanyManagement: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Company Students Modal */}
+          {showCompanyStudentsModal && companyForStudentsModal && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
+              style={{ margin: "0" }}
+            >
+              <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {companyForStudentsModal.name} — Students
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {companyStudentsSnapshot.length} student
+                      {companyStudentsSnapshot.length === 1 ? "" : "s"} linked
+                    </p>
+                  </div>
+                  <button
+                    onClick={closeCompanyStudentsModal}
+                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                  {companyStudentsSnapshot.length === 0 ? (
+                    <div className="text-center py-10">
+                      <Users className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No students linked to this company yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {companyStudentsSnapshot.map((student) => (
+                        <div
+                          key={student.id}
+                          className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50/80 dark:bg-[#212124]/60"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {student.name}
+                              </h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {student.studentNumber}
+                                {student.program ? ` • ${student.program}` : ""}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  student.source === "assigned"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                    : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                }`}
+                              >
+                                {student.source === "assigned"
+                                  ? "Assigned"
+                                  : "Proposal"}
+                              </span>
+                              {student.status && (
+                                <span className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                  {student.status}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

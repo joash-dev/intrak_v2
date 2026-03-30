@@ -60,10 +60,13 @@ const InstructorCompanyProposals = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notifiedMap, setNotifiedMap] = useState<Record<string, boolean>>({});
 
-  const loadProposals = async () => {
+  const loadProposals = async (overrideStatus?: string) => {
     try {
       setLoading(true);
-      const data = await companyProposalService.getInstructorProposals('all');
+      const effectiveStatus = overrideStatus ?? statusFilter;
+      const data = await companyProposalService.getInstructorProposals(
+        effectiveStatus === 'all' ? 'all' : (effectiveStatus as any),
+      );
       setProposals(data);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to load company proposals');
@@ -76,11 +79,13 @@ const InstructorCompanyProposals = () => {
     loadProposals();
   }, []);
 
+  useEffect(() => {
+    // Make the status filter authoritative (prevents “glitchy” mixed states).
+    loadProposals(statusFilter);
+  }, [statusFilter]);
+
   const filtered = useMemo(() => {
     let result = proposals;
-    if (statusFilter !== 'all') {
-      result = result.filter((p) => p.status === statusFilter);
-    }
     const query = search.trim().toLowerCase();
     if (query) {
       result = result.filter((p) =>
@@ -89,15 +94,32 @@ const InstructorCompanyProposals = () => {
       );
     }
     return result;
-  }, [proposals, search, statusFilter]);
+  }, [proposals, search]);
+
 
   const handleUpload = async (proposalId: string, file: File | null) => {
     if (!file) return;
     try {
       setUploadingId(proposalId);
-      await companyProposalService.uploadAttachment(proposalId, file, 'INSTRUCTOR_ENDORSEMENT');
+      const attachment = await companyProposalService.uploadAttachment(
+        proposalId,
+        file,
+        'INSTRUCTOR_ENDORSEMENT'
+      );
       toast.success('Instructor endorsement uploaded');
-      await loadProposals();
+      // Avoid refetching the whole proposals list; update only the affected card.
+      setProposals((prev) =>
+        prev.map((p) => {
+          if (p.id !== proposalId) return p;
+
+          const existing = p.attachments ?? [];
+          const filtered = existing.filter(
+            (a) =>
+              !(a.role === attachment.role && a.documentType === attachment.documentType)
+          );
+          return { ...p, attachments: [...filtered, attachment] };
+        })
+      );
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to upload file');
     } finally {
@@ -276,7 +298,7 @@ const InstructorCompanyProposals = () => {
               </div>
               <div className="mt-4 sm:mt-0">
                 <button
-                  onClick={loadProposals}
+                  onClick={() => loadProposals()}
                   className="group relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/20 to-blue-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
@@ -338,177 +360,177 @@ const InstructorCompanyProposals = () => {
           ) : (
             <div className="space-y-4">
               {filtered.map((proposal) => {
-                const canReview = actionStatuses.includes(proposal.status);
-                const hasInstructorEndorsement = proposal.attachments.some(
-                  (attachment) => attachment.role === 'INSTRUCTOR',
-                );
+                  const canReview = actionStatuses.includes(proposal.status);
+                  const hasInstructorEndorsement = proposal.attachments.some(
+                    (attachment) => attachment.role === 'INSTRUCTOR',
+                  );
 
-                const studentFiles = proposal.attachments.filter((attachment) => attachment.role === 'STUDENT');
-                const instructorFiles = proposal.attachments.filter((attachment) => attachment.role === 'INSTRUCTOR');
+                  const studentFiles = proposal.attachments.filter((attachment) => attachment.role === 'STUDENT');
+                  const instructorFiles = proposal.attachments.filter((attachment) => attachment.role === 'INSTRUCTOR');
 
-                return (
-                  <div
-                    key={proposal.id}
-                    className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200"
-                  >
-                    {/* Header: Company name + status */}
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
-                          <FileUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  return (
+                    <div
+                      key={proposal.id}
+                      className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                    >
+                      {/* Header: Company name + status */}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
+                            <FileUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{proposal.companyName}</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Student: {proposal.student.user.name}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white truncate">{proposal.companyName}</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Student: {proposal.student.user.name}
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap self-start ${statusClass[proposal.status]}`}>
+                          {statusLabel[proposal.status]}
+                        </span>
+                      </div>
+
+                      {/* Company Details */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-[#19191c]/50 rounded-xl p-3 sm:p-4">
+                        <p><strong>Company Years:</strong> {proposal.companyYears ?? '-'}</p>
+                        <p><strong>Department Assigned:</strong> {proposal.assignedDepartment || '-'}</p>
+                        <p><strong>Role Assigned:</strong> {proposal.assignedRole || '-'}</p>
+                        <p><strong>Has PSU MOA:</strong> {proposal.hasPsuMoa == null ? '-' : proposal.hasPsuMoa ? 'Yes' : 'No'}</p>
+                        <p><strong>Address:</strong> {proposal.address || '-'}</p>
+                        <p><strong>Industry:</strong> {proposal.industry || '-'}</p>
+                        <p><strong>Contact Person:</strong> {proposal.contactPerson || '-'}</p>
+                        <p><strong>Contact Email:</strong> {proposal.contactEmail || '-'}</p>
+                      </div>
+
+                      {/* Current Decision */}
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-[#19191c]/50">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wide">Current Decision</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {getInstructorDecisionLabel(proposal.status)}
+                        </p>
+                        {proposal.remarks && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            Remarks: {proposal.remarks}
                           </p>
-                        </div>
+                        )}
+                        {notifiedMap[proposal.id] && (
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                            Student has been notified for this decision.
+                          </p>
+                        )}
                       </div>
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap self-start ${statusClass[proposal.status]}`}>
-                        {statusLabel[proposal.status]}
-                      </span>
-                    </div>
 
-                    {/* Company Details */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50/50 dark:bg-[#19191c]/50 rounded-xl p-3 sm:p-4">
-                      <p><strong>Company Years:</strong> {proposal.companyYears ?? '-'}</p>
-                      <p><strong>Department Assigned:</strong> {proposal.assignedDepartment || '-'}</p>
-                      <p><strong>Role Assigned:</strong> {proposal.assignedRole || '-'}</p>
-                      <p><strong>Has PSU MOA:</strong> {proposal.hasPsuMoa == null ? '-' : proposal.hasPsuMoa ? 'Yes' : 'No'}</p>
-                      <p><strong>Address:</strong> {proposal.address || '-'}</p>
-                      <p><strong>Industry:</strong> {proposal.industry || '-'}</p>
-                      <p><strong>Contact Person:</strong> {proposal.contactPerson || '-'}</p>
-                      <p><strong>Contact Email:</strong> {proposal.contactEmail || '-'}</p>
-                    </div>
-
-                    {/* Current Decision */}
-                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-[#19191c]/50">
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wide">Current Decision</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {getInstructorDecisionLabel(proposal.status)}
-                      </p>
-                      {proposal.remarks && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Remarks: {proposal.remarks}
-                        </p>
-                      )}
-                      {notifiedMap[proposal.id] && (
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                          Student has been notified for this decision.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Files for Review */}
-                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-[#19191c]/50">
-                      <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Files for Review</p>
-                      {[...studentFiles, ...instructorFiles].length === 0 ? (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">No files uploaded yet.</p>
-                      ) : (
-                        <div className="space-y-1.5">
-                          {[...studentFiles, ...instructorFiles].map((attachment) => (
-                            <div
-                              key={attachment.id}
-                              className="flex items-center justify-between text-xs bg-white dark:bg-[#212124] rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
-                            >
-                              <span className="truncate mr-2 min-w-0">
-                                {attachment.filename} <span className="text-gray-400">({attachment.role})</span>
-                              </span>
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <button
-                                  onClick={() => handlePreviewAttachment(attachment.id)}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  title="Preview"
-                                >
-                                  <Eye className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDownloadAttachment(attachment.id, attachment.filename)}
-                                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  title="Download"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                </button>
+                      {/* Files for Review */}
+                      <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4 bg-gray-50/50 dark:bg-[#19191c]/50">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Files for Review</p>
+                        {[...studentFiles, ...instructorFiles].length === 0 ? (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">No files uploaded yet.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {[...studentFiles, ...instructorFiles].map((attachment) => (
+                              <div
+                                key={attachment.id}
+                                className="flex items-center justify-between text-xs bg-white dark:bg-[#212124] rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700"
+                              >
+                                <span className="truncate mr-2 min-w-0">
+                                  {attachment.filename} <span className="text-gray-400">({attachment.role})</span>
+                                </span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    onClick={() => handlePreviewAttachment(attachment.id)}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    title="Preview"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDownloadAttachment(attachment.id, attachment.filename)}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    title="Download"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {!hasInstructorEndorsement && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                          Upload your instructor endorsement before forwarding to coordinator.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Remarks */}
-                    <div className="space-y-3">
-                      <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Instructor Remarks</label>
-                      <textarea
-                        rows={2}
-                        value={remarksMap[proposal.id] || ''}
-                        onChange={(e) => setRemarksMap((prev) => ({ ...prev, [proposal.id]: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124] dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Required for return/reject. Optional for forward."
-                      />
-                    </div>
-
-                    {/* Upload & Decision Actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 pt-2 border-t border-gray-100 dark:border-gray-700/50">
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Upload</p>
-                        <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 cursor-pointer text-xs sm:text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <FileUp className="w-4 h-4 flex-shrink-0" />
-                          Upload Endorsement
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={(e) => handleUpload(proposal.id, e.target.files?.[0] || null)}
-                          />
-                        </label>
+                            ))}
+                          </div>
+                        )}
+                        {!hasInstructorEndorsement && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                            Upload your instructor endorsement before forwarding to coordinator.
+                          </p>
+                        )}
                       </div>
 
-                      <div className="sm:text-right">
-                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Decision</p>
-                        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                          <button
-                            onClick={() => handleForward(proposal.id)}
-                            disabled={!canReview || !hasInstructorEndorsement || processingId === proposal.id || uploadingId === proposal.id}
-                            className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-green-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-green-700"
-                          >
-                            <CheckCircle className="w-4 h-4 flex-shrink-0" /> Forward
-                          </button>
+                      {/* Remarks */}
+                      <div className="space-y-3">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Instructor Remarks</label>
+                        <textarea
+                          rows={2}
+                          value={remarksMap[proposal.id] || ''}
+                          onChange={(e) => setRemarksMap((prev) => ({ ...prev, [proposal.id]: e.target.value }))}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-[#212124] dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Required for return/reject. Optional for forward."
+                        />
+                      </div>
 
-                          <button
-                            onClick={() => handleDecision(proposal.id, 'RETURNED_BY_INSTRUCTOR')}
-                            disabled={!canReview || processingId === proposal.id}
-                            className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-amber-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-amber-700"
-                          >
-                            <RotateCcw className="w-4 h-4 flex-shrink-0" /> Return
-                          </button>
+                      {/* Upload & Decision Actions */}
+                      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 pt-2 border-t border-gray-100 dark:border-gray-700/50">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Upload</p>
+                          <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 cursor-pointer text-xs sm:text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <FileUp className="w-4 h-4 flex-shrink-0" />
+                            Upload Endorsement
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleUpload(proposal.id, e.target.files?.[0] || null)}
+                            />
+                          </label>
+                        </div>
 
-                          <button
-                            onClick={() => handleDecision(proposal.id, 'REJECTED_BY_INSTRUCTOR')}
-                            disabled={!canReview || processingId === proposal.id}
-                            className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-red-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-red-700"
-                          >
-                            <XCircle className="w-4 h-4 flex-shrink-0" /> Reject
-                          </button>
-
-                          {(proposal.status === 'APPROVED' || proposal.status === 'REJECTED') && (
+                        <div className="sm:text-right">
+                          <p className="text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Decision</p>
+                          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                             <button
-                              onClick={() => handleNotifyStudent(proposal.id, proposal.status)}
-                              disabled={processingId === proposal.id}
-                              className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 disabled:opacity-50 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                              onClick={() => handleForward(proposal.id)}
+                              disabled={!canReview || !hasInstructorEndorsement || processingId === proposal.id || uploadingId === proposal.id}
+                              className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-green-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-green-700"
                             >
-                              {processingId === proposal.id ? 'Notifying...' : notifiedMap[proposal.id] ? 'Notified' : 'Notify Student'}
+                              <CheckCircle className="w-4 h-4 flex-shrink-0" /> Forward
                             </button>
-                          )}
+
+                            <button
+                              onClick={() => handleDecision(proposal.id, 'RETURNED_BY_INSTRUCTOR')}
+                              disabled={!canReview || processingId === proposal.id}
+                              className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-amber-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-amber-700"
+                            >
+                              <RotateCcw className="w-4 h-4 flex-shrink-0" /> Return
+                            </button>
+
+                            <button
+                              onClick={() => handleDecision(proposal.id, 'REJECTED_BY_INSTRUCTOR')}
+                              disabled={!canReview || processingId === proposal.id}
+                              className="flex-1 sm:flex-none px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl bg-red-600 text-white disabled:opacity-50 inline-flex items-center justify-center gap-1.5 transition-colors hover:bg-red-700"
+                            >
+                              <XCircle className="w-4 h-4 flex-shrink-0" /> Reject
+                            </button>
+
+                            {(proposal.status === 'APPROVED' || proposal.status === 'REJECTED') && (
+                              <button
+                                onClick={() => handleNotifyStudent(proposal.id, proposal.status)}
+                                disabled={processingId === proposal.id}
+                                className="w-full sm:w-auto px-4 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 disabled:opacity-50 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                              >
+                                {processingId === proposal.id ? 'Notifying...' : notifiedMap[proposal.id] ? 'Notified' : 'Notify Student'}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
+                  );
               })}
             </div>
           )}

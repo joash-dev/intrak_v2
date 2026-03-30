@@ -77,9 +77,25 @@ const CoordinatorCompanyProposals = () => {
     if (!file) return;
     try {
       setUploadingId(proposalId);
-      await companyProposalService.uploadAttachment(proposalId, file, 'COORDINATOR_FINAL_DOCUMENT');
+      const attachment = await companyProposalService.uploadAttachment(
+        proposalId,
+        file,
+        'COORDINATOR_FINAL_DOCUMENT'
+      );
       toast.success('Final document uploaded');
-      await loadProposals();
+      // Avoid refetching the whole proposals list; update only the affected card.
+      setProposals((prev) =>
+        prev.map((p) => {
+          if (p.id !== proposalId) return p;
+
+          const existing = p.attachments ?? [];
+          const filtered = existing.filter(
+            (a) =>
+              !(a.role === attachment.role && a.documentType === attachment.documentType)
+          );
+          return { ...p, attachments: [...filtered, attachment] };
+        })
+      );
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Failed to upload file');
     } finally {

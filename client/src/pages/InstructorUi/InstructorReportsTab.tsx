@@ -15,6 +15,7 @@ import {
   Filter,
   BarChart3,
   Eye,
+  Building2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { reportService } from "../../services/reportService";
@@ -23,6 +24,7 @@ import type {
   AttendanceReportLog,
 } from "../../services/reportService";
 import { instructorService, type InstructorStudent } from "../../services/instructorService";
+import { useSearchParams } from "react-router-dom";
 
 // ── Date Preset Helpers ──────────────────────────────────────────────
 type DatePreset = "all" | "today" | "this_week" | "this_month" | "last_30" | "custom";
@@ -120,6 +122,8 @@ const InstructorReportsTab: React.FC = () => {
   const [students, setStudents] = useState<InstructorStudent[]>([]);
   const [studentLoading, setStudentLoading] = useState(true);
   const [overviewSearch, setOverviewSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCompanyParam = (searchParams.get("company") || "all").trim();
 
   // Detail view
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -206,6 +210,13 @@ const InstructorReportsTab: React.FC = () => {
     setReportError(null);
   };
 
+  const setSelectedCompany = (company: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (!company || company === "all") next.delete("company");
+    else next.set("company", company);
+    setSearchParams(next, { replace: true });
+  };
+
   // ── Downloads ────────────────────────────────────────────────────
   const handleDownload = async (format: "pdf" | "excel") => {
     if (!selectedStudentId) return;
@@ -225,15 +236,44 @@ const InstructorReportsTab: React.FC = () => {
 
   // ── Computed values ──────────────────────────────────────────────
   const filteredStudents = useMemo(() => {
-    if (!overviewSearch.trim()) return students;
-    const q = overviewSearch.toLowerCase();
-    return students.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.studentId?.toLowerCase().includes(q) ||
-        s.company.toLowerCase().includes(q)
-    );
-  }, [students, overviewSearch]);
+    const q = overviewSearch.trim().toLowerCase();
+    const companyScope =
+      selectedCompanyParam && selectedCompanyParam !== "all" ? selectedCompanyParam : null;
+
+    return students.filter((s) => {
+      const companyMatch = !companyScope || s.company === companyScope;
+      if (!companyMatch) return false;
+      if (!q) return true;
+
+      const matchesStudent =
+        s.name.toLowerCase().includes(q) || s.studentId?.toLowerCase().includes(q);
+      if (companyScope) return matchesStudent; // scoped: student search only
+
+      return matchesStudent || s.company.toLowerCase().includes(q); // unscoped: student or company search
+    });
+  }, [students, overviewSearch, selectedCompanyParam]);
+
+  const companies = useMemo(() => {
+    const map = new Map<
+      string,
+      { company: string; total: number; active: number; warning: number; at_risk: number; completed: number }
+    >();
+
+    for (const s of students) {
+      const company = (s.company || "No company").trim() || "No company";
+      if (!map.has(company)) {
+        map.set(company, { company, total: 0, active: 0, warning: 0, at_risk: 0, completed: 0 });
+      }
+      const entry = map.get(company)!;
+      entry.total += 1;
+      if (s.status === "active") entry.active += 1;
+      else if (s.status === "warning") entry.warning += 1;
+      else if (s.status === "at_risk") entry.at_risk += 1;
+      else if (s.status === "completed") entry.completed += 1;
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.company.localeCompare(b.company));
+  }, [students]);
 
   const overviewStats = useMemo(() => {
     const total = students.length;
@@ -266,6 +306,7 @@ const InstructorReportsTab: React.FC = () => {
   );
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
+  const isCompanyScoped = selectedCompanyParam !== "all";
 
   // ═══════════════════════════════════════════════════════════════════
   // DETAIL VIEW
@@ -631,103 +672,155 @@ const InstructorReportsTab: React.FC = () => {
         ))}
       </div>
 
-      {/* Student Overview Table */}
-      <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Student Progress Overview
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Click "View Report" to see detailed attendance for a student
+      {!isCompanyScoped ? (
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-gray-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                Companies
+              </h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Click a company card to open its student reports page.
             </p>
           </div>
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search students..."
-              value={overviewSearch}
-              onChange={(e) => setOverviewSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#2a2a2d] text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-            />
+
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {companies.map((c) => (
+              <button
+                key={c.company}
+                type="button"
+                onClick={() => setSelectedCompany(c.company)}
+                className="text-left rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99] hover:bg-gray-50 dark:hover:bg-gray-800/40"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                      {c.company}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {c.total} student{c.total === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    {c.active}/{c.total}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
+      ) : (
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedCompany("all")}
+                className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                title="Back to companies"
+              >
+                <ArrowLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              </button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {selectedCompanyParam} - Student Reports
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Search and open reports for students in this company
+                </p>
+              </div>
+            </div>
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder={`Search students in ${selectedCompanyParam}...`}
+                value={overviewSearch}
+                onChange={(e) => setOverviewSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#2a2a2d] text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              />
+            </div>
+          </div>
 
-        {studentLoading ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent" />
-          </div>
-        ) : filteredStudents.length === 0 ? (
-          <div className="p-12 text-center">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
-            <p className="text-gray-500 dark:text-gray-400">
-              {overviewSearch ? "No students match your search." : "No assigned students found."}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
-                <tr>
-                  {["Student", "Company", "Hours Progress", "Attendance", "Status", "Last Activity", ""].map(
-                    (h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredStudents.map((student) => {
-                  return (
-                    <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
-                            {student.avatar}
+          {studentLoading ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent" />
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="p-12 text-center">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
+              <p className="text-gray-500 dark:text-gray-400">
+                {overviewSearch
+                  ? "No students match your search in this company."
+                  : "No students found for this company."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto transition-all duration-300 ease-out">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900/50">
+                  <tr>
+                    {["Student", "Company", "Hours Progress", "Attendance", "Status", "Last Activity", ""].map(
+                      (h) => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {h}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredStudents.map((student) => {
+                    return (
+                      <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                              {student.avatar}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{student.name}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{student.studentId}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{student.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{student.studentId}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{student.company}</td>
-                      <td className="px-4 py-3 min-w-[180px]">
-                        <ProgressBar
-                          current={student.hoursCompleted}
-                          total={student.requiredHours}
-                          size="sm"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                        {student.attendanceRate > 0 ? `${student.attendanceRate.toFixed(0)}%` : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={student.status} />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {student.lastActivity}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleViewReport(student.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          View Report
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{student.company}</td>
+                        <td className="px-4 py-3 min-w-[180px]">
+                          <ProgressBar
+                            current={student.hoursCompleted}
+                            total={student.requiredHours}
+                            size="sm"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                          {student.attendanceRate > 0 ? `${student.attendanceRate.toFixed(0)}%` : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={student.status} />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {student.lastActivity}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleViewReport(student.id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm font-medium"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View Report
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

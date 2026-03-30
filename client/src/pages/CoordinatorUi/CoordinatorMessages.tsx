@@ -1,29 +1,58 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Loader2 } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { MessageSquare, Loader2, ArrowLeft, Info } from "lucide-react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import PartnershipMessageThread from "../../components/PartnershipMessageThread";
-import { coordinatorService, type CoordinatorStudent } from "../../services/coordinatorService";
+import PartnershipConversationsSidebar from "../../components/PartnershipConversationsSidebar";
+import StudentChatDetailsDrawer from "../../components/StudentChatDetailsDrawer";
+import {
+  partnershipConversationService,
+  type PartnershipConversationSummary,
+} from "../../services/partnershipConversationService";
 
 const CoordinatorMessages: React.FC = () => {
   const location = useLocation();
-  const query = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const selectedFromQuery = query.get("studentId");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedFromQuery = searchParams.get("studentId") || "";
 
-  const [students, setStudents] = useState<CoordinatorStudent[]>([]);
+  const [conversations, setConversations] = useState<
+    PartnershipConversationSummary[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>(selectedFromQuery || "");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(
+    selectedFromQuery || ""
+  );
+  const [showMobileThread, setShowMobileThread] = useState<boolean>(
+    Boolean(selectedFromQuery)
+  );
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const all = await coordinatorService.getAllStudents();
-        setStudents(all);
-        if (!selectedStudentId && selectedFromQuery) {
+        const conv = await partnershipConversationService.getConversations();
+        setConversations(conv);
+
+        const hasSelected =
+          !!selectedFromQuery && conv.some((c) => c.studentId === selectedFromQuery);
+
+        if (hasSelected) {
           setSelectedStudentId(selectedFromQuery);
+          setShowMobileThread(true);
+          return;
         }
-        if (!selectedStudentId && !selectedFromQuery && all.length > 0) {
-          setSelectedStudentId(all[0].id);
+
+        if (conv.length > 0) {
+          const fallbackId = conv[0].studentId;
+          setSelectedStudentId(fallbackId);
+          setShowMobileThread(true);
+          const next = new URLSearchParams(location.search);
+          next.set("studentId", fallbackId);
+          setSearchParams(next);
+        } else {
+          setSelectedStudentId("");
+          setShowMobileThread(false);
         }
       } finally {
         setLoading(false);
@@ -36,11 +65,15 @@ const CoordinatorMessages: React.FC = () => {
   useEffect(() => {
     if (selectedFromQuery && selectedFromQuery !== selectedStudentId) {
       setSelectedStudentId(selectedFromQuery);
+      setShowMobileThread(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFromQuery]);
 
-  const selectedStudent = students.find((s) => s.id === selectedStudentId);
+  const selectedConversation = useMemo(
+    () => conversations.find((c) => c.studentId === selectedStudentId),
+    [conversations, selectedStudentId]
+  );
 
   return (
     <div className="space-y-6 font-outfit">
@@ -60,22 +93,8 @@ const CoordinatorMessages: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full sm:w-[420px]">
-            <select
-              value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white"
-              disabled={loading}
-            >
-              <option value="" disabled>
-                Select a student
-              </option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.studentNumber})
-                </option>
-              ))}
-            </select>
+          <div className="hidden sm:block text-sm text-gray-500 dark:text-gray-400">
+            Use the sidebar to switch conversations.
           </div>
         </div>
       </div>
@@ -85,17 +104,91 @@ const CoordinatorMessages: React.FC = () => {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
-        ) : !selectedStudentId ? (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-            No students found.
-          </div>
         ) : (
-          <div className="p-3 sm:p-4">
-            <PartnershipMessageThread
-              studentId={selectedStudentId}
-              studentName={selectedStudent?.name}
-              currentUserRole="COORDINATOR"
-            />
+          <div className="flex flex-col lg:flex-row h-[calc(100vh-260px)] min-h-[560px]">
+            <aside
+              className={[
+                `w-full ${sidebarCollapsed ? "lg:w-[92px]" : "lg:w-[420px]"} border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-gray-700 h-full overflow-hidden transition-[width] duration-300 ease-in-out`,
+                showMobileThread ? "hidden lg:block" : "block",
+              ].join(" ")}
+            >
+              <PartnershipConversationsSidebar
+                conversations={conversations}
+                selectedStudentId={selectedStudentId}
+                collapsed={sidebarCollapsed}
+                onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+                onSelectStudent={(id) => {
+                  setSelectedStudentId(id);
+                  setShowMobileThread(true);
+                  const next = new URLSearchParams(location.search);
+                  next.set("studentId", id);
+                  setSearchParams(next);
+                }}
+              />
+            </aside>
+
+            <main
+              className={[
+                "flex-1 p-3 sm:p-4 h-full min-h-0",
+                showMobileThread ? "block" : "hidden lg:block",
+              ].join(" ")}
+            >
+              {!selectedStudentId ? (
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                  No conversations found.
+                </div>
+              ) : (
+                <div className="h-full min-h-0 flex flex-col">
+                  {/* Thread header */}
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowMobileThread(false)}
+                        className="lg:hidden inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                      </button>
+
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          {selectedConversation?.studentName || "Student"}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {selectedConversation?.studentNumber || "—"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setDetailsOpen(true)}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
+                      aria-label="Open student details"
+                      title="Student details"
+                    >
+                      <Info className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    <PartnershipMessageThread
+                      studentId={selectedStudentId}
+                      studentName={selectedConversation?.studentName}
+                      currentUserRole="COORDINATOR"
+                    />
+                  </div>
+
+                  <StudentChatDetailsDrawer
+                    open={detailsOpen}
+                    onClose={() => setDetailsOpen(false)}
+                    studentId={selectedStudentId}
+                    fallbackName={selectedConversation?.studentName}
+                    fallbackStudentNumber={selectedConversation?.studentNumber}
+                  />
+                </div>
+              )}
+            </main>
           </div>
         )}
       </div>

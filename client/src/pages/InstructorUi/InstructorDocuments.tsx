@@ -68,6 +68,8 @@ const DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
   { id: "agency-student-evaluation", name: "Evaluation Instrument of PSU Partner Agencies (Student) (Form FM-AA-INT-19c)", category: "post-ojt", required: true, type: "AGENCY_STUDENT_EVALUATION" },
 ];
 
+const STUDENTS_PER_PAGE = 10;
+
 const InstructorDocumentsTab = () => {
   // --- State ---
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -77,6 +79,7 @@ const InstructorDocumentsTab = () => {
   const [documents, setDocuments] = useState<InstructorDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Review Modal State
   const [selectedDoc, setSelectedDoc] = useState<InstructorDocument | null>(null);
@@ -99,6 +102,11 @@ const InstructorDocumentsTab = () => {
       if (previewUrl) window.URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  // Reset pagination when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // --- Data Loading ---
 
@@ -259,7 +267,11 @@ const InstructorDocumentsTab = () => {
       setReviewRemarks("");
 
       if (nextDoc) {
-        toast("Opening next document...", { icon: '➡️' });
+        if (nextDoc.studentId !== currentStudentId) {
+          toast(`Now reviewing: ${nextDoc.studentName} (${nextDoc.studentNumber})`);
+        } else {
+          toast("Opening next document...");
+        }
         // Load the next document immediately
         const success = await loadDocumentPreview(nextDoc);
         if (!success) {
@@ -267,7 +279,7 @@ const InstructorDocumentsTab = () => {
           // Fallback: If load fails, maybe close modal or let user choose
         }
       } else {
-        toast.success("All pending documents reviewed! 🎉", { duration: 3000 });
+        toast.success("All pending documents reviewed!", { duration: 3000 });
         // Close modal after a brief delay
         setTimeout(() => {
           setShowReviewModal(false);
@@ -464,137 +476,210 @@ const InstructorDocumentsTab = () => {
       );
     }
 
-    const filteredStudents = students.filter(s =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.studentNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filteredStudents = students.filter((s) => {
+      // Match student identity fields
+      const matchesStudent =
+        s.name.toLowerCase().includes(normalizedQuery) ||
+        s.studentNumber.toLowerCase().includes(normalizedQuery);
+
+      if (matchesStudent || !normalizedQuery) return true;
+
+      // Match student's submitted documents (filename/type)
+      const studentDocs = getStudentDocuments(s.id);
+      return studentDocs.some((d) => {
+        const fileName = (d.fileName || "").toLowerCase();
+        const documentTypeRaw = (d.documentType || "").toLowerCase();
+        const documentTypeLabel = formatDocumentType(d.documentType || "")
+          .toLowerCase();
+        return (
+          fileName.includes(normalizedQuery) ||
+          documentTypeRaw.includes(normalizedQuery) ||
+          documentTypeLabel.includes(normalizedQuery)
+        );
+      });
+    });
+
+    if (filteredStudents.length === 0) {
+      return (
+        <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-10 text-center">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No matching students
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Try a student name, student number, file name, or document type.
+          </p>
+        </div>
+      );
+    }
+
+    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / STUDENTS_PER_PAGE));
+    const page = Math.min(currentPage, totalPages);
+    const start = (page - 1) * STUDENTS_PER_PAGE;
+    const end = start + STUDENTS_PER_PAGE;
+    const paginatedStudents = filteredStudents.slice(start, end);
+
+    const renderPagination = () => (
+      <div className="mt-4 sm:mt-6 flex items-center justify-between">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          Showing {start + 1}-{Math.min(end, filteredStudents.length)} of {filteredStudents.length}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={page === 1}
+            className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+            Page {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     );
 
     if (viewMode === "grid") {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredStudents.map(student => {
-            const progress = getStudentProgress(student.id);
-            return (
-              <div
-                key={student.id}
-                onClick={() => setSelectedStudent(student)}
-                className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer group touch-manipulation"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0">
-                      {student.avatar}
+        <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {paginatedStudents.map(student => {
+              const progress = getStudentProgress(student.id);
+              return (
+                <div
+                  key={student.id}
+                  onClick={() => setSelectedStudent(student)}
+                  className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer group touch-manipulation"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-base sm:text-lg flex-shrink-0">
+                        {student.avatar}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                          {student.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{student.studentNumber}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                        {student.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{student.studentNumber}</p>
-                    </div>
+                    {progress.pending > 0 && (
+                      <span className="flex items-center justify-center w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs font-bold animate-pulse flex-shrink-0 ml-2">
+                        {progress.pending}
+                      </span>
+                    )}
                   </div>
-                  {progress.pending > 0 && (
-                    <span className="flex items-center justify-center w-6 h-6 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full text-xs font-bold animate-pulse flex-shrink-0 ml-2">
-                      {progress.pending}
-                    </span>
-                  )}
-                </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between text-xs sm:text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Progress</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{progress.percentage}%</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                      style={{ width: `${progress.percentage}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>{progress.approved}/{progress.total} Requirements</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Progress</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{progress.percentage}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                        style={{ width: `${progress.percentage}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{progress.approved}/{progress.total} Requirements</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          {renderPagination()}
         </div>
       );
     }
 
     return (
-      <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800/50">
-              <tr>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Student</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Progress</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending</th>
-                <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filteredStudents.map(student => {
-                const progress = getStudentProgress(student.id);
-                return (
-                  <tr
-                    key={student.id}
-                    onClick={() => setSelectedStudent(student)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors touch-manipulation"
-                  >
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
-                          {student.avatar}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{student.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{student.studentNumber}</div>
-                          <div className="md:hidden mt-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">{progress.percentage}%</span>
-                              <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden max-w-[100px]">
-                                <div
-                                  className="h-full bg-blue-600 rounded-full"
-                                  style={{ width: `${progress.percentage}%` }}
-                                />
+      <div>
+        <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <tr>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Student</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">Progress</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending</th>
+                  <th className="px-3 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {paginatedStudents.map(student => {
+                  const progress = getStudentProgress(student.id);
+                  return (
+                    <tr
+                      key={student.id}
+                      onClick={() => setSelectedStudent(student)}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors touch-manipulation"
+                    >
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                            {student.avatar}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{student.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{student.studentNumber}</div>
+                            <div className="md:hidden mt-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{progress.percentage}%</span>
+                                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden max-w-[100px]">
+                                  <div
+                                    className="h-full bg-blue-600 rounded-full"
+                                    style={{ width: `${progress.percentage}%` }}
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden md:table-cell">
-                      <div className="w-full max-w-xs">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-500 dark:text-gray-400">{progress.percentage}%</span>
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 hidden md:table-cell">
+                        <div className="w-full max-w-xs">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-500 dark:text-gray-400">{progress.percentage}%</span>
+                          </div>
+                          <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-600 rounded-full"
+                              style={{ width: `${progress.percentage}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-600 rounded-full"
-                            style={{ width: `${progress.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      {progress.pending > 0 ? (
-                        <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                          {progress.pending} Pending
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">All caught up</span>
-                      )}
-                    </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden sm:table-cell">
-                      <ChevronRight className="w-5 h-5 text-gray-400 inline-block" />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                        {progress.pending > 0 ? (
+                          <span className="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                            {progress.pending} Pending
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">All caught up</span>
+                        )}
+                      </td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right hidden sm:table-cell">
+                        <ChevronRight className="w-5 h-5 text-gray-400 inline-block" />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {renderPagination()}
       </div>
     );
   };
@@ -809,7 +894,7 @@ const InstructorDocumentsTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students or documents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -820,7 +905,7 @@ const InstructorDocumentsTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search students..."
+                placeholder="Search students or documents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -905,6 +990,16 @@ const InstructorDocumentsTab = () => {
                   </div>
                 </div>
 
+                {/* Student indicator */}
+                <div className="flex items-center justify-between">
+                  <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+                    Reviewing:{" "}
+                    <span className="font-semibold">
+                      {selectedDoc.studentName} ({selectedDoc.studentNumber})
+                    </span>
+                  </div>
+                </div>
+
                 {/* Status Badge */}
                 <div className="flex items-center justify-between">
                   <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 ${selectedDoc.status === 'APPROVED'
@@ -936,6 +1031,12 @@ const InstructorDocumentsTab = () => {
                     <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight">
                       {formatDocumentType(selectedDoc.documentType)}
                     </h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300 truncate">
+                      Reviewing:{" "}
+                      <span className="font-semibold">
+                        {selectedDoc.studentName} ({selectedDoc.studentNumber})
+                      </span>
+                    </p>
                   </div>
                 </div>
 

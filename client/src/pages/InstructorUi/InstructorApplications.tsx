@@ -12,6 +12,7 @@ import {
   Loader2,
   AlertCircle,
   ChevronLeft,
+  ChevronDown,
   ChevronRight,
   Inbox,
   MapPin,
@@ -67,6 +68,10 @@ const InstructorApplications: React.FC = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusDropdownActive, setStatusDropdownActive] = useState(false);
+  const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
   useEffect(() => {
     loadApplications();
@@ -181,16 +186,59 @@ const InstructorApplications: React.FC = () => {
     });
   }, [applications, searchQuery]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredApplications.length / ITEMS_PER_PAGE);
-  const paginatedApplications = filteredApplications.slice(
+  const groupedCompanies = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        company: CompanyApplication["company"];
+        applications: CompanyApplication[];
+      }
+    >();
+
+    for (const app of filteredApplications) {
+      const companyId = app.company?.id || app.companyId;
+      if (!companyId) continue;
+      if (!map.has(companyId)) {
+        map.set(companyId, { company: app.company, applications: [] });
+      }
+      map.get(companyId)!.applications.push(app);
+    }
+
+    return Array.from(map.values())
+      .map((g) => ({
+        ...g,
+        applications: [...g.applications].sort((a, b) => {
+          // Pending first, then newest first
+          const statusRank = (s: CompanyApplication["status"]) =>
+            s === "PENDING" ? 0 : s === "APPROVED" ? 1 : s === "REJECTED" ? 2 : 3;
+          const r = statusRank(a.status) - statusRank(b.status);
+          if (r !== 0) return r;
+          return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+        }),
+      }))
+      .sort((a, b) => a.company.name.localeCompare(b.company.name));
+  }, [filteredApplications]);
+
+  // Pagination (by companies)
+  const totalPages = Math.ceil(groupedCompanies.length / ITEMS_PER_PAGE);
+  const paginatedCompanies = groupedCompanies.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   useEffect(() => {
     setCurrentPage(1);
+    setExpandedCompanyIds(new Set());
   }, [searchQuery, statusFilter]);
+
+  const toggleCompanyExpanded = (companyId: string) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(companyId)) next.delete(companyId);
+      else next.add(companyId);
+      return next;
+    });
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -314,22 +362,37 @@ const InstructorApplications: React.FC = () => {
               className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder:text-gray-500 dark:placeholder:text-gray-400"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 min-w-[130px]"
+          <div
+            className={`relative min-w-[130px] rounded-lg transition-all duration-200 ${
+              statusDropdownActive
+                ? "ring-2 ring-blue-500/30 scale-[1.01]"
+                : "hover:shadow-sm"
+            }`}
           >
-            <option value="all">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="WITHDRAWN">Withdrawn</option>
-          </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              onFocus={() => setStatusDropdownActive(true)}
+              onBlur={() => setStatusDropdownActive(false)}
+              className="appearance-none w-full pl-3 pr-8 py-2 text-xs sm:text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            >
+              <option value="all">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="WITHDRAWN">Withdrawn</option>
+            </select>
+            <ChevronDown
+              className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                statusDropdownActive ? "rotate-180 text-blue-500" : ""
+              }`}
+            />
+          </div>
         </div>
       </div>
 
       {/* Applications List */}
-      {filteredApplications.length === 0 ? (
+      {groupedCompanies.length === 0 ? (
         <div className="bg-white dark:bg-[#212124] rounded-xl p-10 sm:p-16 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
           <div className="p-4 bg-gray-100 dark:bg-gray-700/50 rounded-full w-fit mx-auto mb-4">
             <Inbox className="w-8 h-8 text-gray-400" />
@@ -345,73 +408,64 @@ const InstructorApplications: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {paginatedApplications.map((application) => {
-            const availableSlots = getAvailableSlots(application.company);
+          {paginatedCompanies.map((group) => {
+            const companyId = group.company?.id;
+            const isExpanded = companyId ? expandedCompanyIds.has(companyId) : false;
+            const availableSlots = getAvailableSlots(group.company);
+            const pendingCount = group.applications.filter((a) => a.status === "PENDING").length;
 
             return (
               <div
-                key={application.id}
+                key={companyId}
                 className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 overflow-hidden"
               >
-                <div className="p-4 sm:p-5">
-                  {/* Main Row: Student + Status/Actions */}
+                <button
+                  type="button"
+                  onClick={() => companyId && toggleCompanyExpanded(companyId)}
+                  className="w-full text-left p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    {/* Student Info */}
                     <div className="flex items-start space-x-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                        {application.student.user.name.charAt(0).toUpperCase()}
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+                        <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
-                          {application.student.user.name}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
-                            <User className="w-3 h-3 mr-0.5" />
-                            {formatStudentId(application.student.studentNumber)}
-                          </span>
-                          <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">•</span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {application.student.program} - Year {application.student.year}
-                          </span>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate">
+                              {group.company.name}
+                            </h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-start gap-1">
+                              <MapPin className="w-3 h-3 mr-1 flex-shrink-0 mt-0.5" />
+                              <span className="min-w-0 break-words">{group.company.address}</span>
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {group.company.industry && (
+                              <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium">
+                                {group.company.industry}
+                              </span>
+                            )}
+                            <div className="text-gray-400 dark:text-gray-500">
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform duration-300 ease-out ${
+                                  isExpanded ? "rotate-180" : "rotate-0"
+                                }`}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center mt-0.5 sm:hidden">
-                          <Mail className="w-3 h-3 text-gray-400 mr-1" />
-                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {application.student.user.email}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                            {group.applications.length} applicant{group.applications.length !== 1 ? "s" : ""}
                           </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="flex-shrink-0">
-                      {getStatusBadge(application.status)}
-                    </div>
-                  </div>
-
-                  {/* Company Card */}
-                  <div className="mt-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                    <div className="flex items-start space-x-3">
-                      <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
-                        <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {application.company.name}
-                          </h4>
-                          {application.company.industry && (
-                            <span className="hidden sm:inline-block text-[10px] px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full font-medium flex-shrink-0">
-                              {application.company.industry}
+                          {pendingCount > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full text-[11px] font-semibold">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {pendingCount} pending
                             </span>
                           )}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-start gap-1">
-                          <MapPin className="w-3 h-3 mr-1 flex-shrink-0 mt-0.5" />
-                          <span className="min-w-0 break-words">{application.company.address}</span>
-                        </p>
-                        <div className="mt-1.5">
                           {availableSlots > 0 ? (
                             <span className="text-xs text-green-600 dark:text-green-400 font-medium inline-flex items-center">
                               <CheckCircle className="w-3 h-3 mr-1" />
@@ -427,63 +481,115 @@ const InstructorApplications: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </button>
 
-                  {/* Application Message */}
-                  {application.message && (
-                    <div className="mt-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-52 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
-                        <span className="font-semibold text-blue-700 dark:text-blue-300">Message: </span>
-                        {application.message}
-                      </p>
-                    </div>
-                  )}
+                <div
+                  className={`grid transition-all duration-300 ease-out ${
+                    isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="border-t border-gray-100 dark:border-gray-700/50">
+                      <div className="p-4 sm:p-5 space-y-3 bg-gray-50/50 dark:bg-[#19191c]/20">
+                      {group.applications.map((application) => {
+                        const canApprove = getAvailableSlots(group.company) > 0;
+                        return (
+                          <div
+                            key={application.id}
+                            className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start space-x-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                                  {application.student.user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                      {application.student.user.name}
+                                    </h4>
+                                    <div className="flex-shrink-0">
+                                      {getStatusBadge(application.status)}
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+                                      <User className="w-3 h-3 mr-0.5" />
+                                      {formatStudentId(application.student.studentNumber)}
+                                    </span>
+                                    <span className="text-gray-300 dark:text-gray-600 hidden sm:inline">•</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      {application.student.program} - Year {application.student.year}
+                                    </span>
+                                  </div>
+                                  <div className="hidden sm:flex items-center mt-0.5">
+                                    <Mail className="w-3 h-3 text-gray-400 mr-1" />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                      {application.student.user.email}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
-                  {/* Rejection Reason */}
-                  {application.rejectionReason && (
-                    <div className="mt-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-40 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
-                        <span className="font-semibold text-red-700 dark:text-red-300">Rejection Reason: </span>
-                        {application.rejectionReason}
-                      </p>
-                    </div>
-                  )}
+                            {application.message && (
+                              <div className="mt-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
+                                <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-52 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
+                                  <span className="font-semibold text-blue-700 dark:text-blue-300">Message: </span>
+                                  {application.message}
+                                </p>
+                              </div>
+                            )}
 
-                  {/* Footer: Dates + Actions */}
-                  <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
-                      <span className="inline-flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        Applied {formatDate(application.appliedAt)}
-                      </span>
-                      {application.reviewedAt && (
-                        <span className="inline-flex items-center">
-                          <Briefcase className="w-3 h-3 mr-1" />
-                          Reviewed {formatDate(application.reviewedAt)}
-                          {application.reviewer && ` by ${application.reviewer.name}`}
-                        </span>
-                      )}
-                    </div>
+                            {application.rejectionReason && (
+                              <div className="mt-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/50 rounded-lg p-2.5 min-w-0 max-w-full">
+                                <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed max-h-40 overflow-y-auto overscroll-contain break-words whitespace-pre-wrap">
+                                  <span className="font-semibold text-red-700 dark:text-red-300">Rejection Reason: </span>
+                                  {application.rejectionReason}
+                                </p>
+                              </div>
+                            )}
 
-                    {/* Actions for Pending */}
-                    {application.status === "PENDING" && (
-                      <div className="flex space-x-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleApprove(application)}
-                          disabled={availableSlots <= 0}
-                          className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium flex items-center space-x-1"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          <span>Approve</span>
-                        </button>
-                        <button
-                          onClick={() => handleReject(application)}
-                          className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium flex items-center space-x-1"
-                        >
-                          <XCircle className="w-3.5 h-3.5" />
-                          <span>Reject</span>
-                        </button>
+                            <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
+                                <span className="inline-flex items-center">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  Applied {formatDate(application.appliedAt)}
+                                </span>
+                                {application.reviewedAt && (
+                                  <span className="inline-flex items-center">
+                                    <Briefcase className="w-3 h-3 mr-1" />
+                                    Reviewed {formatDate(application.reviewedAt)}
+                                    {application.reviewer && ` by ${application.reviewer.name}`}
+                                  </span>
+                                )}
+                              </div>
+
+                              {application.status === "PENDING" && (
+                                <div className="flex space-x-2 flex-shrink-0">
+                                  <button
+                                    onClick={() => handleApprove(application)}
+                                    disabled={!canApprove}
+                                    className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium flex items-center space-x-1"
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>Approve</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleReject(application)}
+                                    className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium flex items-center space-x-1"
+                                  >
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    <span>Reject</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -494,7 +600,7 @@ const InstructorApplications: React.FC = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between bg-white dark:bg-[#212124] rounded-xl p-3 shadow-sm border border-gray-200 dark:border-gray-700">
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredApplications.length)} of {filteredApplications.length}
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, groupedCompanies.length)} of {groupedCompanies.length}
               </span>
               <div className="flex items-center space-x-1">
                 <button

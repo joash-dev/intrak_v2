@@ -89,6 +89,8 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [replyTo, setReplyTo] = useState<ReplyMeta | null>(null);
+  const requestSeqRef = useRef(0);
+  const studentIdRef = useRef(studentId);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -97,10 +99,13 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   const syncComposerHeight = useCallback(() => {
     const ta = composerRef.current;
     if (!ta) return;
+    const MAX_COMPOSER_HEIGHT_PX = 128; // cap textarea growth; use internal scroll after this
     ta.style.height = "0px";
     ta.style.height = `${ta.scrollHeight}px`;
+    const nextHeight = Math.min(ta.scrollHeight, MAX_COMPOSER_HEIGHT_PX);
+    ta.style.height = `${nextHeight}px`;
     ta.style.overflowX = "hidden";
-    ta.style.overflowY = "hidden";
+    ta.style.overflowY = ta.scrollHeight > MAX_COMPOSER_HEIGHT_PX ? "auto" : "hidden";
   }, []);
 
   useEffect(() => {
@@ -109,6 +114,14 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
 
   useEffect(() => {
     if (studentId) {
+      // Reset conversation-local UI when switching students.
+      studentIdRef.current = studentId;
+      setReplyTo(null);
+      setNewMessage("");
+      setMessages([]);
+      setLastMessageCount(0);
+      setShowScrollToBottom(false);
+
       loadMessages();
       
       // Set up polling for real-time updates (poll every 3 seconds)
@@ -220,42 +233,48 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   };
 
   const loadMessages = async (showLoading = true) => {
+    const requestId = ++requestSeqRef.current;
+    const requestedStudentId = studentIdRef.current;
+
     try {
-      if (showLoading) {
-        setLoading(true);
-      }
-      const response = await api.get(`/students/partnership-messages?studentId=${studentId}`);
-      const newMessages = response.data.messages || [];
-      
-      // Update messages - React will handle re-rendering only if changed
-      const hasNewMessages = messages.length !== newMessages.length || 
-        messages.some((msg, idx) => !newMessages[idx] || msg.id !== newMessages[idx].id);
-      
-      setMessages(prevMessages => {
+      if (showLoading) setLoading(true);
+
+      const response = await api.get(
+        `/students/partnership-messages?studentId=${requestedStudentId}`
+      );
+      const newMessages: PartnershipMessage[] = response.data.messages || [];
+
+      // If a newer request started (e.g. dropdown switched), ignore this response.
+      if (requestId !== requestSeqRef.current) return;
+
+      setMessages((prevMessages) => {
         // Only update if the message count or IDs have changed
         if (prevMessages.length !== newMessages.length) {
           return newMessages;
         }
-        // Check if any message IDs are different
-        const hasChanges = prevMessages.some((msg, idx) => 
-          !newMessages[idx] || msg.id !== newMessages[idx].id
+
+        const hasChanges = prevMessages.some(
+          (msg, idx) => !newMessages[idx] || msg.id !== newMessages[idx].id
         );
         return hasChanges ? newMessages : prevMessages;
       });
-      
-      // Check scroll position after messages update (if there were changes)
-      if (hasNewMessages) {
-        setTimeout(() => {
-          checkIfAtBottom();
-        }, 100);
-      }
+
+      // Check scroll position after messages update
+      setTimeout(() => {
+        // Guard: ensure we didn't switch students in the meantime
+        if (requestedStudentId !== studentIdRef.current) return;
+        checkIfAtBottom();
+      }, 100);
     } catch (error: any) {
+      // If the error is from a stale request, ignore it.
+      if (requestId !== requestSeqRef.current) return;
+
       console.error("Error loading messages:", error);
       if (error.response?.status !== 404 && showLoading) {
         toast.error("Failed to load messages");
       }
     } finally {
-      if (showLoading) {
+      if (showLoading && requestId === requestSeqRef.current) {
         setLoading(false);
       }
     }
@@ -278,8 +297,8 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
       });
 
       // Add the new message immediately for instant feedback
-      const updatedMessages = [...messages, response.data.message];
-      setMessages(updatedMessages);
+      const outgoingMessage: PartnershipMessage = response.data.message;
+      setMessages((prev) => [...prev, outgoingMessage]);
       setNewMessage("");
       setReplyTo(null);
       toast.success("Message sent successfully");
@@ -325,11 +344,11 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
+    <div className="flex h-full flex-col min-h-0">
+      <div className="relative flex-1 min-h-0 overflow-hidden">
         <div
           ref={messagesContainerRef}
-          className={`h-[60vh] overflow-y-auto px-4 sm:px-6 py-4 space-y-2 bg-gray-50/40 dark:bg-[#19191c] transition-all duration-300 ${
+          className={`h-full overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 space-y-2 bg-gray-50/40 dark:bg-[#19191c] transition-all duration-300 ${
             isScrolling ? "scrollbar-visible" : "scrollbar-hidden"
           }`}
         >
@@ -491,7 +510,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
         {showScrollToBottom && (
           <button
             onClick={scrollToBottom}
-            className="absolute bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
+            className="absolute bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110 z-10"
             title="Scroll to latest message"
           >
             <ChevronDown className="w-5 h-5" />
@@ -541,7 +560,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
               spellCheck={false}
               autoComplete="off"
               wrap="soft"
-              className="min-h-[2.75rem] min-w-0 flex-1 resize-none overflow-x-hidden whitespace-pre-wrap px-2 py-1.5 bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 border-0 outline-none focus:outline-none leading-5 [overflow-wrap:anywhere]"
+              className="min-h-[2.75rem] max-h-32 min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-auto whitespace-pre-wrap px-2 py-1.5 bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 border-0 outline-none focus:outline-none leading-5 [overflow-wrap:anywhere]"
             />
             <button
               onClick={handleSendMessage}

@@ -1427,6 +1427,131 @@ export const getPartnershipMessages = async (req: AuthRequest, res: Response) =>
   }
 };
 
+// Get partnership conversation summaries (one entry per student)
+// Used for chat-style sidebar: last message preview + timestamp.
+export const getPartnershipConversations = async (req: AuthRequest, res: Response) => {
+  try {
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+
+    if (!userRole || !userId) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    // 1) Fetch allowed students (based on role)
+    let students: Array<{
+      id: string;
+      studentNumber: string;
+      user: { name: string; profilePhoto: string | null };
+    }> = [];
+
+    if (userRole === 'STUDENT') {
+      const studentRecord = await prisma.student.findUnique({
+        where: { userId },
+        select: {
+          id: true,
+          studentNumber: true,
+          user: { select: { name: true, profilePhoto: true } },
+        },
+      });
+
+      if (!studentRecord) {
+        return res.status(404).json({ message: 'Student record not found' });
+      }
+
+      students = [studentRecord];
+    } else if (userRole === 'INSTRUCTOR') {
+      students = await prisma.student.findMany({
+        where: { instructorId: userId },
+        select: {
+          id: true,
+          studentNumber: true,
+          user: { select: { name: true, profilePhoto: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } else if (userRole === 'COORDINATOR') {
+      students = await prisma.student.findMany({
+        select: {
+          id: true,
+          studentNumber: true,
+          user: { select: { name: true, profilePhoto: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } else {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const studentIds = students.map((s) => s.id);
+
+    // 2) Fetch last message per student
+    const lastMessages = studentIds.length
+      ? await prisma.partnershipMessage.findMany({
+          where: { studentId: { in: studentIds } },
+          distinct: ['studentId'],
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            studentId: true,
+            createdAt: true,
+            content: true,
+            sender: { select: { name: true, role: true } },
+          },
+        })
+      : [];
+
+    const lastByStudentId = new Map<
+      string,
+      (typeof lastMessages)[number]
+    >();
+    for (const msg of lastMessages) {
+      lastByStudentId.set(msg.studentId, msg);
+    }
+
+    const conversations = students.map((s) => {
+      const last = lastByStudentId.get(s.id) || null;
+      const profilePhotoUrl = s.user.profilePhoto
+        ? `/api/users/profile-photo/${s.user.profilePhoto}`
+        : null;
+
+      if (!last) {
+        return {
+          studentId: s.id,
+          studentNumber: s.studentNumber,
+          studentName: s.user.name,
+          profilePhoto: profilePhotoUrl,
+          lastMessage: null,
+        };
+      }
+
+      // Use the same reply-preview parsing logic as notifications.
+      const previewRaw = getNotificationMessagePreview(last.content) || '';
+      const preview =
+        previewRaw.length > 80 ? `${previewRaw.slice(0, 77)}...` : previewRaw;
+
+      return {
+        studentId: s.id,
+        studentNumber: s.studentNumber,
+        studentName: s.user.name,
+        profilePhoto: profilePhotoUrl,
+        lastMessage: {
+          id: last.id,
+          content: preview,
+          createdAt: last.createdAt.toISOString(),
+          senderName: last.sender.name,
+          senderRole: last.sender.role,
+        },
+      };
+    });
+
+    return res.json({ conversations });
+  } catch (error) {
+    console.error('Error fetching partnership conversation summaries:', error);
+    return res.status(500).json({ message: 'Failed to fetch conversation summaries' });
+  }
+};
+
 // Send partnership message
 export const sendPartnershipMessage = async (req: AuthRequest, res: Response) => {
   try {
