@@ -1,3 +1,46 @@
 intrak_docs/
 .env
 .cursor/
+# Dependency directories
+node_modules/
+server/node_modules/
+client/node_modules/
+
+# Build output
+dist/
+build/
+server/dist/
+client/dist/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor/project config
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Test coverage
+coverage/
+
+# Misc
+*.local
+.env.*.local
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Ignore uploads (if local, not versioned)
+uploads/
+server/uploads/
