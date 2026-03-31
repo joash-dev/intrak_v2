@@ -11,9 +11,27 @@ export class SocketServer {
     private io: Server;
 
     constructor(httpServer: HTTPServer) {
+        const envOrigins = (process.env.CORS_ORIGIN || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        const allowedOrigins = new Set<string>([
+            ...envOrigins,
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'https://intrak.site',
+            'https://www.intrak.site',
+        ]);
+
         this.io = new Server(httpServer, {
             cors: {
-                origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
+                // Allow known origins plus env-configured origins for Socket.IO handshake.
+                origin: (origin, callback) => {
+                    if (!origin) return callback(null, true);
+                    if (allowedOrigins.has(origin)) return callback(null, true);
+                    return callback(new Error(`Socket CORS blocked for origin: ${origin}`));
+                },
                 credentials: true,
             },
             pingTimeout: 60000,
