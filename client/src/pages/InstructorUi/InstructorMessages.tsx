@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MessageSquare, Loader2, ArrowLeft, Info } from "lucide-react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import PartnershipMessageThread from "../../components/PartnershipMessageThread";
@@ -26,6 +26,44 @@ const InstructorMessages: React.FC = () => {
   );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const refreshConversations = useCallback(async () => {
+    try {
+      const conv = await partnershipConversationService.getConversations();
+      setConversations(conv);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedStudentId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await partnershipConversationService.markConversationRead(selectedStudentId);
+        if (!cancelled) {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.studentId === selectedStudentId ? { ...c, unread: false } : c
+            )
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStudentId]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") refreshConversations();
+    }, 12000);
+    return () => window.clearInterval(id);
+  }, [refreshConversations]);
 
   useEffect(() => {
     const load = async () => {
@@ -176,6 +214,7 @@ const InstructorMessages: React.FC = () => {
                       studentId={selectedStudentId}
                       studentName={selectedConversation?.studentName}
                       currentUserRole="INSTRUCTOR"
+                      onConversationUpdated={refreshConversations}
                     />
                   </div>
 

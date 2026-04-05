@@ -172,6 +172,7 @@ model User {
   notifications           Notification[]         @relation("UserNotifications")
   companiesSupervised     Company[]              @relation("CompanySupervisor")
   partnershipMessagesSent PartnershipMessage[]   @relation("PartnershipMessageSender")
+  partnershipConversationReads PartnershipConversationRead[]
   supervisorFeedbacks     SupervisorFeedback[]   @relation("SupervisorFeedbacks")
   announcementViews       AnnouncementView[]
   agencySelfEvaluations   AgencySelfEvaluation[] @relation("AgencySelfEvaluations")
@@ -250,6 +251,7 @@ model Student {
   applications        CompanyApplication[]
   companyProposals    CompanyProposal[]
   partnershipMessages PartnershipMessage[] @relation("PartnershipMessages")
+  partnershipConversationReads PartnershipConversationRead[]
   supervisorFeedbacks SupervisorFeedback[]
 
   @@index([companyId])
@@ -675,6 +677,22 @@ model PartnershipMessage {
 
   @@index([studentId])
   @@map("partnership_messages")
+}
+
+// Last-read pointer per staff user (instructor/coordinator) per student thread
+model PartnershipConversationRead {
+  id         String   @id @default(uuid())
+  userId     String
+  studentId  String
+  lastReadAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, studentId])
+  @@index([userId])
+  @@map("partnership_conversation_reads")
 }
 
 model MessageTemplate {

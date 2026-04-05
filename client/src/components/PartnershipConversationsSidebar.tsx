@@ -111,6 +111,7 @@ const PartnershipConversationsSidebar: React.FC<Props> = ({
               const snippet = last?.content || "No messages yet";
               const initial = (c.studentName || "?").trim().charAt(0).toUpperCase();
               const hasPhoto = Boolean(c.profilePhoto);
+              const unread = Boolean(c.unread);
               return (
                 <button
                   key={c.studentId}
@@ -160,19 +161,47 @@ const PartnershipConversationsSidebar: React.FC<Props> = ({
                         <>
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                              <div
+                                className={[
+                                  "text-sm text-gray-900 dark:text-white truncate",
+                                  unread ? "font-bold" : "font-semibold",
+                                ].join(" ")}
+                              >
                                 {c.studentName}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              <div
+                                className={[
+                                  "text-xs truncate",
+                                  unread
+                                    ? "font-semibold text-gray-700 dark:text-gray-200"
+                                    : "text-gray-500 dark:text-gray-400",
+                                ].join(" ")}
+                              >
                                 {c.studentNumber}
                               </div>
                             </div>
-                            <div className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap pt-0.5">
-                              {last ? formatSidebarTime(last.createdAt) : ""}
+                            <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
+                              {unread && (
+                                <span
+                                  className="h-2 w-2 rounded-full bg-blue-500"
+                                  title="Unread"
+                                  aria-hidden
+                                />
+                              )}
+                              <div className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                {last ? formatSidebarTime(last.createdAt) : ""}
+                              </div>
                             </div>
                           </div>
 
-                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-300 truncate">
+                          <div
+                            className={[
+                              "mt-1 text-xs truncate",
+                              unread
+                                ? "font-semibold text-gray-900 dark:text-white"
+                                : "text-gray-600 dark:text-gray-300",
+                            ].join(" ")}
+                          >
                             {snippet}
                           </div>
                         </>

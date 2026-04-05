@@ -1,11 +1,32 @@
 import { Response } from 'express';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
 import { calculateExpectedWorkingDays, calculateDynamicProjectedEndDate } from '../utils/attendanceUtils';
 import { prisma } from '../config/database';
 import { getErrorMessage } from '../utils/errorHandler';
+
+type PartnershipConversationReadDelegate = {
+  findMany: (args: {
+    where: { userId: string; studentId: { in: string[] } };
+    select: { studentId: true; lastReadAt: true };
+  }) => Promise<Array<{ studentId: string; lastReadAt: Date }>>;
+  upsert: (args: {
+    where: { userId_studentId: { userId: string; studentId: string } };
+    create: { userId: string; studentId: string; lastReadAt: Date };
+    update: { lastReadAt: Date };
+  }) => Promise<unknown>;
+};
+
+/** Set after `npx prisma generate` when `PartnershipConversationRead` exists in schema */
+function getPartnershipConversationReadDelegate(): PartnershipConversationReadDelegate | null {
+  const d = (prisma as unknown as Record<string, unknown>).partnershipConversationRead;
+  if (d && typeof d === 'object' && 'findMany' in d && 'upsert' in d) {
+    return d as PartnershipConversationReadDelegate;
+  }
+  return null;
+}
 
 const REPLY_PREFIX = '__reply__:';
 
@@ -1485,28 +1506,61 @@ export const getPartnershipConversations = async (req: AuthRequest, res: Respons
 
     const studentIds = students.map((s) => s.id);
 
-    // 2) Fetch last message per student
-    const lastMessages = studentIds.length
-      ? await prisma.partnershipMessage.findMany({
-          where: { studentId: { in: studentIds } },
-          distinct: ['studentId'],
-          orderBy: { createdAt: 'desc' },
-          select: {
-            id: true,
-            studentId: true,
-            createdAt: true,
-            content: true,
-            sender: { select: { name: true, role: true } },
-          },
-        })
-      : [];
+    // 2) Last message per student (DISTINCT ON — Prisma distinct+orderBy is not reliable here)
+    type LastMsgRow = {
+      id: string;
+      studentId: string;
+      createdAt: Date;
+      content: string;
+      senderName: string;
+      senderRole: string;
+    };
 
-    const lastByStudentId = new Map<
-      string,
-      (typeof lastMessages)[number]
-    >();
+    const lastMessages: LastMsgRow[] =
+      studentIds.length > 0
+        ? await prisma.$queryRaw<LastMsgRow[]>`
+            SELECT DISTINCT ON (pm."studentId")
+              pm.id,
+              pm."studentId",
+              pm."createdAt",
+              pm.content,
+              u.name AS "senderName",
+              u.role::text AS "senderRole"
+            FROM partnership_messages pm
+            INNER JOIN users u ON u.id = pm."senderId"
+            WHERE pm."studentId" IN (${Prisma.join(studentIds)})
+            ORDER BY pm."studentId", pm."createdAt" DESC
+          `
+        : [];
+
+    const lastByStudentId = new Map<string, LastMsgRow>();
     for (const msg of lastMessages) {
       lastByStudentId.set(msg.studentId, msg);
+    }
+
+    // 3) Per-user read pointers (instructor/coordinator only)
+    const readByStudentId = new Map<string, Date>();
+    const readDelegate = getPartnershipConversationReadDelegate();
+    if (
+      (userRole === 'INSTRUCTOR' || userRole === 'COORDINATOR') &&
+      readDelegate &&
+      studentIds.length > 0
+    ) {
+      const reads = await readDelegate.findMany({
+        where: { userId, studentId: { in: studentIds } },
+        select: { studentId: true, lastReadAt: true },
+      });
+      for (const r of reads) {
+        readByStudentId.set(r.studentId, r.lastReadAt);
+      }
+    } else if (
+      (userRole === 'INSTRUCTOR' || userRole === 'COORDINATOR') &&
+      !readDelegate &&
+      process.env.NODE_ENV === 'development'
+    ) {
+      console.warn(
+        '[partnership-conversations] PartnershipConversationRead model missing on Prisma client. Run: cd server && npx prisma generate'
+      );
     }
 
     const conversations = students.map((s) => {
@@ -1522,13 +1576,19 @@ export const getPartnershipConversations = async (req: AuthRequest, res: Respons
           studentName: s.user.name,
           profilePhoto: profilePhotoUrl,
           lastMessage: null,
+          unread: false,
         };
       }
 
-      // Use the same reply-preview parsing logic as notifications.
       const previewRaw = getNotificationMessagePreview(last.content) || '';
       const preview =
         previewRaw.length > 80 ? `${previewRaw.slice(0, 77)}...` : previewRaw;
+
+      const lastReadAt = readByStudentId.get(s.id);
+      const unread =
+        (userRole === 'INSTRUCTOR' || userRole === 'COORDINATOR') &&
+        last.senderRole === 'STUDENT' &&
+        (!lastReadAt || last.createdAt > lastReadAt);
 
       return {
         studentId: s.id,
@@ -1539,16 +1599,88 @@ export const getPartnershipConversations = async (req: AuthRequest, res: Respons
           id: last.id,
           content: preview,
           createdAt: last.createdAt.toISOString(),
-          senderName: last.sender.name,
-          senderRole: last.sender.role,
+          senderName: last.senderName,
+          senderRole: last.senderRole,
         },
+        unread,
       };
+    });
+
+    // Newest activity first; threads with no messages last
+    conversations.sort((a, b) => {
+      const ta = a.lastMessage
+        ? new Date(a.lastMessage.createdAt).getTime()
+        : 0;
+      const tb = b.lastMessage
+        ? new Date(b.lastMessage.createdAt).getTime()
+        : 0;
+      if (ta === 0 && tb === 0) return 0;
+      if (ta === 0) return 1;
+      if (tb === 0) return -1;
+      return tb - ta;
     });
 
     return res.json({ conversations });
   } catch (error) {
     console.error('Error fetching partnership conversation summaries:', error);
     return res.status(500).json({ message: 'Failed to fetch conversation summaries' });
+  }
+};
+
+/** Mark the current thread as read for instructor/coordinator (updates lastReadAt to now). */
+export const markPartnershipConversationRead = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+    const { studentId } = req.body as { studentId?: string };
+
+    if (!userId || !userRole) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    if (userRole !== 'INSTRUCTOR' && userRole !== 'COORDINATOR') {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+    if (!studentId || typeof studentId !== 'string') {
+      return res.status(400).json({ message: 'Student ID is required' });
+    }
+
+    const studentRecord = await prisma.student.findUnique({
+      where: { id: studentId },
+      select: { instructorId: true },
+    });
+    if (!studentRecord) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    const hasPermission =
+      userRole === 'COORDINATOR' ||
+      (userRole === 'INSTRUCTOR' && studentRecord.instructorId === userId);
+    if (!hasPermission) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const readDelegate = getPartnershipConversationReadDelegate();
+    if (readDelegate) {
+      const now = new Date();
+      await readDelegate.upsert({
+        where: {
+          userId_studentId: { userId, studentId },
+        },
+        create: {
+          userId,
+          studentId,
+          lastReadAt: now,
+        },
+        update: {
+          lastReadAt: now,
+        },
+      });
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('Error marking partnership conversation read:', error);
+    return res.status(500).json({ message: 'Failed to update read state' });
   }
 };
 
@@ -1629,6 +1761,26 @@ export const sendPartnershipMessage = async (req: AuthRequest, res: Response) =>
         }
       }
     });
+
+    // Staff who send a message have implicitly read the thread up to now
+    const readDelegate = getPartnershipConversationReadDelegate();
+    if (
+      (req.user!.role === 'INSTRUCTOR' || req.user!.role === 'COORDINATOR') &&
+      readDelegate
+    ) {
+      const now = new Date();
+      await readDelegate.upsert({
+        where: {
+          userId_studentId: { userId: req.user!.id, studentId },
+        },
+        create: {
+          userId: req.user!.id,
+          studentId,
+          lastReadAt: now,
+        },
+        update: { lastReadAt: now },
+      });
+    }
 
     // Create notifications for relevant parties
     const messagePreview = getNotificationMessagePreview(content);

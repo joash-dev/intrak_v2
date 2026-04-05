@@ -667,15 +667,15 @@ const CoordinatorStudentManagement: React.FC<CoordinatorStudentManagementProps> 
 
       {/* Student Details Modal */}
       {showStudentDetailsModal && detailStudent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4" style={{ margin: "0" }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-3 sm:p-4" style={{ margin: "0" }}>
+          <div className="bg-white dark:bg-[#212124] rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Student Details
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Manage company assignment for {detailStudent.name}
+                  Company assignment and pre-deployment documents for {detailStudent.name}
                 </p>
               </div>
               <button
@@ -1489,9 +1489,9 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
   };
 
   return (
-    <div className="bg-white dark:bg-[#212124] rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-[#212124] rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
-        <div>
+        <div className="min-w-0 pr-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Pre-Deployment Required Documents
           </h3>
@@ -1515,69 +1515,79 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className={`p-4 rounded-lg border ${doc.status === "APPROVED"
+              className={`p-3 sm:p-4 rounded-lg border ${doc.status === "APPROVED"
                 ? "bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700"
                 : doc.status === "PENDING"
                   ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700"
                   : "bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700"
                 }`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <FileText className="w-4 h-4 text-gray-500" />
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {getDocName(doc.type)}
-                    </span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${doc.status === "APPROVED"
-                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200"
-                      : doc.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200"
-                        : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200"
-                      }`}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-start gap-x-2 gap-y-1.5">
+                    <div className="flex min-w-0 flex-1 items-start gap-2">
+                      <FileText className="w-4 h-4 flex-shrink-0 text-gray-500 mt-0.5" />
+                      <span className="min-w-0 font-medium leading-snug text-gray-900 dark:text-white [overflow-wrap:anywhere]">
+                        {getDocName(doc.type)}
+                      </span>
+                    </div>
+                    <span
+                      className={`inline-flex flex-shrink-0 items-center rounded px-2 py-0.5 text-xs font-medium ${doc.status === "APPROVED"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200"
+                        : doc.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200"
+                        }`}
+                    >
                       {doc.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="break-all text-xs text-gray-600 dark:text-gray-400 sm:text-sm">
                     {doc.filename}
                   </p>
                   {doc.remarks && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Remarks: {doc.remarks}
                     </p>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 ml-4">
+                <div className="flex flex-shrink-0 items-center justify-end gap-1 border-t border-gray-200/70 pt-3 dark:border-gray-600/70 sm:ml-0 sm:border-l sm:border-t-0 sm:border-gray-200 sm:pl-4 sm:pt-0 dark:sm:border-gray-600">
                   <button
+                    type="button"
                     onClick={() => handlePreview(doc)}
-                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                    className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                     title="Preview"
+                    aria-label="Preview document"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="h-4 w-4" />
                   </button>
                   {doc.status === "PENDING" && (
                     <>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedDoc(doc);
                           setReviewAction("approve");
                           setRemarks("");
                         }}
-                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20"
                         title="Approve"
+                        aria-label="Approve document"
                       >
-                        <CheckCircle className="w-4 h-4" />
+                        <CheckCircle className="h-4 w-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedDoc(doc);
                           setReviewAction("reject");
                           setRemarks("");
                         }}
-                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                         title="Reject"
+                        aria-label="Reject document"
                       >
-                        <XCircle className="w-4 h-4" />
+                        <XCircle className="h-4 w-4" />
                       </button>
                     </>
                   )}

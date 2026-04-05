@@ -75,11 +75,14 @@ interface PartnershipMessageThreadProps {
   studentId: string;
   studentName?: string;
   currentUserRole: "INSTRUCTOR" | "COORDINATOR";
+  /** Refresh sidebar ordering / read state after sending. */
+  onConversationUpdated?: () => void;
 }
 
 const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   studentId,
   currentUserRole,
+  onConversationUpdated,
 }) => {
   const [messages, setMessages] = useState<PartnershipMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -91,6 +94,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
   const [replyTo, setReplyTo] = useState<ReplyMeta | null>(null);
   const requestSeqRef = useRef(0);
   const studentIdRef = useRef(studentId);
+  const lastMessageIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +125,7 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
       setMessages([]);
       setLastMessageCount(0);
       setShowScrollToBottom(false);
+      lastMessageIdRef.current = null;
 
       loadMessages();
       
@@ -247,6 +252,25 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
       // If a newer request started (e.g. dropdown switched), ignore this response.
       if (requestId !== requestSeqRef.current) return;
 
+      const lastMsg = newMessages.length > 0 ? newMessages[newMessages.length - 1] : null;
+      const lastId = lastMsg?.id ?? null;
+      const lastMessageChanged = lastId !== lastMessageIdRef.current;
+      lastMessageIdRef.current = lastId;
+
+      if (
+        lastMsg &&
+        lastMsg.senderRole === "STUDENT" &&
+        (currentUserRole === "INSTRUCTOR" || currentUserRole === "COORDINATOR") &&
+        lastMessageChanged
+      ) {
+        api
+          .post("/students/partnership-conversations/read", {
+            studentId: requestedStudentId,
+          })
+          .catch(() => {});
+        onConversationUpdated?.();
+      }
+
       setMessages((prevMessages) => {
         // Only update if the message count or IDs have changed
         if (prevMessages.length !== newMessages.length) {
@@ -302,12 +326,13 @@ const PartnershipMessageThread: React.FC<PartnershipMessageThreadProps> = ({
       setNewMessage("");
       setReplyTo(null);
       toast.success("Message sent successfully");
-      
+      onConversationUpdated?.();
+
       // Auto-scroll to bottom when user sends a message
       setTimeout(() => {
         scrollToBottom();
       }, 100);
-      
+
       // Reload messages to get the latest from server (in case of any sync issues)
       setTimeout(() => {
         loadMessages(false);

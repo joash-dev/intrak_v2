@@ -18,6 +18,7 @@ router.get('/instructor/:instructorId', studentController.getStudentsByInstructo
 router.get('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.getPartnershipMessages);
 router.post('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.sendPartnershipMessage);
 router.get('/partnership-conversations', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.getPartnershipConversations);
+router.post('/partnership-conversations/read', authorize(['INSTRUCTOR', 'COORDINATOR']), studentController.markPartnershipConversationRead);
 router.get('/partnership-checklist', authorize(['STUDENT']), studentController.getPartnershipChecklist);
 router.put('/partnership-checklist', authorize(['STUDENT']), studentController.updatePartnershipChecklist);
 router.put('/:id/saturday-preference', authorize(['STUDENT']), studentController.updateSaturdayPreference);
