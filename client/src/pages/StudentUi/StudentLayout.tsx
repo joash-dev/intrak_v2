@@ -361,7 +361,10 @@ const StudentLayout = () => {
                                     <Lock className="w-3.5 h-3.5 ml-auto text-gray-400 dark:text-gray-600 flex-shrink-0" />
                                 )}
                                 {item.id === "notifications" && unreadCount > 0 && (
-                                    <span className={`w-2 h-2 bg-purple-500 rounded-full ${sidebarExpanded ? "ml-auto" : "absolute top-1 right-1 lg:block hidden"}`}></span>
+                                    <span
+                                        className={`w-2 h-2 shrink-0 rounded-full bg-purple-500 ${sidebarExpanded ? "ml-auto" : "ml-auto lg:absolute lg:top-1 lg:right-1 lg:ml-0"}`}
+                                        aria-hidden
+                                    />
                                 )}
                             </button>
                         ))}

@@ -30,6 +30,30 @@ export interface AttendanceStats {
   avgHoursPerDay: number;
 }
 
+export type AttendanceNoWorkReason =
+  | 'TYPHOON'
+  | 'NATURAL_DISASTER'
+  | 'POWER_OUTAGE'
+  | 'TRANSPORT_INTERRUPTED'
+  | 'COMPANY_SUSPENDED'
+  | 'OTHER';
+
+export type AttendanceNoWorkStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface AttendanceNoWorkNotice {
+  id: string;
+  studentId: string;
+  dateKey: string;
+  reason: AttendanceNoWorkReason;
+  details: string | null;
+  status: AttendanceNoWorkStatus;
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  supervisorRemarks: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class AttendanceService {
   // Get student's attendance logs
   async getAttendanceLogs(): Promise<AttendanceLog[]> {
@@ -275,6 +299,20 @@ class AttendanceService {
       console.error('Error updating Saturday preference:', error);
       throw new Error(error.response?.data?.message || 'Failed to update Saturday preference');
     }
+  }
+
+  async getMyNoWorkNotices(): Promise<AttendanceNoWorkNotice[]> {
+    const response = await api.get('/attendance/no-work-notices/me');
+    return response.data.notices ?? [];
+  }
+
+  async createNoWorkNotice(payload: {
+    dateKey: string;
+    reason: AttendanceNoWorkReason;
+    details?: string;
+  }): Promise<AttendanceNoWorkNotice> {
+    const response = await api.post('/attendance/no-work-notices', payload);
+    return response.data.notice;
   }
 
 }

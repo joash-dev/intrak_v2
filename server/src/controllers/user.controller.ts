@@ -20,10 +20,12 @@ function normalizePhoneForStorage(phone: string): string {
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
-    const { role, search, page = 1, limit = 20, email } = req.query;
+    const { role, search, page = 1, limit = 20, email, active } = req.query;
 
     const where: any = {};
     if (role) where.role = role;
+    if (active === 'true') where.active = true;
+    if (active === 'false') where.active = false;
     if (email) {
       // Direct email lookup for validation purposes
       where.email = email;

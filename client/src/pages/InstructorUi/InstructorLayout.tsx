@@ -278,7 +278,10 @@ const InstructorLayout = () => {
                                 <item.icon className="w-5 h-5 flex-shrink-0" />
                                 <span className={`font-medium text-sm ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
                                 {item.id === "notifications" && unreadCount > 0 && (
-                                    <span className={`w-2 h-2 bg-blue-500 rounded-full ${sidebarExpanded ? "ml-auto" : "absolute top-1 right-1 lg:block hidden"}`}></span>
+                                    <span
+                                        className={`w-2 h-2 shrink-0 rounded-full bg-blue-500 ${sidebarExpanded ? "ml-auto" : "ml-auto lg:absolute lg:top-1 lg:right-1 lg:ml-0"}`}
+                                        aria-hidden
+                                    />
                                 )}
                             </button>
                         ))}

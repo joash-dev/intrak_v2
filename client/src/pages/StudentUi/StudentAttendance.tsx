@@ -14,11 +14,14 @@ import {
   Settings2,
   X,
   Building2,
+  CloudRain,
 } from "lucide-react";
 import {
   attendanceService,
   type AttendanceLog,
   type AttendanceStats,
+  type AttendanceNoWorkNotice,
+  type AttendanceNoWorkReason,
 } from "../../services/attendanceService";
 import { roundToOfficialTime } from "../../utils/attendanceCalculations";
 import api from "../../services/api";
@@ -65,6 +68,12 @@ const StudentAttendanceTab: React.FC = () => {
   const [saturdayPreferenceLoading, setSaturdayPreferenceLoading] = useState(false);
   const [selectedSaturdayPreference, setSelectedSaturdayPreference] = useState<"yes" | "no" | "">("");
   const [ojtStartDate, setOjtStartDate] = useState<string | null>(null);
+  const [noWorkNotices, setNoWorkNotices] = useState<AttendanceNoWorkNotice[]>([]);
+  const [showNoWorkModal, setShowNoWorkModal] = useState(false);
+  const [noWorkSubmitting, setNoWorkSubmitting] = useState(false);
+  const [noWorkDateKey, setNoWorkDateKey] = useState("");
+  const [noWorkReason, setNoWorkReason] = useState<AttendanceNoWorkReason>("TYPHOON");
+  const [noWorkDetails, setNoWorkDetails] = useState("");
 
   const qrGeneratedAtRef = useRef<number>(0);
   const showQRModalRef = useRef(false);
@@ -103,6 +112,13 @@ const StudentAttendanceTab: React.FC = () => {
         attendanceArray
       );
       setStats(calculatedStats);
+
+      try {
+        const nw = await attendanceService.getMyNoWorkNotices();
+        setNoWorkNotices(Array.isArray(nw) ? nw : []);
+      } catch {
+        setNoWorkNotices([]);
+      }
     } catch (error) {
       console.error("Error fetching attendance data:", error);
       toast.error("Failed to load attendance data");
@@ -115,6 +131,7 @@ const StudentAttendanceTab: React.FC = () => {
         pendingDays: 0,
         avgHoursPerDay: 0,
       });
+      setNoWorkNotices([]);
     } finally {
       setLoading(false);
     }
@@ -232,6 +249,47 @@ const StudentAttendanceTab: React.FC = () => {
   const handleOpenManualModal = () => {
     setManualRemarks("");
     setShowManualModal(true);
+  };
+
+  const manilaTodayKey = () =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(
+      new Date()
+    );
+
+  const openNoWorkModal = () => {
+    setNoWorkDateKey(manilaTodayKey());
+    setNoWorkReason("TYPHOON");
+    setNoWorkDetails("");
+    setShowNoWorkModal(true);
+  };
+
+  const submitNoWorkNotice = async () => {
+    if (!noWorkDateKey) {
+      toast.error("Choose a date");
+      return;
+    }
+    if (noWorkReason === "OTHER" && noWorkDetails.trim().length < 3) {
+      toast.error("Please describe the situation.");
+      return;
+    }
+    try {
+      setNoWorkSubmitting(true);
+      await attendanceService.createNoWorkNotice({
+        dateKey: noWorkDateKey,
+        reason: noWorkReason,
+        details: noWorkDetails.trim() || undefined,
+      });
+      toast.success("Report sent to your supervisor for review.");
+      setShowNoWorkModal(false);
+      await fetchAttendanceData();
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Could not submit report";
+      toast.error(msg);
+    } finally {
+      setNoWorkSubmitting(false);
+    }
   };
 
   // Calendar logic
@@ -358,6 +416,22 @@ const StudentAttendanceTab: React.FC = () => {
       return false;
     }
     
+    // Approved “no work” report (typhoon, company closed, etc.) — not absent
+    const hasApprovedNoWork = noWorkNotices.some(
+      (n) => n.dateKey === dateStr && n.status === "APPROVED"
+    );
+    if (hasApprovedNoWork) {
+      return false;
+    }
+
+    // Pending report: show as “pending” on calendar, not “absent”
+    const hasPendingNoWork = noWorkNotices.some(
+      (n) => n.dateKey === dateStr && n.status === "PENDING"
+    );
+    if (hasPendingNoWork) {
+      return false;
+    }
+
     // Check if there's any attendance log for this day
     if (!Array.isArray(attendanceLogs)) return true;
     
@@ -714,7 +788,7 @@ const StudentAttendanceTab: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <button
           onClick={handleGenerateQR}
           disabled={qrLoading}
@@ -771,6 +845,23 @@ const StudentAttendanceTab: React.FC = () => {
             </p>
           </div>
         </button>
+
+        <button
+          type="button"
+          onClick={openNoWorkModal}
+          className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow text-left group border border-gray-100 dark:border-gray-700"
+        >
+          <div className="w-12 h-12 bg-sky-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+            <CloudRain className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+            No-work day report
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Typhoon, company closed, etc. Supervisor must approve.
+          </p>
+        </button>
+
         {companyType && (
           <button
             onClick={() => setShowSaturdayPreferenceModal(true)}
@@ -870,21 +961,41 @@ const StudentAttendanceTab: React.FC = () => {
               const log = day ? getLogForDay(day) : null;
               const isAbsent = day ? isAbsentDay(day) : false;
               const isExpected = day ? isExpectedWorkingDay(day) : false;
+              const dateStr = day
+                ? `${currentDate.getFullYear()}-${String(
+                    currentDate.getMonth() + 1
+                  ).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                : "";
+              const nw = day
+                ? noWorkNotices.find((n) => n.dateKey === dateStr)
+                : undefined;
+
+              let cellBg = "";
+              if (day) {
+                if (log) {
+                  cellBg = log.verified
+                    ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
+                    : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md";
+                } else if (nw?.status === "APPROVED") {
+                  cellBg =
+                    "bg-sky-100 dark:bg-sky-900/50 border border-sky-200 dark:border-sky-800";
+                } else if (nw?.status === "PENDING") {
+                  cellBg =
+                    "bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800";
+                } else if (isAbsent) {
+                  cellBg =
+                    "bg-red-100 dark:bg-red-900 cursor-pointer hover:shadow-md";
+                } else if (isExpected) {
+                  cellBg = "bg-gray-50 dark:bg-[#212124]";
+                } else {
+                  cellBg = "bg-gray-50 dark:bg-[#212124] opacity-50";
+                }
+              }
+
               return (
                 <div
                   key={index}
-                  className={`aspect-square p-1 sm:p-2 rounded-lg text-center relative ${day
-                    ? isAbsent
-                      ? "bg-red-100 dark:bg-red-900 cursor-pointer hover:shadow-md"
-                      : log
-                        ? log.verified
-                          ? "bg-green-100 dark:bg-green-900 cursor-pointer hover:shadow-md"
-                          : "bg-yellow-100 dark:bg-yellow-900 cursor-pointer hover:shadow-md"
-                        : isExpected
-                          ? "bg-gray-50 dark:bg-[#212124]"
-                          : "bg-gray-50 dark:bg-[#212124] opacity-50"
-                    : ""
-                    }`}
+                  className={`aspect-square p-1 sm:p-2 rounded-lg text-center relative ${cellBg}`}
                   onClick={() => {
                     if (!day || !log) return;
                     setSelectedDate(log.date);
@@ -897,6 +1008,20 @@ const StudentAttendanceTab: React.FC = () => {
                       <div className="font-medium text-xs sm:text-base text-gray-900 dark:text-white">
                         {day}
                       </div>
+                      {nw?.status === "APPROVED" && !log && (
+                        <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
+                          <div className="text-[10px] sm:text-xs font-semibold text-sky-700 dark:text-sky-300">
+                            Excused
+                          </div>
+                        </div>
+                      )}
+                      {nw?.status === "PENDING" && !log && (
+                        <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
+                          <div className="text-[10px] sm:text-xs font-semibold text-amber-700 dark:text-amber-300">
+                            Pending
+                          </div>
+                        </div>
+                      )}
                       {isAbsent && (
                         <div className="text-[8px] sm:text-xs mt-0.5 sm:mt-1">
                           <div className="text-[10px] sm:text-xs font-semibold text-red-600 dark:text-red-400">
@@ -949,6 +1074,14 @@ const StudentAttendanceTab: React.FC = () => {
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 dark:bg-red-900 rounded"></div>
               <span className="text-gray-600 dark:text-gray-400">Absent</span>
+            </div>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-sky-100 dark:bg-sky-900/50 rounded border border-sky-200 dark:border-sky-800"></div>
+              <span className="text-gray-600 dark:text-gray-400">No work (approved)</span>
+            </div>
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-amber-100 dark:bg-amber-900/40 rounded border border-amber-200 dark:border-amber-800"></div>
+              <span className="text-gray-600 dark:text-gray-400">Report pending</span>
             </div>
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-50 dark:bg-[#212124] rounded"></div>
@@ -1210,6 +1343,93 @@ const StudentAttendanceTab: React.FC = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* No-work day report (typhoon, etc.) */}
+      {showNoWorkModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => !noWorkSubmitting && setShowNoWorkModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6 shadow-xl border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+              Report no-work day
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Use this when you could not attend OJT due to typhoon, company closure, or similar. Your
+              supervisor will review and approve so the day is not counted as absent.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date (Manila)
+                </label>
+                <input
+                  type="date"
+                  value={noWorkDateKey}
+                  onChange={(e) => setNoWorkDateKey(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-[#19191c] dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Reason
+                </label>
+                <select
+                  value={noWorkReason}
+                  onChange={(e) =>
+                    setNoWorkReason(e.target.value as AttendanceNoWorkReason)
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-[#19191c] dark:text-white"
+                >
+                  <option value="TYPHOON">Typhoon / severe weather</option>
+                  <option value="NATURAL_DISASTER">Flood, earthquake, or other disaster</option>
+                  <option value="POWER_OUTAGE">Power / utilities outage</option>
+                  <option value="TRANSPORT_INTERRUPTED">Major transport disruption</option>
+                  <option value="COMPANY_SUSPENDED">Company / site closed</option>
+                  <option value="OTHER">Other (describe below)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Details {noWorkReason === "OTHER" ? "(required)" : "(optional)"}
+                </label>
+                <textarea
+                  value={noWorkDetails}
+                  onChange={(e) => setNoWorkDetails(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Class suspended — Signal No. 3 in our area"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-[#19191c] dark:text-white resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                disabled={noWorkSubmitting}
+                onClick={() => setShowNoWorkModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={noWorkSubmitting}
+                onClick={() => void submitNoWorkNotice()}
+                className="flex-1 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {noWorkSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : null}
+                Submit to supervisor
+              </button>
+            </div>
           </div>
         </div>
       )}

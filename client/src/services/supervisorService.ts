@@ -1,4 +1,5 @@
 import api from './api';
+import type { AttendanceNoWorkNotice } from './attendanceService';
 
 // Interfaces
 export interface SupervisorStudent {
@@ -555,6 +556,35 @@ class SupervisorService {
       console.error('Error exporting supervisor feedback:', error);
       throw error;
     }
+  }
+
+  async getNoWorkNotices(
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+  ): Promise<
+    Array<
+      AttendanceNoWorkNotice & {
+        student: {
+          id: string;
+          studentNumber: string;
+          user: { name: string; email: string };
+        };
+      }
+    >
+  > {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    const q = params.toString();
+    const response = await api.get(
+      `/attendance/no-work-notices/supervisor${q ? `?${q}` : ''}`
+    );
+    return response.data.notices ?? [];
+  }
+
+  async reviewNoWorkNotice(
+    id: string,
+    body: { status: 'APPROVED' | 'REJECTED'; supervisorRemarks?: string }
+  ): Promise<void> {
+    await api.put(`/attendance/no-work-notices/${id}/review`, body);
   }
 }
 

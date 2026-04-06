@@ -110,9 +110,6 @@ const CoordinatorDocumentsTab: React.FC = () => {
   const [filterStudent, setFilterStudent] = useState("all");
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewAction, setReviewAction] = useState<
-    "approve" | "reject" | null
-  >(null);
   const [remarks, setRemarks] = useState("");
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -350,28 +347,21 @@ const CoordinatorDocumentsTab: React.FC = () => {
   };
 
   // ── Actions ───────────────────────────────────────────────────────
-  const handleReview = (doc: Document, action: "approve" | "reject") => {
+  const handleReview = (doc: Document) => {
     setSelectedDoc(doc);
-    setReviewAction(action);
     setShowReviewModal(true);
     setRemarks("");
   };
 
   const submitReview = async () => {
-    if (!selectedDoc || !reviewAction) return;
+    if (!selectedDoc) return;
     try {
       setSubmitting(true);
-      if (reviewAction === "approve") {
-        await documentService.approveDocument(selectedDoc.id, remarks);
-        toast.success("Document approved successfully");
-      } else {
-        await documentService.rejectDocument(selectedDoc.id, remarks);
-        toast.success("Document rejected");
-      }
+      await documentService.approveDocument(selectedDoc.id, remarks);
+      toast.success("Document approved successfully");
       await fetchDocuments();
       setShowReviewModal(false);
       setSelectedDoc(null);
-      setReviewAction(null);
       setRemarks("");
     } catch (err: any) {
       console.error("Error reviewing document:", err);
@@ -819,14 +809,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
                   doc.status === "RESUBMISSION_REQUESTED") && (
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => handleReview(doc, "reject")}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800/30 rounded-lg transition-colors font-medium text-xs sm:text-sm"
-                    >
-                      <XCircle className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
-                    <button
-                      onClick={() => handleReview(doc, "approve")}
+                      onClick={() => handleReview(doc)}
                       className="flex items-center space-x-1.5 px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors font-medium text-xs sm:text-sm"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
@@ -945,23 +928,11 @@ const CoordinatorDocumentsTab: React.FC = () => {
             {/* Modal header */}
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center space-x-3">
-                <div
-                  className={`p-2 rounded-lg ${
-                    reviewAction === "approve"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : "bg-red-100 dark:bg-red-900/30"
-                  }`}
-                >
-                  {reviewAction === "approve" ? (
-                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  )}
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  {reviewAction === "approve"
-                    ? "Approve Document"
-                    : "Reject Document"}
+                  Approve Document
                 </h3>
               </div>
               <button
@@ -998,18 +969,12 @@ const CoordinatorDocumentsTab: React.FC = () => {
             {/* Remarks */}
             <div className="mb-5">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {reviewAction === "approve"
-                  ? "Comments (Optional)"
-                  : "Rejection Reason (Required)"}
+                Comments (Optional)
               </label>
               <textarea
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder={
-                  reviewAction === "approve"
-                    ? "Add any additional comments…"
-                    : "Please provide a reason for rejection…"
-                }
+                placeholder="Add any additional comments…"
                 rows={3}
                 className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
@@ -1025,30 +990,18 @@ const CoordinatorDocumentsTab: React.FC = () => {
               </button>
               <button
                 onClick={submitReview}
-                disabled={
-                  submitting ||
-                  (reviewAction === "reject" && !remarks.trim())
-                }
-                className={`px-5 py-2 rounded-xl font-medium text-sm transition-colors flex items-center space-x-2 ${
-                  reviewAction === "approve"
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-red-600 text-white hover:bg-red-700"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                disabled={submitting}
+                className="px-5 py-2 rounded-xl font-medium text-sm transition-colors flex items-center space-x-2 bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Processing…</span>
                   </>
-                ) : reviewAction === "approve" ? (
+                ) : (
                   <>
                     <CheckCircle className="w-4 h-4" />
                     <span>Approve</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject</span>
                   </>
                 )}
               </button>

@@ -17,7 +17,10 @@ import {
   UserX,
   Users,
   Info,
+  Download,
+  Printer,
 } from "lucide-react";
+import { PDFDocument } from "pdf-lib";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document } from "../../services/documentService";
@@ -49,6 +52,8 @@ const StudentDocumentsTab: React.FC = () => {
   // For upload modal
   const [selectedType, setSelectedType] = useState<string>("");
   const [generatingType, setGeneratingType] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [printingAll, setPrintingAll] = useState(false);
 
   // Expanded categories state
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
@@ -281,6 +286,112 @@ const StudentDocumentsTab: React.FC = () => {
 
     return { total, approved, pending };
   }, [activeDocs, preDeploymentOthersApproved]);
+
+  /** Approved documents ordered to match the checklist (for print-all). */
+  const approvedDocsForPrint = useMemo(() => {
+    const typeOrderIndex = (type: string) => {
+      const normalized =
+        type === "ENDORSEMENT_LETTER_MULTI" ? "ENDORSEMENT_LETTER" : type;
+      const i = documentTypes.findIndex((dt) => dt.value === normalized);
+      return i === -1 ? 9999 : i;
+    };
+    return [...activeDocs]
+      .filter((d) => d.status === "APPROVED")
+      .sort((a, b) => typeOrderIndex(a.type) - typeOrderIndex(b.type));
+  }, [activeDocs]);
+
+  const handlePrintAllApproved = async () => {
+    if (approvedDocsForPrint.length === 0) {
+      toast.error("No approved documents to print yet.");
+      return;
+    }
+
+    setPrintingAll(true);
+    toast(`Preparing ${approvedDocsForPrint.length} approved document(s)…`, { icon: "🖨️" });
+
+    try {
+      const blobResults = await Promise.all(
+        approvedDocsForPrint.map(async (doc) => {
+          try {
+            const blob = await documentService.downloadDocument(doc.id);
+            return { doc, blob };
+          } catch {
+            return { doc, blob: null as Blob | null };
+          }
+        })
+      );
+
+      const validResults = blobResults.filter((r) => r.blob !== null) as { doc: Document; blob: Blob }[];
+
+      if (validResults.length === 0) {
+        toast.error("Could not load any documents. Try again or download each file separately.");
+        return;
+      }
+
+      if (validResults.length < blobResults.length) {
+        toast(
+          `${blobResults.length - validResults.length} file(s) could not be loaded and were skipped.`,
+          { icon: "⚠️" }
+        );
+      }
+
+      const mergedPdf = await PDFDocument.create();
+
+      for (const { doc, blob } of validResults) {
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const mime = blob.type || "";
+
+          if (mime === "application/pdf" || mime === "application/x-pdf") {
+            const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+            const pages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+            pages.forEach((page) => mergedPdf.addPage(page));
+          } else if (mime.startsWith("image/")) {
+            let img;
+            if (mime === "image/png") {
+              img = await mergedPdf.embedPng(arrayBuffer);
+            } else {
+              img = await mergedPdf.embedJpg(arrayBuffer);
+            }
+            const page = mergedPdf.addPage([img.width, img.height]);
+            page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+          } else {
+            const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+            const pages = await mergedPdf.copyPages(sourcePdf, sourcePdf.getPageIndices());
+            pages.forEach((page) => mergedPdf.addPage(page));
+          }
+        } catch (err) {
+          console.warn(`Skipped "${doc.filename}" — could not merge:`, err);
+        }
+      }
+
+      if (mergedPdf.getPageCount() === 0) {
+        toast.error("Could not merge any documents into a printable PDF.");
+        return;
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      const mergedBlob = new Blob([mergedBytes as unknown as BlobPart], {
+        type: "application/pdf",
+      });
+      const mergedUrl = URL.createObjectURL(mergedBlob);
+
+      const printWindow = window.open(mergedUrl, "_blank");
+      if (printWindow) {
+        printWindow.addEventListener("load", () => {
+          setTimeout(() => printWindow.print(), 700);
+        });
+        toast.success(`${mergedPdf.getPageCount()} page(s) ready — use your browser print dialog.`);
+      } else {
+        toast.error("Pop-up blocked. Allow pop-ups for this site to print.");
+      }
+    } catch (error) {
+      console.error("Print all error:", error);
+      toast.error("Failed to prepare documents for printing.");
+    } finally {
+      setPrintingAll(false);
+    }
+  };
 
   // Accept/Decline shared document handlers
   const [processingSharedId, setProcessingSharedId] = useState<string | null>(null);
@@ -519,6 +630,26 @@ const StudentDocumentsTab: React.FC = () => {
     setViewModalOpen(true);
   };
 
+  const handleDownload = async (doc: Document) => {
+    try {
+      setDownloadingId(doc.id);
+      const blob = await documentService.downloadDocument(doc.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = doc.filename || "document.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Download started");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Download failed. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const handleDelete = async (docId: string) => {
     if (confirm("Are you sure you want to delete this document?")) {
       try {
@@ -681,7 +812,7 @@ const StudentDocumentsTab: React.FC = () => {
           </div>
 
           {/* Progress Stats */}
-          <div className="flex items-center space-x-6 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg">
+          <div className="flex items-center space-x-6 bg-gray-50 dark:bg-gray-800/50 px-4 py-2 rounded-lg w-full md:w-auto justify-center md:justify-start">
             <div className="text-center">
               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Completed</p>
               <p className="text-lg font-bold text-green-600 dark:text-green-400">{stats.approved}</p>
@@ -700,16 +831,36 @@ const StudentDocumentsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Search requirements..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white shadow-sm"
-        />
+      {/* Search + Print all approved */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search requirements..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-[#212124] text-gray-900 dark:text-white shadow-sm"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => void handlePrintAllApproved()}
+          disabled={printingAll || approvedDocsForPrint.length === 0}
+          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-transparent shadow-sm shrink-0 whitespace-nowrap sm:w-auto w-full"
+          title={
+            approvedDocsForPrint.length === 0
+              ? "Approve documents first to include them in a combined printout"
+              : `Open a single PDF with ${approvedDocsForPrint.length} approved document(s) for printing`
+          }
+        >
+          {printingAll ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Printer className="w-4 h-4" />
+          )}
+          Print all approved
+        </button>
       </div>
 
       {/* Pending Shared Endorsement Letters (from other students) */}
@@ -969,13 +1120,30 @@ const StudentDocumentsTab: React.FC = () => {
                                 <>
                               {/* View Button (if uploaded) */}
                               {doc && (
-                                <button
-                                  onClick={() => handleView(doc)}
-                                  className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                                >
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => handleView(doc)}
+                                    className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View
+                                  </button>
+                                  {doc.status === "APPROVED" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownload(doc)}
+                                      disabled={downloadingId === doc.id}
+                                      className="inline-flex items-center justify-center h-10 px-4 min-w-[110px] text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors border border-transparent"
+                                    >
+                                      {downloadingId === doc.id ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      ) : (
+                                        <Download className="w-4 h-4 mr-2" />
+                                      )}
+                                      Download
+                                    </button>
+                                  )}
+                                </>
                               )}
 
                               {/* Fill Up Button (for template-backed forms) */}
@@ -1211,17 +1379,17 @@ const StudentDocumentsTab: React.FC = () => {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style={{ marginTop: "0px" }}>
           <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-[#19191c]">
-              <div className="flex items-center space-x-4">
-                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center gap-3 bg-white dark:bg-[#19191c]">
+              <div className="flex items-center space-x-4 min-w-0 flex-1">
+                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shrink-0">
                   <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
                     {documentTypes.find(t => t.value === selectedDoc.type)?.label || selectedDoc.type}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full truncate max-w-full">
                       {selectedDoc.filename}
                     </span>
                     <span className="text-xs text-gray-400">•</span>
@@ -1231,12 +1399,30 @@ const StudentDocumentsTab: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setViewModalOpen(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {selectedDoc.status === "APPROVED" && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(selectedDoc)}
+                    disabled={downloadingId === selectedDoc.id}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {downloadingId === selectedDoc.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4" />
+                    )}
+                    <span className="hidden sm:inline">Download</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setViewModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  aria-label="Close"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">

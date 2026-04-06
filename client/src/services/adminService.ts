@@ -362,9 +362,17 @@ class AdminService {
     search?: string;
     page?: number;
     limit?: number;
+    active?: boolean;
   }): Promise<{ users: AdminUser[]; pagination: any }> {
     try {
-      const response = await api.get('/users', { params });
+      const { active, ...rest } = params ?? {};
+      const response = await api.get('/users', {
+        params: {
+          ...rest,
+          ...(active === true ? { active: 'true' } : {}),
+          ...(active === false ? { active: 'false' } : {}),
+        },
+      });
       // Map the users to include the correct profile photo URL
       if (response.data && response.data.users) {
         response.data.users = response.data.users.map((user: AdminUser) => ({

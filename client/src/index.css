@@ -172,46 +172,95 @@ body {
   font-family: "Poppins", Arial, Helvetica, sans-serif, "Outfit";
 }
 
+/* ─── Global minimal scrollbars (all scrollable regions) ─── */
+:root {
+  --scrollbar-thumb: rgba(15, 23, 42, 0.28);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.45);
+}
+
+.dark {
+  --scrollbar-thumb: rgba(255, 255, 255, 0.22);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.38);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Custom scrollbar styles for notification dropdown */
 .notification-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgb(209 213 219) rgb(243 244 246);
+  scrollbar-color: rgb(156 163 175) transparent;
 }
 
 .notification-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .notification-scrollbar::-webkit-scrollbar-track {
-  background: rgb(243 244 246);
-  border-radius: 4px;
+  background: transparent;
 }
 
 .notification-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(209 213 219);
-  border-radius: 4px;
+  background: rgb(156 163 175);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   transition: background-color 0.2s ease;
 }
 
 .notification-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(156 163 175);
+  background: rgb(107 114 128);
+}
+
+.notification-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Dark mode scrollbar styles */
 .dark .notification-scrollbar {
-  scrollbar-color: rgb(75 85 99) rgb(31 41 55);
-}
-
-.dark .notification-scrollbar::-webkit-scrollbar-track {
-  background: rgb(31 41 55);
+  scrollbar-color: rgb(107 114 128) transparent;
 }
 
 .dark .notification-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(75 85 99);
+  background: rgb(107 114 128);
 }
 
 .dark .notification-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(107 114 128);
+  background: rgb(156 163 175);
 }
 
 /* Custom thin scrollbar styles for alerts and activities */
@@ -230,12 +279,20 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(209 213 219);
-  border-radius: 3px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   transition: background-color 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(156 163 175);
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Dark mode thin scrollbar */
@@ -251,44 +308,48 @@ body {
   background: rgb(107 114 128);
 }
 
-/* Slim, themed scrollbar for textareas (horizontal + vertical) */
+/* Slim, themed scrollbar for textareas (horizontal + vertical) — subtle blue thumb */
 .scrollbar-slim {
   scrollbar-width: thin;
-  /* thumb color | track color */
-  scrollbar-color: rgb(37 99 235) rgba(37, 99, 235, 0.08);
+  scrollbar-color: rgba(37, 99, 235, 0.55) transparent;
 }
 
 .scrollbar-slim::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-slim::-webkit-scrollbar-track {
-  background: rgba(37, 99, 235, 0.06);
-  border-radius: 8px;
-  border: 1px solid rgba(37, 99, 235, 0.15);
+  background: transparent;
 }
 
 .scrollbar-slim::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
-  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.45);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .scrollbar-slim::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+  background: rgba(29, 78, 216, 0.65);
+}
+
+.scrollbar-slim::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .dark .scrollbar-slim {
-  scrollbar-color: rgb(59 130 246) rgba(59, 130, 246, 0.14);
-}
-
-.dark .scrollbar-slim::-webkit-scrollbar-track {
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.22);
+  scrollbar-color: rgba(96, 165, 250, 0.55) transparent;
 }
 
 .dark .scrollbar-slim::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  background: rgba(96, 165, 250, 0.4);
+}
+
+.dark .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 165, 250, 0.65);
 }
 
 /* Modal overlay styles */
@@ -342,7 +403,7 @@ body.modal-open {
 }
 
 .scrollbar-hidden::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .scrollbar-hidden::-webkit-scrollbar-track {
@@ -351,8 +412,14 @@ body.modal-open {
 
 .scrollbar-hidden::-webkit-scrollbar-thumb {
   background: transparent;
-  border-radius: 4px;
+  border-radius: 9999px;
   transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.scrollbar-hidden::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .scrollbar-visible {
@@ -361,22 +428,29 @@ body.modal-open {
 }
 
 .scrollbar-visible::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .scrollbar-visible::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 4px;
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb {
   background: #6366f1;
-  border-radius: 4px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
   transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {
   background: #4f46e5;
+}
+
+.scrollbar-visible::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Dark mode scrollbar */
@@ -399,18 +473,17 @@ body.modal-open {
 }
 
 .scrollbar-admin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-admin::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 4px;
 }
 
 .scrollbar-admin::-webkit-scrollbar-thumb {
   background: rgb(75 85 99);
-  border-radius: 4px;
+  border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
   transition: background-color 0.2s ease;
@@ -426,6 +499,12 @@ body.modal-open {
   background-clip: padding-box;
 }
 
+.scrollbar-admin::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Purple accent scrollbar for admin theme */
 .scrollbar-admin-purple {
   scrollbar-width: thin;
@@ -433,18 +512,17 @@ body.modal-open {
 }
 
 .scrollbar-admin-purple::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .scrollbar-admin-purple::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 4px;
 }
 
 .scrollbar-admin-purple::-webkit-scrollbar-thumb {
   background: rgb(147 51 234);
-  border-radius: 4px;
+  border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
   transition: background-color 0.2s ease;
@@ -460,6 +538,12 @@ body.modal-open {
   background-clip: padding-box;
 }
 
+.scrollbar-admin-purple::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Documents auto-hiding scrollbar - fades out when not scrolling */
 .documents-scrollbar {
   scrollbar-width: thin;
@@ -467,18 +551,23 @@ body.modal-open {
 }
 
 .documents-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .documents-scrollbar::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 4px;
 }
 
 .documents-scrollbar::-webkit-scrollbar-thumb {
   background: transparent;
-  border-radius: 4px;
+  border-radius: 9999px;
   transition: background-color 0.3s ease;
+}
+
+.documents-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Show scrollbar on hover */

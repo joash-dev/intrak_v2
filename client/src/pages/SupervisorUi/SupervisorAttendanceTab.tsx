@@ -11,6 +11,7 @@ import {
   Loader2,
   Calendar,
   QrCode,
+  CloudRain,
 } from "lucide-react";
 import { supervisorService } from "../../services/supervisorService";
 import type { AttendanceLog } from "../../services/supervisorService";
@@ -19,8 +20,17 @@ import type { IScannerControls, BrowserMultiFormatReader } from "@zxing/browser"
 import { aiService } from "../../services/aiService";
 import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
+const NO_WORK_REASON_LABELS: Record<string, string> = {
+  TYPHOON: "Typhoon / severe weather",
+  NATURAL_DISASTER: "Natural disaster",
+  POWER_OUTAGE: "Power / utilities outage",
+  TRANSPORT_INTERRUPTED: "Transport disruption",
+  COMPANY_SUSPENDED: "Company / site closed",
+  OTHER: "Other",
+};
+
 const SupervisorAttendance = () => {
-  const [activeTab, setActiveTab] = useState("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "scanner" | "nowork">("logs");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
@@ -74,6 +84,29 @@ const SupervisorAttendance = () => {
     return colors[status] || colors["pending"];
   };
 
+  const getNoWorkStatusClass = (status: string) => {
+    const colors: Record<string, string> = {
+      PENDING:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+      APPROVED:
+        "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+      REJECTED:
+        "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+    };
+    return colors[status] || colors.PENDING;
+  };
+
+  const formatNoWorkDate = (dateKey: string) => {
+    const parts = dateKey.split("-").map(Number);
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return dateKey;
+    const [y, m, d] = parts;
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
       log.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,6 +156,32 @@ const SupervisorAttendance = () => {
     }
   };
 
+  const handleSubmitNoticeReview = async () => {
+    if (!selectedNotice || !noticeReviewAction) return;
+    if (noticeReviewAction === "reject" && !noticeReviewRemarks.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+    try {
+      await supervisorService.reviewNoWorkNotice(selectedNotice.id, {
+        status: noticeReviewAction === "approve" ? "APPROVED" : "REJECTED",
+        supervisorRemarks: noticeReviewRemarks.trim() || undefined,
+      });
+      toast.success(
+        noticeReviewAction === "approve"
+          ? "No-work report approved"
+          : "No-work report rejected"
+      );
+      setSelectedNotice(null);
+      setNoticeReviewAction(null);
+      setNoticeReviewRemarks("");
+      await fetchNoWorkNotices();
+    } catch (error) {
+      console.error("Notice review error:", error);
+      toast.error("Failed to update report");
+    }
+  };
+
   const [scannerKey, setScannerKey] = useState(0);
   const [showScanSuccessModal, setShowScanSuccessModal] = useState(false);
   const [qrAction, setQrAction] = useState<'login' | 'logout' | null>(null);
@@ -130,6 +189,17 @@ const SupervisorAttendance = () => {
   const [manualToken, setManualToken] = useState("");
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [noWorkList, setNoWorkList] = useState<
+    Awaited<ReturnType<typeof supervisorService.getNoWorkNotices>>
+  >([]);
+  const [noWorkLoading, setNoWorkLoading] = useState(false);
+  const [selectedNotice, setSelectedNotice] = useState<
+    (typeof noWorkList)[number] | null
+  >(null);
+  const [noticeReviewAction, setNoticeReviewAction] = useState<
+    "approve" | "reject" | null
+  >(null);
+  const [noticeReviewRemarks, setNoticeReviewRemarks] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerControlsRef = useRef<IScannerControls | null>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
@@ -243,6 +313,25 @@ const SupervisorAttendance = () => {
     }
     handleTokenVerification(manualToken);
   };
+
+  const fetchNoWorkNotices = useCallback(async () => {
+    try {
+      setNoWorkLoading(true);
+      const list = await supervisorService.getNoWorkNotices();
+      setNoWorkList(list);
+    } catch (error) {
+      console.error("Error loading no-work notices:", error);
+      toast.error("Failed to load no-work day reports");
+    } finally {
+      setNoWorkLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "nowork") {
+      void fetchNoWorkNotices();
+    }
+  }, [activeTab, fetchNoWorkNotices]);
 
   useEffect(() => {
     if (activeTab !== "scanner") {
@@ -457,6 +546,18 @@ const SupervisorAttendance = () => {
           <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>QR Scanner</span>
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("nowork")}
+          className={`flex-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md sm:rounded-lg font-medium transition-colors flex items-center justify-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm ${activeTab === "nowork"
+            ? "bg-blue-600 text-white shadow"
+            : "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+            }`}
+        >
+          <CloudRain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="hidden sm:inline">No-work reports</span>
+          <span className="sm:hidden">No-work</span>
+        </button>
       </div>
 
       {activeTab === "scanner" && (
@@ -552,6 +653,133 @@ const SupervisorAttendance = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === "nowork" && (
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <CloudRain className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                No-work day reports
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-2xl">
+                When interns could not report due to severe weather, outages, transport issues, or company closure,
+                they submit a notice here. Approve to excuse the day for attendance; reject if it does not apply.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void fetchNoWorkNotices()}
+              disabled={noWorkLoading}
+              className="shrink-0 px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+          {noWorkLoading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
+            </div>
+          ) : noWorkList.length === 0 ? (
+            <p className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+              No reports from your interns yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800/80 text-left text-gray-600 dark:text-gray-300">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Intern</th>
+                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3 font-medium">Reason</th>
+                    <th className="px-4 py-3 font-medium min-w-[140px]">Details</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium text-right w-[1%]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {noWorkList.map((notice) => (
+                    <tr
+                      key={notice.id}
+                      className="hover:bg-gray-50/80 dark:hover:bg-gray-800/40"
+                    >
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {notice.student.user.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {notice.student.studentNumber}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                        {formatNoWorkDate(notice.dateKey)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                        {NO_WORK_REASON_LABELS[notice.reason] ?? notice.reason}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 max-w-xs">
+                        {notice.details?.trim() ? (
+                          <span className="line-clamp-2">{notice.details}</span>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getNoWorkStatusClass(
+                            notice.status
+                          )}`}
+                        >
+                          {notice.status === "PENDING"
+                            ? "Pending"
+                            : notice.status === "APPROVED"
+                              ? "Approved"
+                              : "Rejected"}
+                        </span>
+                        {notice.supervisorRemarks?.trim() && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                            Note: {notice.supervisorRemarks}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {notice.status === "PENDING" ? (
+                          <div className="flex flex-wrap justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedNotice(notice);
+                                setNoticeReviewAction("approve");
+                                setNoticeReviewRemarks("");
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedNotice(notice);
+                                setNoticeReviewAction("reject");
+                                setNoticeReviewRemarks("");
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 dark:text-gray-500">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -998,6 +1226,92 @@ const SupervisorAttendance = () => {
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {verifyAction === "approve" ? "Approve" : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedNotice && noticeReviewAction && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+          onClick={() => {
+            setSelectedNotice(null);
+            setNoticeReviewAction(null);
+            setNoticeReviewRemarks("");
+          }}
+        >
+          <div
+            className="bg-white dark:bg-[#212124] rounded-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              {noticeReviewAction === "approve"
+                ? "Approve no-work report"
+                : "Reject no-work report"}
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-4 space-y-1 text-sm">
+              <p className="font-semibold text-gray-900 dark:text-white">
+                {selectedNotice.student.user.name}
+              </p>
+              <p className="text-gray-600 dark:text-gray-400">
+                {selectedNotice.student.studentNumber}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                {formatNoWorkDate(selectedNotice.dateKey)} ·{" "}
+                {NO_WORK_REASON_LABELS[selectedNotice.reason] ??
+                  selectedNotice.reason}
+              </p>
+              {selectedNotice.details?.trim() && (
+                <p className="text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600">
+                  {selectedNotice.details}
+                </p>
+              )}
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {noticeReviewAction === "approve"
+                  ? "Optional note to intern"
+                  : "Reason for rejection (required)"}
+              </label>
+              <textarea
+                value={noticeReviewRemarks}
+                onChange={(e) => setNoticeReviewRemarks(e.target.value)}
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                placeholder={
+                  noticeReviewAction === "approve"
+                    ? "Optional message…"
+                    : "Explain why this report is rejected…"
+                }
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedNotice(null);
+                  setNoticeReviewAction(null);
+                  setNoticeReviewRemarks("");
+                }}
+                className="px-5 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmitNoticeReview()}
+                disabled={
+                  noticeReviewAction === "reject" && !noticeReviewRemarks.trim()
+                }
+                className={`px-5 py-2 rounded-lg transition-colors text-sm font-medium text-white ${
+                  noticeReviewAction === "approve"
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {noticeReviewAction === "approve" ? "Approve" : "Reject"}
               </button>
             </div>
           </div>

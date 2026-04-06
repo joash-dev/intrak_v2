@@ -47,7 +47,7 @@ const AdminUserManagement = () => {
     }[]
   >([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const PAGE_SIZE = 10;
   const [isAddingUser, setIsAddingUser] = useState(false);
 
   // Fetch users with real API
@@ -62,11 +62,17 @@ const AdminUserManagement = () => {
           role: roleFilter !== "ALL" ? roleFilter : undefined,
           search: searchQuery || undefined,
           page,
-          limit,
+          limit: PAGE_SIZE,
+          active:
+            statusFilter === "ACTIVE"
+              ? true
+              : statusFilter === "INACTIVE"
+                ? false
+                : undefined,
         }),
-      [roleFilter, searchQuery, page, limit]
+      [roleFilter, searchQuery, statusFilter, page, PAGE_SIZE]
     ),
-    [roleFilter, searchQuery, page, limit],
+    [roleFilter, searchQuery, statusFilter, page, PAGE_SIZE],
     { ttl: 2 * 60 * 1000 } // 2 minutes cache
   );
 
@@ -164,15 +170,6 @@ const AdminUserManagement = () => {
 
   // Use global stats so counts remain consistent regardless of filters
   const stats = globalStats;
-
-  // Filter users locally for status filter
-  const filteredUsers = users.filter((user) => {
-    const matchesStatus =
-      statusFilter === "ALL" ||
-      (statusFilter === "ACTIVE" && user.active) ||
-      (statusFilter === "INACTIVE" && !user.active);
-    return matchesStatus;
-  });
 
   const resetForm = () => {
     setFormData({
@@ -524,13 +521,19 @@ const AdminUserManagement = () => {
               type="text"
               placeholder="Search by name, email, or student number..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="ALL">All Roles</option>
@@ -542,7 +545,10 @@ const AdminUserManagement = () => {
           </select>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="ALL">All Status</option>
@@ -551,12 +557,20 @@ const AdminUserManagement = () => {
           </select>
         </div>
         <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          Showing {filteredUsers.length} of {pagination?.total || 0} users
-          {pagination && pagination.pages > 1 && (
-            <span className="ml-2">
-              (Page {pagination.page} of {pagination.pages})
-            </span>
-          )}
+          {pagination && pagination.total > 0 ? (
+            <>
+              Showing {(pagination.page - 1) * pagination.limit + 1}–
+              {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+              {pagination.total} users
+              {pagination.pages > 1 && (
+                <span className="ml-2">
+                  (Page {pagination.page} of {pagination.pages})
+                </span>
+              )}
+            </>
+          ) : !usersLoading ? (
+            <>0 users</>
+          ) : null}
         </div>
       </div>
 
@@ -580,7 +594,7 @@ const AdminUserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredUsers.map((user) => (
+              {users.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-150 border-b border-gray-200 dark:border-gray-700/50"
@@ -676,7 +690,7 @@ const AdminUserManagement = () => {
           <div className="p-6">
             <UserTableSkeleton />
           </div>
-        ) : filteredUsers.length === 0 ? (
+        ) : users.length === 0 ? (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 dark:text-gray-400">No users found</p>

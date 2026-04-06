@@ -437,7 +437,8 @@ const DocumentFeedbackPanel = ({
               {documentId && (type === "REQUEST_CHANGES" || type === "APPROVAL_NOTE") && (
                 <AIGenerateButton
                   onGenerate={async () => {
-                    const action = type === "APPROVAL_NOTE" ? "approve" : type === "REQUEST_CHANGES" ? "reject" : "request_changes";
+                    const action =
+                      type === "APPROVAL_NOTE" ? "approve" : "request_changes";
                     return aiService.generateDocumentFeedback({
                       documentId,
                       action: action as "approve" | "reject" | "request_changes",

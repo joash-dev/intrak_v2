@@ -482,16 +482,12 @@ const SupervisorLayout: React.FC = () => {
                                 >
                                     <Icon className="w-5 h-5 flex-shrink-0" />
                                     <span className={`font-medium text-sm text-left ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
-                                    {/* Unread notification badge */}
+                                    {/* Unread notification badge (same dot style as header bell) */}
                                     {isNotifications && unreadNotificationCount > 0 && (
-                                        <>
-                                            {sidebarExpanded && (
-                                                <span className="ml-auto w-2 h-2 bg-purple-500 rounded-full"></span>
-                                            )}
-                                            {!sidebarExpanded && (
-                                                <span className="absolute top-1 right-1 lg:block hidden w-2 h-2 bg-purple-500 rounded-full"></span>
-                                            )}
-                                        </>
+                                        <span
+                                            className={`w-2 h-2 shrink-0 rounded-full bg-purple-500 ${sidebarExpanded ? "ml-auto" : "ml-auto lg:absolute lg:top-1 lg:right-1 lg:ml-0"}`}
+                                            aria-hidden
+                                        />
                                     )}
                                 </button>
                             );

@@ -1392,7 +1392,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
   const [loading, setLoading] = useState(true);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(null);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [remarks, setRemarks] = useState("");
 
   const preDeploymentDocTypes = [
@@ -1441,7 +1441,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
     try {
       await documentService.approveDocument(selectedDoc.id, remarks);
       toast.success("Document approved successfully");
-      setReviewAction(null);
+      setApproveModalOpen(false);
       setRemarks("");
       setSelectedDoc(null);
       if (previewUrl) {
@@ -1452,25 +1452,6 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
     } catch (error: any) {
       devLog.error("Error approving document:", error);
       toast.error(error.response?.data?.message || "Failed to approve document");
-    }
-  };
-
-  const handleReject = async () => {
-    if (!selectedDoc) return;
-    try {
-      await documentService.rejectDocument(selectedDoc.id, remarks);
-      toast.success("Document rejected");
-      setReviewAction(null);
-      setRemarks("");
-      setSelectedDoc(null);
-      if (previewUrl) {
-        window.URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
-      await loadDocuments();
-    } catch (error: any) {
-      devLog.error("Error rejecting document:", error);
-      toast.error(error.response?.data?.message || "Failed to reject document");
     }
   };
 
@@ -1562,34 +1543,19 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
                     <Eye className="h-4 w-4" />
                   </button>
                   {doc.status === "PENDING" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedDoc(doc);
-                          setReviewAction("approve");
-                          setRemarks("");
-                        }}
-                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20"
-                        title="Approve"
-                        aria-label="Approve document"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedDoc(doc);
-                          setReviewAction("reject");
-                          setRemarks("");
-                        }}
-                        className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                        title="Reject"
-                        aria-label="Reject document"
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDoc(doc);
+                        setApproveModalOpen(true);
+                        setRemarks("");
+                      }}
+                      className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20"
+                      title="Approve"
+                      aria-label="Approve document"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
               </div>
@@ -1599,14 +1565,14 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       )}
 
       {/* Review Modal */}
-      {selectedDoc && reviewAction && (
+      {selectedDoc && approveModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }} onClick={() => {
-          setReviewAction(null);
+          setApproveModalOpen(false);
           setRemarks("");
         }}>
           <div className="bg-white dark:bg-[#212124] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {reviewAction === "approve" ? "Approve" : "Reject"} Document
+              Approve Document
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               {getDocName(selectedDoc.type)}
@@ -1614,24 +1580,20 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
             <textarea
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder={reviewAction === "approve" ? "Optional remarks..." : "Reason for rejection (required)"}
+              placeholder="Optional remarks..."
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white mb-4"
               rows={4}
             />
             <div className="flex items-center space-x-3">
               <button
-                onClick={reviewAction === "approve" ? handleApprove : handleReject}
-                disabled={reviewAction === "reject" && !remarks.trim()}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${reviewAction === "approve"
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  }`}
+                onClick={handleApprove}
+                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
               >
-                {reviewAction === "approve" ? "Approve" : "Reject"}
+                Approve
               </button>
               <button
                 onClick={() => {
-                  setReviewAction(null);
+                  setApproveModalOpen(false);
                   setRemarks("");
                 }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -1644,7 +1606,7 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
       )}
 
       {/* Preview Modal */}
-      {selectedDoc && previewUrl && !reviewAction && (
+      {selectedDoc && previewUrl && !approveModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" onClick={() => {
           setSelectedDoc(null);
           if (previewUrl) {

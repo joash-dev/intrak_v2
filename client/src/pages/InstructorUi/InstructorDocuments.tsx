@@ -216,12 +216,11 @@ const InstructorDocumentsTab = () => {
     }
   };
 
-  const handleReviewAction = async (action: 'approve' | 'reject' | 'request_changes') => {
+  const handleReviewAction = async (action: 'approve' | 'request_changes') => {
     if (!selectedDoc) return;
 
-    // Validate remarks for reject and request_changes
-    if ((action === 'reject' || action === 'request_changes') && !reviewRemarks.trim()) {
-      toast.error(`Please provide a reason for ${action === 'reject' ? 'rejection' : 'requesting changes'}`);
+    if (action === 'request_changes' && !reviewRemarks.trim()) {
+      toast.error('Please provide a reason for requesting changes');
       return;
     }
 
@@ -234,9 +233,6 @@ const InstructorDocumentsTab = () => {
       if (action === 'approve') {
         await documentService.approveDocument(selectedDoc.id, reviewRemarks || undefined);
         toast.success("Document approved successfully ✓");
-      } else if (action === 'reject') {
-        await documentService.rejectDocument(selectedDoc.id, reviewRemarks);
-        toast.success("Document rejected");
       } else if (action === 'request_changes') {
         await documentService.addDocumentFeedback(selectedDoc.id, {
           message: reviewRemarks,
@@ -1152,7 +1148,7 @@ const InstructorDocumentsTab = () => {
                     <textarea
                       value={reviewRemarks}
                       onChange={(e) => setReviewRemarks(e.target.value)}
-                      placeholder="Add remarks (required for reject)..."
+                      placeholder="Add remarks (required when requesting changes)..."
                       className="flex-1 p-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       rows={1}
                     />
@@ -1172,14 +1168,6 @@ const InstructorDocumentsTab = () => {
                       >
                         {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
                         Changes
-                      </button>
-                      <button
-                        onClick={() => handleReviewAction('reject')}
-                        disabled={isSubmittingReview}
-                        className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition-colors flex items-center gap-2"
-                      >
-                        {isSubmittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                        Reject
                       </button>
                     </div>
                   </div>
