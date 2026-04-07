@@ -20,6 +20,7 @@ import { documentService } from "../../services/documentService";
 import type { Document as AppDocument } from "../../services/documentService";
 import { companyProposalService, type CompanyProposal } from "../../services/companyProposalService";
 import toast from "react-hot-toast";
+import { formatDateMMDDYYYY } from "../../utils/formatDate";
 
 interface PartnershipDocument {
   id: string;
@@ -607,7 +608,7 @@ const StudentCompanyPartnershipAssistance = () => {
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">{proposal.companyName}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                           {proposal.status === "DRAFT" ? "Created" : "Submitted"}{" "}
-                          {new Date(proposal.createdAt).toLocaleDateString()}
+                          {formatDateMMDDYYYY(proposal.createdAt)}
                         </p>
                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 font-mono">
                           ID: {proposal.id}

@@ -27,6 +27,7 @@ import type { Document } from "../../services/documentService";
 import Skeleton from "../../components/Skeleton";
 import { toast } from "react-hot-toast";
 import PDFViewer from "../../components/document/PDFViewer";
+import { formatDateMMDDYYYY } from "../../utils/formatDate";
 
 const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
@@ -1082,7 +1083,7 @@ const StudentDocumentsTab: React.FC = () => {
                                       {getRequirementRowStatusBadge(req.value, doc, req.required)}
                                       {doc && (
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          Uploaded: {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'N/A'}
+                                          Uploaded: {formatDateMMDDYYYY(doc.uploadedAt)}
                                         </span>
                                       )}
                                     </div>
@@ -1379,22 +1380,22 @@ const StudentDocumentsTab: React.FC = () => {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style={{ marginTop: "0px" }}>
           <div className="bg-white dark:bg-[#19191c] rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center gap-3 bg-white dark:bg-[#19191c]">
-              <div className="flex items-center space-x-4 min-w-0 flex-1">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start sm:items-center gap-3 bg-white dark:bg-[#19191c]">
+              <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl shrink-0">
                   <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white leading-tight">
                     {documentTypes.find(t => t.value === selectedDoc.type)?.label || selectedDoc.type}
                   </h3>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full truncate max-w-full">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full truncate max-w-[190px] sm:max-w-full">
                       {selectedDoc.filename}
                     </span>
-                    <span className="text-xs text-gray-400">•</span>
+                    <span className="hidden sm:inline text-xs text-gray-400">•</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Uploaded {selectedDoc.uploadedAt ? new Date(selectedDoc.uploadedAt).toLocaleDateString() : 'N/A'}
+                      Uploaded {formatDateMMDDYYYY(selectedDoc.uploadedAt)}
                     </span>
                   </div>
                 </div>

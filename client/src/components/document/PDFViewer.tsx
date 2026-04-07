@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -16,6 +16,8 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [scale, setScale] = useState(1.0);
     const [rotation, setRotation] = useState(0);
+    const canvasContainerRef = useRef<HTMLDivElement | null>(null);
+    const [basePageWidth, setBasePageWidth] = useState<number>(800);
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
         setNumPages(numPages);
@@ -33,12 +35,26 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
         changePage(1);
     };
 
+    useEffect(() => {
+        const updateWidth = () => {
+            const container = canvasContainerRef.current;
+            if (!container) return;
+            // Keep a little breathing room inside the scroller on small screens.
+            const availableWidth = Math.max(220, container.clientWidth - 24);
+            setBasePageWidth(Math.min(900, availableWidth));
+        };
+
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+
     if (!url) return null;
 
     return (
         <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
             {/* Controls Toolbar */}
-            <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-10">
+            <div className="flex flex-col gap-2 p-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-10 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-1 sm:gap-2">
                     <button
                         onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
@@ -67,7 +83,7 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
                     </button>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center justify-end gap-2 sm:gap-3">
                     <button
                         disabled={pageNumber <= 1}
                         onClick={previousPage}
@@ -75,8 +91,11 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
                     >
                         <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
-                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    <span className="hidden sm:inline text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
                         Page {pageNumber} of {numPages || '--'}
+                    </span>
+                    <span className="sm:hidden text-xs text-gray-600 dark:text-gray-400 font-medium">
+                        Pg {pageNumber}/{numPages || '--'}
                     </span>
                     <button
                         disabled={pageNumber >= (numPages || 1)}
@@ -89,7 +108,7 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
             </div>
 
             {/* PDF Canvas */}
-            <div className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 flex justify-center p-4">
+            <div ref={canvasContainerRef} className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 flex justify-center p-2 sm:p-4">
                 <Document
                     file={url}
                     onLoadSuccess={onDocumentLoadSuccess}
@@ -108,7 +127,7 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
                 >
                     <Page
                         pageNumber={pageNumber}
-                        scale={scale}
+                        width={Math.max(220, Math.floor(basePageWidth * scale))}
                         rotate={rotation}
                         className="bg-white"
                         loading={

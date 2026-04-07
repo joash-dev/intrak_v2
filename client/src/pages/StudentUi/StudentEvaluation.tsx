@@ -18,6 +18,7 @@ import { toast } from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 import { devLog } from "../../utils/devLog";
 import { useOutletContext, useNavigate } from "react-router-dom";
+import { formatDateMMDDYYYY } from "../../utils/formatDate";
 
 interface TerminationData {
   lackOfWork?: boolean;
@@ -95,7 +96,7 @@ const StudentEvaluationsTab: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showEvaluationDetails, setShowEvaluationDetails] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     fetchEvaluationForms();
@@ -489,6 +490,16 @@ const StudentEvaluationsTab: React.FC = () => {
     }
   };
 
+  const getEvaluationDateLabel = (form: EvaluationForm) => {
+    if (form.id === "form-19b" && form.document?.uploadedAt) {
+      return `Uploaded: ${formatDateMMDDYYYY(form.document.uploadedAt)}`;
+    }
+    if (form.evaluation?.date) {
+      return formatDateMMDDYYYY(form.evaluation.date);
+    }
+    return "-";
+  };
+
   // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
@@ -585,18 +596,22 @@ const StudentEvaluationsTab: React.FC = () => {
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {form.description}
                   </p>
+                  {form.evaluation && (
+                    <div className="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                      <p>
+                        <span className="font-medium">Evaluator:</span> {form.evaluation.evaluatorName}
+                      </p>
+                      <p>
+                        <span className="font-medium">Date:</span> {getEvaluationDateLabel(form)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
                     <span className="font-medium mr-2">Date:</span>
-                    {form.id === "form-19b" && form.document ? (
-                      <span>Uploaded: {new Date(form.document.uploadedAt || "").toLocaleDateString()}</span>
-                    ) : form.evaluation ? (
-                      <span>{new Date(form.evaluation.date).toLocaleDateString()}</span>
-                    ) : (
-                      <span>-</span>
-                    )}
+                    <span>{getEvaluationDateLabel(form)}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -837,16 +852,16 @@ const StudentEvaluationsTab: React.FC = () => {
                       <td className="px-6 py-4">
                         {form.id === "form-19b" && form.document ? (
                           <div className="text-sm text-gray-900 dark:text-white">
-                            <div>Uploaded: {new Date(form.document.uploadedAt || "").toLocaleDateString()}</div>
+                            <div>Uploaded: {formatDateMMDDYYYY(form.document.uploadedAt)}</div>
                             {form.document.reviewedAt && (
                               <div className="text-sm text-gray-900 dark:text-white mt-1">
-                                Reviewed: {new Date(form.document.reviewedAt).toLocaleDateString()}
+                                Reviewed: {formatDateMMDDYYYY(form.document.reviewedAt)}
                               </div>
                             )}
                           </div>
                         ) : form.evaluation ? (
                           <div className="text-sm text-gray-900 dark:text-white">
-                            {new Date(form.evaluation.date).toLocaleDateString()}
+                            {formatDateMMDDYYYY(form.evaluation.date)}
                           </div>
                         ) : (
                           <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
@@ -996,7 +1011,7 @@ const StudentEvaluationsTab: React.FC = () => {
                     </p>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       <span className="font-medium">Date:</span>{" "}
-                      <span className="text-gray-900 dark:text-white">{new Date(selectedForm.evaluation.date).toLocaleDateString()}</span>
+                      <span className="text-gray-900 dark:text-white">{formatDateMMDDYYYY(selectedForm.evaluation.date)}</span>
                     </p>
                     {selectedForm.id === "form-11" && (
                       <>

@@ -20,6 +20,7 @@ import Skeleton from "../../components/Skeleton";
 import { settingsService } from "../../services/settingsService";
 import { ProfilePhoto } from "../../components/LoadingStates/ProfilePhotoSkeleton";
 import { formatStudentId } from "../../utils/formatStudentId";
+import { formatDateMMDDYYYY } from "../../utils/formatDate";
 
 const defaultDashboardData: DashboardData = {
     student: {
@@ -353,18 +354,18 @@ const StudentOverview = () => {
                     <div className="space-y-3 flex-1">
                         {Array.isArray(data.documents) && data.documents.length > 0 ? (
                             data.documents.slice(0, 4).map((doc: any) => (
-                                <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#212124] rounded-lg">
-                                    <div className="flex items-center space-x-3">
+                                <div key={doc.id} className="flex items-start justify-between gap-3 p-3 bg-gray-50 dark:bg-[#212124] rounded-lg">
+                                    <div className="flex items-start space-x-3 min-w-0 flex-1">
                                         {doc.status === "APPROVED" && <CheckCircle className="w-5 h-5 text-green-500" />}
                                         {doc.status === "PENDING" && <AlertCircle className="w-5 h-5 text-yellow-500" />}
                                         {doc.status === "REJECTED" && <XCircle className="w-5 h-5 text-red-500" />}
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[16rem]" title={getDocumentTypeLabel(doc.type)}>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate sm:max-w-[16rem]" title={getDocumentTypeLabel(doc.type)}>
                                                 {getDocumentTypeLabel(doc.type)}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${doc.status === "APPROVED" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : doc.status === "PENDING" ? "bg-yellow-100 text-yellow-800 dark:bg-[#212124] dark:text-yellow-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"}`}>{doc.status}</span>
+                                    <span className={`shrink-0 text-xs px-2 py-1 rounded-full ${doc.status === "APPROVED" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : doc.status === "PENDING" ? "bg-yellow-100 text-yellow-800 dark:bg-[#212124] dark:text-yellow-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"}`}>{doc.status}</span>
                                 </div>
                             ))
                         ) : (
@@ -390,12 +391,12 @@ const StudentOverview = () => {
                         <div className="space-y-2">
                             {Array.isArray(data.attendance) && data.attendance.length > 0 ? (
                                 data.attendance.slice(0, 3).map((log) => (
-                                    <div key={log.id} className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-600 dark:text-gray-400">{new Date(log.date).toLocaleDateString()}</span>
-                                        <span className="text-gray-900 dark:text-white">
+                                    <div key={log.id} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+                                        <span className="text-gray-600 dark:text-gray-400">{formatDateMMDDYYYY(log.date)}</span>
+                                        <span className="text-gray-900 dark:text-white break-words sm:text-center sm:flex-1 sm:px-3">
                                             {log.timeIn ? formatAttendanceTime(log.timeIn) : "N/A"} - {log.timeOut ? formatAttendanceTime(log.timeOut) : "In Progress"}
                                         </span>
-                                        <span className="font-medium text-blue-600">{formatDuration(log.durationMinutes)}</span>
+                                        <span className="font-medium text-blue-600 sm:text-right">{formatDuration(log.durationMinutes)}</span>
                                     </div>
                                 ))
                             ) : (
