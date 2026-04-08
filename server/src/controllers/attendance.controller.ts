@@ -50,11 +50,28 @@ const roundToOfficialTime = (minutes: number): number => {
 };
 
 /**
- * Floors a timestamp to the nearest 30-minute block.
+ * Round-in rule for Time In:
+ * Ceil timestamp to the next 30-minute block.
  * Examples:
- * - 08:19 -> 08:00
- * - 08:30 -> 08:30
- * - 12:20 -> 12:00
+ * - 08:16 -> 08:30
+ * - 09:34 -> 10:00
+ */
+const ceilTo30MinuteBlock = (value: Date): Date => {
+  const d = new Date(value);
+  const mins = d.getMinutes();
+  d.setSeconds(0, 0);
+  if (mins === 0 || mins === 30) return d;
+  if (mins < 30) {
+    d.setMinutes(30);
+  } else {
+    d.setHours(d.getHours() + 1, 0, 0, 0);
+  }
+  return d;
+};
+
+/**
+ * Round-out rule for Time Out:
+ * Floor timestamp to the previous 30-minute block.
  */
 const floorTo30MinuteBlock = (value: Date): Date => {
   const d = new Date(value);
@@ -65,7 +82,7 @@ const floorTo30MinuteBlock = (value: Date): Date => {
 };
 
 const computeOfficialDurationMinutes = (timeIn: Date, timeOut: Date): number => {
-  const roundedIn = floorTo30MinuteBlock(timeIn);
+  const roundedIn = ceilTo30MinuteBlock(timeIn);
   const roundedOut = floorTo30MinuteBlock(timeOut);
   const diff = roundedOut.getTime() - roundedIn.getTime();
   return Math.max(0, Math.floor(diff / 60000));
