@@ -12,6 +12,7 @@
     "migrate": "prisma migrate dev",
     "migrate:prod": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
+    "recompute:attendance": "ts-node src/scripts/recomputeAttendanceDurations.ts",
     "studio": "prisma studio",
     "test": "jest",
     "test:watch": "jest --watch",
