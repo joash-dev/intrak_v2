@@ -49,6 +49,35 @@ const roundToOfficialTime = (minutes: number): number => {
   return Math.floor(minutes / 30) * 30;
 };
 
+/**
+ * Floors a timestamp to the nearest 30-minute block.
+ * Examples:
+ * - 08:19 -> 08:00
+ * - 08:30 -> 08:30
+ * - 12:20 -> 12:00
+ */
+const floorTo30MinuteBlock = (value: Date): Date => {
+  const d = new Date(value);
+  const mins = d.getMinutes();
+  d.setSeconds(0, 0);
+  d.setMinutes(mins < 30 ? 0 : 30);
+  return d;
+};
+
+const computeOfficialDurationMinutes = (timeIn: Date, timeOut: Date): number => {
+  const roundedIn = floorTo30MinuteBlock(timeIn);
+  const roundedOut = floorTo30MinuteBlock(timeOut);
+  const diff = roundedOut.getTime() - roundedIn.getTime();
+  return Math.max(0, Math.floor(diff / 60000));
+};
+
+const getManilaFixedTimeUtc = (date: Date, hours24: number, minutes: number) => {
+  const { yyyyMmDd } = getManilaDayRangeUtc(date);
+  const hh = String(hours24).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  return new Date(`${yyyyMmDd}T${hh}:${mm}:00.000+08:00`);
+};
+
 const formatHours = (hoursDecimal: number): string => {
   const totalMinutes = Math.round(hoursDecimal * 60);
   const hours = Math.floor(totalMinutes / 60);
@@ -158,12 +187,43 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
       });
 
       if (openLog) {
+        // If it's a morning session and it's already past 12:00 PM Manila time,
+        // auto time-out at exactly 12:00 PM so the student can start session 2.
+        const now = new Date();
+        const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
+        const sixPm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 18, 0);
+
+        if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
+          // Session 1 -> force close at noon
+          await prisma.attendanceLog.update({
+            where: { id: openLog.id },
+            data: {
+              timeOut: noon,
+              durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, noon),
+            },
+          });
+        } else if (
+          openLog.timeIn &&
+          openLog.timeIn.getTime() >= noon.getTime() &&
+          openLog.timeIn.getTime() < sixPm.getTime() &&
+          now.getTime() >= sixPm.getTime()
+        ) {
+          // Session 2 -> force close at 6:00 PM
+          await prisma.attendanceLog.update({
+            where: { id: openLog.id },
+            data: {
+              timeOut: sixPm,
+              durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, sixPm),
+            },
+          });
+        } else {
         return res.status(400).json({
           message: 'There is an active time-in without time-out. Time-out first before starting a new segment.',
           openLogId: openLog.id,
           openLogDate: openLog.date,
           openLogTimeIn: openLog.timeIn,
         });
+        }
       }
 
       log = await prisma.attendanceLog.create({
@@ -192,9 +252,7 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
 
       // Students must use server-detected time for time-out as well.
       const timeOutDate = isStudentSelfLog ? new Date() : new Date(timeOut);
-      const durationMinutes = Math.floor(
-        (timeOutDate.getTime() - existingLog.timeIn!.getTime()) / 60000
-      );
+      const durationMinutes = computeOfficialDurationMinutes(existingLog.timeIn!, timeOutDate);
 
       log = await prisma.attendanceLog.update({
         where: { id: existingLog.id },
@@ -378,27 +436,75 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     let action: 'login' | 'logout';
     if (openLog) {
       const now = new Date();
-      const durationMinutes = Math.max(
-        0,
-        Math.floor((now.getTime() - openLog.timeIn!.getTime()) / 60000)
-      );
-      log = await prisma.attendanceLog.update({
-        where: { id: openLog.id },
-        data: {
-          timeOut: now,
-          durationMinutes,
-          verified: true,
-          verificationMethod: 'QR',
-          verificationMetadata: {
-            ...(openLog.verificationMetadata as any),
-            token,
-            latitude,
-            longitude,
-            distanceMeters
+      const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
+      const sixPm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 18, 0);
+
+      // If they forgot to time-out in the morning session and it's already past noon,
+      // close at exactly 12:00 PM and treat this scan as a new login (session 2).
+      if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
+        await prisma.attendanceLog.update({
+          where: { id: openLog.id },
+          data: {
+            timeOut: noon,
+            durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, noon),
+            verified: true,
+            verificationMethod: 'QR',
+            verificationMetadata: {
+              ...(openLog.verificationMetadata as any),
+              token,
+              latitude,
+              longitude,
+              distanceMeters
+            }
           }
-        }
-      });
-      action = 'logout';
+        });
+
+        // Continue to create a new log as "login" below.
+      } else if (
+        openLog.timeIn &&
+        openLog.timeIn.getTime() >= noon.getTime() &&
+        openLog.timeIn.getTime() < sixPm.getTime() &&
+        now.getTime() >= sixPm.getTime()
+      ) {
+        // If they forgot to time-out in the afternoon session, close at exactly 6:00 PM.
+        // Treat this scan as a logout completion (do not start a new session).
+        log = await prisma.attendanceLog.update({
+          where: { id: openLog.id },
+          data: {
+            timeOut: sixPm,
+            durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, sixPm),
+            verified: true,
+            verificationMethod: 'QR',
+            verificationMetadata: {
+              ...(openLog.verificationMetadata as any),
+              token,
+              latitude,
+              longitude,
+              distanceMeters
+            }
+          }
+        });
+        action = 'logout';
+      } else {
+        const durationMinutes = computeOfficialDurationMinutes(openLog.timeIn!, now);
+        log = await prisma.attendanceLog.update({
+          where: { id: openLog.id },
+          data: {
+            timeOut: now,
+            durationMinutes,
+            verified: true,
+            verificationMethod: 'QR',
+            verificationMetadata: {
+              ...(openLog.verificationMetadata as any),
+              token,
+              latitude,
+              longitude,
+              distanceMeters
+            }
+          }
+        });
+        action = 'logout';
+      }
     } else {
       // Enforce max segments/day (PHT) for new QR time-in.
       const now = new Date();
@@ -423,6 +529,43 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
           studentId: qrToken.studentId,
           date: new Date(),
           timeIn: new Date(),
+          verified: true,
+          verificationMethod: 'QR',
+          verificationMetadata: {
+            token,
+            latitude,
+            longitude,
+            distanceMeters
+          }
+        }
+      });
+      action = 'login';
+    }
+
+    // If we auto-closed the morning openLog at noon, we still need to create a new login now.
+    if (!log && openLog) {
+      const now = new Date();
+      const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
+      const segmentsToday = await prisma.attendanceLog.count({
+        where: {
+          studentId: qrToken.studentId,
+          timeIn: { gte: start, lte: end },
+        },
+      });
+      if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
+        return res.status(400).json({
+          message: `Daily attendance limit reached for ${yyyyMmDd}.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: MAX_SEGMENTS_PER_DAY,
+        });
+      }
+
+      log = await prisma.attendanceLog.create({
+        data: {
+          studentId: qrToken.studentId,
+          date: now,
+          timeIn: now,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {

@@ -58,17 +58,26 @@ const SupervisorAttendance = () => {
     fetchAttendanceLogs();
   }, [fetchAttendanceLogs]);
 
+  const formatHours = (minutesInput: number) => {
+    const totalMinutes = Math.max(0, Math.floor(Number(minutesInput || 0)));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const hLabel = hours === 1 ? "hour" : "hours";
+    const mLabel = minutes === 1 ? "minute" : "minutes";
+    return `${hours} ${hLabel} ${minutes} ${mLabel}`;
+  };
+
   const stats = {
     pending: logs.filter((log) => log.status === "pending").length,
     approved: logs.filter((log) => log.status === "approved").length,
     rejected: logs.filter((log) => log.status === "rejected").length,
-    totalHoursToday: logs
-      .filter((log) => {
-        const today = new Date().toISOString().split("T")[0];
-        return log.date.split("T")[0] === today && log.status !== "rejected";
-      })
-      .reduce((sum, log) => sum + log.durationMinutes / 60, 0)
-      .toFixed(2),
+    totalHoursToday: (() => {
+      const today = new Date().toISOString().split("T")[0];
+      const totalMinutes = logs
+        .filter((log) => log.date.split("T")[0] === today && log.status !== "rejected")
+        .reduce((sum, log) => sum + Number(log.durationMinutes || 0), 0);
+      return formatHours(totalMinutes);
+    })(),
   };
 
   const getStatusColor = (status: string) => {
@@ -244,11 +253,6 @@ const SupervisorAttendance = () => {
     if (!approvedStudentId) return null;
     return approvedLogsByStudent.find((s) => s.studentId === approvedStudentId) || null;
   }, [approvedLogsByStudent, approvedStudentId]);
-
-  const formatHours = (minutes: number) => {
-    const hrs = minutes / 60;
-    return `${hrs.toFixed(2)}h`;
-  };
 
   const handleApprove = async (logsToVerify: AttendanceLog[]) => {
     setSelectedLogs(logsToVerify);

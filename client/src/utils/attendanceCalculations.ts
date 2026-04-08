@@ -155,10 +155,12 @@ export function formatDuration(minutes: number): string {
   const roundedMinutes = roundToOfficialTime(minutes);
   const hours = Math.floor(roundedMinutes / 60);
   const mins = roundedMinutes % 60;
+  const hLabel = hours === 1 ? "hour" : "hours";
+  const mLabel = mins === 1 ? "minute" : "minutes";
   if (hours > 0) {
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    return mins > 0 ? `${hours} ${hLabel} ${mins} ${mLabel}` : `${hours} ${hLabel}`;
   }
-  return mins > 0 ? `${mins}m` : '0m';
+  return mins > 0 ? `${mins} ${mLabel}` : "0 minutes";
 }
 
 /**

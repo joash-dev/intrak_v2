@@ -12,6 +12,7 @@ import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, getStoragePath, syncLocalToNAS } from './config/nas';
 import { startNASSyncJob } from './jobs/nasSync.job';
+import { startAttendanceAutoTimeoutJob } from './jobs/attendanceAutoTimeout.job';
 import { testDatabaseConnection, prisma } from './config/database';
 
 // Routes
@@ -51,6 +52,9 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Attendance: auto time-out morning sessions at 12:00 (Asia/Manila)
+startAttendanceAutoTimeoutJob();
 
 // Trust proxy - required when running behind nginx/reverse proxy
 // This fixes express-rate-limit X-Forwarded-For header issues
