@@ -36,7 +36,6 @@ const CoordinatorCompanyProposals = React.lazy(() => import("./pages/Coordinator
 const SupervisorLayout = React.lazy(() => import("./pages/SupervisorUi/SupervisorLayout"));
 const SupervisorOverview = React.lazy(() => import("./pages/SupervisorUi/SupervisorOverview"));
 const SupervisorAttendanceTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorAttendanceTab"));
-const SupervisorDocumentsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorDocumentsTab"));
 const SupervisorEvaluationsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorEvaluationsTab"));
 const SupervisorSettingsTab = React.lazy(() => import("./pages/SupervisorUi/SupervisorSettingsTab"));
 const SupervisorNotifications = React.lazy(() => import("./pages/SupervisorUi/SupervisorNotifications"));
@@ -242,7 +241,6 @@ const App: React.FC = () => {
                 <Route path="dashboard" element={<SupervisorOverview />} />
                 <Route path="announcements" element={<SupervisorAnnouncementsPage />} />
                 <Route path="attendance" element={<SupervisorAttendanceTab />} />
-                <Route path="documents" element={<SupervisorDocumentsTab />} />
                 <Route path="evaluations" element={<SupervisorEvaluationsTab />} />
                 <Route path="settings" element={<SupervisorSettingsTab />} />
                 <Route path="notifications" element={<SupervisorNotifications />} />

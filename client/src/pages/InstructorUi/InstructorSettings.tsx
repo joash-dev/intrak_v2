@@ -248,16 +248,6 @@ const InstructorSettings = () => {
         return;
       }
 
-      if (!profile.email.trim()) {
-        setErrors({ email: "Email is required" });
-        return;
-      }
-
-      if (!settingsService.validateEmail(profile.email)) {
-        setErrors({ email: "Please enter a valid email address" });
-        return;
-      }
-
       if (profile.phone && !settingsService.validatePhone(profile.phone)) {
         setErrors({ phone: "Please enter a valid phone number" });
         return;
@@ -266,7 +256,6 @@ const InstructorSettings = () => {
       // Update profile using the settings service
       const updatedProfile = await settingsService.updateProfile({
         name: profile.name,
-        email: profile.email,
         phone: profile.phone,
       });
 
@@ -689,28 +678,15 @@ const InstructorSettings = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                        <p className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                           Email
-                        </label>
-                        <input
-                          type="email"
-                          value={profile.email}
-                          onChange={(e) => {
-                            setProfile({ ...profile, email: e.target.value });
-                            if (errors.email) {
-                              setErrors({ ...errors, email: "" });
-                            }
-                          }}
-                          className={`w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 dark:bg-gray-700 dark:text-white ${errors.email
-                            ? "border-red-500"
-                            : "border-gray-200 dark:border-gray-600"
-                            }`}
-                        />
-                        {errors.email && (
-                          <p className="mt-1 text-xs sm:text-sm text-red-600">
-                            {errors.email}
-                          </p>
-                        )}
+                        </p>
+                        <p className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border-2 rounded-xl border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300">
+                          {profile.email || "—"}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Sign-in email cannot be changed here. Contact an administrator if you need to update it.
+                        </p>
                       </div>
 
                       <div>

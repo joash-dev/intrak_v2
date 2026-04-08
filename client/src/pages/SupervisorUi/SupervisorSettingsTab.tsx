@@ -256,7 +256,6 @@ const SupervisorSettings = () => {
       setSaving(true);
       await settingsService.updateProfile({
         name: profileData.name,
-        email: profileData.email,
         phone: profileData.phone,
       });
 
@@ -266,7 +265,11 @@ const SupervisorSettings = () => {
         const user = JSON.parse(userString);
         localStorage.setItem(
           "user",
-          JSON.stringify({ ...user, ...profileData })
+          JSON.stringify({
+            ...user,
+            name: profileData.name,
+            phone: profileData.phone,
+          })
         );
       }
       refreshUserData();
@@ -567,23 +570,16 @@ const SupervisorSettings = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
+                    <p className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
                       Email
-                    </label>
-                    <div className="relative">
+                    </p>
+                    <div className="relative flex items-center pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-gray-50 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 min-h-[38px] sm:min-h-[42px]">
                       <Mail className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-                      <input
-                        type="email"
-                        value={profileData.email}
-                        onChange={(e) =>
-                          setProfileData({
-                            ...profileData,
-                            email: e.target.value,
-                          })
-                        }
-                        className="w-full pl-9 sm:pl-10 pr-4 py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md sm:rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                      />
+                      <span className="truncate">{profileData.email || "—"}</span>
                     </div>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Sign-in email cannot be changed here. Contact an administrator if you need to update it.
+                    </p>
                   </div>
 
                   <div>

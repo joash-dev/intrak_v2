@@ -6,7 +6,6 @@ import {
     Menu,
     LogOut,
     Home,
-    FileText,
     Loader2,
     MessageSquare,
 } from "lucide-react";
@@ -207,7 +206,8 @@ const SupervisorLayout: React.FC = () => {
             }
 
             if (notification.type === "DOCUMENT") {
-                navigate("/industry-partner/documents");
+                // Documents tab is intentionally not available for supervisors.
+                navigate("/industry-partner/dashboard");
             } else if (notification.link) {
                 navigate(notification.link);
             }
@@ -241,7 +241,6 @@ const SupervisorLayout: React.FC = () => {
         { id: "dashboard", label: "Dashboard", icon: Home, path: "/industry-partner/dashboard" },
         { id: "announcements", label: "Announcements", icon: MessageSquare, path: "/industry-partner/announcements" },
         { id: "attendance", label: "Attendance", icon: Clock, path: "/industry-partner/attendance" },
-        { id: "documents", label: "Documents", icon: FileText, path: "/industry-partner/documents" },
         { id: "evaluations", label: "Evaluations", icon: Award, path: "/industry-partner/evaluations" },
         { id: "notifications", label: "Notifications", icon: Bell, path: "/industry-partner/notifications" },
     ];

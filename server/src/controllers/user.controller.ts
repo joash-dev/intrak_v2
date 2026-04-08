@@ -163,7 +163,10 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     const data: any = {};
     if (name) data.name = name;
-    if (email) data.email = email;
+    // Only administrators may change email; other roles use settings UI without email edits.
+    if (email && req.user!.role === 'ADMIN') {
+      data.email = email;
+    }
     if (password) data.passwordHash = await bcrypt.hash(password, 12);
     if (active !== undefined && req.user!.role === 'ADMIN') data.active = active;
     // Allow users to update their own phone number; keep admin ability too.

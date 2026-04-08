@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   Clock,
@@ -6,7 +6,6 @@ import {
   CheckCircle,
   X,
   Search,
-  Eye,
   Download,
   Loader2,
   Calendar,
@@ -31,22 +30,21 @@ const NO_WORK_REASON_LABELS: Record<string, string> = {
 
 const SupervisorAttendance = () => {
   const [activeTab, setActiveTab] = useState<"logs" | "scanner" | "nowork">("logs");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLog, setSelectedLog] = useState<AttendanceLog | null>(null);
+  const [selectedLogs, setSelectedLogs] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyAction, setVerifyAction] = useState<"approve" | "reject" | null>(null);
   const [remarks, setRemarks] = useState("");
+  const [approvedStudentId, setApprovedStudentId] = useState<string | null>(null);
   const fetchAttendanceLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const filters: any = {};
-      if (filterStatus !== "all") {
-        filters.status = filterStatus;
-      }
-      const fetchedLogs = await supervisorService.getAttendanceLogs(filters);
+      // Fetch ALL logs so we can:
+      // - show pending items for approval
+      // - show approved summaries per student (cards)
+      const fetchedLogs = await supervisorService.getAttendanceLogs({});
       setLogs(fetchedLogs);
     } catch (error) {
       console.error("Error fetching attendance logs:", error);
@@ -54,7 +52,7 @@ const SupervisorAttendance = () => {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus]);
+  }, []);
 
   useEffect(() => {
     fetchAttendanceLogs();
@@ -111,26 +109,163 @@ const SupervisorAttendance = () => {
     const matchesSearch =
       log.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.studentNumber.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || log.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    return matchesSearch && log.status === "pending";
   });
 
-  const handleApprove = async (log: AttendanceLog) => {
-    setSelectedLog(log);
+  const pendingGroupedRows = useMemo(() => {
+    type Group = {
+      key: string;
+      date: string;
+      studentName: string;
+      studentNumber: string;
+      logs: AttendanceLog[];
+    };
+
+    const map = new Map<string, Group>();
+    for (const log of filteredLogs) {
+      const dateKey = (log.date || "").split("T")[0] || log.date || "";
+      const key = `${log.studentNumber}__${dateKey}`;
+      const current = map.get(key) || {
+        key,
+        date: log.date,
+        studentName: log.studentName,
+        studentNumber: log.studentNumber,
+        logs: [],
+      };
+      current.logs.push(log);
+      // keep the latest date value (for formatting)
+      current.date = log.date || current.date;
+      map.set(key, current);
+    }
+
+    const sortTs = (l: AttendanceLog) => {
+      const t = l.timeIn || l.timeOut || l.date;
+      const ms = t ? new Date(t).getTime() : 0;
+      return Number.isNaN(ms) ? 0 : ms;
+    };
+
+    return Array.from(map.values())
+      .map((g) => {
+        const sorted = g.logs.slice().sort((a, b) => sortTs(a) - sortTs(b));
+        const slot1 = sorted[0] || null;
+        const slot2 = sorted[1] || null;
+        return {
+          ...g,
+          slot1,
+          slot2,
+        };
+      })
+      .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  }, [filteredLogs]);
+
+  const approvedLogsByStudent = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        studentId: string;
+        studentName: string;
+        studentNumber: string;
+        approvedCount: number;
+        approvedMinutes: number;
+        logs: AttendanceLog[];
+      }
+    >();
+
+    for (const log of logs) {
+      if (log.status !== "approved") continue;
+      const key = log.studentId || log.studentNumber || log.studentName;
+      if (!key) continue;
+
+      const current = map.get(key) || {
+        studentId: key,
+        studentName: log.studentName,
+        studentNumber: log.studentNumber,
+        approvedCount: 0,
+        approvedMinutes: 0,
+        logs: [],
+      };
+
+      current.approvedCount += 1;
+      current.approvedMinutes += Number(log.durationMinutes || 0);
+      current.logs.push(log);
+      map.set(key, current);
+    }
+
+    return Array.from(map.values()).sort(
+      (a, b) => b.approvedMinutes - a.approvedMinutes
+    );
+  }, [logs]);
+
+  const approvedGroupedRows = useMemo(() => {
+    const currentApprovedStudent =
+      approvedLogsByStudent.find((s) => s.studentId === approvedStudentId) || null;
+    if (!currentApprovedStudent) return [];
+
+    type Group = {
+      key: string;
+      date: string;
+      logs: AttendanceLog[];
+      slot1: AttendanceLog | null;
+      slot2: AttendanceLog | null;
+    };
+
+    const sortTs = (l: AttendanceLog) => {
+      const t = l.timeIn || l.timeOut || l.date;
+      const ms = t ? new Date(t).getTime() : 0;
+      return Number.isNaN(ms) ? 0 : ms;
+    };
+
+    const map = new Map<string, { date: string; logs: AttendanceLog[] }>();
+    for (const log of currentApprovedStudent.logs) {
+      const dateKey = (log.date || "").split("T")[0] || log.date || "";
+      const current = map.get(dateKey) || { date: log.date, logs: [] as AttendanceLog[] };
+      current.logs.push(log);
+      current.date = log.date || current.date;
+      map.set(dateKey, current);
+    }
+
+    const rows: Group[] = Array.from(map.entries()).map(([dateKey, g]) => {
+      const sorted = g.logs.slice().sort((a, b) => sortTs(a) - sortTs(b));
+      const slot1 = sorted[0] || null;
+      const slot2 = sorted[1] || null;
+      return {
+        key: dateKey,
+        date: g.date,
+        logs: g.logs,
+        slot1,
+        slot2,
+      };
+    });
+
+    return rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  }, [approvedLogsByStudent, approvedStudentId]);
+
+  const selectedApprovedStudent = useMemo(() => {
+    if (!approvedStudentId) return null;
+    return approvedLogsByStudent.find((s) => s.studentId === approvedStudentId) || null;
+  }, [approvedLogsByStudent, approvedStudentId]);
+
+  const formatHours = (minutes: number) => {
+    const hrs = minutes / 60;
+    return `${hrs.toFixed(2)}h`;
+  };
+
+  const handleApprove = async (logsToVerify: AttendanceLog[]) => {
+    setSelectedLogs(logsToVerify);
     setVerifyAction("approve");
     setRemarks("");
     setShowVerifyModal(true);
   };
 
-  const handleReject = async (log: AttendanceLog) => {
-    setSelectedLog(log);
+  const handleReject = async (logsToVerify: AttendanceLog[]) => {
+    setSelectedLogs(logsToVerify);
     setVerifyAction("reject");
     setRemarks("");
     setShowVerifyModal(true);
   };
 
   const handleSubmitVerification = async () => {
-    if (!selectedLog || !verifyAction) return;
+    if (selectedLogs.length === 0 || !verifyAction) return;
 
     if (verifyAction === "reject" && !remarks.trim()) {
       toast.error("Please provide a reason for rejection");
@@ -139,14 +274,14 @@ const SupervisorAttendance = () => {
 
     try {
       if (verifyAction === "approve") {
-        await supervisorService.approveAttendance(selectedLog.id);
-        toast.success(`Attendance approved for ${selectedLog.studentName}`);
+        await Promise.all(selectedLogs.map((l) => supervisorService.approveAttendance(l.id)));
+        toast.success(`Attendance approved for ${selectedLogs[0]?.studentName ?? "student"}`);
       } else {
-        await supervisorService.rejectAttendance(selectedLog.id, remarks);
-        toast.success(`Attendance rejected for ${selectedLog.studentName}`);
+        await Promise.all(selectedLogs.map((l) => supervisorService.rejectAttendance(l.id, remarks)));
+        toast.success(`Attendance rejected for ${selectedLogs[0]?.studentName ?? "student"}`);
       }
       setShowVerifyModal(false);
-      setSelectedLog(null);
+      setSelectedLogs([]);
       setVerifyAction(null);
       setRemarks("");
       await fetchAttendanceLogs();
@@ -823,6 +958,77 @@ const SupervisorAttendance = () => {
       )}
       {activeTab === "logs" && (
         <>
+          {/* Approved Attendance Cards */}
+          <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                  Approved Attendance (per student)
+                </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Click a student to view their approved logs.
+                </p>
+              </div>
+              <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 shrink-0">
+                {approvedLogsByStudent.length} student(s)
+              </span>
+            </div>
+
+            {approvedLogsByStudent.length === 0 ? (
+              <div className="text-sm text-gray-600 dark:text-gray-400 py-4 text-center">
+                No approved attendance yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {approvedLogsByStudent.map((s) => {
+                  const initials = (s.studentName || "ST")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .substring(0, 2);
+                  const hours = formatHours(s.approvedMinutes);
+                  return (
+                    <button
+                      key={s.studentId}
+                      type="button"
+                      onClick={() => setApprovedStudentId(s.studentId)}
+                      className="text-left hover:bg-gray-50 dark:hover:bg-gray-700/30 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                              {s.studentName}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {s.studentNumber}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 shrink-0">
+                          {s.approvedCount}
+                        </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          Approved hours
+                        </p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">
+                          {hours}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Filters */}
           <div className="bg-white dark:bg-[#212124] rounded-xl p-4 shadow-sm">
             <div className="flex flex-col md:flex-row gap-4">
@@ -836,16 +1042,10 @@ const SupervisorAttendance = () => {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+              <div className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-[#1c1c1f] text-gray-700 dark:text-gray-200 flex items-center">
+                <AlertCircle className="w-4 h-4 mr-2 text-yellow-600 dark:text-yellow-300" />
+                <span className="text-sm font-medium">Pending approval only</span>
+              </div>
               <button
                 onClick={fetchAttendanceLogs}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -857,7 +1057,7 @@ const SupervisorAttendance = () => {
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredLogs.length} of {logs.length} logs
+            Showing {pendingGroupedRows.length} pending row(s)
           </p>
 
           {/* Logs Table */}
@@ -873,13 +1073,16 @@ const SupervisorAttendance = () => {
                       Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Time In/Out
+                      Time In
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Hours
+                      Time Out
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Method
+                      Time In
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                      Time Out
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Status
@@ -890,15 +1093,15 @@ const SupervisorAttendance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredLogs.map((log) => (
+                  {pendingGroupedRows.map((row) => (
                     <tr
-                      key={log.id}
+                      key={row.key}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
-                            {log.studentName
+                            {row.studentName
                               .split(" ")
                               .map((n) => n[0])
                               .join("")
@@ -906,10 +1109,10 @@ const SupervisorAttendance = () => {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                              {log.studentName}
+                              {row.studentName}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {log.studentNumber}
+                              {row.studentNumber}
                             </p>
                           </div>
                         </div>
@@ -918,74 +1121,58 @@ const SupervisorAttendance = () => {
                         <div className="flex items-center space-x-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <p className="text-sm text-gray-900 dark:text-white">
-                            {formatDate(log.date)}
+                            {formatDate(row.date)}
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <p className="text-sm text-gray-900 dark:text-white">
-                          {formatTime(log.timeIn)}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {formatTime(log.timeOut)}
+                          {formatTime(row.slot1?.timeIn ?? null)}
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {(log.durationMinutes / 60).toFixed(2)}h
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {formatTime(row.slot1?.timeOut ?? null)}
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-white">
-                          {log.method}
-                        </span>
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {formatTime(row.slot2?.timeIn ?? null)}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-sm text-gray-900 dark:text-white">
+                          {formatTime(row.slot2?.timeOut ?? null)}
+                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                            log.status
+                            "pending"
                           )}`}
                         >
-                          {log.status}
+                          pending
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {log.status === "pending" ? (
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleApprove(log)}
-                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                              title="Approve"
-                              aria-label={`Approve attendance for ${log.studentName}`}
-                            >
-                              <CheckCircle className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleReject(log)}
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Reject"
-                              aria-label={`Reject attendance for ${log.studentName}`}
-                            >
-                              <X className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => setSelectedLog(log)}
-                              className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
-                              title="View Details"
-                              aria-label={`View details for ${log.studentName}`}
-                            >
-                              <Eye className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ) : (
+                        <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => setSelectedLog(log)}
-                            className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            aria-label={`View details for ${log.studentName}`}
+                            onClick={() => void handleApprove(row.logs)}
+                            className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Approve"
+                            aria-label={`Approve attendance for ${row.studentName}`}
                           >
-                            <Eye className="w-5 h-5" />
+                            <CheckCircle className="w-5 h-5" />
                           </button>
-                        )}
+                          <button
+                            onClick={() => void handleReject(row.logs)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Reject"
+                            aria-label={`Reject attendance for ${row.studentName}`}
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -993,7 +1180,7 @@ const SupervisorAttendance = () => {
               </table>
             </div>
 
-            {filteredLogs.length === 0 && (
+            {pendingGroupedRows.length === 0 && (
               <div className="text-center py-12">
                 <Clock className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">
@@ -1005,149 +1192,16 @@ const SupervisorAttendance = () => {
         </>
       )}
 
-      {/* Detail Modal */}
-      {selectedLog && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
-          style={{ margin: "0" }}
-          onClick={() => setSelectedLog(null)}
-        >
-          <div
-            className="bg-white dark:bg-[#212124] rounded-xl max-w-2xl w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                Attendance Details
-              </h3>
-              <button
-                onClick={() => setSelectedLog(null)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-lg">
-                  {selectedLog.studentName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .substring(0, 2)}
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedLog.studentName}
-                  </h4>
-                  <p className="text-sm text-gray-500">
-                    {selectedLog.studentNumber}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Date</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatDate(selectedLog.date)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Status</p>
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusColor(
-                      selectedLog.status
-                    )}`}
-                  >
-                    {selectedLog.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Time In</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatTime(selectedLog.timeIn)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Time Out</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatTime(selectedLog.timeOut)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Hours Worked</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {(selectedLog.durationMinutes / 60).toFixed(2)} hours
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Method</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {selectedLog.method}
-                  </p>
-                </div>
-              </div>
-
-              {selectedLog.location && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Location</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {selectedLog.location}
-                  </p>
-                  {selectedLog.coordinates && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      📍 {selectedLog.coordinates}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {selectedLog.remarks && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Remarks</p>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {selectedLog.remarks}
-                  </p>
-                </div>
-              )}
-
-              {selectedLog.status === "pending" && (
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => {
-                      handleApprove(selectedLog);
-                    }}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleReject(selectedLog);
-                    }}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Detail Modal removed (no view action) */}
 
       {/* Verification Modal */}
-      {showVerifyModal && selectedLog && verifyAction && (
+      {showVerifyModal && selectedLogs.length > 0 && verifyAction && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
           style={{ margin: "0" }}
           onClick={() => {
             setShowVerifyModal(false);
-            setSelectedLog(null);
+            setSelectedLogs([]);
             setVerifyAction(null);
             setRemarks("");
           }}
@@ -1163,10 +1217,10 @@ const SupervisorAttendance = () => {
             </h3>
             <div className="bg-gray-50 dark:bg-[#212124] rounded-lg p-4 mb-6">
               <p className="font-semibold text-gray-900 dark:text-white">
-                {selectedLog.studentName}
+                {selectedLogs[0].studentName}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {new Date(selectedLog.date).toLocaleDateString()}
+                {new Date(selectedLogs[0].date).toLocaleDateString()}
               </p>
             </div>
             <div className="mb-6">
@@ -1176,11 +1230,11 @@ const SupervisorAttendance = () => {
                     ? "Notes (Optional)"
                     : "Reason (Required)"}
                 </label>
-                {selectedLog && verifyAction && (
+                {selectedLogs.length > 0 && verifyAction && (
                   <AIGenerateButton
                     onGenerate={async () => {
                       return aiService.generateAttendanceNote({
-                        attendanceLogId: selectedLog.id,
+                        attendanceLogId: selectedLogs[0].id,
                         action: verifyAction,
                       });
                     }}
@@ -1209,7 +1263,7 @@ const SupervisorAttendance = () => {
               <button
                 onClick={() => {
                   setShowVerifyModal(false);
-                  setSelectedLog(null);
+                  setSelectedLogs([]);
                   setVerifyAction(null);
                   setRemarks("");
                 }}
@@ -1313,6 +1367,146 @@ const SupervisorAttendance = () => {
               >
                 {noticeReviewAction === "approve" ? "Approve" : "Reject"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approved logs modal */}
+      {selectedApprovedStudent && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          style={{ margin: "0" }}
+          onClick={() => setApprovedStudentId(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#19191c] rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                  {selectedApprovedStudent.studentName}
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  {selectedApprovedStudent.studentNumber} • {selectedApprovedStudent.approvedCount} approved log(s) •{" "}
+                  {formatHours(selectedApprovedStudent.approvedMinutes)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setApprovedStudentId(null)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <div className="p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                  <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Total approved logs</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      {selectedApprovedStudent.approvedCount}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Total approved hours</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      {formatHours(selectedApprovedStudent.approvedMinutes)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Days with approved logs</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      {approvedGroupedRows.length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-[#19191c] rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 dark:bg-[#212124]">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Time In
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Time Out
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Time In
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Time Out
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Method
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            Hours
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {approvedGroupedRows.map((row) => {
+                          const totalMinutes = row.logs.reduce(
+                            (sum, l) => sum + Number(l.durationMinutes || 0),
+                            0
+                          );
+                          const method =
+                            row.slot1?.method ||
+                            row.slot2?.method ||
+                            row.logs[0]?.method ||
+                            "—";
+                          return (
+                            <tr key={row.key} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {formatDate(row.date)}
+                                </p>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatTime(row.slot1?.timeIn ?? null)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatTime(row.slot1?.timeOut ?? null)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatTime(row.slot2?.timeIn ?? null)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {formatTime(row.slot2?.timeOut ?? null)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="text-sm text-gray-900 dark:text-white">
+                                  {method}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                  {formatHours(totalMinutes)}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {approvedGroupedRows.length === 0 && (
+                    <div className="text-center py-10 text-sm text-gray-500 dark:text-gray-400">
+                      No approved logs found.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

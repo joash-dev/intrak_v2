@@ -222,12 +222,6 @@ const CoordinatorSettingsTab = () => {
       setSaving(true);
       setErrors({});
 
-      // Validate email
-      if (!settingsService.validateEmail(profileData.email)) {
-        setErrors({ email: "Please enter a valid email address" });
-        return;
-      }
-
       // Validate phone if provided
       if (
         profileData.phone &&
@@ -239,7 +233,6 @@ const CoordinatorSettingsTab = () => {
 
       const updatedProfile = await settingsService.updateProfile({
         name: profileData.name,
-        email: profileData.email,
         phone: profileData.phone,
         emergencyContact: profileData.emergencyContact,
         emergencyName: profileData.emergencyName,
@@ -657,29 +650,16 @@ const CoordinatorSettingsTab = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Mail className="w-4 h-4 inline mr-1" />
                       {t("settings.profile.email")}
-                    </label>
-                    <input
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          email: e.target.value,
-                        })
-                      }
-                      className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${errors.email
-                        ? "border-red-500"
-                        : "border-gray-300 dark:border-gray-600"
-                        }`}
-                    />
-                    {errors.email && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.email}
-                      </p>
-                    )}
+                    </p>
+                    <p className="w-full px-4 py-2 border rounded-xl bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm">
+                      {profileData.email || "—"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Your sign-in email cannot be changed here. Contact an administrator if you need to update it.
+                    </p>
                   </div>
 
                   <div>
