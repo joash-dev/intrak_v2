@@ -176,8 +176,19 @@ const InstructorMessages: React.FC = () => {
               ].join(" ")}
             >
               {!selectedStudentId ? (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                  No conversations found.
+                <div className="h-full flex items-center justify-center">
+                  <div className="max-w-sm text-center px-6">
+                    <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                      No conversation selected
+                    </h3>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      Choose a student from the sidebar to view messages, or wait for
+                      a new student message to start a thread.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="h-full min-h-0 flex flex-col">

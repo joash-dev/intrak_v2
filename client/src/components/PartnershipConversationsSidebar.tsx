@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, Search, SearchX } from "lucide-react";
 import type { PartnershipConversationSummary } from "../services/partnershipConversationService";
 
 type Props = {
@@ -100,8 +100,24 @@ const PartnershipConversationsSidebar: React.FC<Props> = ({
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-            No conversations found.
+          <div className="p-6 h-full flex items-center justify-center">
+            <div className="max-w-[240px] text-center">
+              <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                {query.trim() ? (
+                  <SearchX className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                ) : (
+                  <MessageSquare className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                )}
+              </div>
+              <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                {query.trim() ? "No matching conversations" : "No conversations yet"}
+              </div>
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                {query.trim()
+                  ? "Try searching by student name, ID, or message snippet."
+                  : "Student threads will appear here once a message is sent."}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="p-2 sm:p-3 space-y-1">
