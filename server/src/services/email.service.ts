@@ -270,7 +270,7 @@ class EmailService {
 
   public generateEmailTemplate(content: string, bannerText: string, bannerIcon?: string): string {
     const clientUrl = process.env.CLIENT_URL || 'https://intrak.site';
-    const logoUrl = `${clientUrl}/logo_intrak.png`;
+    const logoUrl = `${clientUrl}/intrak_logo-nbg.png`;
 
     return `
 <!DOCTYPE html>

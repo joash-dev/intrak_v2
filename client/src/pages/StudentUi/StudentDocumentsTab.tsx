@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Upload,
   FileText,
@@ -332,7 +332,7 @@ const StudentDocumentsTab: React.FC = () => {
       if (validResults.length < blobResults.length) {
         toast(
           `${blobResults.length - validResults.length} file(s) could not be loaded and were skipped.`,
-          { icon: "⚠️" }
+          { icon: "âš ï¸" }
         );
       }
 
@@ -893,7 +893,7 @@ const StudentDocumentsTab: React.FC = () => {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       Submitted by <span className="font-medium text-gray-700 dark:text-gray-300">{doc.uploadedBy?.name || 'Unknown'}</span>
-                      {doc.uploadedAt && <> · {doc.uploadedAt}</>}
+                      {doc.uploadedAt && <> Â· {doc.uploadedAt}</>}
                     </p>
                   </div>
                 </div>
@@ -953,7 +953,7 @@ const StudentDocumentsTab: React.FC = () => {
                       Endorsement Letter (Multiple Students)
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Submitted {doc.uploadedAt && <>{doc.uploadedAt}</>} · <span className="text-blue-600 dark:text-blue-400 font-medium">Awaiting student acceptance</span>
+                      Submitted {doc.uploadedAt && <>{doc.uploadedAt}</>} Â· <span className="text-blue-600 dark:text-blue-400 font-medium">Awaiting student acceptance</span>
                     </p>
                   </div>
                 </div>
@@ -1097,7 +1097,7 @@ const StudentDocumentsTab: React.FC = () => {
                                       <div className="mt-2 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50/90 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-950 dark:text-amber-100 flex gap-2 items-start">
                                         <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-300 mt-0.5" aria-hidden />
                                         <span>
-                                          <span className="font-semibold">Tip:</span> It’s best to fill out and finalize the{" "}
+                                          <span className="font-semibold">Tip:</span> It's best to fill out and finalize the{" "}
                                           <strong className="font-semibold">Record File last</strong>, after your other
                                           pre-deployment forms are on file, so the checklist in the PDF matches your
                                           progress.
@@ -1455,7 +1455,7 @@ const StudentDocumentsTab: React.FC = () => {
                   <div className="text-center">
                     <div className="relative w-16 h-16 mx-auto mb-4">
                       <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
-                      <img src="/just_logo.png" alt="Loading..." className="relative w-16 h-16 object-contain z-10" />
+                      <img src="/logo_intrak_only-nbg.png" alt="Loading..." className="relative w-16 h-16 object-contain z-10" />
                     </div>
                     <p className="text-gray-500 font-medium">Loading preview...</p>
                   </div>

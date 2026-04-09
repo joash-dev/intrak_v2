@@ -80,8 +80,8 @@ async function main() {
     for (const row of rows) {
       const timeIn = row.timeIn!;
       const noon = getManilaFixedTimeUtc(timeIn, 12, 0);
-      const sixPm = getManilaFixedTimeUtc(timeIn, 18, 0);
-      const cutoff = timeIn.getTime() < noon.getTime() ? noon : sixPm;
+      const fivePm = getManilaFixedTimeUtc(timeIn, 17, 0);
+      const cutoff = timeIn.getTime() < noon.getTime() ? noon : fivePm;
 
       let effectiveOut = row.timeOut ?? cutoff;
       if (effectiveOut.getTime() > cutoff.getTime()) {

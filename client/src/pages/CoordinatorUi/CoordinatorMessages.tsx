@@ -8,6 +8,7 @@ import {
   partnershipConversationService,
   type PartnershipConversationSummary,
 } from "../../services/partnershipConversationService";
+import { requestCoordinatorNavBadgesRefresh } from "../../services/coordinatorService";
 
 const CoordinatorMessages: React.FC = () => {
   const location = useLocation();
@@ -31,6 +32,7 @@ const CoordinatorMessages: React.FC = () => {
     try {
       const conv = await partnershipConversationService.getConversations();
       setConversations(conv);
+      requestCoordinatorNavBadgesRefresh();
     } catch {
       /* ignore */
     }
@@ -48,6 +50,7 @@ const CoordinatorMessages: React.FC = () => {
               c.studentId === selectedStudentId ? { ...c, unread: false } : c
             )
           );
+          requestCoordinatorNavBadgesRefresh();
         }
       } catch {
         /* ignore */

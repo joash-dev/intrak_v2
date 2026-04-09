@@ -327,7 +327,7 @@ const Login: React.FC = () => {
             {/* Logo */}
             <div className={`flex justify-center ${requires2FA ? "mb-6" : "mb-8"}`}>
               <img
-                src="/logo.jpg"
+                src="/intrak_logo.png"
                 alt="INTRAK Logo"
                 className={requires2FA ? "h-24 w-auto" : "h-32 w-auto"}
               />
@@ -720,19 +720,17 @@ const Login: React.FC = () => {
               <p>Streamline. Manage. Connect.</p>
             </div>
           </div>
-        </div >
+        </div>
 
-        {/* Right Section - Image (Hidden on Mobile/Tablet) */}
-        < div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-50 to-blue-100 items-center justify-center" >
-          <div className="relative">
-            <img
-              src="/intrak_light.jpg"
-              alt="INTRAK Illustration"
-              className="max-w-full h-auto"
-            />
-          </div>
-        </div >
-      </div >
+        {/* Right Section - Campus image (Hidden on Mobile/Tablet) */}
+        <div className="hidden lg:flex flex-1 min-h-0 relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100">
+          <img
+            src="/psu-campus.png"
+            alt="Pangasinan State University campus"
+            className="h-full w-full object-cover object-[50%_49%]"
+          />
+        </div>
+      </div>
     </>
   );
 };

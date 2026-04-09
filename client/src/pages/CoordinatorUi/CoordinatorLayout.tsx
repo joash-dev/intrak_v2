@@ -21,6 +21,11 @@ import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { formatDateTime } from "../../services/localeService";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
 import { devLog } from "../../utils/devLog";
+import {
+    coordinatorService,
+    COORDINATOR_NAV_BADGES_REFRESH,
+    type CoordinatorNavBadgeCounts,
+} from "../../services/coordinatorService";
 // Define the context type for shared data
 type CoordinatorContextType = {
     currentUser: {
@@ -279,6 +284,54 @@ const CoordinatorLayout: React.FC = () => {
         (notification) => !notification.read
     ).length;
 
+    const ZERO_NAV_BADGES: CoordinatorNavBadgeCounts = {
+        documentsAction: 0,
+        proposalsAction: 0,
+        messagesUnread: 0,
+    };
+    const [navBadges, setNavBadges] = useState<CoordinatorNavBadgeCounts>(ZERO_NAV_BADGES);
+
+    const refreshNavBadges = useCallback(async () => {
+        const counts = await coordinatorService.getNavBadgeCounts();
+        setNavBadges(counts);
+    }, []);
+
+    useEffect(() => {
+        void refreshNavBadges();
+    }, [location.pathname, refreshNavBadges]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            void refreshNavBadges();
+        }, 15000);
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") void refreshNavBadges();
+        };
+        const onBadgesRefresh = () => void refreshNavBadges();
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener(COORDINATOR_NAV_BADGES_REFRESH, onBadgesRefresh);
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            window.removeEventListener(COORDINATOR_NAV_BADGES_REFRESH, onBadgesRefresh);
+        };
+    }, [refreshNavBadges]);
+
+    const navAttentionCount = (tabId: string): number => {
+        switch (tabId) {
+            case "dashboard":
+                return 0;
+            case "documents":
+                return navBadges.documentsAction;
+            case "company-proposals":
+                return navBadges.proposalsAction;
+            case "messages":
+                return navBadges.messagesUnread;
+            default:
+                return 0;
+        }
+    };
+
     const formatDropdownTimestamp = (timestamp: string) => {
         if (!timestamp) return "";
         return formatDateTime(timestamp);
@@ -332,7 +385,7 @@ const CoordinatorLayout: React.FC = () => {
                             <Menu className="w-5 h-5" />
                         </button>
                         <img
-                            src="/just_logo.png"
+                            src="/logo_intrak_only-nbg.png"
                             alt="INTRAK Logo"
                             className="w-10 h-10 rounded-lg object-cover"
                         />
@@ -515,7 +568,7 @@ const CoordinatorLayout: React.FC = () => {
                             </button>
                             {/* Logo */}
                             <img
-                                src="/just_logo.png"
+                                src="/logo_intrak_only-nbg.png"
                                 alt="INTRAK Logo"
                                 className="w-12 h-12 rounded-lg object-cover"
                             />
@@ -540,7 +593,7 @@ const CoordinatorLayout: React.FC = () => {
                                 </button>
                                 {/* Logo */}
                                 <img
-                                    src="/just_logo.png"
+                                    src="/logo_intrak_only-nbg.png"
                                     alt="INTRAK Logo"
                                     className="w-12 h-12 rounded-full object-cover"
                                 />
@@ -553,6 +606,7 @@ const CoordinatorLayout: React.FC = () => {
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isNotifications = item.id === "notifications";
+                            const pending = navAttentionCount(item.id);
                             return (
                                 <button
                                     key={item.id}
@@ -576,6 +630,18 @@ const CoordinatorLayout: React.FC = () => {
                                             className={`w-2 h-2 shrink-0 rounded-full bg-purple-500 ${sidebarExpanded ? "ml-auto" : "ml-auto lg:absolute lg:top-1 lg:right-1 lg:ml-0"}`}
                                             aria-hidden
                                         />
+                                    )}
+                                    {!isNotifications && pending > 0 && (
+                                        <span
+                                            className={
+                                                sidebarExpanded
+                                                    ? "ml-auto min-w-[1.25rem] rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white shadow-sm"
+                                                    : "ml-auto h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#212124] lg:absolute lg:top-1.5 lg:right-1.5 lg:ml-0"
+                                            }
+                                            aria-label={`${pending} item${pending === 1 ? "" : "s"} need attention`}
+                                        >
+                                            {sidebarExpanded ? (pending > 99 ? "99+" : pending) : null}
+                                        </span>
                                     )}
                                 </button>
                             );

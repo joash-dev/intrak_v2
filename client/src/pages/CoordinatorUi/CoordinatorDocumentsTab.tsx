@@ -23,6 +23,7 @@ import { formatDate, formatDateTime } from "../../services/localeService";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 import PDFViewer from "../../components/document/PDFViewer";
+import { requestCoordinatorNavBadgesRefresh } from "../../services/coordinatorService";
 
 // ── Document type → human-readable label ──────────────────────────────
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -114,6 +115,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
   const [previewDoc, setPreviewDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [pulseDocIds, setPulseDocIds] = useState<Set<string>>(() => new Set());
 
   // Data
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -168,8 +170,36 @@ const CoordinatorDocumentsTab: React.FC = () => {
       setError(err.message || "Failed to fetch documents");
     } finally {
       setLoading(false);
+      requestCoordinatorNavBadgesRefresh();
     }
   };
+
+  // Pulse documents ONE time when they newly become pending / resubmission requested.
+  useEffect(() => {
+    const isActionable = (status: string) => status === "PENDING" || status === "RESUBMISSION_REQUESTED";
+    const key = (id: string) => `intrak:seen-attn:coordinator:doc:${id}`;
+    const actionable = documents.filter((d) => isActionable(d.status));
+    const newly = actionable
+      .map((d) => d.id)
+      .filter((id) => {
+        try {
+          return sessionStorage.getItem(key(id)) !== "1";
+        } catch {
+          return false;
+        }
+      });
+    if (newly.length === 0) return;
+    for (const id of newly) {
+      try {
+        sessionStorage.setItem(key(id), "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setPulseDocIds(new Set(newly));
+    const t = window.setTimeout(() => setPulseDocIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+  }, [documents]);
 
   // ── Helpers ───────────────────────────────────────────────────────
   const generateAvatar = (name: string): string =>
@@ -360,6 +390,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
       await documentService.approveDocument(selectedDoc.id, remarks);
       toast.success("Document approved successfully");
       await fetchDocuments();
+      requestCoordinatorNavBadgesRefresh();
       setShowReviewModal(false);
       setSelectedDoc(null);
       setRemarks("");
@@ -675,7 +706,12 @@ const CoordinatorDocumentsTab: React.FC = () => {
         {paginatedDocuments.map((doc) => (
           <div
             key={doc.id}
-            className="bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md"
+            className={[
+              "bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md",
+              pulseDocIds.has(doc.id) ? "animate-attention-once" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
           >
 
             <div className="p-4 sm:p-5">

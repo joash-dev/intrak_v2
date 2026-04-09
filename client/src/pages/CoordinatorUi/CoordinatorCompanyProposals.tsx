@@ -7,6 +7,8 @@ import {
   type CompanyProposalStatus,
 } from '../../services/companyProposalService';
 import Skeleton from '../../components/Skeleton';
+import { requestCoordinatorNavBadgesRefresh } from '../../services/coordinatorService';
+import { instructorNavCountsCompanyProposal } from '../../utils/instructorNavAttention';
 
 const statusLabel: Record<CompanyProposalStatus, string> = {
   DRAFT: 'Draft',
@@ -41,6 +43,7 @@ const CoordinatorCompanyProposals = () => {
   const [externalRefMap, setExternalRefMap] = useState<Record<string, string>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [pulseIds, setPulseIds] = useState<Set<string>>(() => new Set());
 
   const loadProposals = async () => {
     try {
@@ -51,12 +54,41 @@ const CoordinatorCompanyProposals = () => {
       toast.error(error?.response?.data?.message || 'Failed to load company proposals');
     } finally {
       setLoading(false);
+      requestCoordinatorNavBadgesRefresh();
     }
   };
 
   useEffect(() => {
     loadProposals();
   }, []);
+
+  // Pulse cards ONE time when they newly enter coordinator-action statuses.
+  useEffect(() => {
+    const isActionable = (status: string) =>
+      status === "FORWARDED_TO_COORDINATOR" || status === "UNDER_COORDINATOR_REVIEW";
+    const key = (id: string) => `intrak:seen-attn:coordinator:proposal:${id}`;
+    const actionable = proposals.filter((p) => isActionable(p.status));
+    const newly = actionable
+      .map((p) => p.id)
+      .filter((id) => {
+        try {
+          return sessionStorage.getItem(key(id)) !== "1";
+        } catch {
+          return false;
+        }
+      });
+    if (newly.length === 0) return;
+    for (const id of newly) {
+      try {
+        sessionStorage.setItem(key(id), "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setPulseIds(new Set(newly));
+    const t = window.setTimeout(() => setPulseIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+  }, [proposals]);
 
   const filtered = useMemo(() => {
     let result = proposals;
@@ -318,11 +350,17 @@ const CoordinatorCompanyProposals = () => {
                   proposal.status === 'FORWARDED_TO_COORDINATOR' || proposal.status === 'UNDER_COORDINATOR_REVIEW';
                 const canFinalizeNow = proposal.status === 'PENDING_EXTERNAL_APPROVAL';
                 const allDocs = proposal.attachments;
+                const shouldPulse = pulseIds.has(proposal.id);
 
                 return (
                   <div
                     key={proposal.id}
-                    className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className={[
+                      "bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200",
+                      shouldPulse ? "animate-attention-once" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   >
                     {/* Header: Company name + status */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">

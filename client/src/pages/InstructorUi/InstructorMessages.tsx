@@ -8,6 +8,7 @@ import {
   partnershipConversationService,
   type PartnershipConversationSummary,
 } from "../../services/partnershipConversationService";
+import { requestInstructorNavBadgesRefresh } from "../../services/instructorService";
 
 const InstructorMessages: React.FC = () => {
   const location = useLocation();
@@ -31,6 +32,7 @@ const InstructorMessages: React.FC = () => {
     try {
       const conv = await partnershipConversationService.getConversations();
       setConversations(conv);
+      requestInstructorNavBadgesRefresh();
     } catch {
       /* ignore */
     }
@@ -48,6 +50,7 @@ const InstructorMessages: React.FC = () => {
               c.studentId === selectedStudentId ? { ...c, unread: false } : c
             )
           );
+          requestInstructorNavBadgesRefresh();
         }
       } catch {
         /* ignore */
@@ -94,6 +97,7 @@ const InstructorMessages: React.FC = () => {
         }
       } finally {
         setLoading(false);
+        requestInstructorNavBadgesRefresh();
       }
     };
     load();
@@ -111,6 +115,11 @@ const InstructorMessages: React.FC = () => {
   const selectedConversation = useMemo(
     () => conversations.find((c) => c.studentId === selectedStudentId),
     [conversations, selectedStudentId]
+  );
+
+  const unreadThreadsCount = useMemo(
+    () => conversations.filter((c) => c.unread).length,
+    [conversations]
   );
 
   return (

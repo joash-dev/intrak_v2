@@ -88,7 +88,7 @@ const MaintenancePage: React.FC = () => {
         <div className="flex items-center space-x-3">
           {/* Logo */}
           <img
-            src="/just_logo.png"
+            src="/logo_intrak_only-nbg.png"
             alt="INTRAK Logo"
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full shadow-lg object-cover"
           />
@@ -116,7 +116,7 @@ const MaintenancePage: React.FC = () => {
           <div className="text-center mb-6">
             <div className="mx-auto w-32 h-32 flex items-center justify-center mb-3">
               <img
-                src="/logo_intrak.png"
+                src="/intrak_logo-nbg.png"
                 alt="INTRAK Logo"
                 className="w-full h-full object-contain"
               />

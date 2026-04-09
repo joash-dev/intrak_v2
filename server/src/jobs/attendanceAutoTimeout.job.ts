@@ -1,40 +1,14 @@
 import cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
 import { prisma } from '../config/database';
+import { getOfficialPairOnClose } from '../utils/attendanceOfficialTime.util';
 
 let tasks: ScheduledTask[] = [];
 
-const ceilTo30MinuteBlock = (value: Date): Date => {
-  const d = new Date(value);
-  const mins = d.getMinutes();
-  d.setSeconds(0, 0);
-  if (mins === 0 || mins === 30) return d;
-  if (mins < 30) {
-    d.setMinutes(30);
-  } else {
-    d.setHours(d.getHours() + 1, 0, 0, 0);
-  }
-  return d;
-};
-
-const floorTo30MinuteBlock = (value: Date): Date => {
-  const d = new Date(value);
-  const mins = d.getMinutes();
-  d.setSeconds(0, 0);
-  d.setMinutes(mins < 30 ? 0 : 30);
-  return d;
-};
-
-const computeOfficialDurationMinutes = (timeIn: Date, timeOut: Date): number => {
-  const roundedIn = ceilTo30MinuteBlock(timeIn);
-  const roundedOut = floorTo30MinuteBlock(timeOut);
-  const diff = roundedOut.getTime() - roundedIn.getTime();
-  return Math.max(0, Math.floor(diff / 60000));
-};
-
 /**
- * Auto-close morning session at exactly 12:00 PM (Asia/Manila).
- * If a student timed-in in the morning and forgot to time-out, we force timeOut = 12:00 PM.
+ * Auto-close morning session at 12:00 PM (Asia/Manila).
+ * Auto-close afternoon session at 6:00 PM (Asia/Manila).
+ * Stored times are normalized to official slots (8–12 and 1–5/6).
  */
 export const startAttendanceAutoTimeoutJob = (): void => {
   if (tasks.length > 0) return;
@@ -71,29 +45,31 @@ export const startAttendanceAutoTimeoutJob = (): void => {
         if (openMorningLogs.length === 0) return;
 
         await Promise.all(
-          openMorningLogs.map((log) =>
-            prisma.attendanceLog.update({
+          openMorningLogs.map((log) => {
+            const pair = getOfficialPairOnClose(log.timeIn!, noon);
+            return prisma.attendanceLog.update({
               where: { id: log.id },
               data: {
-                timeOut: noon,
-                durationMinutes: computeOfficialDurationMinutes(log.timeIn!, noon),
+                timeIn: pair.officialIn,
+                timeOut: pair.officialOut,
+                durationMinutes: pair.durationMinutes,
               },
-            }),
-          ),
+            });
+          }),
         );
       },
       { timezone: 'Asia/Manila' },
     ),
   );
 
-  // Session 2 auto time-out at 6:00 PM
+  // Session 2 auto time-out at official 5:00 PM (OJT standard)
   tasks.push(
     cron.schedule(
-      '0 18 * * *',
+      '0 17 * * *',
       async () => {
         const manilaToday = getManilaYyyyMmDd();
         const noon = new Date(`${manilaToday}T12:00:00.000+08:00`);
-        const sixPm = new Date(`${manilaToday}T18:00:00.000+08:00`);
+        const fivePm = new Date(`${manilaToday}T17:00:00.000+08:00`);
 
         const openAfternoonLogs = await prisma.attendanceLog.findMany({
           where: {
@@ -101,7 +77,6 @@ export const startAttendanceAutoTimeoutJob = (): void => {
             timeIn: {
               not: null,
               gte: noon,
-              lt: sixPm,
             },
           },
           select: { id: true, timeIn: true },
@@ -110,22 +85,24 @@ export const startAttendanceAutoTimeoutJob = (): void => {
         if (openAfternoonLogs.length === 0) return;
 
         await Promise.all(
-          openAfternoonLogs.map((log) =>
-            prisma.attendanceLog.update({
+          openAfternoonLogs.map((log) => {
+            const pair = getOfficialPairOnClose(log.timeIn!, fivePm);
+            return prisma.attendanceLog.update({
               where: { id: log.id },
               data: {
-                timeOut: sixPm,
-                durationMinutes: computeOfficialDurationMinutes(log.timeIn!, sixPm),
+                timeIn: pair.officialIn,
+                timeOut: pair.officialOut,
+                durationMinutes: pair.durationMinutes,
               },
-            }),
-          ),
+            });
+          }),
         );
       },
       { timezone: 'Asia/Manila' },
     ),
   );
 
-  console.log('[Attendance Auto Timeout] Jobs started (12:00 and 18:00 Asia/Manila)');
+  console.log('[Attendance Auto Timeout] Jobs started (12:00 and 17:00 Asia/Manila)');
 };
 
 export const stopAttendanceAutoTimeoutJob = (): void => {
@@ -135,4 +112,3 @@ export const stopAttendanceAutoTimeoutJob = (): void => {
     console.log('[Attendance Auto Timeout] Jobs stopped');
   }
 };
-

@@ -19,6 +19,7 @@ import {
 import { PDFDocument } from "pdf-lib";
 import {
   instructorService,
+  requestInstructorNavBadgesRefresh,
   type InstructorStudent,
   type InstructorDocument,
 } from "../../services/instructorService";
@@ -26,6 +27,9 @@ import toast from "react-hot-toast";
 import { documentService } from "../../services/documentService";
 import PDFViewer from "../../components/document/PDFViewer";
 import { devLog } from "../../utils/devLog";
+import {
+  instructorNavCountsDocumentReview,
+} from "../../utils/instructorNavAttention";
 
 // --- Types ---
 
@@ -89,6 +93,8 @@ const InstructorDocumentsTab = () => {
   const [reviewRemarks, setReviewRemarks] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [printingAll, setPrintingAll] = useState(false);
+  const [pulseStudentIds, setPulseStudentIds] = useState<Set<string>>(() => new Set());
+  const [pulseDocIds, setPulseDocIds] = useState<Set<string>>(() => new Set());
 
   // --- Effects ---
 
@@ -125,8 +131,64 @@ const InstructorDocumentsTab = () => {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
+      requestInstructorNavBadgesRefresh();
     }
   };
+
+  // Pulse students once when they newly have pending/resubmission docs.
+  useEffect(() => {
+    const key = (id: string) => `intrak:seen-attn:instructor:doc-student:${id}`;
+    const studentsWithAttention = students
+      .map((s) => s.id)
+      .filter((studentId) =>
+        getStudentDocuments(studentId).some((d) => instructorNavCountsDocumentReview(d.status)),
+      );
+    const newly = studentsWithAttention.filter((id) => {
+      try {
+        return sessionStorage.getItem(key(id)) !== "1";
+      } catch {
+        return false;
+      }
+    });
+    if (newly.length === 0) return;
+    for (const id of newly) {
+      try {
+        sessionStorage.setItem(key(id), "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setPulseStudentIds(new Set(newly));
+    const t = window.setTimeout(() => setPulseStudentIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [students, documents]);
+
+  // Pulse individual doc requirements once when they newly require review.
+  useEffect(() => {
+    const key = (id: string) => `intrak:seen-attn:instructor:doc:${id}`;
+    const actionable = documents.filter((d) => instructorNavCountsDocumentReview(d.status));
+    const newly = actionable
+      .map((d) => d.id)
+      .filter((id) => {
+        try {
+          return sessionStorage.getItem(key(id)) !== "1";
+        } catch {
+          return false;
+        }
+      });
+    if (newly.length === 0) return;
+    for (const id of newly) {
+      try {
+        sessionStorage.setItem(key(id), "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setPulseDocIds(new Set(newly));
+    const t = window.setTimeout(() => setPulseDocIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+  }, [documents]);
 
   // --- Helpers ---
 
@@ -245,6 +307,7 @@ const InstructorDocumentsTab = () => {
       // Refresh documents list to get updated status from server
       const updatedDocs = await instructorService.getDocumentsForReview();
       setDocuments(updatedDocs);
+      requestInstructorNavBadgesRefresh();
 
       // --- AUTO-ADVANCE LOGIC ---
       // Find the next pending document
@@ -554,7 +617,12 @@ const InstructorDocumentsTab = () => {
                 <div
                   key={student.id}
                   onClick={() => setSelectedStudent(student)}
-                  className="bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer group touch-manipulation"
+                  className={[
+                    "bg-white dark:bg-[#212124] rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer group touch-manipulation",
+                    pulseStudentIds.has(student.id) ? "animate-attention-once" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
@@ -619,7 +687,12 @@ const InstructorDocumentsTab = () => {
                     <tr
                       key={student.id}
                       onClick={() => setSelectedStudent(student)}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors touch-manipulation"
+                      className={[
+                        "hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors touch-manipulation",
+                        pulseStudentIds.has(student.id) ? "animate-attention-once" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
@@ -782,9 +855,19 @@ const InstructorDocumentsTab = () => {
                       .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime())[0];
 
                     const status = doc ? doc.status : "MISSING";
+                    const docMatchesSidebar =
+                      doc != null && instructorNavCountsDocumentReview(doc.status);
 
                     return (
-                      <div key={req.id} className="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <div
+                        key={req.id}
+                        className={[
+                          "p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
+                          docMatchesSidebar && doc ? (pulseDocIds.has(doc.id) ? "animate-attention-once" : "") : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                           <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
                             <div className={`mt-1 p-2 rounded-lg flex-shrink-0 ${status === "MISSING"

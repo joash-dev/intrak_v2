@@ -7,7 +7,7 @@ const PageLoader: React.FC = () => {
                 <div className="relative w-24 h-24 mx-auto mb-4">
                     <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
                     <img
-                        src="/logo_intrak.png"
+                        src="/intrak_logo-nbg.png"
                         alt="INTRAK Logo"
                         className="relative w-full h-full object-contain animate-pulse"
                     />

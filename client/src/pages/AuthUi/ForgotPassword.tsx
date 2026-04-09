@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
@@ -44,7 +44,7 @@ const ForgotPassword = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
                 <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
                     <div className="text-center mb-8">
-                        <img src="/logo.jpg" alt="INTRAK Logo" className="h-20 w-auto mx-auto mb-4" />
+                        <img src="/intrak_logo.png" alt="INTRAK Logo" className="h-20 w-auto mx-auto mb-4" />
                         <h2 className="text-2xl font-bold text-gray-900" style={outfitFont}>Forgot Password</h2>
                         <p className="text-gray-500 mt-2" style={outfitFont}>Enter your email to receive a reset link</p>
                     </div>

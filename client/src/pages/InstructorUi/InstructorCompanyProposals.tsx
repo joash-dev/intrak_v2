@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  instructorNavCountsCompanyProposal,
+} from '../../utils/instructorNavAttention';
 import { CheckCircle, Download, Eye, FileUp, RefreshCw, RotateCcw, Search, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -7,6 +10,7 @@ import {
   type CompanyProposalStatus,
 } from '../../services/companyProposalService';
 import Skeleton from '../../components/Skeleton';
+import { requestInstructorNavBadgesRefresh } from '../../services/instructorService';
 
 const statusLabel: Record<CompanyProposalStatus, string> = {
   DRAFT: 'Draft',
@@ -72,6 +76,7 @@ const InstructorCompanyProposals = () => {
       toast.error(error?.response?.data?.message || 'Failed to load company proposals');
     } finally {
       setLoading(false);
+      requestInstructorNavBadgesRefresh();
     }
   };
 
@@ -95,6 +100,38 @@ const InstructorCompanyProposals = () => {
     }
     return result;
   }, [proposals, search]);
+
+  const [pulseIds, setPulseIds] = useState<Set<string>>(() => new Set());
+
+  // Pulse cards ONE time when they newly become "Submitted to Instructor".
+  useEffect(() => {
+    const key = (id: string) => `intrak:seen-attn:instructor:proposal:${id}`;
+    const actionable = proposals.filter((p) => instructorNavCountsCompanyProposal(p.status));
+    const newlyActionable = actionable
+      .map((p) => p.id)
+      .filter((id) => {
+        try {
+          return sessionStorage.getItem(key(id)) !== '1';
+        } catch {
+          return false;
+        }
+      });
+
+    if (newlyActionable.length === 0) return;
+
+    // Mark seen immediately so refreshes won't repulse.
+    for (const id of newlyActionable) {
+      try {
+        sessionStorage.setItem(key(id), '1');
+      } catch {
+        /* ignore */
+      }
+    }
+
+    setPulseIds(new Set(newlyActionable));
+    const t = window.setTimeout(() => setPulseIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+  }, [proposals]);
 
 
   const handleUpload = async (proposalId: string, file: File | null) => {
@@ -364,6 +401,7 @@ const InstructorCompanyProposals = () => {
                   const hasInstructorEndorsement = proposal.attachments.some(
                     (attachment) => attachment.role === 'INSTRUCTOR',
                   );
+                  const matchesSidebarBadge = instructorNavCountsCompanyProposal(proposal.status);
 
                   const studentFiles = proposal.attachments.filter((attachment) => attachment.role === 'STUDENT');
                   const instructorFiles = proposal.attachments.filter((attachment) => attachment.role === 'INSTRUCTOR');
@@ -371,7 +409,12 @@ const InstructorCompanyProposals = () => {
                   return (
                     <div
                       key={proposal.id}
-                      className="bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+                      className={[
+                        'bg-white dark:bg-[#212124] rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow duration-200',
+                        matchesSidebarBadge && pulseIds.has(proposal.id) ? 'animate-attention-once' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       {/* Header: Company name + status */}
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">

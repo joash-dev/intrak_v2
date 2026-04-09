@@ -1,7 +1,24 @@
 import api from './api';
 import { calculateAttendanceStats } from '../utils/attendanceCalculations';
 import { announcementService, type Announcement } from './announcementService';
+import { companyProposalService } from './companyProposalService';
+import { partnershipConversationService } from './partnershipConversationService';
 import { devLog } from '../utils/devLog';
+
+/** Fired when instructor pages change data that affects sidebar badges. */
+export const INSTRUCTOR_NAV_BADGES_REFRESH = 'intrak:instructor-nav-badges-refresh';
+
+export function requestInstructorNavBadgesRefresh(): void {
+  window.dispatchEvent(new CustomEvent(INSTRUCTOR_NAV_BADGES_REFRESH));
+}
+
+export interface InstructorNavBadgeCounts {
+  documentsAction: number;
+  applicationsPending: number;
+  proposalsAction: number;
+  messagesUnread: number;
+  studentsAttention: number;
+}
 
 // Types for instructor data
 export interface InstructorStats {
@@ -93,6 +110,46 @@ export interface InstructorDocument {
 }
 
 class InstructorService {
+  /** Counts for sidebar dots (pending work / attention). */
+  async getNavBadgeCounts(): Promise<InstructorNavBadgeCounts> {
+    const empty: InstructorNavBadgeCounts = {
+      documentsAction: 0,
+      applicationsPending: 0,
+      proposalsAction: 0,
+      messagesUnread: 0,
+      studentsAttention: 0,
+    };
+    try {
+      const [appsRes, proposals, docs, convos, students] = await Promise.all([
+        api.get('/company-applications', { params: { status: 'PENDING' } }).catch(() => ({ data: { applications: [] } })),
+        companyProposalService.getInstructorProposals('SUBMITTED_TO_INSTRUCTOR').catch(() => []),
+        this.getDocumentsForReview().catch(() => []),
+        partnershipConversationService.getConversations().catch(() => []),
+        this.getAssignedStudents().catch(() => []),
+      ]);
+
+      const applicationsPending = (appsRes.data?.applications || []).length;
+      const proposalsAction = proposals.length;
+      const documentsAction = docs.filter(
+        (d) => d.status === 'PENDING' || d.status === 'RESUBMISSION_REQUESTED',
+      ).length;
+      const messagesUnread = convos.filter((c) => c.unread).length;
+      const studentsAttention = students.filter(
+        (s) => s.status === 'at_risk' || s.status === 'warning',
+      ).length;
+
+      return {
+        documentsAction,
+        applicationsPending,
+        proposalsAction,
+        messagesUnread,
+        studentsAttention,
+      };
+    } catch {
+      return empty;
+    }
+  }
+
   // Get students assigned to the current instructor
   async getAssignedStudents(): Promise<InstructorStudent[]> {
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Suspense } from "react";
+﻿import { useState, useEffect, useRef, Suspense } from "react";
 import {
     Home,
     FileText,
@@ -294,7 +294,7 @@ const StudentLayout = () => {
                         <button id="mobile-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                             <Menu className="w-5 h-5" />
                         </button>
-                        <img src="/just_logo.png" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+                        <img src="/logo_intrak_only-nbg.png" alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
                     </div>
                     <div className="flex items-center space-x-2">
                         <button onClick={() => navigate("/student/notifications")} className="relative p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
@@ -324,7 +324,7 @@ const StudentLayout = () => {
                             <button onClick={() => window.innerWidth >= 1024 ? setSidebarExpanded(!sidebarExpanded) : setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
                                 <Menu className="w-5 h-5" />
                             </button>
-                            <img src="/just_logo.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
+                            <img src="/logo_intrak_only-nbg.png" alt="Logo" className="w-12 h-12 rounded-lg object-cover" />
                             <div>
                                 <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">INTRAK</h2>
                                 <p className="text-xs text-gray-500">Student Portal</p>
@@ -333,7 +333,7 @@ const StudentLayout = () => {
                         {!sidebarExpanded && (
                             <div className="hidden lg:flex flex-col items-center space-y-2">
                                 <button onClick={() => setSidebarExpanded(!sidebarExpanded)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Menu className="w-5 h-5" /></button>
-                                <img src="/just_logo.png" alt="Logo" className="w-12 h-12 rounded-full object-cover" />
+                                <img src="/logo_intrak_only-nbg.png" alt="Logo" className="w-12 h-12 rounded-full object-cover" />
                             </div>
                         )}
                     </div>

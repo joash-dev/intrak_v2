@@ -13,7 +13,7 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo_intrak.png'],
+      includeAssets: ['intrak_logo-nbg.png'],
       manifest: {
         name: 'INTRAK',
         short_name: 'INTRAK',
@@ -21,12 +21,12 @@ export default defineConfig({
         theme_color: '#ffffff',
         icons: [
           {
-            src: 'logo_intrak.png',
+            src: 'intrak_logo-nbg.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'logo_intrak.png',
+            src: 'intrak_logo-nbg.png',
             sizes: '512x512',
             type: 'image/png'
           }

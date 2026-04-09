@@ -12,6 +12,12 @@ import fs from 'fs';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { prisma } from '../config/database';
+import {
+  getManilaDayRangeUtc,
+  getManilaFixedTimeUtc,
+  getOfficialPairOnClose,
+  getOfficialTimeIn,
+} from '../utils/attendanceOfficialTime.util';
 
 // Resolve template path - works in both development and production
 const templateName = '14 INTERNSHIP TIMEFRAME_2024.docx';
@@ -34,65 +40,12 @@ const getDayOfWeek = (value: Date | string): string => {
   return days[date.getDay()];
 };
 
-/**
- * Round minutes to the nearest 30-minute increment (official time standard)
- * - If minutes >= 30, round to 30 minutes
- * - If minutes < 30, round to 0 minutes (don't count)
- */
+/** DTR summaries: round credited minutes down to 30-minute steps for display. */
 const roundToOfficialTime = (minutes: number): number => {
-  // Round DOWN to nearest 30-minute interval
-  // Anything less than 30 minutes rounds to 0
   if (minutes < 30) {
     return 0;
   }
-  // Round down to nearest 30-minute interval (30, 60, 90, 120, etc.)
   return Math.floor(minutes / 30) * 30;
-};
-
-/**
- * Round-in rule for Time In:
- * Ceil timestamp to the next 30-minute block.
- * Examples:
- * - 08:16 -> 08:30
- * - 09:34 -> 10:00
- */
-const ceilTo30MinuteBlock = (value: Date): Date => {
-  const d = new Date(value);
-  const mins = d.getMinutes();
-  d.setSeconds(0, 0);
-  if (mins === 0 || mins === 30) return d;
-  if (mins < 30) {
-    d.setMinutes(30);
-  } else {
-    d.setHours(d.getHours() + 1, 0, 0, 0);
-  }
-  return d;
-};
-
-/**
- * Round-out rule for Time Out:
- * Floor timestamp to the previous 30-minute block.
- */
-const floorTo30MinuteBlock = (value: Date): Date => {
-  const d = new Date(value);
-  const mins = d.getMinutes();
-  d.setSeconds(0, 0);
-  d.setMinutes(mins < 30 ? 0 : 30);
-  return d;
-};
-
-const computeOfficialDurationMinutes = (timeIn: Date, timeOut: Date): number => {
-  const roundedIn = ceilTo30MinuteBlock(timeIn);
-  const roundedOut = floorTo30MinuteBlock(timeOut);
-  const diff = roundedOut.getTime() - roundedIn.getTime();
-  return Math.max(0, Math.floor(diff / 60000));
-};
-
-const getManilaFixedTimeUtc = (date: Date, hours24: number, minutes: number) => {
-  const { yyyyMmDd } = getManilaDayRangeUtc(date);
-  const hh = String(hours24).padStart(2, '0');
-  const mm = String(minutes).padStart(2, '0');
-  return new Date(`${yyyyMmDd}T${hh}:${mm}:00.000+08:00`);
 };
 
 const formatHours = (hoursDecimal: number): string => {
@@ -117,22 +70,6 @@ const getOrdinalSuffix = (num: number): string => {
 };
 
 const MAX_SEGMENTS_PER_DAY = 2;
-
-const getManilaDayRangeUtc = (date: Date | string) => {
-  // Convert a date (or date string) into the UTC range that corresponds to the
-  // Asia/Manila calendar day. This avoids UTC/PHT boundary bugs near midnight.
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const yyyyMmDd = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Manila',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(d); // YYYY-MM-DD
-
-  const start = new Date(`${yyyyMmDd}T00:00:00.000+08:00`);
-  const end = new Date(`${yyyyMmDd}T23:59:59.999+08:00`);
-  return { start, end, yyyyMmDd };
-};
 
 // Log Attendance (manual time-in/time-out)
 export const logAttendance = async (req: AuthRequest, res: Response) => {
@@ -208,51 +145,54 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
         // auto time-out at exactly 12:00 PM so the student can start session 2.
         const now = new Date();
         const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
-        const sixPm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 18, 0);
+        const fivePm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 17, 0);
 
         if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
-          // Session 1 -> force close at noon
+          const pair = getOfficialPairOnClose(openLog.timeIn, noon);
           await prisma.attendanceLog.update({
             where: { id: openLog.id },
             data: {
-              timeOut: noon,
-              durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, noon),
+              timeIn: pair.officialIn,
+              timeOut: pair.officialOut,
+              durationMinutes: pair.durationMinutes,
             },
           });
         } else if (
           openLog.timeIn &&
           openLog.timeIn.getTime() >= noon.getTime() &&
-          openLog.timeIn.getTime() < sixPm.getTime() &&
-          now.getTime() >= sixPm.getTime()
+          now.getTime() >= fivePm.getTime()
         ) {
-          // Session 2 -> force close at 6:00 PM
+          const pair = getOfficialPairOnClose(openLog.timeIn, fivePm);
           await prisma.attendanceLog.update({
             where: { id: openLog.id },
             data: {
-              timeOut: sixPm,
-              durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, sixPm),
+              timeIn: pair.officialIn,
+              timeOut: pair.officialOut,
+              durationMinutes: pair.durationMinutes,
             },
           });
         } else {
-        return res.status(400).json({
-          message: 'There is an active time-in without time-out. Time-out first before starting a new segment.',
-          openLogId: openLog.id,
-          openLogDate: openLog.date,
-          openLogTimeIn: openLog.timeIn,
-        });
+          return res.status(400).json({
+            message: 'There is an active time-in without time-out. Time-out first before starting a new segment.',
+            openLogId: openLog.id,
+            openLogDate: openLog.date,
+            openLogTimeIn: openLog.timeIn,
+          });
         }
       }
 
+      const actualIn = new Date(timeIn);
+      const officialIn = getOfficialTimeIn(segmentsToday, actualIn);
       log = await prisma.attendanceLog.create({
         data: {
           studentId,
           date: new Date(date),
-          timeIn: new Date(timeIn),
+          timeIn: officialIn,
           verificationMethod: 'MANUAL'
         }
       });
 
-      await ensureStudentStartDate(studentId, new Date(timeIn));
+      await ensureStudentStartDate(studentId, officialIn);
     } else if (action === 'time-out') {
       // Close the most recent open segment for the given date (or any date if not provided)
       const existingLog = await prisma.attendanceLog.findFirst({
@@ -269,13 +209,14 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
 
       // Students must use server-detected time for time-out as well.
       const timeOutDate = isStudentSelfLog ? new Date() : new Date(timeOut);
-      const durationMinutes = computeOfficialDurationMinutes(existingLog.timeIn!, timeOutDate);
+      const pair = getOfficialPairOnClose(existingLog.timeIn!, timeOutDate);
 
       log = await prisma.attendanceLog.update({
         where: { id: existingLog.id },
         data: {
-          timeOut: timeOutDate,
-          durationMinutes
+          timeIn: pair.officialIn,
+          timeOut: pair.officialOut,
+          durationMinutes: pair.durationMinutes
         }
       });
 
@@ -283,7 +224,7 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
         where: { id: studentId },
         data: {
           completedHours: {
-            increment: Math.floor(durationMinutes / 60)
+            increment: Math.floor(pair.durationMinutes / 60)
           }
         }
       });
@@ -454,16 +395,18 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     if (openLog) {
       const now = new Date();
       const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
-      const sixPm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 18, 0);
+      const fivePm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 17, 0);
 
       // If they forgot to time-out in the morning session and it's already past noon,
       // close at exactly 12:00 PM and treat this scan as a new login (session 2).
       if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
+        const pair = getOfficialPairOnClose(openLog.timeIn, noon);
         await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeOut: noon,
-            durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, noon),
+            timeIn: pair.officialIn,
+            timeOut: pair.officialOut,
+            durationMinutes: pair.durationMinutes,
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -480,16 +423,15 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       } else if (
         openLog.timeIn &&
         openLog.timeIn.getTime() >= noon.getTime() &&
-        openLog.timeIn.getTime() < sixPm.getTime() &&
-        now.getTime() >= sixPm.getTime()
+        now.getTime() >= fivePm.getTime()
       ) {
-        // If they forgot to time-out in the afternoon session, close at exactly 6:00 PM.
-        // Treat this scan as a logout completion (do not start a new session).
+        const pair = getOfficialPairOnClose(openLog.timeIn, fivePm);
         log = await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeOut: sixPm,
-            durationMinutes: computeOfficialDurationMinutes(openLog.timeIn, sixPm),
+            timeIn: pair.officialIn,
+            timeOut: pair.officialOut,
+            durationMinutes: pair.durationMinutes,
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -503,12 +445,13 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
         action = 'logout';
       } else {
-        const durationMinutes = computeOfficialDurationMinutes(openLog.timeIn!, now);
+        const pair = getOfficialPairOnClose(openLog.timeIn!, now);
         log = await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeOut: now,
-            durationMinutes,
+            timeIn: pair.officialIn,
+            timeOut: pair.officialOut,
+            durationMinutes: pair.durationMinutes,
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -541,11 +484,12 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
       }
 
+      const officialIn = getOfficialTimeIn(segmentsToday, now);
       log = await prisma.attendanceLog.create({
         data: {
           studentId: qrToken.studentId,
           date: new Date(),
-          timeIn: new Date(),
+          timeIn: officialIn,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {
@@ -578,11 +522,12 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
       }
 
+      const officialIn2 = getOfficialTimeIn(segmentsToday, now);
       log = await prisma.attendanceLog.create({
         data: {
           studentId: qrToken.studentId,
           date: now,
-          timeIn: now,
+          timeIn: officialIn2,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {
@@ -680,11 +625,12 @@ export const verifyGPS = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    const officialIn = getOfficialTimeIn(segmentsToday, now);
     const log = await prisma.attendanceLog.create({
       data: {
         studentId,
         date: new Date(),
-        timeIn: new Date(),
+        timeIn: officialIn,
         verified: withinRange,
         verificationMethod: 'GPS',
         verificationMetadata: {

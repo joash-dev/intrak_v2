@@ -513,7 +513,8 @@ export const formDefinitions: Record<string, FormDefinition> = {
     documentType: 'TRAINING_AGREEMENT',
     templateFile: 'training_agreement.html',
     title: 'Training Agreement and Liability Waiver Form - Overtime Form',
-    description: 'FM-AA-INT-15 — Training agreement and liability waiver for overtime internship training',
+    description:
+      'FM-AA-INT-15 — Training agreement and liability waiver for overtime internship training. Institutional approval for this form is handled from 5:00 PM onward (separate from the standard OJT attendance clock-out).',
     fields: [
       // Auto-filled
       { name: 'student_name', label: 'Name of Student-Intern', type: 'text', required: true, autoFillKey: 'student_name', section: 'Student Information' },

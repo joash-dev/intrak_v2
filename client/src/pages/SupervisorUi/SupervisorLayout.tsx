@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+﻿import React, { useState, useEffect, Suspense } from "react";
 import {
     Clock,
     Award,
@@ -260,7 +260,7 @@ const SupervisorLayout: React.FC = () => {
                             <Menu className="w-5 h-5" />
                         </button>
                         <img
-                            src="/just_logo.png"
+                            src="/logo_intrak_only-nbg.png"
                             alt="INTRAK Logo"
                             className="w-10 h-10 rounded-lg object-cover"
                         />
@@ -426,7 +426,7 @@ const SupervisorLayout: React.FC = () => {
                             </button>
                             {/* Logo */}
                             <img
-                                src="/just_logo.png"
+                                src="/logo_intrak_only-nbg.png"
                                 alt="INTRAK Logo"
                                 className="w-12 h-12 rounded-lg object-cover"
                             />
@@ -451,7 +451,7 @@ const SupervisorLayout: React.FC = () => {
                                 </button>
                                 {/* Logo */}
                                 <img
-                                    src="/just_logo.png"
+                                    src="/logo_intrak_only-nbg.png"
                                     alt="INTRAK Logo"
                                     className="w-12 h-12 rounded-full object-cover"
                                 />

@@ -4,6 +4,22 @@ import type { AxiosResponse } from 'axios';
 import type { Company, MOA, MOAStats, ApproveMOAResult, SupervisorProvisionResult } from './companyService';
 import { devLog } from '../utils/devLog';
 import { announcementService, type Announcement } from './announcementService';
+import { companyProposalService } from './companyProposalService';
+import { documentService } from './documentService';
+import { partnershipConversationService } from './partnershipConversationService';
+
+/** Fired when coordinator pages change data that affects sidebar badges. */
+export const COORDINATOR_NAV_BADGES_REFRESH = 'intrak:coordinator-nav-badges-refresh';
+
+export function requestCoordinatorNavBadgesRefresh(): void {
+  window.dispatchEvent(new CustomEvent(COORDINATOR_NAV_BADGES_REFRESH));
+}
+
+export interface CoordinatorNavBadgeCounts {
+  documentsAction: number;
+  proposalsAction: number;
+  messagesUnread: number;
+}
 
 export interface CoordinatorSettings {
   autoApproveDocuments: boolean;
@@ -90,6 +106,37 @@ export interface CoordinatorAlert {
 }
 
 class CoordinatorService {
+  /** Counts for sidebar dots (pending work / attention). */
+  async getNavBadgeCounts(): Promise<CoordinatorNavBadgeCounts> {
+    const empty: CoordinatorNavBadgeCounts = {
+      documentsAction: 0,
+      proposalsAction: 0,
+      messagesUnread: 0,
+    };
+    try {
+      const [docsRes, proposals, convos] = await Promise.all([
+        documentService.getDocuments().catch(() => ({ documents: [] as any[] })),
+        companyProposalService.getCoordinatorProposals('all').catch(() => []),
+        partnershipConversationService.getConversations().catch(() => []),
+      ]);
+
+      const documents = (docsRes as any)?.documents || (docsRes as any)?.data?.documents || [];
+      const documentsAction = documents.filter(
+        (d: any) => d.status === 'PENDING' || d.status === 'RESUBMISSION_REQUESTED',
+      ).length;
+
+      const proposalsAction = (proposals as any[]).filter(
+        (p: any) => p.status === 'FORWARDED_TO_COORDINATOR' || p.status === 'UNDER_COORDINATOR_REVIEW',
+      ).length;
+
+      const messagesUnread = (convos as any[]).filter((c: any) => c.unread).length;
+
+      return { documentsAction, proposalsAction, messagesUnread };
+    } catch {
+      return empty;
+    }
+  }
+
   // Get all students for coordinator view
   async getAllStudents(): Promise<CoordinatorStudent[]> {
     try {

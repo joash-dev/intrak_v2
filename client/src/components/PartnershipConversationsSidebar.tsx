@@ -112,6 +112,19 @@ const PartnershipConversationsSidebar: React.FC<Props> = ({
               const initial = (c.studentName || "?").trim().charAt(0).toUpperCase();
               const hasPhoto = Boolean(c.profilePhoto);
               const unread = Boolean(c.unread);
+              const unreadToken = unread ? (last?.createdAt || "unread") : "";
+              const shouldPulseUnread = (() => {
+                if (!unread) return false;
+                try {
+                  const key = `intrak:seen-unread:convo:${c.studentId}`;
+                  const prev = sessionStorage.getItem(key);
+                  if (prev === unreadToken) return false;
+                  sessionStorage.setItem(key, unreadToken);
+                  return true;
+                } catch {
+                  return false;
+                }
+              })();
               return (
                 <button
                   key={c.studentId}
@@ -119,10 +132,13 @@ const PartnershipConversationsSidebar: React.FC<Props> = ({
                   onClick={() => onSelectStudent(c.studentId)}
                   className={[
                     "w-full text-left rounded-xl border transition-colors",
+                    shouldPulseUnread ? "animate-attention-once" : "",
                     isSelected
                       ? "bg-blue-50 dark:bg-blue-900/20 border-blue-300/60 dark:border-blue-700"
                       : "bg-white dark:bg-[#212124] border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/40",
-                  ].join(" ")}
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   title={collapsed ? `${c.studentName} (${c.studentNumber})` : undefined}
                 >
                   <div className={collapsed ? "p-2 flex items-center justify-center" : "p-3 flex items-start gap-3"}>

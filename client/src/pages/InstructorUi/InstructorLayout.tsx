@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import {
     Users,
     Building2,
@@ -18,6 +18,19 @@ import { useOptimizedData } from "../../hooks/useOptimizedData";
 import { settingsService } from "../../services/settingsService";
 import { notificationService, type NotificationItem } from "../../services/notificationService";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
+import {
+    instructorService,
+    INSTRUCTOR_NAV_BADGES_REFRESH,
+    type InstructorNavBadgeCounts,
+} from "../../services/instructorService";
+
+const ZERO_NAV_BADGES: InstructorNavBadgeCounts = {
+    documentsAction: 0,
+    applicationsPending: 0,
+    proposalsAction: 0,
+    messagesUnread: 0,
+    studentsAttention: 0,
+};
 
 const InstructorLayout = () => {
     const navigate = useNavigate();
@@ -195,6 +208,80 @@ const InstructorLayout = () => {
 
     const unreadCount = localNotifications.filter(n => !n.read).length;
 
+    const [navBadges, setNavBadges] = useState<InstructorNavBadgeCounts>(ZERO_NAV_BADGES);
+
+    const refreshNavBadges = useCallback(async () => {
+        const counts = await instructorService.getNavBadgeCounts();
+        setNavBadges(counts);
+    }, []);
+
+    useEffect(() => {
+        void refreshNavBadges();
+    }, [location.pathname, refreshNavBadges]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            void refreshNavBadges();
+        }, 15000);
+        const onVisibilityChange = () => {
+            if (document.visibilityState === "visible") void refreshNavBadges();
+        };
+        const onBadgesRefresh = () => void refreshNavBadges();
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        window.addEventListener(INSTRUCTOR_NAV_BADGES_REFRESH, onBadgesRefresh);
+        return () => {
+            window.clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            window.removeEventListener(INSTRUCTOR_NAV_BADGES_REFRESH, onBadgesRefresh);
+        };
+    }, [refreshNavBadges]);
+
+    const navAttentionCount = (tabId: string): number => {
+        switch (tabId) {
+            case "dashboard":
+                return 0;
+            case "documents":
+                return navBadges.documentsAction;
+            case "applications":
+                return navBadges.applicationsPending;
+            case "company-proposals":
+                return navBadges.proposalsAction;
+            case "students":
+                return navBadges.studentsAttention + unreadCount;
+            case "messages":
+                return navBadges.messagesUnread;
+            default:
+                return 0;
+        }
+    };
+
+    /** Explains what the sidebar number counts (hover when collapsed). */
+    const navAttentionDetailTitle = (tabId: string): string | null => {
+        const n = navAttentionCount(tabId);
+        if (n <= 0) return null;
+        switch (tabId) {
+            case "documents":
+                return `${n} document(s) to review (pending or resubmission requested)`;
+            case "applications":
+                return `${n} company application(s) awaiting your approval`;
+            case "company-proposals":
+                return `${n} proposal(s) submitted to you (matches sidebar count)`;
+            case "students": {
+                const s = navBadges.studentsAttention;
+                const u = unreadCount;
+                if (s > 0 && u > 0) {
+                    return `${s} student(s) at risk or on warning, plus ${u} unread notification(s)`;
+                }
+                if (u > 0) return `${u} unread notification(s)`;
+                return `${s} student(s) at risk or on warning`;
+            }
+            case "messages":
+                return `${n} conversation(s) with unread messages`;
+            default:
+                return null;
+        }
+    };
+
     // Navigation Items
     const navItems = [
         { id: "dashboard", icon: Home, label: "Dashboard", path: "/instructor/dashboard" },
@@ -217,7 +304,7 @@ const InstructorLayout = () => {
                         <button id="mobile-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Toggle sidebar">
                             <Menu className="w-5 h-5" />
                         </button>
-                        <img src="/just_logo.png" alt="INTRAK Logo" className="w-10 h-10 rounded-lg object-cover" />
+                        <img src="/logo_intrak_only-nbg.png" alt="INTRAK Logo" className="w-10 h-10 rounded-lg object-cover" />
                     </div>
                     <div className="flex items-center space-x-2">
                         <button onClick={() => navigate("/instructor/notifications")} className="relative p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="View notifications">
@@ -247,7 +334,7 @@ const InstructorLayout = () => {
                             <button onClick={() => window.innerWidth >= 1024 ? setSidebarExpanded(!sidebarExpanded) : setSidebarOpen(!sidebarOpen)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Toggle sidebar">
                                 <Menu className="w-5 h-5" />
                             </button>
-                            <img src="/just_logo.png" alt="INTRAK Logo" className="w-12 h-12 rounded-lg object-cover" />
+                            <img src="/logo_intrak_only-nbg.png" alt="INTRAK Logo" className="w-12 h-12 rounded-lg object-cover" />
                             <div>
                                 <h2 className="text-lg font-bold bg-gradient-to-b from-blue-400 to-blue-800 bg-clip-text text-transparent">INTRAK</h2>
                                 <p className="text-xs text-gray-500">Instructor Portal</p>
@@ -256,14 +343,16 @@ const InstructorLayout = () => {
                         {!sidebarExpanded && (
                             <div className="hidden lg:flex flex-col items-center space-y-2">
                                 <button onClick={() => setSidebarExpanded(!sidebarExpanded)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" aria-label="Expand sidebar"><Menu className="w-5 h-5" /></button>
-                                <img src="/just_logo.png" alt="INTRAK Logo" className="w-12 h-12 rounded-full object-cover" />
+                                <img src="/logo_intrak_only-nbg.png" alt="INTRAK Logo" className="w-12 h-12 rounded-full object-cover" />
                             </div>
                         )}
                     </div>
 
                     {/* Nav Items */}
                     <nav className="flex-1 space-y-2 overflow-y-auto p-4 scrollbar-hidden">
-                        {navItems.map((item) => (
+                        {navItems.map((item) => {
+                            const pending = navAttentionCount(item.id);
+                            return (
                             <button
                                 key={item.id}
                                 id={`tour-nav-${item.id}`}
@@ -273,7 +362,11 @@ const InstructorLayout = () => {
                                 }}
                                 className={`relative w-full flex items-center transition-all duration-200 ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} ${activeTab === item.id ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 rounded-lg" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"}`}
                                 aria-label={item.label}
-                                title={!sidebarExpanded ? item.label : undefined}
+                                title={(() => {
+                                    const detail = navAttentionDetailTitle(item.id);
+                                    if (detail) return `${item.label}: ${detail}`;
+                                    return !sidebarExpanded ? item.label : undefined;
+                                })()}
                             >
                                 <item.icon className="w-5 h-5 flex-shrink-0" />
                                 <span className={`font-medium text-sm ${sidebarExpanded ? "" : "lg:hidden"}`}>{item.label}</span>
@@ -283,8 +376,21 @@ const InstructorLayout = () => {
                                         aria-hidden
                                     />
                                 )}
+                                {item.id !== "notifications" && pending > 0 && (
+                                    <span
+                                        className={
+                                            sidebarExpanded
+                                                ? "ml-auto min-w-[1.25rem] rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-white shadow-sm"
+                                                : "ml-auto h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500 ring-2 ring-white dark:ring-[#212124] lg:absolute lg:top-1.5 lg:right-1.5 lg:ml-0"
+                                        }
+                                        aria-label={`${pending} item${pending === 1 ? "" : "s"} need attention`}
+                                    >
+                                        {sidebarExpanded ? (pending > 99 ? "99+" : pending) : null}
+                                    </span>
+                                )}
                             </button>
-                        ))}
+                            );
+                        })}
                     </nav>
 
                     {/* Profile & Logout */}

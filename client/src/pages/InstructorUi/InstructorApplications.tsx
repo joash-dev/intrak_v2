@@ -19,7 +19,11 @@ import {
   Briefcase,
 } from "lucide-react";
 import api from "../../services/api";
+import { requestInstructorNavBadgesRefresh } from "../../services/instructorService";
 import toast from "react-hot-toast";
+import {
+  instructorNavCountsApplication,
+} from "../../utils/instructorNavAttention";
 import { formatStudentId } from "../../utils/formatStudentId";
 
 interface CompanyApplication {
@@ -72,6 +76,7 @@ const InstructorApplications: React.FC = () => {
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
     () => new Set()
   );
+  const [pulseIds, setPulseIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     loadApplications();
@@ -89,8 +94,35 @@ const InstructorApplications: React.FC = () => {
       toast.error("Failed to load applications");
     } finally {
       setLoading(false);
+      requestInstructorNavBadgesRefresh();
     }
   };
+
+  // Pulse each application ONCE when it first becomes pending.
+  useEffect(() => {
+    const key = (id: string) => `intrak:seen-attn:instructor:application:${id}`;
+    const pending = applications.filter((a) => instructorNavCountsApplication(a.status));
+    const newlyPending = pending
+      .map((a) => a.id)
+      .filter((id) => {
+        try {
+          return sessionStorage.getItem(key(id)) !== "1";
+        } catch {
+          return false;
+        }
+      });
+    if (newlyPending.length === 0) return;
+    for (const id of newlyPending) {
+      try {
+        sessionStorage.setItem(key(id), "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    setPulseIds(new Set(newlyPending));
+    const t = window.setTimeout(() => setPulseIds(new Set()), 1000);
+    return () => window.clearTimeout(t);
+  }, [applications]);
 
   useEffect(() => {
     loadApplications();
@@ -493,10 +525,18 @@ const InstructorApplications: React.FC = () => {
                       <div className="p-4 sm:p-5 space-y-3 bg-gray-50/50 dark:bg-[#19191c]/20">
                       {group.applications.map((application) => {
                         const canApprove = getAvailableSlots(group.company) > 0;
+                        const matchesSidebarBadge = instructorNavCountsApplication(
+                          application.status,
+                        );
                         return (
                           <div
                             key={application.id}
-                            className="bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4"
+                            className={[
+                              "bg-white dark:bg-[#212124] rounded-xl border border-gray-200 dark:border-gray-700 p-3 sm:p-4",
+                              matchesSidebarBadge && pulseIds.has(application.id) ? "animate-attention-once" : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start space-x-3 flex-1 min-w-0">
