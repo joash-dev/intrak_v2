@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
+import { guardStudentWriteByAuthenticatedUser } from '../middleware/studentLifecycleGuard';
 import * as studentController from '../controllers/student.controller';
 import * as weeklyReportController from '../controllers/weeklyReport.controller';
 import * as supervisorFeedbackController from '../controllers/supervisorFeedback.controller';
@@ -16,22 +17,52 @@ router.get('/my-assigned', studentController.getMyAssignedStudents);
 router.get('/instructor/:instructorId', studentController.getStudentsByInstructor);
 // Partnership routes - must come before /:id route
 router.get('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.getPartnershipMessages);
-router.post('/partnership-messages', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.sendPartnershipMessage);
+router.post(
+  '/partnership-messages',
+  authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']),
+  guardStudentWriteByAuthenticatedUser,
+  studentController.sendPartnershipMessage,
+);
 router.get('/partnership-conversations', authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR']), studentController.getPartnershipConversations);
 router.post('/partnership-conversations/read', authorize(['INSTRUCTOR', 'COORDINATOR']), studentController.markPartnershipConversationRead);
 router.get('/partnership-checklist', authorize(['STUDENT']), studentController.getPartnershipChecklist);
-router.put('/partnership-checklist', authorize(['STUDENT']), studentController.updatePartnershipChecklist);
-router.put('/:id/saturday-preference', authorize(['STUDENT']), studentController.updateSaturdayPreference);
-router.post('/apply-company', authorize(['STUDENT']), studentController.applyToCompany);
-router.post('/request-company-partnership', authorize(['STUDENT']), studentController.requestCompanyPartnership);
+router.put(
+  '/partnership-checklist',
+  authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
+  studentController.updatePartnershipChecklist,
+);
+router.put(
+  '/:id/saturday-preference',
+  authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
+  studentController.updateSaturdayPreference,
+);
+router.post('/apply-company', authorize(['STUDENT']), guardStudentWriteByAuthenticatedUser, studentController.applyToCompany);
+router.post(
+  '/request-company-partnership',
+  authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
+  studentController.requestCompanyPartnership,
+);
 
 // Instructor assignment routes - specific routes before generic :id
 router.patch('/bulk-assign-instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.bulkAssignInstructor);
 router.patch('/:studentId/instructor', authorize(['ADMIN', 'COORDINATOR']), studentController.assignInstructor);
+router.patch(
+  '/:studentId/lifecycle/complete',
+  authorize(['ADMIN', 'COORDINATOR']),
+  studentController.completeStudentOjt,
+);
 
 // Weekly report routes
 router.get('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.getWeeklyReport);
-router.post('/weekly-reports/me', authorize(['STUDENT']), weeklyReportController.saveWeeklyReport);
+router.post(
+  '/weekly-reports/me',
+  authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
+  weeklyReportController.saveWeeklyReport,
+);
 router.get('/weekly-reports/export/me', authorize(['STUDENT']), weeklyReportController.exportWeeklyReport);
 // Supervisor feedback routes
 router.post('/supervisor-feedback', authorize(['INDUSTRY_PARTNER']), supervisorFeedbackController.submitFeedback);
@@ -48,7 +79,12 @@ router.get('/:studentId/timeline', authorize(['INSTRUCTOR', 'COORDINATOR', 'ADMI
 // Parameterized routes - must come after specific routes
 router.get('/:id', studentController.getStudentById);
 router.post('/', authorize(['ADMIN', 'INSTRUCTOR']), studentController.createStudent);
-router.put('/:id', authorize(['ADMIN', 'INSTRUCTOR', 'STUDENT', 'COORDINATOR']), studentController.updateStudent);
+router.put(
+  '/:id',
+  authorize(['ADMIN', 'INSTRUCTOR', 'STUDENT', 'COORDINATOR']),
+  guardStudentWriteByAuthenticatedUser,
+  studentController.updateStudent,
+);
 router.delete('/:id', authorize(['ADMIN', 'INSTRUCTOR']), studentController.deleteStudent);
 
 export default router;

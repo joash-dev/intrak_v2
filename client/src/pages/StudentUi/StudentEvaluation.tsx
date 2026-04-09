@@ -434,7 +434,7 @@ const StudentEvaluationsTab: React.FC = () => {
 
   const getStatusText = (form: EvaluationForm) => {
     if (form.id === "form-11") {
-      return "Export Available";
+      return form.evaluation ? "Export Available" : "Not Filled";
     }
 
     if (form.id === "form-18") {
@@ -462,7 +462,7 @@ const StudentEvaluationsTab: React.FC = () => {
 
   const getStatusColor = (form: EvaluationForm) => {
     if (form.id === "form-11") {
-      if (form.document) {
+      if (form.evaluation) {
         return "bg-green-500 text-white";
       }
       return "bg-gray-100 text-gray-600 dark:bg-[#212124] dark:text-gray-400";

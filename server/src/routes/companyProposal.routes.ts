@@ -8,6 +8,7 @@ import {
   validateFileSize,
   validateFileType,
 } from '../middleware/fileSecurity';
+import { guardStudentWriteByAuthenticatedUser } from '../middleware/studentLifecycleGuard';
 import * as companyProposalController from '../controllers/companyProposal.controller';
 
 const router = Router();
@@ -15,24 +16,27 @@ const router = Router();
 router.use(authenticate);
 
 // Student endpoints
-router.post('/', authorize(['STUDENT']), companyProposalController.createProposal);
+router.post('/', authorize(['STUDENT']), guardStudentWriteByAuthenticatedUser, companyProposalController.createProposal);
 router.get('/my', authorize(['STUDENT']), companyProposalController.getMyProposals);
 router.patch(
   '/:id/student/submit-to-instructor',
   authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
   companyProposalController.studentSubmitDraftToInstructor,
 );
 router.patch(
   '/:id/student/resubmit',
   authorize(['STUDENT']),
+  guardStudentWriteByAuthenticatedUser,
   companyProposalController.studentResubmitProposal,
 );
 router.delete(
   '/attachments/:attachmentId',
   authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR', 'ADMIN']),
+  guardStudentWriteByAuthenticatedUser,
   companyProposalController.deleteProposalAttachment,
 );
-router.delete('/:id', authorize(['STUDENT']), companyProposalController.deleteMyProposal);
+router.delete('/:id', authorize(['STUDENT']), guardStudentWriteByAuthenticatedUser, companyProposalController.deleteMyProposal);
 
 // Instructor and coordinator proposal lists
 router.get('/instructor', authorize(['INSTRUCTOR', 'ADMIN']), companyProposalController.getInstructorProposals);
@@ -42,6 +46,7 @@ router.get('/coordinator', authorize(['COORDINATOR', 'ADMIN']), companyProposalC
 router.post(
   '/:id/attachments',
   authorize(['STUDENT', 'INSTRUCTOR', 'COORDINATOR', 'ADMIN']),
+  guardStudentWriteByAuthenticatedUser,
   upload.single('file'),
   validateFileType,
   validateFileSize,

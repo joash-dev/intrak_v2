@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
+import { guardStudentWriteByAuthenticatedUser } from '../middleware/studentLifecycleGuard';
 import * as companyApplicationController from '../controllers/companyApplication.controller';
 
 const router = Router();
@@ -10,9 +11,9 @@ router.use(authenticate);
 
 // Student routes
 router.get('/my-applications', companyApplicationController.getMyApplications);
-router.post('/apply', companyApplicationController.applyToCompany);
-router.post('/resign-placement', companyApplicationController.resignFromPlacement);
-router.patch('/:id/withdraw', companyApplicationController.withdrawApplication);
+router.post('/apply', guardStudentWriteByAuthenticatedUser, companyApplicationController.applyToCompany);
+router.post('/resign-placement', guardStudentWriteByAuthenticatedUser, companyApplicationController.resignFromPlacement);
+router.patch('/:id/withdraw', guardStudentWriteByAuthenticatedUser, companyApplicationController.withdrawApplication);
 
 // Instructor/Coordinator/Admin routes
 router.get(

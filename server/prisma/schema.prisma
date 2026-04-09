@@ -145,6 +145,13 @@ enum NotificationType {
   OTHER
 }
 
+enum StudentLifecycleStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  PURGED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -174,6 +181,7 @@ model User {
   // Relations
   student                 Student?
   studentsAssigned        Student[]              @relation("InstructorStudents") // Students assigned to this instructor
+  lifecycleLegalHoldsSet  Student[]              @relation("StudentLifecycleLegalHoldSetter")
   documentsUploaded       Document[]             @relation("DocumentUploader")
   evaluationsGiven        Evaluation[]           @relation("Evaluator")
   announcementsCreated    Announcement[]
@@ -251,6 +259,14 @@ model Student {
   endDate          DateTime?
   totalHours       Int       @default(240)
   completedHours   Int       @default(0)
+  lifecycleStatus  StudentLifecycleStatus @default(ACTIVE)
+  completedAt      DateTime?
+  archivedAt       DateTime?
+  retentionUntil   DateTime?
+  legalHold        Boolean   @default(false)
+  legalHoldReason  String?
+  legalHoldSetById String?
+  legalHoldSetAt   DateTime?
   weeklyReportData Json? // Store weekly report data as JSON
   jobDescription   String? // Job description for the internship
   worksOnSaturday  Boolean   @default(false) // Saturday work preference (for private companies)
@@ -261,6 +277,7 @@ model Student {
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   company             Company?             @relation(fields: [companyId], references: [id])
   instructor          User?                @relation("InstructorStudents", fields: [instructorId], references: [id])
+  legalHoldSetBy      User?                @relation("StudentLifecycleLegalHoldSetter", fields: [legalHoldSetById], references: [id])
   documents           Document[]
   attendanceLogs      AttendanceLog[]
   evaluations         Evaluation[]
@@ -273,6 +290,9 @@ model Student {
 
   @@index([companyId])
   @@index([instructorId])
+  @@index([lifecycleStatus])
+  @@index([retentionUntil])
+  @@index([legalHold])
   @@map("students")
 }
 

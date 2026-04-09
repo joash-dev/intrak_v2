@@ -390,8 +390,8 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       orderBy: { date: 'desc' }
     });
 
-    let log;
-    let action: 'login' | 'logout';
+    let log: any;
+    let action: 'login' | 'logout' = 'login';
     if (openLog) {
       const now = new Date();
       const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
@@ -542,7 +542,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     }
 
     // Ensure student start date is initialized from the earliest attendance activity.
-    const attendanceReferenceDate = openLog?.timeIn || log.timeIn || new Date();
+    const attendanceReferenceDate = openLog?.timeIn || log?.timeIn || new Date();
     await ensureStudentStartDate(qrToken.studentId, attendanceReferenceDate);
 
     await prisma.qRToken.update({

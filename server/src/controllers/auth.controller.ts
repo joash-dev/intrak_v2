@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import { StudentLifecycleStatus } from '@prisma/client';
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
+import { isStudentLifecycleReadOnly } from '../services/studentLifecycle.service';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -266,6 +268,8 @@ export const login = async (req: Request, res: Response) => {
       contactEmail?: string | null;
       contactNumber?: string | null;
     } | null = null;
+    let lifecycleStatus: StudentLifecycleStatus | null = null;
+    let readOnly = false;
 
     if (user.role === 'INDUSTRY_PARTNER') {
       const company = await prisma.company.findFirst({
@@ -296,6 +300,15 @@ export const login = async (req: Request, res: Response) => {
         };
     }
 
+    if (user.role === 'STUDENT') {
+      const studentLifecycle = await prisma.student.findFirst({
+        where: { userId: user.id },
+        select: { lifecycleStatus: true },
+      });
+      lifecycleStatus = studentLifecycle?.lifecycleStatus ?? StudentLifecycleStatus.ACTIVE;
+      readOnly = isStudentLifecycleReadOnly(lifecycleStatus);
+    }
+
     // Update last login info
     const clientIp = req.headers['x-forwarded-for'] as string || req.ip || 'unknown';
     await prisma.user.update({
@@ -322,7 +335,9 @@ export const login = async (req: Request, res: Response) => {
         companyAddress: companyInfo?.address || null,
         companyContactPerson: companyInfo?.contactPerson || null,
         companyContactEmail: companyInfo?.contactEmail || null,
-        companyContactNumber: companyInfo?.contactNumber || null
+        companyContactNumber: companyInfo?.contactNumber || null,
+        lifecycleStatus,
+        readOnly,
       }
     });
   } catch (error) {
