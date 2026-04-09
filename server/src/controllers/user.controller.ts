@@ -7,6 +7,7 @@ import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
 import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
+import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
 
 /** Strip non-digits; preserve optional leading + (e.g. +639…). */
 function normalizePhoneForStorage(phone: string): string {
@@ -325,6 +326,40 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    const studentRecord = await prisma.student.findUnique({
+      where: { userId: id },
+      select: { id: true },
+    });
+
+    // Student accounts use orchestrated NAS-aware deletion flow.
+    if (studentRecord) {
+      const outcome = await deleteStudentAccountWithNASPurge(studentRecord.id);
+      await auditLog(req.user!.id, 'USER_DELETED', {
+        deletedUserId: id,
+        deletedUserName: user.name,
+        deletedUserEmail: user.email,
+        deletedRole: user.role,
+        deleted: outcome.deleted,
+        files: outcome.files,
+      }, req);
+      await logActivity({
+        type: 'USER_DELETED',
+        description: `User account deleted: ${user.name} (${user.role})`,
+        userId: req.user!.id,
+        userName: req.user!.name,
+        metadata: {
+          deletedUserId: id,
+          files: outcome.files,
+        },
+        ipAddress: req.ip
+      });
+      return res.json({
+        message: 'User deleted successfully',
+        deleted: outcome.deleted,
+        files: outcome.files,
+      });
     }
 
     // Prevent admin from deleting their own account

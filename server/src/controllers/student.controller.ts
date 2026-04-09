@@ -1,11 +1,16 @@
 import { Response } from 'express';
-import { NotificationType, Prisma } from '@prisma/client';
+import { NotificationType, Prisma, StudentLifecycleStatus } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
 import { notificationService } from '../services/notification.service';
 import { calculateExpectedWorkingDays, calculateDynamicProjectedEndDate } from '../utils/attendanceUtils';
 import { prisma } from '../config/database';
 import { getErrorMessage } from '../utils/errorHandler';
+import {
+  isStudentLifecycleReadOnly,
+  transitionStudentLifecycle,
+} from '../services/studentLifecycle.service';
+import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
 
 type PartnershipConversationReadDelegate = {
   findMany: (args: {
@@ -36,6 +41,14 @@ const decodeSafe = (value: string): string => {
   } catch {
     return value;
   }
+};
+
+const getLifecycleMeta = (status?: StudentLifecycleStatus | null) => {
+  const safeStatus = status ?? StudentLifecycleStatus.ACTIVE;
+  return {
+    lifecycleStatus: safeStatus,
+    readOnly: isStudentLifecycleReadOnly(safeStatus),
+  };
 };
 
 const getNotificationMessagePreview = (raw: string): string => {
@@ -133,6 +146,7 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
           endDate: true,
           totalHours: true,
           completedHours: true,
+          lifecycleStatus: true,
           createdAt: true,
           updatedAt: true,
           user: { select: { name: true, email: true, profilePhoto: true } },
@@ -162,7 +176,10 @@ export const getStudents = async (req: AuthRequest, res: Response) => {
     ]);
 
     res.json({
-      students,
+      students: students.map((student) => ({
+        ...student,
+        ...getLifecycleMeta(student.lifecycleStatus),
+      })),
       pagination: {
         total,
         page: Number(page),
@@ -353,7 +370,8 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
       lastAttendanceDate: latestAttendanceDate ? latestAttendanceDate.toISOString() : null,
       worksOnSaturday,
       companyType: companyType,
-      workingDays: workingDays
+      workingDays: workingDays,
+      ...getLifecycleMeta(student.lifecycleStatus),
     });
   } catch (error) {
     console.error('Error fetching student profile:', error);
@@ -386,7 +404,12 @@ export const getStudentById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    res.json({ student });
+    res.json({
+      student: {
+        ...student,
+        ...getLifecycleMeta(student.lifecycleStatus),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch student', error });
   }
@@ -535,6 +558,16 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const updateData = { ...req.body };
 
+    // Lifecycle transitions must go through dedicated endpoints/service.
+    delete (updateData as any).lifecycleStatus;
+    delete (updateData as any).completedAt;
+    delete (updateData as any).archivedAt;
+    delete (updateData as any).retentionUntil;
+    delete (updateData as any).legalHold;
+    delete (updateData as any).legalHoldReason;
+    delete (updateData as any).legalHoldSetById;
+    delete (updateData as any).legalHoldSetAt;
+
     // Validate student number format if provided
     if (updateData.studentNumber && !/^\d{2}-[A-Z]{2}-\d{4}$/.test(updateData.studentNumber)) {
       return res.status(400).json({
@@ -561,70 +594,76 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const completeStudentOjt = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const { reason, retentionYears } = req.body || {};
+
+    if (!req.user?.id) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const years =
+      typeof retentionYears === 'number' && Number.isFinite(retentionYears) && retentionYears > 0
+        ? Math.trunc(retentionYears)
+        : 7;
+
+    const student = await transitionStudentLifecycle({
+      studentId,
+      targetStatus: StudentLifecycleStatus.COMPLETED,
+      actorUserId: req.user.id,
+      reason,
+      req,
+      retentionYears: years,
+    });
+
+    return res.json({
+      message: 'Student marked as completed',
+      student: {
+        id: student.id,
+        completedAt: student.completedAt,
+        archivedAt: student.archivedAt,
+        retentionUntil: student.retentionUntil,
+        ...getLifecycleMeta(student.lifecycleStatus),
+      },
+    });
+  } catch (error) {
+    console.error('Error completing OJT lifecycle:', error);
+    const statusCode = (error as any)?.statusCode || 500;
+    return res.status(statusCode).json({
+      message:
+        statusCode === 500
+          ? 'Failed to update student lifecycle'
+          : (error as Error).message,
+    });
+  }
+};
+
 export const deleteStudent = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const outcome = await deleteStudentAccountWithNASPurge(id);
 
-    // First, get the student record to find the associated user ID
-    const student = await prisma.student.findUnique({
-      where: { id },
-      select: { userId: true }
-    });
+    await auditLog(req.user!.id, 'STUDENT_ACCOUNT_DELETED', {
+      targetStudentId: outcome.studentId,
+      targetUserId: outcome.userId,
+      deleted: outcome.deleted,
+      files: outcome.files,
+    }, req);
 
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
-
-    // Delete all related data in the correct order to avoid foreign key constraints
-
-    // 1. Delete attendance logs
-    const attendanceResult = await prisma.attendanceLog.deleteMany({
-      where: { studentId: id }
-    });
-
-    // 2. Delete document submissions
-    const documentResult = await prisma.document.deleteMany({
-      where: { studentId: id }
-    });
-
-    // 3. Delete evaluations
-    const evaluationResult = await prisma.evaluation.deleteMany({
-      where: { studentId: id }
-    });
-
-    // 4. Delete audit logs related to this student user
-    const auditResult = await prisma.auditLog.deleteMany({
-      where: { userId: student.userId }
-    });
-
-    // 5. Delete the student record
-    await prisma.student.delete({ where: { id } });
-
-    // 6. Finally, delete the user account
-    await prisma.user.delete({ where: { id: student.userId } });
-
-    console.log(`[Student] Student deletion completed:`);
-    console.log(`   • Attendance logs: ${attendanceResult.count}`);
-    console.log(`   • Document submissions: ${documentResult.count}`);
-    console.log(`   • Evaluations: ${evaluationResult.count}`);
-    console.log(`   • Audit logs: ${auditResult.count}`);
-    console.log(`   • Student record: 1`);
-    console.log(`   • User account: 1`);
-
+    console.log(`[Student] Student deletion with NAS purge completed for ${outcome.studentId}`);
     res.json({
-      message: 'Student and all related data deleted successfully',
-      deleted: {
-        attendanceLogs: attendanceResult.count,
-        documents: documentResult.count,
-        evaluations: evaluationResult.count,
-        auditLogs: auditResult.count,
-        studentRecord: 1,
-        userAccount: 1
-      }
+      message: 'Student account deleted with NAS file purge',
+      deleted: outcome.deleted,
+      files: outcome.files,
     });
   } catch (error) {
     console.error('Error deleting student:', error);
-    res.status(500).json({ message: 'Failed to delete student', error });
+    const statusCode = (error as any)?.statusCode || 500;
+    res.status(statusCode).json({
+      message: statusCode === 404 ? 'Student not found' : 'Failed to delete student',
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
+    });
   }
 };
 

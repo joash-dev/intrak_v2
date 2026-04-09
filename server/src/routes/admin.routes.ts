@@ -32,6 +32,7 @@ router.get('/dashboard', adminController.getAdminDashboard);
 
 // Admin user management routes
 router.get('/instructors', adminController.getInstructors);
+router.delete('/users/:id', authorize(['ADMIN']), userController.deleteUser);
 
 // Admin system information route
 router.get('/system-info', adminController.getSystemInfo);

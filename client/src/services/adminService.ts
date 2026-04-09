@@ -30,6 +30,20 @@ export interface AdminUser {
   };
 }
 
+export interface DeleteUserFilesSummary {
+  discovered: number;
+  deleted: number;
+  missing: number;
+  failed: number;
+  failures: string[];
+}
+
+export interface DeleteUserResponse {
+  message: string;
+  deleted?: Record<string, number>;
+  files?: DeleteUserFilesSummary;
+}
+
 export interface AdminSettingsRecord {
   id: string;
   userId: string;
@@ -565,9 +579,9 @@ class AdminService {
     }
   }
 
-  async deleteUser(id: string): Promise<{ message: string }> {
+  async deleteUser(id: string): Promise<DeleteUserResponse> {
     try {
-      const response = await api.delete(`/users/${id}`);
+      const response = await api.delete(`/admin/users/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting user:', error);

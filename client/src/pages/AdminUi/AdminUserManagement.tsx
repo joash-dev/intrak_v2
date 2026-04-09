@@ -17,7 +17,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useOptimizedData } from "../../hooks/useOptimizedData";
-import { adminService, type AdminUser } from "../../services/adminService";
+import {
+  adminService,
+  type AdminUser,
+  type DeleteUserResponse,
+} from "../../services/adminService";
 import { instructorService } from "../../services/instructorService";
 import { UserTableSkeleton } from "../../components/LoadingStates/AdminSkeleton";
 import toast from "react-hot-toast";
@@ -49,6 +53,9 @@ const AdminUserManagement = () => {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<DeleteUserResponse | null>(
+    null
+  );
 
   // Fetch users with real API
   const {
@@ -307,10 +314,10 @@ const AdminUserManagement = () => {
     if (!selectedUser) return;
 
     try {
-      await adminService.deleteUser(selectedUser.id);
-      const successMsg = "User deleted successfully";
+      const response = await adminService.deleteUser(selectedUser.id);
+      const successMsg = response.message || "User deleted successfully";
       toast.success(successMsg);
-      alert(successMsg);
+      setDeleteResult(response);
 
       setShowDeleteModal(false);
       setSelectedUser(null);
@@ -1075,6 +1082,54 @@ const AdminUserManagement = () => {
                 Delete User
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {deleteResult && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center p-4"
+          style={{ margin: "0" }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-4">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
+              Deletion Completed
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-4">
+              {deleteResult.message || "User deleted successfully."}
+            </p>
+
+            {deleteResult.files && (
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 bg-gray-50 dark:bg-gray-900/40">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  File Purge Summary
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-gray-600 dark:text-gray-400">Deleted</div>
+                  <div className="text-right font-medium text-green-600">
+                    {deleteResult.files.deleted}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">Missing (already gone)</div>
+                  <div className="text-right font-medium text-amber-600">
+                    {deleteResult.files.missing}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-400">Failed</div>
+                  <div className="text-right font-medium text-red-600">
+                    {deleteResult.files.failed}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setDeleteResult(null)}
+              className="w-full px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
