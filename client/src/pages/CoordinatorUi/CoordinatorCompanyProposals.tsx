@@ -8,7 +8,6 @@ import {
 } from '../../services/companyProposalService';
 import Skeleton from '../../components/Skeleton';
 import { requestCoordinatorNavBadgesRefresh } from '../../services/coordinatorService';
-import { instructorNavCountsCompanyProposal } from '../../utils/instructorNavAttention';
 
 const statusLabel: Record<CompanyProposalStatus, string> = {
   DRAFT: 'Draft',

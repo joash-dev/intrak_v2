@@ -117,11 +117,6 @@ const InstructorMessages: React.FC = () => {
     [conversations, selectedStudentId]
   );
 
-  const unreadThreadsCount = useMemo(
-    () => conversations.filter((c) => c.unread).length,
-    [conversations]
-  );
-
   return (
     <div className="space-y-6 font-outfit">
       <div className="bg-white dark:bg-[#212124] rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
