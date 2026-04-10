@@ -32,14 +32,33 @@ interface AboutUsSectionProps {
 
 const defaultDeveloper: Developer = {
     name: "Joash Irvin M. Santos",
-    role: "Cloud Infrastructure Engineer • Full Stack Developer",
-    bio: "A Cloud and Full Stack Developer focused on designing and deploying secure, scalable web applications using AWS and containerized architectures.",
+    role: "Computer Engineering Student • Full Stack Developer",
+    bio: "A Computer Engineering student who developed INTRAK as a practical solution to help streamline OJT management for students, instructors, coordinators, and partner companies.",
     initials: "JS",
     socialLinks: {
         github: "https://github.com/joash-dev",
         linkedin: "https://www.linkedin.com/in/joash-irvin-santos-b0b63728b",
+        portfolio: "https://joashsantos.vercel.app/",
     },
 };
+
+const defaultDevelopers: Developer[] = [
+    defaultDeveloper,
+    {
+        name: "Gym Vergel M. Ramos",
+        role: "Documentation Lead",
+        bio: "Handled the documentation of this thesis system to ensure clear and complete project records.",
+        initials: "GR",
+        socialLinks: {},
+    },
+    {
+        name: "Brandon S. Ilao",
+        role: "Development Support",
+        bio: "Supported the development of INTRAK through collaboration in building and improving key features.",
+        initials: "BI",
+        socialLinks: {},
+    },
+];
 
 const defaultTechnologies = [
     "React",
@@ -59,7 +78,7 @@ const AboutUsSection = ({
     systemVersion = "2.0",
     systemDate = "February 2026",
     systemDescription = "A comprehensive On-the-Job Training management system designed to streamline the internship process for students, instructors, coordinators, and industry partners.",
-    developers = [defaultDeveloper],
+    developers = defaultDevelopers,
     technologies = defaultTechnologies,
 }: AboutUsSectionProps) => {
     return (
