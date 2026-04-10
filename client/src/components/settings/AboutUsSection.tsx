@@ -54,9 +54,12 @@ const defaultDevelopers: Developer[] = [
     {
         name: "Brandon S. Ilao",
         role: "Development Support",
-        bio: "Supported the development of INTRAK through collaboration in building and improving key features.",
+        bio: "Contributed to INTRAK’s development by assisting with feature work, testing, and refinements in collaboration with the project team.",
         initials: "BI",
-        socialLinks: {},
+        socialLinks: {
+            github: "https://github.com/MomochiServices",
+            linkedin: "https://www.linkedin.com/in/brandon-ilao-0a909a3a7",
+        },
     },
 ];
 
