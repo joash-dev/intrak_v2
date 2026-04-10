@@ -33,7 +33,7 @@ interface AboutUsSectionProps {
 const defaultDeveloper: Developer = {
     name: "Joash Irvin M. Santos",
     role: "Computer Engineering Student • Full Stack Developer",
-    bio: "A Computer Engineering student who developed INTRAK as a practical solution to help streamline OJT management for students, instructors, coordinators, and partner companies.",
+    bio: "Developed INTRAK as a practical solution to help streamline OJT management for students, instructors, coordinators, and partner companies.",
     initials: "JS",
     socialLinks: {
         github: "https://github.com/joash-dev",
@@ -46,7 +46,7 @@ const defaultDevelopers: Developer[] = [
     defaultDeveloper,
     {
         name: "Gym Vergel M. Ramos",
-        role: "Documentation Lead",
+        role: "Computer Engineering Student • Documentation Lead",
         bio: "Handled the documentation of this thesis system to ensure clear and complete project records.",
         initials: "GR",
         socialLinks: {
@@ -55,7 +55,7 @@ const defaultDevelopers: Developer[] = [
     },
     {
         name: "Brandon S. Ilao",
-        role: "Development Support",
+        role: "Computer Engineering Student • Development Support",
         bio: "Contributed to INTRAK’s development by assisting with feature work, testing, and refinements in collaboration with the project team.",
         initials: "BI",
         socialLinks: {
