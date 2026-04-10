@@ -3,17 +3,10 @@ import path from 'path';
 import fs from 'fs';
 import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
 
-const uploadPath = getStoragePath();
-
-// Ensure upload directory exists
-ensureNASDirectoryExists(uploadPath).catch(console.error);
-
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      // Create a general documents directory since we can't access studentId here
-      const dir = path.join(uploadPath, 'documents', 'temp');
-      
+      const dir = path.join(getStoragePath(), 'documents', 'temp');
       await ensureNASDirectoryExists(dir);
       cb(null, dir);
     } catch (error) {

@@ -373,7 +373,7 @@ const SupervisorSettings = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+          <div className="lg:sticky lg:top-4 bg-white dark:bg-[#212124] rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
             <nav className="space-y-1.5 sm:space-y-2">
               <button
                 onClick={() => setActiveTab("profile")}

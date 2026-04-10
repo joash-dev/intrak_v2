@@ -2,6 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { computeFileHash } from '../services/fileIntegrity.service';
 
+/**
+ * NAS availability cache. Updated exclusively by validateNASConnection() (async).
+ * null = not yet checked. While null or false, all storage ops use UPLOAD_PATH
+ * so a hung CIFS/NFS mount can never block the Node event loop.
+ */
+let nasAvailabilityCache: boolean | null = null;
+
 export interface NASConfig {
   enabled: boolean;
   mountPath: string;
@@ -25,91 +32,26 @@ export const getNASConfig = (): NASConfig => {
 export const ensureNASDirectoryExists = async (dirPath: string): Promise<void> => {
   const nasConfig = getNASConfig();
 
-  // Try to create directory, fallback to local if NAS unavailable
   try {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
+    await fs.promises.mkdir(dirPath, { recursive: true });
   } catch (error: any) {
-    // If NAS path fails, try local fallback
     if (nasConfig.enabled && dirPath.startsWith(nasConfig.mountPath)) {
       const localPath = dirPath.replace(nasConfig.mountPath, process.env.UPLOAD_PATH || './uploads');
       console.warn(`WARNING: Failed to create NAS directory, using local fallback: ${localPath}`);
-      if (!fs.existsSync(localPath)) {
-        fs.mkdirSync(localPath, { recursive: true });
-      }
+      await fs.promises.mkdir(localPath, { recursive: true });
     } else {
       throw error;
     }
   }
 };
 
-export const getStoragePath = (): string => {
-  const nasConfig = getNASConfig();
-
-  return nasConfig.enabled
-    ? nasConfig.mountPath
-    : process.env.UPLOAD_PATH || './uploads';
-};
+/** Effective storage root — NAS when validated, else local UPLOAD_PATH. */
+export const getStoragePath = (): string => getStoragePathWithFallback().storagePath;
 
 /**
- * Check if a path is actually a network mount (CIFS/NFS) - synchronous version
- * This helps detect stale mounts where directory exists but NAS is unmounted
- * In Docker containers, bind mounts from host also count as valid NAS
+ * Returns the active storage path based on the cached NAS availability.
+ * Zero synchronous I/O — safe to call on every request.
  */
-const isNetworkMountSync = (mountPath: string): boolean => {
-  try {
-    const { execSync } = require('child_process');
-    const mountOutput = execSync('mount', { encoding: 'utf8' });
-    const mountLines = mountOutput.split('\n').map((line: string) => line.trim()).filter(Boolean);
-
-    // Build candidate paths from most-specific to least-specific.
-    // This lets NAS_PATH like /mnt/nas/intrak/uploads match parent mount /mnt/nas.
-    const normalizedPath = path.resolve(mountPath);
-    const candidates: string[] = [];
-    let current = normalizedPath;
-    while (!candidates.includes(current)) {
-      candidates.push(current);
-      const parent = path.dirname(current);
-      if (parent === current) break;
-      current = parent;
-    }
-
-    const mountInfo = mountLines.find((line: string) =>
-      candidates.some(candidate => line.includes(` on ${candidate} `))
-    ) || '';
-
-    // Look for network filesystem types: cifs, nfs, smbfs
-    const isNetwork = mountInfo.includes('type cifs') ||
-      mountInfo.includes('type nfs') ||
-      mountInfo.includes('type smbfs');
-
-    // Also check for Docker bind mounts (when host has NAS mounted)
-    // In Docker, host bind mounts appear as "overlay" or just exist without specific type
-    const isBindMount = mountInfo.includes('overlay') || mountInfo.trim().length > 0;
-
-    // If USE_NAS is true and path is writable, trust it as NAS
-    // This handles Docker containers where host's CIFS mount becomes a bind mount
-    if (process.env.USE_NAS === 'true' && !isNetwork && mountInfo.trim().length === 0) {
-      // No mount info found, but let's check if it's writable - that's good enough
-      const testFile = require('path').join(mountPath, '.nas_test_' + Date.now());
-      try {
-        require('fs').writeFileSync(testFile, 'test');
-        require('fs').unlinkSync(testFile);
-        console.log(`[NAS] ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    return isNetwork || isBindMount;
-  } catch (error) {
-    // If command fails, assume not a network mount
-    return false;
-  }
-};
-
 export const getStoragePathWithFallback = (): { storagePath: string; isUsingFallback: boolean } => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
@@ -118,88 +60,44 @@ export const getStoragePathWithFallback = (): { storagePath: string; isUsingFall
     return { storagePath: localPath, isUsingFallback: false };
   }
 
-  // Check if NAS is actually available
-  try {
-    if (fs.existsSync(nasConfig.mountPath)) {
-      // Check if it's actually a network mount (not just a local directory)
-      const isActualNAS = isNetworkMountSync(nasConfig.mountPath);
-      if (!isActualNAS) {
-        console.warn('[NAS] Mount point exists but is NOT a network mount (NAS is unmounted), falling back to local storage');
-        return { storagePath: localPath, isUsingFallback: true };
-      }
-
-      // Test write access
-      const testFile = path.join(nasConfig.mountPath, '.test_write');
-      try {
-        fs.writeFileSync(testFile, 'test');
-        fs.unlinkSync(testFile);
-        return { storagePath: nasConfig.mountPath, isUsingFallback: false };
-      } catch (error) {
-        // NAS exists but not writable, fallback to local
-        console.warn('[NAS] Mount point exists but not writable, falling back to local storage');
-        return { storagePath: localPath, isUsingFallback: true };
-      }
-    }
-  } catch (error) {
-    // NAS mount point doesn't exist or error accessing it
-    console.warn('[NAS] Mount point not accessible, falling back to local storage');
+  if (nasAvailabilityCache === true) {
+    return { storagePath: nasConfig.mountPath, isUsingFallback: false };
   }
 
-  // Fallback to local storage
   return { storagePath: localPath, isUsingFallback: true };
 };
 
+const nasIoTimeoutMs = (): number =>
+  parseInt(process.env.NAS_IO_TIMEOUT_MS || '4000', 10);
+
 /**
- * Check if a path is actually a network mount (CIFS/NFS)
- * This helps detect stale mounts where directory exists but NAS is unmounted
- * In Docker containers, bind mounts from host also count as valid NAS
+ * Async NAS probe with a wall-clock timeout so a dead CIFS/NFS mount
+ * can never block for more than NAS_IO_TIMEOUT_MS (default 4 s).
  */
-const isNetworkMount = (mountPath: string): boolean => {
+const probeNASPath = async (mountPath: string, timeoutMs: number): Promise<boolean> => {
+  const work = async (): Promise<boolean> => {
+    try {
+      await fs.promises.access(mountPath, fs.constants.R_OK | fs.constants.W_OK);
+    } catch {
+      return false;
+    }
+    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const testFile = path.join(mountPath, `.intrak_nas_probe_${token}`);
+    try {
+      await fs.promises.writeFile(testFile, 'ok');
+      await fs.promises.unlink(testFile);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   try {
-    const { execSync } = require('child_process');
-    const mountOutput = execSync('mount', { encoding: 'utf8' });
-    const mountLines = mountOutput.split('\n').map((line: string) => line.trim()).filter(Boolean);
-
-    // Build candidate paths from most-specific to least-specific.
-    // This lets NAS_PATH like /mnt/nas/intrak/uploads match parent mount /mnt/nas.
-    const normalizedPath = path.resolve(mountPath);
-    const candidates: string[] = [];
-    let current = normalizedPath;
-    while (!candidates.includes(current)) {
-      candidates.push(current);
-      const parent = path.dirname(current);
-      if (parent === current) break;
-      current = parent;
-    }
-
-    const mountInfo = mountLines.find((line: string) =>
-      candidates.some(candidate => line.includes(` on ${candidate} `))
-    ) || '';
-
-    // Look for network filesystem types: cifs, nfs, smbfs
-    const isNetwork = mountInfo.includes('type cifs') ||
-      mountInfo.includes('type nfs') ||
-      mountInfo.includes('type smbfs');
-
-    // Also check for Docker bind mounts
-    const isBindMount = mountInfo.includes('overlay') || mountInfo.trim().length > 0;
-
-    // If USE_NAS is true and path is writable, trust it as NAS
-    if (process.env.USE_NAS === 'true' && !isNetwork && mountInfo.trim().length === 0) {
-      const testFile = require('path').join(mountPath, '.nas_test_' + Date.now());
-      try {
-        require('fs').writeFileSync(testFile, 'test');
-        require('fs').unlinkSync(testFile);
-        console.log(`[NAS] ${mountPath} is writable - accepting as valid NAS (Docker bind mount)`);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    return isNetwork || isBindMount;
-  } catch (error) {
-    // If command fails, assume not a network mount
+    return await Promise.race([
+      work(),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), timeoutMs)),
+    ]);
+  } catch {
     return false;
   }
 };
@@ -208,38 +106,25 @@ export const validateNASConnection = async (): Promise<boolean> => {
   const nasConfig = getNASConfig();
 
   if (!nasConfig.enabled) {
-    return true; // NAS not enabled, use local storage
+    nasAvailabilityCache = null;
+    return true;
   }
 
-  try {
-    // Check if mount point exists
-    if (!fs.existsSync(nasConfig.mountPath)) {
-      console.warn(`[NAS] Mount point does not exist: ${nasConfig.mountPath}`);
-      return false;
-    }
+  const timeoutMs = nasIoTimeoutMs();
+  const ok = await probeNASPath(nasConfig.mountPath, timeoutMs);
+  nasAvailabilityCache = ok;
 
-    // Check if it's actually a network mount (not just a local directory)
-    const isActualNAS = isNetworkMount(nasConfig.mountPath);
-    if (!isActualNAS) {
-      console.warn(`[NAS] ${nasConfig.mountPath} exists but is NOT a network mount (likely local directory - NAS is unmounted)`);
-      return false;
-    }
-
-    // Test write access
-    const testFile = path.join(nasConfig.mountPath, '.test_write');
-    try {
-      fs.writeFileSync(testFile, 'test');
-      fs.unlinkSync(testFile);
-      return true;
-    } catch (writeError) {
-      console.warn(`[NAS] Mount point exists but not writable:`, writeError);
-      return false;
-    }
-  } catch (error) {
-    console.error('NAS connection validation failed:', error);
-    return false;
+  if (!ok) {
+    console.warn(
+      `[NAS] Storage path not reachable within ${timeoutMs}ms — using local fallback until NAS is reachable`
+    );
   }
+
+  return ok;
 };
+
+/** Expose cache state for logging / health endpoints. */
+export const isNASAvailable = (): boolean | null => nasAvailabilityCache;
 
 /**
  * Resolve file path - checks both NAS and local storage
@@ -250,18 +135,22 @@ export const validateNASConnection = async (): Promise<boolean> => {
 export const resolveFilePath = (storedPath: string): string | null => {
   const nasConfig = getNASConfig();
   const localPath = process.env.UPLOAD_PATH || './uploads';
+  const nasDown = nasAvailabilityCache === false;
 
-  // Normalize the path
   const normalizedPath = path.normalize(storedPath);
 
-  // If absolute path, check if it exists
   if (path.isAbsolute(normalizedPath)) {
-    if (fs.existsSync(normalizedPath)) {
-      return normalizedPath;
+    // When NAS is known-down, skip any existsSync on NAS paths (avoids blocking)
+    const isNASPath = nasConfig.enabled && normalizedPath.startsWith(nasConfig.mountPath);
+
+    if (!isNASPath || !nasDown) {
+      if (fs.existsSync(normalizedPath)) {
+        return normalizedPath;
+      }
     }
 
-    // If NAS path but file not found, try local fallback
-    if (nasConfig.enabled && normalizedPath.startsWith(nasConfig.mountPath)) {
+    // NAS path but file not found (or NAS down) → try local fallback
+    if (isNASPath) {
       const localFallback = normalizedPath.replace(nasConfig.mountPath, localPath);
       if (fs.existsSync(localFallback)) {
         console.warn(`[NAS] File not found on NAS, using local fallback: ${localFallback}`);
@@ -269,8 +158,8 @@ export const resolveFilePath = (storedPath: string): string | null => {
       }
     }
 
-    // If local path but file not found, try NAS (in case file was moved)
-    if (normalizedPath.startsWith(localPath) && nasConfig.enabled) {
+    // Local path but file not found → try NAS (only when NAS is up)
+    if (normalizedPath.startsWith(localPath) && nasConfig.enabled && !nasDown) {
       const nasFallback = normalizedPath.replace(localPath, nasConfig.mountPath);
       if (fs.existsSync(nasFallback)) {
         console.warn(`[NAS] File not found locally, found on NAS: ${nasFallback}`);
@@ -279,7 +168,7 @@ export const resolveFilePath = (storedPath: string): string | null => {
     }
   }
 
-  // Try relative paths
+  // Try relative paths — skip NAS-rooted candidates when NAS is down
   const possiblePaths = [
     normalizedPath,
     path.resolve(process.cwd(), normalizedPath),
@@ -287,13 +176,11 @@ export const resolveFilePath = (storedPath: string): string | null => {
     path.resolve(__dirname, '../../', normalizedPath),
   ];
 
-  // Add NAS and local paths
-  if (nasConfig.enabled) {
+  if (nasConfig.enabled && !nasDown) {
     possiblePaths.push(path.resolve(nasConfig.mountPath, normalizedPath));
   }
   possiblePaths.push(path.resolve(localPath, normalizedPath));
 
-  // Find first existing path
   for (const possiblePath of possiblePaths) {
     if (fs.existsSync(possiblePath)) {
       return possiblePath;

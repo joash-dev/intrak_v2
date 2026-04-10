@@ -113,14 +113,20 @@ app.use(cookieParser());
 app.use('/api/auth', rateLimiter);
 
 // Static files (uploaded documents) with CORS headers
-// Use storage path (supports both local and NAS)
-const storagePath = getStoragePath();
-app.use('/uploads', (req, res, next) => {
+// Serve from local UPLOAD_PATH first (always available), then NAS if configured.
+// This ensures files are served even when NAS is down (local backups).
+const uploadsCorsMw = (req: any, res: any, next: any) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static(storagePath));
+};
+const localUploadPath = process.env.UPLOAD_PATH || './uploads';
+app.use('/uploads', uploadsCorsMw, express.static(localUploadPath));
+if (process.env.USE_NAS === 'true') {
+  const nasPath = process.env.NAS_PATH || '/mnt/nas/intrak';
+  app.use('/uploads', uploadsCorsMw, express.static(nasPath));
+}
 
 // Serve profile photos with proper headers
 app.use('/api/users/profile-photo', (req, res, next) => {
@@ -312,7 +318,6 @@ if (process.env.NODE_ENV !== 'test') {
 
   const startServer = async () => {
     await initializeDatabase();
-    await waitForNAS();
 
     const http = require('http');
     const { initializeSocketServer } = require('./socket');
@@ -322,12 +327,7 @@ if (process.env.NODE_ENV !== 'test') {
     // Initialize Socket.IO
     initializeSocketServer(httpServer);
 
-    // Start scheduled NAS sync job (runs every 30 min by default)
-    // Always start when NAS is configured so it can detect NAS coming back online
-    if (process.env.USE_NAS === 'true') {
-      startNASSyncJob();
-    }
-
+    // Start listening BEFORE NAS validation so login & API are available immediately
     httpServer.listen(PORT, () => {
       console.log('========================================');
       console.log(`INTRAK Server running on port ${PORT}`);
@@ -348,6 +348,13 @@ if (process.env.NODE_ENV !== 'test') {
       console.log('   GET    /api/users (requires auth)');
       console.log('   GET    /health');
       console.log('');
+
+      // Validate NAS in background — never blocks the server from accepting requests
+      waitForNAS().then(() => {
+        if (process.env.USE_NAS === 'true') {
+          startNASSyncJob();
+        }
+      });
     });
   };
 

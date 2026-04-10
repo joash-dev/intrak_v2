@@ -503,7 +503,7 @@ const CoordinatorSettingsTab = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
+          <div className="lg:sticky lg:top-4 bg-white dark:bg-[#212124] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-2">
             <nav className="space-y-1">
               {sections.map((section) => {
                 const Icon = section.icon;

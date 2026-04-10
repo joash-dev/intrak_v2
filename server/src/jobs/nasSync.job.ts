@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
 import { syncLocalToNAS, validateNASConnection } from '../config/nas';
+import { prisma } from '../config/database';
 
 let syncTask: ScheduledTask | null = null;
 let isSyncing = false;
@@ -12,10 +13,11 @@ let wasNASAvailable = false;
 // Override with the NAS_SYNC_CRON environment variable.
 //
 // The job:
-//   1. Re-validates NAS connectivity (detects NAS coming back online)
-//   2. Copies local-only files to NAS
-//   3. Re-syncs files with size mismatches (partial copies)
-//   4. Verifies each copy via MD5 hash
+//   1. Checks the Auto Backup admin setting (skips if disabled)
+//   2. Re-validates NAS connectivity (detects NAS coming back online)
+//   3. Copies local-only files to NAS
+//   4. Re-syncs files with size mismatches (partial copies)
+//   5. Verifies each copy via MD5 hash
 export const startNASSyncJob = (): void => {
   const schedule = process.env.NAS_SYNC_CRON || '*/30 * * * *';
 
@@ -25,7 +27,6 @@ export const startNASSyncJob = (): void => {
   }
 
   syncTask = cron.schedule(schedule, async () => {
-    // Prevent overlapping runs
     if (isSyncing) {
       console.log('[NAS Sync] Sync already in progress, skipping this run');
       return;
@@ -35,7 +36,18 @@ export const startNASSyncJob = (): void => {
     const startTime = Date.now();
 
     try {
-      // Re-validate NAS connectivity each run (detect NAS coming back online)
+      // Respect the Auto Backup toggle in admin settings
+      try {
+        const settings = await prisma.adminSettings.findFirst({ select: { autoBackup: true } });
+        if (settings && !settings.autoBackup) {
+          console.log('[NAS Sync] Auto backup is disabled in admin settings, skipping');
+          return;
+        }
+      } catch (err) {
+        console.warn('[NAS Sync] Could not read admin settings, proceeding with sync');
+      }
+
+      // Re-validate NAS connectivity each run (detects NAS coming back online + updates cache)
       const isNASAvailable = await validateNASConnection();
 
       if (isNASAvailable && !wasNASAvailable) {

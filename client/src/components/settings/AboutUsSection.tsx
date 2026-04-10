@@ -49,7 +49,9 @@ const defaultDevelopers: Developer[] = [
         role: "Documentation Lead",
         bio: "Handled the documentation of this thesis system to ensure clear and complete project records.",
         initials: "GR",
-        socialLinks: {},
+        socialLinks: {
+            linkedin: "https://www.linkedin.com/in/gym-vergel-ramos-96b4b2251/",
+        },
     },
     {
         name: "Brandon S. Ilao",
