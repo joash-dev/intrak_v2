@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
 import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { prisma } from '../config/database';
+import { recordScheduledNASBackupRun } from '../services/nasBackupStatus.store';
 
 let syncTask: ScheduledTask | null = null;
 let healthCheckTask: ScheduledTask | null = null;
@@ -30,11 +31,18 @@ export const startNASSyncJob = (): void => {
   syncTask = cron.schedule(schedule, async () => {
     if (isSyncing) {
       console.log('[NAS Sync] Sync already in progress, skipping this run');
+      recordScheduledNASBackupRun({
+        finishedAt: new Date().toISOString(),
+        durationSeconds: 0,
+        status: 'skipped',
+        skipReason: 'sync_already_running',
+      });
       return;
     }
 
     isSyncing = true;
     const startTime = Date.now();
+    const elapsedSec = () => Number(((Date.now() - startTime) / 1000).toFixed(1));
 
     try {
       // Respect the Auto Backup toggle in admin settings
@@ -42,6 +50,12 @@ export const startNASSyncJob = (): void => {
         const settings = await prisma.adminSettings.findFirst({ select: { autoBackup: true } });
         if (settings && !settings.autoBackup) {
           console.log('[NAS Sync] Auto backup is disabled in admin settings, skipping');
+          recordScheduledNASBackupRun({
+            finishedAt: new Date().toISOString(),
+            durationSeconds: elapsedSec(),
+            status: 'skipped',
+            skipReason: 'auto_backup_disabled',
+          });
           return;
         }
       } catch (err) {
@@ -62,13 +76,19 @@ export const startNASSyncJob = (): void => {
       wasNASAvailable = isNASAvailable;
 
       if (!isNASAvailable) {
+        recordScheduledNASBackupRun({
+          finishedAt: new Date().toISOString(),
+          durationSeconds: elapsedSec(),
+          status: 'skipped',
+          skipReason: 'nas_unavailable',
+        });
         return;
       }
 
       console.log('[NAS Sync] Starting scheduled sync...');
       const result = await syncLocalToNAS();
 
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const elapsed = elapsedSec();
 
       if (result.synced > 0 || result.failed > 0) {
         console.log(
@@ -79,8 +99,25 @@ export const startNASSyncJob = (): void => {
       } else {
         console.log(`[NAS Sync] Finished in ${elapsed}s - everything up to date`);
       }
+
+      recordScheduledNASBackupRun({
+        finishedAt: new Date().toISOString(),
+        durationSeconds: elapsed,
+        status: 'completed',
+        summary: result.failed > 0 || result.synced > 0 ? 'files_copied' : 'up_to_date',
+        synced: result.synced,
+        failed: result.failed,
+        hashVerified: result.hashVerified,
+        hashFailed: result.hashFailed,
+      });
     } catch (error) {
       console.error('[NAS Sync] Job error:', error);
+      recordScheduledNASBackupRun({
+        finishedAt: new Date().toISOString(),
+        durationSeconds: elapsedSec(),
+        status: 'error',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       isSyncing = false;
     }

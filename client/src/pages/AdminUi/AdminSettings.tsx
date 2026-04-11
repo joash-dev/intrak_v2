@@ -34,7 +34,12 @@ import {
   settingsService,
   type AppPreferences,
 } from "../../services/settingsService";
-import { adminService, type SystemInfo, type SystemAlert } from "../../services/adminService";
+import {
+  adminService,
+  type NASBackupRunRecord,
+  type SystemInfo,
+  type SystemAlert,
+} from "../../services/adminService";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import { AdminSettingsSkeleton } from "../../components/LoadingStates/AdminSkeleton";
@@ -252,6 +257,36 @@ function SystemInformationPanel({ systemInfo }: { systemInfo: SystemInfo }) {
       </div>
     </div>
   );
+}
+
+function describeNasBackupRun(run: NASBackupRunRecord | null | undefined): string {
+  if (!run) return "";
+  if (run.status === "skipped") {
+    switch (run.skipReason) {
+      case "sync_already_running":
+        return "Skipped — another sync was already running.";
+      case "auto_backup_disabled":
+        return "Skipped — Auto backup is off in Admin settings.";
+      case "nas_unavailable":
+        return "Skipped — NAS unreachable.";
+      case "nas_disabled":
+        return "Skipped — NAS disabled (USE_NAS).";
+      default:
+        return "Skipped.";
+    }
+  }
+  if (run.status === "error") {
+    return run.errorMessage || "Sync error.";
+  }
+  if (run.summary === "up_to_date") {
+    return "Everything up to date (no files needed copying).";
+  }
+  const parts: string[] = [];
+  if (run.synced != null) parts.push(`${run.synced} synced`);
+  if (run.failed != null && run.failed > 0) parts.push(`${run.failed} failed`);
+  if (run.hashVerified != null) parts.push(`${run.hashVerified} hash-verified`);
+  if (run.hashFailed != null && run.hashFailed > 0) parts.push(`${run.hashFailed} hash issues`);
+  return parts.length > 0 ? parts.join(" · ") : "Completed.";
 }
 
 const AdminSettings = () => {
@@ -1881,6 +1916,91 @@ const AdminSettings = () => {
                           )}
                         </div>
                       </div>
+
+                      {/* NAS scheduled backup status (mirrors server logs) */}
+                      {systemInfo.nasBackup && (
+                        <div className="px-4 py-3.5 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                NAS backup (sync)
+                              </span>
+                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                Same data as{" "}
+                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">[NAS Sync]</code> in server
+                                logs. Resets if the server restarts.
+                              </p>
+                            </div>
+                            <div className="text-right text-[10px] text-gray-500 dark:text-gray-400 space-y-0.5 max-w-[220px]">
+                              <p>
+                                <span className="font-medium text-gray-600 dark:text-gray-300">Sync cron</span>{" "}
+                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800 break-all">
+                                  {systemInfo.nasBackup.scheduledCron}
+                                </code>
+                              </p>
+                              <p>
+                                <span className="font-medium text-gray-600 dark:text-gray-300">Health cron</span>{" "}
+                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800 break-all">
+                                  {systemInfo.nasBackup.healthCheckCron}
+                                </code>
+                              </p>
+                            </div>
+                          </div>
+                          {!systemInfo.nasBackup.nasFeatureEnabled && (
+                            <p className="text-xs text-amber-800 dark:text-amber-200">
+                              USE_NAS is off — the job runs but does not copy files to NAS.
+                            </p>
+                          )}
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-3 space-y-1.5">
+                              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                Last scheduled run
+                              </p>
+                              {systemInfo.nasBackup.lastScheduled ? (
+                                <>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    {new Date(
+                                      systemInfo.nasBackup.lastScheduled.finishedAt,
+                                    ).toLocaleString()}
+                                    {" · "}
+                                    {systemInfo.nasBackup.lastScheduled.durationSeconds}s
+                                  </p>
+                                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug">
+                                    {describeNasBackupRun(systemInfo.nasBackup.lastScheduled)}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-gray-500 italic">
+                                  No run recorded yet (server may have just started).
+                                </p>
+                              )}
+                            </div>
+                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-3 space-y-1.5">
+                              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                Last manual sync (API)
+                              </p>
+                              {systemInfo.nasBackup.lastManual ? (
+                                <>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                                    {new Date(
+                                      systemInfo.nasBackup.lastManual.finishedAt,
+                                    ).toLocaleString()}
+                                    {" · "}
+                                    {systemInfo.nasBackup.lastManual.durationSeconds}s
+                                  </p>
+                                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug">
+                                    {describeNasBackupRun(systemInfo.nasBackup.lastManual)}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-gray-500 italic">
+                                  No manual sync since last server start.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Memory */}
                       <div className="px-4 py-3.5">

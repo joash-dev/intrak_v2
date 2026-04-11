@@ -206,6 +206,27 @@ export interface NASConfig {
   hasPassword: boolean;
 }
 
+export interface NASBackupRunRecord {
+  finishedAt: string;
+  durationSeconds: number;
+  status: 'completed' | 'skipped' | 'error';
+  skipReason?: string;
+  summary?: 'up_to_date' | 'files_copied';
+  synced?: number;
+  failed?: number;
+  hashVerified?: number;
+  hashFailed?: number;
+  errorMessage?: string;
+}
+
+export interface NASBackupStatus {
+  lastScheduled: NASBackupRunRecord | null;
+  lastManual: NASBackupRunRecord | null;
+  scheduledCron: string;
+  healthCheckCron: string;
+  nasFeatureEnabled: boolean;
+}
+
 export interface SystemInfo {
   version: string;
   lastUpdated: string;
@@ -237,6 +258,8 @@ export interface SystemInfo {
   // NAS storage metrics
   nasAvailable?: boolean;
   nasStorage?: NASStorage | null;
+  /** Last NAS sync runs (in-memory; resets on server restart) */
+  nasBackup?: NASBackupStatus;
   // System alerts
   alerts?: SystemAlert[];
 }

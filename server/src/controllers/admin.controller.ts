@@ -8,8 +8,9 @@ import path from 'path';
 import checkDiskSpace from 'check-disk-space';
 import { prisma } from '../config/database';
 import { getNASStorageMetrics, getLocalStorageMetrics, getAllStorageAlerts, StorageAlert } from '../services/storageMonitor.service';
-import { getStoragePathWithFallback, syncLocalToNAS, validateNASConnection } from '../config/nas';
+import { getNASConfig as getNASEnvConfig, getStoragePathWithFallback, syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { runIntegrityCheck } from '../services/fileIntegrity.service';
+import { getNASBackupStatusForAdmin, recordManualNASBackupRun } from '../services/nasBackupStatus.store';
 import {
   applyNASRuntimeConfigToEnv,
   getNASRuntimeConfig,
@@ -982,6 +983,8 @@ export const getSystemInfo = async (req: AuthRequest, res: Response) => {
       // NAS storage metrics
       nasAvailable,
       nasStorage,
+      // Last scheduled / manual NAS backup (in-memory; resets on server restart)
+      nasBackup: getNASBackupStatusForAdmin(),
       // Storage alerts
       alerts
     };
@@ -1139,8 +1142,43 @@ export const syncNASFromLocal = async (req: AuthRequest, res: Response) => {
 
     const config = await getNASRuntimeConfig();
     applyNASRuntimeConfigToEnv(config);
-    const syncResult = await syncLocalToNAS();
 
+    const nasEnabled = getNASEnvConfig().enabled;
+    const t0 = Date.now();
+    let nasReachable = false;
+    if (nasEnabled) {
+      nasReachable = await validateNASConnection();
+    }
+    const syncResult = await syncLocalToNAS();
+    const durationSeconds = Number(((Date.now() - t0) / 1000).toFixed(1));
+    const finishedAt = new Date().toISOString();
+
+    if (!nasEnabled) {
+      recordManualNASBackupRun({
+        finishedAt,
+        durationSeconds,
+        status: 'skipped',
+        skipReason: 'nas_disabled',
+      });
+    } else if (!nasReachable) {
+      recordManualNASBackupRun({
+        finishedAt,
+        durationSeconds,
+        status: 'skipped',
+        skipReason: 'nas_unavailable',
+      });
+    } else {
+      recordManualNASBackupRun({
+        finishedAt,
+        durationSeconds,
+        status: 'completed',
+        summary: syncResult.failed > 0 || syncResult.synced > 0 ? 'files_copied' : 'up_to_date',
+        synced: syncResult.synced,
+        failed: syncResult.failed,
+        hashVerified: syncResult.hashVerified,
+        hashFailed: syncResult.hashFailed,
+      });
+    }
 
     res.json({
       message: `Sync complete. ${syncResult.synced} file(s) synced, ${syncResult.failed} failed, ${syncResult.hashVerified} hash-verified.`,
