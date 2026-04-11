@@ -586,7 +586,7 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
         where: { studentId: id, status: 'APPROVED' },
         select: { type: true },
       });
-      const approvedTypes = new Set(approvedDocs.map((d) => d.type));
+      const approvedTypes = new Set<string>(approvedDocs.map((d) => d.type));
       const PRE_DEPLOYMENT_SLOTS: readonly (readonly string[])[] = [
         ['APPLICATION_INTERNSHIP'],
         ['MEDICAL_CERTIFICATE'],
