@@ -727,7 +727,7 @@ const Login: React.FC = () => {
           <img
             src="/psu-campus.png"
             alt="Pangasinan State University campus"
-            className="h-full w-full object-cover object-[50%_49%]"
+            className="h-full w-full object-cover object-bottom"
           />
         </div>
       </div>
