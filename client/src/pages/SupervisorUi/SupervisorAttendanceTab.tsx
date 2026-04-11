@@ -16,8 +16,6 @@ import { supervisorService } from "../../services/supervisorService";
 import type { AttendanceLog } from "../../services/supervisorService";
 import toast from "react-hot-toast";
 import type { IScannerControls, BrowserMultiFormatReader } from "@zxing/browser";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../../components/ai/AIGenerateButton";
 
 const NO_WORK_REASON_LABELS: Record<string, string> = {
   TYPHOON: "Typhoon / severe weather",
@@ -1207,22 +1205,6 @@ const SupervisorAttendance = () => {
                     ? "Notes (Optional)"
                     : "Reason (Required)"}
                 </label>
-                {selectedLogs.length > 0 && verifyAction && (
-                  <AIGenerateButton
-                    onGenerate={async () => {
-                      return aiService.generateAttendanceNote({
-                        attendanceLogId: selectedLogs[0].id,
-                        action: verifyAction,
-                      });
-                    }}
-                    onSuccess={(generatedText) => {
-                      setRemarks(generatedText);
-                      toast.success('Note generated successfully');
-                    }}
-                    size="sm"
-                    variant="outline"
-                  />
-                )}
               </div>
               <textarea
                 value={remarks}

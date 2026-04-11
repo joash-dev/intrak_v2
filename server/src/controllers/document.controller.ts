@@ -4,7 +4,9 @@ import { generatePreviewHtml, generatePdf } from '../services/pdfGenerator.servi
 import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { validateNASConnection, getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup } from '../config/nas';
+import { validateNASConnection, getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
+
+const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import path from 'path';
 import fs from 'fs';
 import { notificationService } from '../services/notification.service';
@@ -260,13 +262,12 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
           console.log(`[NAS] Created local backup: ${backupPath}`);
         }
       }
-    } catch (moveError) {
+    } catch (moveError: any) {
+      if (NAS_IO_ERRORS.includes(moveError?.code)) invalidateNASCache();
       console.error('Error moving file:', moveError);
-      // Clean up temp file if move fails
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
-      // Clean up destination if copy succeeded but unlink failed
       if (fs.existsSync(finalPath)) {
         fs.unlinkSync(finalPath);
       }
@@ -1085,12 +1086,16 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
 
     await prisma.document.delete({ where: { id } });
 
-    if (realFilepath && otherRefsCount === 0 && fs.existsSync(realFilepath)) {
-      fs.unlinkSync(realFilepath);
+    if (realFilepath && otherRefsCount === 0) {
+      const resolved = resolveFilePath(realFilepath);
+      if (resolved) {
+        try { await fs.promises.unlink(resolved); } catch {}
+      }
     }
 
     res.json({ message: 'Document deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    if (NAS_IO_ERRORS.includes(error?.code)) invalidateNASCache();
     res.status(500).json({ message: 'Failed to delete document', error });
   }
 };

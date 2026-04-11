@@ -18,8 +18,6 @@ import type {
   SupervisorStudent,
   InternshipEvaluationData,
 } from "../../services/supervisorService";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
 import { devLog } from "../../utils/devLog";
 
@@ -1261,35 +1259,6 @@ const SupervisorEvaluation = () => {
                                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Remarks
                                   </p>
-                                  {state.rating > 0 && selectedIntern && (
-                                    <AIGenerateButton
-                                      onGenerate={async () => {
-                                        const selectedCriteria = competency.criteria.find(
-                                          (c) => c.rating === state.rating
-                                        );
-                                        return aiService.generateEvaluationRemarks({
-                                          competencyId: competency.id,
-                                          rating: state.rating,
-                                          studentId: selectedIntern.id,
-                                          competencyTitle: competency.title,
-                                          ratingCriteria: selectedCriteria?.text || '',
-                                        });
-                                      }}
-                                      onSuccess={(generatedText) => {
-                                        setCompetencyRatings((prev) => ({
-                                          ...prev,
-                                          [competency.id]: {
-                                            ...prev[competency.id],
-                                            remarks: generatedText,
-                                          },
-                                        }));
-                                        toast.success('Remarks generated successfully');
-                                      }}
-                                      disabled={!state.rating || !selectedIntern}
-                                      size="sm"
-                                      variant="outline"
-                                    />
-                                  )}
                                 </div>
                                 <textarea
                                   value={state.remarks}
@@ -1321,53 +1290,6 @@ const SupervisorEvaluation = () => {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Overall Comments
                         </label>
-                        {selectedIntern && Object.values(competencyRatings).every((entry) => entry.rating > 0) && (
-                          <AIGenerateButton
-                            onGenerate={async () => {
-                              const competencies = Object.entries(competencyRatings).map(([id, entry]) => {
-                                const competency = competencyList.find(c => c.id === id);
-                                return {
-                                  id,
-                                  title: competency?.title || id,
-                                  rating: entry.rating,
-                                  remarks: entry.remarks,
-                                };
-                              });
-                              const totalRating = Object.values(competencyRatings).reduce(
-                                (sum, entry) => sum + entry.rating,
-                                0
-                              );
-                              const overallRating = totalRating / Object.keys(competencyRatings).length;
-
-                              const terminationReasons: string[] = [];
-                              if (terminationData.lackOfWork) terminationReasons.push('lack of work');
-                              if (terminationData.violationRules) terminationReasons.push('violation of company rules');
-                              if (terminationData.unfavorableHabits) terminationReasons.push('unfavorable work habits');
-                              if (terminationData.altercation) terminationReasons.push('altercation on the job');
-                              if (terminationData.absencesTardiness) terminationReasons.push('absences and tardiness');
-                              if (terminationData.disrespectful) terminationReasons.push('disrespectful behavior');
-                              if (terminationData.noInterest) terminationReasons.push('no interest/demonstrated desire to learn');
-                              if (terminationData.other && terminationData.otherSpecify) terminationReasons.push(terminationData.otherSpecify);
-
-                              return aiService.generateOverallComments({
-                                studentId: selectedIntern.id,
-                                competencies,
-                                overallRating,
-                                terminationData: terminationReasons.length > 0 ? {
-                                  terminated: true,
-                                  reasons: terminationReasons,
-                                } : undefined,
-                              });
-                            }}
-                            onSuccess={(generatedText) => {
-                              setOverallComments(generatedText);
-                              toast.success('Overall comments generated successfully');
-                            }}
-                            disabled={!selectedIntern || !Object.values(competencyRatings).every((entry) => entry.rating > 0)}
-                            size="sm"
-                            variant="outline"
-                          />
-                        )}
                       </div>
                       <textarea
                         value={overallComments}
@@ -1893,23 +1815,6 @@ const SupervisorEvaluation = () => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Other Comments and Suggestions
                       </label>
-                      {selectedIntern && Object.values(form18Ratings).every((rating) => rating > 0) && (
-                        <AIGenerateButton
-                          onGenerate={async () => {
-                            return aiService.generateForm18Comments({
-                              studentId: selectedIntern.id,
-                              ratings: form18Ratings,
-                            });
-                          }}
-                          onSuccess={(generatedText) => {
-                            setForm18Comments(generatedText);
-                            toast.success('Comments generated successfully');
-                          }}
-                          disabled={!selectedIntern || !Object.values(form18Ratings).every((rating) => rating > 0)}
-                          size="sm"
-                          variant="outline"
-                        />
-                      )}
                     </div>
                     <textarea
                       value={form18Comments}

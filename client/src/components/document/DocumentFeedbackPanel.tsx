@@ -12,8 +12,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../ai/AIGenerateButton";
 
 interface DocumentFeedbackPanelProps {
   documentId: string;
@@ -434,25 +432,6 @@ const DocumentFeedbackPanel = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Message
               </label>
-              {documentId && (type === "REQUEST_CHANGES" || type === "APPROVAL_NOTE") && (
-                <AIGenerateButton
-                  onGenerate={async () => {
-                    const action =
-                      type === "APPROVAL_NOTE" ? "approve" : "request_changes";
-                    return aiService.generateDocumentFeedback({
-                      documentId,
-                      action: action as "approve" | "reject" | "request_changes",
-                    });
-                  }}
-                  onSuccess={(generatedText) => {
-                    setMessage(generatedText);
-                    toast.success('Feedback generated successfully');
-                  }}
-                  disabled={!documentId}
-                  size="sm"
-                  variant="outline"
-                />
-              )}
             </div>
             <textarea
               value={message}

@@ -46,12 +46,6 @@ services:
       - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
       - RESEND_FROM_NAME=${RESEND_FROM_NAME}
       - EMAIL_PROVIDER=${EMAIL_PROVIDER}
-      - AI_PROVIDER=${AI_PROVIDER:-}
-      - AI_ENABLED=${AI_ENABLED:-false}
-      - AI_MODEL=${AI_MODEL:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-}
-      - AI_TEMPERATURE=${AI_TEMPERATURE:-}
     volumes:
       # Always use local Docker volume for app uploads path.
       # This keeps EC2 startup independent from host NAS/autofs mount state.

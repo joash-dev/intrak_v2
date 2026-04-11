@@ -127,6 +127,21 @@ export const validateNASConnection = async (): Promise<boolean> => {
 export const isNASAvailable = (): boolean | null => nasAvailabilityCache;
 
 /**
+ * Immediately mark NAS as unavailable so subsequent requests fall back to
+ * local storage. Call this from controller catch blocks when an fs operation
+ * fails with a NAS-specific error (EHOSTDOWN, EIO, ETIMEDOUT, etc.).
+ *
+ * The 2-minute health-check cron will re-validate and flip the cache back
+ * to `true` once the NAS recovers.
+ */
+export const invalidateNASCache = (): void => {
+  if (nasAvailabilityCache !== false) {
+    console.warn('[NAS] Cache invalidated due to I/O error — falling back to local storage');
+    nasAvailabilityCache = false;
+  }
+};
+
+/**
  * Resolve file path - checks both NAS and local storage
  * Useful when NAS might be disconnected but files exist in local storage
  * @param storedPath The filepath stored in database

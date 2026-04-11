@@ -2,7 +2,9 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup } from '../config/nas';
+import { getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
+
+const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import path from 'path';
 import fs from 'fs';
 
@@ -71,13 +73,12 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
           console.log(`[NAS] Created local backup for template: ${backupPath}`);
         }
       }
-    } catch (moveError) {
+    } catch (moveError: any) {
+      if (NAS_IO_ERRORS.includes(moveError?.code)) invalidateNASCache();
       console.error('Error moving template file:', moveError);
-      // Clean up temp file if move fails
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
-      // Clean up destination if copy succeeded but unlink failed
       if (fs.existsSync(filepath)) {
         fs.unlinkSync(filepath);
       }
@@ -320,9 +321,9 @@ export const deleteTemplate = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ message: 'Permission denied' });
     }
 
-    // Delete file from filesystem
-    if (fs.existsSync(template.filepath)) {
-      fs.unlinkSync(template.filepath);
+    const resolved = resolveFilePath(template.filepath);
+    if (resolved) {
+      try { await fs.promises.unlink(resolved); } catch {}
     }
 
     await prisma.documentTemplate.delete({ where: { id } });
@@ -334,7 +335,8 @@ export const deleteTemplate = async (req: AuthRequest, res: Response) => {
     }, req);
 
     res.json({ message: 'Template deleted successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    if (NAS_IO_ERRORS.includes(error?.code)) invalidateNASCache();
     console.error('Template deletion error:', error);
     res.status(500).json({ 
       message: 'Failed to delete template', 

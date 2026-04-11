@@ -26,8 +26,7 @@ import {
   announcementService,
   type Announcement,
 } from "../../services/announcementService";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../../components/ai/AIGenerateButton";
+
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
 
@@ -784,24 +783,6 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Message <span className="text-red-500">*</span>
                   </label>
-                  {newAnnouncement.title && newAnnouncement.audience && (
-                    <AIGenerateButton
-                      onGenerate={async () => {
-                        return aiService.generateAnnouncementContent({
-                          title: newAnnouncement.title,
-                          audience: newAnnouncement.audience,
-                          type: newAnnouncement.type,
-                        });
-                      }}
-                      onSuccess={(generatedText) => {
-                        setNewAnnouncement({ ...newAnnouncement, content: generatedText });
-                        toast.success("Content generated successfully");
-                      }}
-                      disabled={!newAnnouncement.title || !newAnnouncement.audience}
-                      size="sm"
-                      variant="outline"
-                    />
-                  )}
                 </div>
                 <textarea
                   value={newAnnouncement.content}
@@ -936,24 +917,6 @@ const CoordinatorAnnouncementsTab: React.FC<CoordinatorAnnouncementsTabProps> = 
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Message <span className="text-red-500">*</span>
                   </label>
-                  {editingAnnouncement.title && editingAnnouncement.audience && (
-                    <AIGenerateButton
-                      onGenerate={async () => {
-                        return aiService.generateAnnouncementContent({
-                          title: editingAnnouncement.title,
-                          audience: editingAnnouncement.audience,
-                          type: editingAnnouncement.type,
-                        });
-                      }}
-                      onSuccess={(generatedText) => {
-                        setEditingAnnouncement({ ...editingAnnouncement, content: generatedText });
-                        toast.success("Content generated successfully");
-                      }}
-                      disabled={!editingAnnouncement.title || !editingAnnouncement.audience}
-                      size="sm"
-                      variant="outline"
-                    />
-                  )}
                 </div>
                 <textarea
                   value={editingAnnouncement.content}

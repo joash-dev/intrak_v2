@@ -6,7 +6,9 @@ import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
-import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
+import { getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, getNASConfig, invalidateNASCache } from '../config/nas';
+
+const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
 
 /** Strip non-digits; preserve optional leading + (e.g. +639…). */
@@ -570,48 +572,54 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
 
     const userId = req.user!.id;
 
-    // Create profile photos directory if it doesn't exist
-    const storagePath = getStoragePath();
-    const photosDir = path.join(storagePath, 'profile-photos');
+    const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+    let photosDir = path.join(storagePath, 'profile-photos');
     await ensureNASDirectoryExists(photosDir);
 
-    // Generate unique filename
     const timestamp = Date.now();
     const fileExtension = path.extname(req.file.originalname);
     const filename = `${userId}_${timestamp}${fileExtension}`;
-    const filepath = path.join(photosDir, filename);
+    let filepath = path.join(photosDir, filename);
 
-    // Move file from temp location to profile photos directory
-    // Use copy + unlink instead of rename for cross-filesystem compatibility
     try {
       fs.copyFileSync(req.file.path, filepath);
       fs.unlinkSync(req.file.path);
-    } catch (moveError) {
-      console.error('Error moving profile photo:', moveError);
-      // Clean up temp file if move fails
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+    } catch (moveError: any) {
+      // If the NAS write failed, retry to local storage
+      if (NAS_IO_ERRORS.includes(moveError?.code) && !isUsingFallback) {
+        invalidateNASCache();
+        const localDir = path.join(process.env.UPLOAD_PATH || './uploads', 'profile-photos');
+        await fs.promises.mkdir(localDir, { recursive: true });
+        filepath = path.join(localDir, filename);
+        try {
+          fs.copyFileSync(req.file.path, filepath);
+          fs.unlinkSync(req.file.path);
+        } catch (retryError) {
+          console.error('Error moving profile photo (local retry):', retryError);
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          throw new Error('Failed to save profile photo');
+        }
+      } else {
+        console.error('Error moving profile photo:', moveError);
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        throw new Error('Failed to save profile photo');
       }
-      // Clean up destination if copy succeeded but unlink failed
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
-      }
-      throw new Error('Failed to save profile photo');
     }
 
-    // Delete old profile photo if it exists
+    // Delete old profile photo from both NAS and local to avoid orphans
     const user = await prisma.user.findUnique({
       where: { id: userId }
     }) as any;
 
     if (user?.profilePhoto) {
-      const oldFilePath = path.join(photosDir, user.profilePhoto);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
+      const nasDir = path.join(getNASConfig().mountPath, 'profile-photos');
+      const localDir = path.join(process.env.UPLOAD_PATH || './uploads', 'profile-photos');
+      for (const dir of [nasDir, localDir]) {
+        try { await fs.promises.unlink(path.join(dir, user.profilePhoto)); } catch {}
       }
     }
 
-    // Update user profile photo in database
     await prisma.user.update({
       where: { id: userId },
       data: { profilePhoto: filename } as any
@@ -621,7 +629,8 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
       message: 'Profile photo uploaded successfully',
       profilePhoto: `/api/users/profile-photo/${filename}`
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (NAS_IO_ERRORS.includes(error?.code)) invalidateNASCache();
     console.error('Profile photo upload error:', error);
     res.status(500).json({
       message: 'Profile photo upload failed',
@@ -669,22 +678,19 @@ export const getProfilePhoto = async (req: any, res: Response) => {
       return res.status(404).json({ message: 'Invalid profile photo filename' });
     }
 
-    const storagePath = getStoragePath();
-    const filepath = path.join(storagePath, 'profile-photos', filename);
-    console.log(`📸 Looking for file at: ${filepath}`);
+    const candidatePath = path.join(getStoragePath(), 'profile-photos', filename);
+    const resolved = resolveFilePath(candidatePath);
 
-    if (!fs.existsSync(filepath)) {
-      console.log(`📸 File does not exist at: ${filepath}`);
+    if (!resolved) {
+      console.log(`📸 File not found (NAS + local): ${candidatePath}`);
       return res.status(404).json({ message: 'Profile photo file not found' });
     }
 
-    console.log(`📸 Serving profile photo: ${filename}`);
+    console.log(`📸 Serving profile photo: ${resolved}`);
 
-    // Add CORS headers for image serving
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
 
-    // Set appropriate content type based on file extension
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes: { [key: string]: string } = {
       '.jpg': 'image/jpeg',
@@ -695,8 +701,9 @@ export const getProfilePhoto = async (req: any, res: Response) => {
     };
     res.header('Content-Type', mimeTypes[ext] || 'image/jpeg');
 
-    res.sendFile(filepath);
-  } catch (error) {
+    res.sendFile(resolved);
+  } catch (error: any) {
+    if (NAS_IO_ERRORS.includes(error?.code)) invalidateNASCache();
     console.error('Get profile photo error:', error);
     res.status(500).json({
       message: 'Failed to get profile photo',
@@ -715,10 +722,10 @@ export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
     }) as any;
 
     if (user?.profilePhoto) {
-      const storagePath = getStoragePath();
-      const filepath = path.join(storagePath, 'profile-photos', user.profilePhoto);
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
+      const nasDir = path.join(getNASConfig().mountPath, 'profile-photos');
+      const localDir = path.join(process.env.UPLOAD_PATH || './uploads', 'profile-photos');
+      for (const dir of [nasDir, localDir]) {
+        try { await fs.promises.unlink(path.join(dir, user.profilePhoto)); } catch {}
       }
     }
 
@@ -729,7 +736,8 @@ export const removeProfilePhoto = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ message: 'Profile photo removed successfully' });
-  } catch (error) {
+  } catch (error: any) {
+    if (NAS_IO_ERRORS.includes(error?.code)) invalidateNASCache();
     console.error('Remove profile photo error:', error);
     res.status(500).json({
       message: 'Failed to remove profile photo',

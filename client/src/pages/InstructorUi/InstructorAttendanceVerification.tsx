@@ -11,8 +11,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { attendanceService } from "../../services/attendanceService";
-import { aiService } from "../../services/aiService";
-import AIGenerateButton from "../../components/ai/AIGenerateButton";
 import toast from "react-hot-toast";
 import { devLog } from "../../utils/devLog";
 
@@ -510,22 +508,6 @@ const InstructorAttendanceVerification: React.FC = () => {
                     ? "Notes (Optional)"
                     : "Reason (Required)"}
                 </label>
-                {selectedLog && verifyAction && (
-                  <AIGenerateButton
-                    onGenerate={async () => {
-                      return aiService.generateAttendanceNote({
-                        attendanceLogId: selectedLog.id,
-                        action: verifyAction,
-                      });
-                    }}
-                    onSuccess={(generatedText) => {
-                      setRemarks(generatedText);
-                      toast.success('Note generated successfully');
-                    }}
-                    size="sm"
-                    variant="outline"
-                  />
-                )}
               </div>
               <textarea
                 value={remarks}

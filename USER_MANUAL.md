@@ -567,7 +567,7 @@ This is where you make the **final decision** on non-listed company proposals fo
 2. Click **Create**.
 3. Fill in:
    - **Title**
-   - **Content** (you can use the AI Generate button for help drafting)
+   - **Content**
    - **Audience**: All, Students, Coordinators, Instructors, or Partners
    - **Type**: Info, Warning, Success, or Urgent
    - **Pin**: toggle on to keep the announcement at the top

@@ -4,6 +4,7 @@ import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { prisma } from '../config/database';
 
 let syncTask: ScheduledTask | null = null;
+let healthCheckTask: ScheduledTask | null = null;
 let isSyncing = false;
 let wasNASAvailable = false;
 
@@ -86,15 +87,47 @@ export const startNASSyncJob = (): void => {
   });
 
   console.log(`[NAS Sync] Cron job started (schedule: "${schedule}")`);
+
+  // Lightweight health check — updates the cache every 2 minutes so that
+  // error-based invalidation (invalidateNASCache) can recover quickly once
+  // the NAS comes back online. Does NOT trigger a full sync.
+  const healthSchedule = process.env.NAS_HEALTH_CRON || '*/2 * * * *';
+
+  if (cron.validate(healthSchedule)) {
+    healthCheckTask = cron.schedule(healthSchedule, async () => {
+      try {
+        const isUp = await validateNASConnection();
+
+        if (isUp && !wasNASAvailable) {
+          console.log('[NAS Health] NAS is back online — cache updated to available');
+        } else if (!isUp && wasNASAvailable) {
+          console.warn('[NAS Health] NAS went offline — cache updated to unavailable');
+        }
+
+        wasNASAvailable = isUp;
+      } catch (err) {
+        console.error('[NAS Health] Check failed:', err);
+      }
+    });
+
+    console.log(`[NAS Health] Health-check cron started (schedule: "${healthSchedule}")`);
+  } else {
+    console.error(`[NAS Health] Invalid NAS_HEALTH_CRON expression: "${healthSchedule}". Health check not started.`);
+  }
 };
 
 /**
- * Stop the scheduled NAS sync cron job.
+ * Stop the scheduled NAS sync cron job and health check.
  */
 export const stopNASSyncJob = (): void => {
   if (syncTask) {
     syncTask.stop();
     syncTask = null;
     console.log('[NAS Sync] Cron job stopped');
+  }
+  if (healthCheckTask) {
+    healthCheckTask.stop();
+    healthCheckTask = null;
+    console.log('[NAS Health] Health-check cron stopped');
   }
 };
