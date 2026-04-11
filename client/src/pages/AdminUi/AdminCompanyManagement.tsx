@@ -110,9 +110,6 @@ const AdminCompanyManagement = () => {
         contactPerson: formData.contactPerson,
         contactEmail: formData.email,
         contactNumber: formData.phone,
-        latitude: undefined,
-        longitude: undefined,
-        radiusMeters: undefined,
         companyType: formData.companyType,
         workingDays: formData.workingDays,
       });

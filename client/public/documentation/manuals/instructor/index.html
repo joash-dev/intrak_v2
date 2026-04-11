@@ -129,7 +129,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 }</style>
 </head>
 <body>
-<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">â˜°</button>
+<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
 <div class="sb-overlay" aria-hidden="true"></div><aside class="sb">
   <div class="sbt">
     <div class="sbl">
@@ -137,7 +137,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <span class="sbt2">INTRAK</span>
     </div>
     <div class="rp">Instructor Manual</div>
-    <div class="ver">Version 2.0 Â· 2026.03</div>
+    <div class="ver">Version 2.0 · 2026.04</div>
   </div>
   <nav class="nav">
     <span class="gl">Getting Started</span>
@@ -145,10 +145,14 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <a class="ni" onclick="go('login',this)"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Login &amp; Access</a>
     <span class="gl">Your Modules</span>
     <a class="ni" onclick="go('dashboard',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+    <a class="ni" onclick="go('students',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>Students</a>
+    <a class="ni" onclick="go('addstudent',this)"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Add Student</a>
     <a class="ni" onclick="go('documents',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Student Documents</a>
+    <a class="ni" onclick="go('checklist',this)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Document Checklist</a>
     <a class="ni" onclick="go('applications',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Company Applications</a>
     <a class="ni" onclick="go('proposals',this)"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Company Proposals</a>
-    <a class="ni" onclick="go('students',this)"><svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>Students</a>
+    <a class="ni" onclick="go('messages',this)"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</a>
+    <a class="ni" onclick="go('announcements',this)"><svg viewBox="0 0 24 24"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>Announcements</a>
     <a class="ni" onclick="go('reports',this)"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Reports</a>
     <a class="ni" onclick="go('notifications',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
     <span class="gl">Account</span>
@@ -157,14 +161,14 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <a class="ni" onclick="go('troubleshoot',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
   </nav>
   <a class="bk" href="https://www.intrak.site/"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to Documentation</a>
-  <div class="sbf">INTRAK v2.0 Â· Instructor</div>
+  <div class="sbf">INTRAK v2.0 · Instructor</div>
 </aside>
 <main class="main">
 
 <div class="pg on" id="pg-overview">
   <div class="hero"><div class="eye">Instructor Portal</div><div class="h1">Instructor <em>Manual</em></div>
   <div class="hs">Your complete guide to reviewing student documents, managing applications and proposals, monitoring your assigned students, and generating reports.</div>
-  <div class="hm"><span class="ch b">7 Modules</span><span class="ch">Base Path: /instructor</span></div></div>
+  <div class="hm"><span class="ch b">11 Modules</span><span class="ch">Base Path: /instructor</span></div></div>
   <div class="bd">
     <div class="st">Your responsibilities in INTRAK</div>
     <div class="cg">
@@ -172,6 +176,10 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="cl">Manage Applications</div><div class="cd">Review and decide on student company placement applications.</div></div>
       <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="cl">Review Proposals</div><div class="cd">Handle non-listed company proposals — return, reject, or forward to coordinator.</div></div>
       <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="cl">Generate Reports</div><div class="cd">Create attendance and compliance reports for your assigned students.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><div class="cl">Add Students</div><div class="cd">Onboard students individually or in bulk via CSV upload.</div></div>
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="cl">Document Checklist</div><div class="cd">Per-student compliance overview with progress tracking by phase.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="cl">Messages</div><div class="cd">Partnership assistance conversations with students and coordinators.</div></div>
+      <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg></div><div class="cl">Announcements</div><div class="cd">Browse program-wide announcements targeted to All or Instructors.</div></div>
     </div>
     <div class="hr"></div>
     <div class="st">Your daily workflow</div>
@@ -179,8 +187,9 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <div class="step"><div class="snum">1</div><div class="stx">Check your Dashboard for pending review tasks</div></div>
       <div class="step"><div class="snum">2</div><div class="stx">Review new document submissions from assigned students</div></div>
       <div class="step"><div class="snum">3</div><div class="stx">Process any pending company applications or proposals</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Monitor student progress and attendance compliance</div></div>
-      <div class="step"><div class="snum">5</div><div class="stx">Generate reports as needed for coordinator review</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Check Messages for partnership assistance conversations</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Monitor student progress via Document Checklist</div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Generate reports as needed for coordinator review</div></div>
     </div>
   </div>
 </div>
@@ -209,6 +218,66 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
   </div>
 </div>
 
+<div class="pg" id="pg-students">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Your <em>Students</em></div><div class="hs">View profiles, timelines, and activity records for all students assigned to you.</div><div class="hm"><span class="ch b">/instructor/students</span></div></div>
+  <div class="bd">
+    <div class="cg">
+      <div class="card"><div class="cl">Student Profiles</div><div class="cd">View personal details and contact information for each assigned student.</div></div>
+      <div class="card"><div class="cl">Activity Timeline</div><div class="cd">See the full history of submissions, approvals, and placements.</div></div>
+      <div class="card"><div class="cl">Compliance Status</div><div class="cd">Check which required documents each student has completed.</div></div>
+      <div class="card"><div class="cl">Placement Info</div><div class="cd">View which company and supervisor each student is assigned to.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-addstudent">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Add <em>Student</em></div><div class="hs">Onboard new students individually or in bulk via CSV upload. Each created account receives a temporary password by email.</div><div class="hm"><span class="ch b">/instructor/students</span><span class="ch">Two methods</span></div></div>
+  <div class="bd">
+    <div class="st">Method 1 — Single Add</div>
+    <div class="sd">Add one student at a time using the form.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click the <strong>Add Student</strong> button on the Students page</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in <strong>Student Number</strong> (format: <span class="mono">22-UR-0592</span>)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Fill in <strong>Name</strong>, <strong>Email</strong>, <strong>Year</strong>, and <strong>Phone</strong></div></div>
+      <div class="step"><div class="snum">4</div><div class="stx"><strong>Program</strong> is fixed to <span class="sbg">BS Computer Engineering</span></div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Click <strong>Submit</strong> — a temporary password is generated and emailed to the student</div></div>
+    </div>
+    <div class="st">Required fields</div>
+    <div class="slist">
+      <div class="srow"><div class="sic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M4 4h16v16H4z"/><path d="M9 9h6M9 13h4"/></svg></div><div class="sna">Student Number</div><div class="sde"><span class="mono">22-UR-0592</span> format</div></div>
+      <div class="srow"><div class="sic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="sna">Name</div><div class="sde">Full name of the student</div></div>
+      <div class="srow"><div class="sic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg></div><div class="sna">Email</div><div class="sde">Student's email address</div></div>
+      <div class="srow"><div class="sic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="sna">Year</div><div class="sde">Current year level</div></div>
+      <div class="srow"><div class="sic" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="sna">Phone</div><div class="sde">Contact number</div></div>
+      <div class="srow"><div class="sic" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg></div><div class="sna">Program</div><div class="sde">Fixed: <span class="sbg">BS Computer Engineering</span></div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>The student receives an email with their temporary password. They should change it on first login via Settings.</span></div>
+    <div class="hr"></div>
+    <div class="st">Method 2 — Bulk Add via CSV</div>
+    <div class="sd">Upload a CSV file to create multiple student accounts at once.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click the <strong>Bulk Add</strong> button on the Students page</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Click <strong>Download Template</strong> to get the CSV format</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Open the template — columns: <span class="mono">studentNumber</span>, <span class="mono">name</span>, <span class="mono">email</span>, <span class="mono">year</span>, <span class="mono">phone</span></div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Fill in your student data (one row per student)</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Upload the completed CSV file</div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Click <strong>Preview</strong> to review the parsed data</div></div>
+      <div class="step"><div class="snum">7</div><div class="stx">Verify the entries are correct</div></div>
+      <div class="step"><div class="snum">8</div><div class="stx">Click <strong>Add Students</strong> to create all accounts at once</div></div>
+      <div class="step"><div class="snum">9</div><div class="stx">Each student receives an email with their temporary password</div></div>
+    </div>
+    <div class="st">CSV template columns</div>
+    <div class="pw">
+      <div class="sp"><span class="mono">studentNumber</span></div>
+      <div class="sp"><span class="mono">name</span></div>
+      <div class="sp"><span class="mono">email</span></div>
+      <div class="sp"><span class="mono">year</span></div>
+      <div class="sp"><span class="mono">phone</span></div>
+    </div>
+    <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Ensure student numbers follow the <span class="mono">22-UR-0592</span> format. Invalid rows will be flagged during the preview step.</span></div>
+  </div>
+</div>
+
 <div class="pg" id="pg-documents">
   <div class="hero"><div class="eye">Module Guide</div><div class="h1">Student <em>Documents</em></div><div class="hs">Review, approve, reject, or request resubmission of documents from your assigned students.</div><div class="hm"><span class="ch b">/instructor/documents</span></div></div>
   <div class="bd">
@@ -228,6 +297,35 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <div class="sp"><div class="pd" style="background:#534AB7"></div><span class="pn">RESUBMISSION_REQUESTED</span></div>
     </div>
     <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Always include clear, actionable remarks when rejecting or requesting resubmission so students know exactly what to correct.</span></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-checklist">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Document <em>Checklist</em></div><div class="hs">Per-student compliance overview of all required PSU forms and their completion status, organized by deployment phase.</div><div class="hm"><span class="ch b">/instructor/checklist</span><span class="ch">Per-student tracking</span></div></div>
+  <div class="bd">
+    <div class="st">How to use the checklist</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to the <strong>Checklist</strong> tab from the sidebar</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">View a list of your assigned students with <strong>progress bars</strong> (% of required documents approved)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Expand a student to see individual document rows grouped by phase</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Review each document row for its current status</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Use <strong>Search</strong> to find a student quickly</div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Use <strong>Filters</strong> to narrow by status or document category</div></div>
+    </div>
+    <div class="st">Document phases</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="cl">Pre-deployment</div><div class="cd">Forms required before OJT placement begins.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="cl">Upon-approval</div><div class="cd">Forms due after company placement is approved.</div></div>
+      <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="cl">Post-OJT</div><div class="cd">Forms submitted after OJT completion.</div></div>
+    </div>
+    <div class="st">Document row statuses</div>
+    <div class="pw">
+      <div class="sp"><div class="pd" style="background:#9a9890"></div><span class="pn">Pending</span><span class="ps">— not yet submitted</span></div>
+      <div class="sp"><div class="pd" style="background:#BA7517"></div><span class="pn">Submitted</span><span class="ps">— awaiting review</span></div>
+      <div class="sp"><div class="pd" style="background:#1D9E75"></div><span class="pn">Approved</span></div>
+      <div class="sp"><div class="pd" style="background:#E24B4A"></div><span class="pn">Rejected</span></div>
+    </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>The progress bar for each student reflects only <strong>approved</strong> documents. Submitted documents still count as incomplete until reviewed.</span></div>
   </div>
 </div>
 
@@ -264,15 +362,43 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
   </div>
 </div>
 
-<div class="pg" id="pg-students">
-  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Your <em>Students</em></div><div class="hs">View profiles, timelines, and activity records for all students assigned to you.</div><div class="hm"><span class="ch b">/instructor/students</span></div></div>
+<div class="pg" id="pg-messages">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1"><em>Messages</em></div><div class="hs">Partnership assistance conversations with students. Communicate about company proposals and placement coordination in real time.</div><div class="hm"><span class="ch b">/instructor/messages</span><span class="ch">Auto-updating</span></div></div>
   <div class="bd">
-    <div class="cg">
-      <div class="card"><div class="cl">Student Profiles</div><div class="cd">View personal details and contact information for each assigned student.</div></div>
-      <div class="card"><div class="cl">Activity Timeline</div><div class="cd">See the full history of submissions, approvals, and placements.</div></div>
-      <div class="card"><div class="cl">Compliance Status</div><div class="cd">Check which required documents each student has completed.</div></div>
-      <div class="card"><div class="cl">Placement Info</div><div class="cd">View which company and supervisor each student is assigned to.</div></div>
+    <div class="st">Using the messaging interface</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <strong>Messages</strong> from the sidebar</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">A conversation list appears — one entry per student with an active partnership proposal</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Click a student's conversation to open the thread</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Type a message and send</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">The thread shows messages from all participants with <strong>role badges</strong> (Student, Instructor, Coordinator)</div></div>
     </div>
+    <div class="st">Auto-update behaviour</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div><div class="cl">Conversation list</div><div class="cd">Polls every <strong>12 seconds</strong> for new or updated conversations.</div></div>
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="cl">Active thread</div><div class="cd">Polls every <strong>3 seconds</strong> for new messages in the open thread.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="cl">Mark as read</div><div class="cd">Selecting a conversation automatically marks it as read.</div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Unread conversations appear highlighted in the list. Clicking one marks it as read immediately.</span></div>
+  </div>
+</div>
+
+<div class="pg" id="pg-announcements">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1"><em>Announcements</em></div><div class="hs">Browse program-wide announcements targeted to All users or specifically to Instructors.</div><div class="hm"><span class="ch b">/instructor/announcements</span></div></div>
+  <div class="bd">
+    <div class="st">Browsing announcements</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <strong>Announcements</strong> from the sidebar</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Browse announcements targeted to <span class="sbg">All</span> or <span class="sbg">Instructors</span></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Expand an announcement to read the full content</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Use the <strong>search bar</strong> to find specific announcements</div></div>
+    </div>
+    <div class="st">Announcement targets</div>
+    <div class="pw">
+      <div class="sp"><div class="pd" style="background:#534AB7"></div><span class="pn">All</span><span class="ps">— visible to every user</span></div>
+      <div class="sp"><div class="pd" style="background:#1D9E75"></div><span class="pn">Instructors</span><span class="ps">— instructor-specific</span></div>
+    </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Announcements are posted by the Coordinator. You cannot create announcements from the Instructor portal.</span></div>
   </div>
 </div>
 
@@ -317,6 +443,8 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <div class="iss"><div class="iq"><div class="ibg">!</div>I can't see a student's documents</div><div class="isl"><div class="ist"><div class="ibu"></div>Confirm the student is assigned to you under Students</div><div class="ist"><div class="ibu"></div>Check with your coordinator if the assignment is missing</div></div></div>
     <div class="iss"><div class="iq"><div class="ibg">!</div>A module or feature is not visible</div><div class="isl"><div class="ist"><div class="ibu"></div>Ensure you are logged in with the Instructor role</div><div class="ist"><div class="ibu"></div>Some features are condition-based — check workflow status</div></div></div>
     <div class="iss"><div class="iq"><div class="ibg">!</div>I can't forward a proposal</div><div class="isl"><div class="ist"><div class="ibu"></div>Verify the proposal is in SUBMITTED_TO_INSTRUCTOR status</div><div class="ist"><div class="ibu"></div>Ensure you have added any required remarks before forwarding</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>Messages are not updating</div><div class="isl"><div class="ist"><div class="ibu"></div>Check your internet connection — messages poll automatically</div><div class="ist"><div class="ibu"></div>Refresh the page if the polling seems stuck</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>I don't see announcements</div><div class="isl"><div class="ist"><div class="ibu"></div>Only announcements targeted to All or Instructors are visible</div><div class="ist"><div class="ibu"></div>Check with your coordinator if you expect a specific announcement</div></div></div>
     <div class="hr"></div>
     <div class="st">Escalation path</div>
     <div class="wf">

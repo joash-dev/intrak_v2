@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Building2,
   MapPin,
@@ -15,10 +15,12 @@ import {
   X,
   Info,
   UserMinus,
+  FileWarning,
 } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import { companyService, type Company } from "../../services/companyService";
 import { dashboardService } from "../../services/dashboardService";
+import { documentService } from "../../services/documentService";
 import api from "../../services/api";
 import Skeleton from "../../components/Skeleton";
 import toast from "react-hot-toast";
@@ -61,6 +63,28 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
   const [loadingCompanyDetails, setLoadingCompanyDetails] = useState(false);
   const [resigning, setResigning] = useState(false);
   const [showResignModal, setShowResignModal] = useState(false);
+  const [myDocuments, setMyDocuments] = useState<any[]>([]);
+  const [applicationError, setApplicationError] = useState<string | null>(null);
+
+  const PRE_DEPLOYMENT_SLOTS: readonly { types: string[]; label: string }[] = [
+    { types: ["APPLICATION_INTERNSHIP"], label: "Application for Internship" },
+    { types: ["MEDICAL_CERTIFICATE"], label: "Medical Certificate" },
+    { types: ["CERTIFICATION_UNITS"], label: "Certification of Units Earned" },
+    { types: ["INTERNSHIP_RESUME"], label: "Internship Resume" },
+    { types: ["CONSENT_FORM"], label: "Consent Form" },
+    { types: ["ENDORSEMENT_LETTER", "ENDORSEMENT_LETTER_MULTI"], label: "Endorsement Letter" },
+    { types: ["INTERNSHIP_RELEASE"], label: "Internship Release Form" },
+    { types: ["RECORD_FILE"], label: "Record File" },
+  ];
+
+  const missingPreDeploymentDocs = useMemo(() => {
+    const approvedTypes = new Set(
+      myDocuments.filter((d) => d.status === "APPROVED").map((d) => d.type)
+    );
+    return PRE_DEPLOYMENT_SLOTS.filter(
+      (slot) => !slot.types.some((t) => approvedTypes.has(t))
+    );
+  }, [myDocuments]);
 
   // Load companies, applications, and current student data
   useEffect(() => {
@@ -109,15 +133,17 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [companiesData, studentData, applicationsData] = await Promise.all([
+      const [companiesData, studentData, applicationsData, docsData] = await Promise.all([
         companyService.getAllCompanies(),
         dashboardService.getDashboardData(),
         api.get("/company-applications/my-applications"),
+        documentService.getStudentDocuments().catch(() => [] as any[]),
       ]);
 
       setCompanies(companiesData);
       setCurrentStudent(studentData.student);
       setMyApplications(applicationsData.data.applications || []);
+      setMyDocuments(docsData);
     } catch (err: any) {
       console.error("Error loading data:", err);
       setError(err.message || "Failed to load companies");
@@ -130,6 +156,7 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
   const handleApply = (company: Company) => {
     setSelectedCompany(company);
     setApplicationMessage("");
+    setApplicationError(null);
     setShowApplicationModal(true);
   };
 
@@ -155,9 +182,10 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
       }
     } catch (error: any) {
       console.error("Error submitting application:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to submit application"
-      );
+      const msg =
+        error.response?.data?.message || "Failed to submit application";
+      setApplicationError(msg);
+      toast.error(msg);
     } finally {
       setApplying(false);
     }
@@ -813,6 +841,27 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
                 </div>
               </div>
 
+              {missingPreDeploymentDocs.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-2">
+                    <FileWarning className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
+                        Incomplete pre-deployment documents
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
+                        Your instructor won't be able to approve this application until all pre-deployment documents are submitted and approved. Missing:
+                      </p>
+                      <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-0.5">
+                        {missingPreDeploymentDocs.map((slot) => (
+                          <li key={slot.types[0]}>{slot.label}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Application Message (Optional)
               </label>
@@ -825,6 +874,15 @@ const StudentCompanySelection: React.FC<StudentCompanySelectionProps> = () => {
                 className="w-full min-h-[6rem] max-h-60 resize-y overflow-y-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent break-words"
               />
             </div>
+
+            {applicationError && (
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-lg p-3.5 mb-4 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-800 dark:text-red-200 leading-relaxed">
+                  {applicationError}
+                </p>
+              </div>
+            )}
 
             <div className="flex space-x-3">
               <button

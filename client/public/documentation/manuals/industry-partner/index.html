@@ -137,7 +137,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <span class="sbt2">INTRAK</span>
     </div>
     <div class="rp">Industry Partner Manual</div>
-    <div class="ver">Version 2.0 Â· 2026.03</div>
+    <div class="ver">Version 2.0 Â· 2026.04</div>
   </div>
   <nav class="nav">
     <span class="gl">Getting Started</span>
@@ -148,6 +148,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <a class="ni" onclick="go('attendance',this)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Attendance Verification</a>
     <a class="ni" onclick="go('evaluations',this)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Evaluations</a>
     <a class="ni" onclick="go('documents',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documents</a>
+    <a class="ni" onclick="go('announcements',this)"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Announcements</a>
     <span class="gl">Account</span>
     <a class="ni" onclick="go('settings',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
     <a class="ni" onclick="go('notifications',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
@@ -162,7 +163,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 <div class="pg on" id="pg-overview">
   <div class="hero"><div class="eye">Industry Partner Portal</div><div class="h1">Industry Partner <em>Manual</em></div>
   <div class="hs">Your complete guide to verifying intern attendance and submitting performance evaluations through INTRAK.</div>
-  <div class="hm"><span class="ch b">5 Modules</span><span class="ch">Base Path: /industry-partner</span></div></div>
+  <div class="hm"><span class="ch b">6 Modules</span><span class="ch">Base Path: /industry-partner</span></div></div>
   <div class="bd">
     <div class="st">Your two main responsibilities</div>
     <div class="cg">
@@ -199,13 +200,39 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 <div class="pg" id="pg-attendance">
   <div class="hero"><div class="eye">Module Guide</div><div class="h1">Attendance <em>Verification</em></div><div class="hs">Review and verify daily attendance entries submitted by your interns.</div><div class="hm"><span class="ch b">/industry-partner/attendance</span></div></div>
   <div class="bd">
-    <div class="st">How to verify an attendance entry</div>
+    <div class="st">Three-tab layout</div>
+    <div class="sd">The Attendance page is organized into three tabs: Logs, Scanner, and No-Work.</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="cl">Logs</div><div class="cd">Review and approve/reject pending attendance entries grouped by student and date.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/></svg></div><div class="cl">Scanner</div><div class="cd">Scan intern QR codes via device camera or enter tokens manually for real-time verification.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div><div class="cl">No-Work</div><div class="cd">View and approve or reject student no-work day notices.</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">Logs Tab</div>
+    <div class="sd">Review and verify pending attendance entries submitted by your interns.</div>
     <div class="wf">
-      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/industry-partner/attendance</span></div></div>
-      <div class="step"><div class="snum">2</div><div class="stx">Review the pending attendance entry details (intern, date, time)</div></div>
-      <div class="step"><div class="snum">3</div><div class="stx">Choose: Approve or Reject</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Add a remark if rejecting — explain why the entry is invalid</div></div>
-      <div class="step"><div class="snum">5</div><div class="stx">Submit your verification — the intern is notified</div></div>
+      <div class="step"><div class="snum">1</div><div class="stx">Pending entries are grouped by student and date for easy review</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Expand a student to see per-date entries — each date can have up to <strong>2 time segments</strong> (e.g. morning + afternoon)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Approve</strong> — optionally add remarks, then confirm</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx"><strong>Reject</strong> — remarks are <em>required</em> when rejecting; explain why the entry is invalid</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">View per-student summaries showing total approved hours and pending count</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">Scanner Tab</div>
+    <div class="sd">Scan intern QR codes for real-time attendance verification.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Open the Scanner tab — your device camera activates for QR scanning</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Point the camera at the intern's QR code to scan automatically</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Alternatively, use the <strong>manual token entry</strong> text field to type or paste the attendance token</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Verification happens automatically upon a successful scan or token submission</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">No-Work Tab</div>
+    <div class="sd">View and respond to student no-work day notices.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Browse submitted no-work notices from your assigned interns</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Review each notice — the student's reason and date are displayed</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Approve</strong> or <strong>Reject</strong> each no-work notice individually</div></div>
     </div>
     <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Only approved entries count toward the intern's total completed hours. Please verify entries promptly and accurately.</span></div>
     <div class="st">Verification workflow</div>
@@ -220,20 +247,40 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 <div class="pg" id="pg-evaluations">
   <div class="hero"><div class="eye">Module Guide</div><div class="h1">Intern <em>Evaluations</em></div><div class="hs">Submit structured performance evaluations for your assigned interns.</div><div class="hm"><span class="ch b">/industry-partner/evaluations</span></div></div>
   <div class="bd">
-    <div class="st">Submitting an evaluation</div>
+    <div class="st">Three evaluation forms</div>
+    <div class="sd">Each intern requires three separate evaluations. Select the intern, then choose the form to fill out.</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="cl">Form 11</div><div class="cp">Internship Evaluation</div><div class="cd">8 weighted competencies rated 1–5 with termination checkboxes and overall comments.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="cl">Form 18</div><div class="cp">Supervisor Feedback</div><div class="cd">Star ratings on punctuality, knowledge, teamwork, task performance, policy compliance, conduct, and traits.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div><div class="cl">Form 19b</div><div class="cp">Agency Self-Evaluation</div><div class="cd">Demographic fields and multi-criterion ratings for agency-level self-assessment.</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">Form 11 — Internship Evaluation</div>
     <div class="wf">
-      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/industry-partner/evaluations</span></div></div>
-      <div class="step"><div class="snum">2</div><div class="stx">Select the intern you want to evaluate</div></div>
-      <div class="step"><div class="snum">3</div><div class="stx">Fill in ratings for each performance criteria</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Add comments — be specific and constructive</div></div>
-      <div class="step"><div class="snum">5</div><div class="stx">Submit — the intern and their instructor are notified</div></div>
+      <div class="step"><div class="snum">1</div><div class="stx">Select the intern to evaluate</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Rate each of the <strong>8 weighted competencies</strong> on a scale of <strong>1–5</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Check the <strong>termination checkboxes</strong> if applicable (early termination reasons)</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Add <strong>overall comments</strong> about the intern's performance</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Submit the form, then use the <strong>Export</strong> button to download as PDF</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">Form 18 — Supervisor Feedback</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Select the intern to evaluate</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Provide <strong>star ratings</strong> for: Punctuality, Knowledge, Teamwork, Task Performance, Policy Compliance, Conduct, and Traits</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Add written <strong>comments</strong> for qualitative feedback</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx"><strong>Save</strong> as draft or <strong>Submit</strong> the completed form</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Use the <strong>Export</strong> button to download as PDF</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="st">Form 19b — Agency Self-Evaluation</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Fill in <strong>demographic fields</strong> (agency name, address, evaluator info)</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Rate each criterion using the <strong>multi-criterion rating</strong> scales provided</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Submit</strong> the completed self-evaluation</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Use the <strong>Export</strong> button to download as PDF</div></div>
     </div>
     <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Evaluation comments are visible to the intern. Be professional, specific, and constructive in your feedback.</span></div>
-    <div class="st">What evaluations include</div>
-    <div class="cg">
-      <div class="card"><div class="cl">Criteria Ratings</div><div class="cd">Scale-based ratings across defined performance categories set by the institution.</div></div>
-      <div class="card"><div class="cl">Comments</div><div class="cd">Open-text comments providing qualitative feedback to the intern.</div></div>
-    </div>
   </div>
 </div>
 
@@ -244,6 +291,20 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <div class="cg">
       <div class="card"><div class="cl">Intern Documents</div><div class="cd">View submitted documents from your supervised interns for reference.</div></div>
     </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-announcements">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1"><em>Announcements</em></div><div class="hs">Browse announcements published for all users or specifically for industry partners.</div><div class="hm"><span class="ch b">/industry-partner/announcements</span></div></div>
+  <div class="bd">
+    <div class="st">Browsing announcements</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/industry-partner/announcements</span></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Announcements are displayed for <strong>All</strong> users or specifically for <strong>Partners</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Use the <strong>search bar</strong> to filter announcements by keyword</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Click on an announcement to <strong>expand</strong> and read the full content</div></div>
+    </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Announcements are published by coordinators and administrators. You can view and read them, but cannot create or edit announcements.</span></div>
   </div>
 </div>
 

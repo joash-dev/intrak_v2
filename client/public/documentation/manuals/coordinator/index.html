@@ -129,7 +129,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 }</style>
 </head>
 <body>
-<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">â˜°</button>
+<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
 <div class="sb-overlay" aria-hidden="true"></div><aside class="sb">
   <div class="sbt">
     <div class="sbl">
@@ -137,7 +137,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <span class="sbt2">INTRAK</span>
     </div>
     <div class="rp">Coordinator Manual</div>
-    <div class="ver">Version 2.0 Â· 2026.03</div>
+    <div class="ver">Version 2.0 &middot; 2026.04</div>
   </div>
   <nav class="nav">
     <span class="gl">Getting Started</span>
@@ -149,6 +149,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <a class="ni" onclick="go('companies',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Companies</a>
     <a class="ni" onclick="go('proposals',this)"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Company Proposals</a>
     <a class="ni" onclick="go('announcements',this)"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Announcements</a>
+    <a class="ni" onclick="go('messages',this)"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Messages</a>
     <a class="ni" onclick="go('reports',this)"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Reports</a>
     <a class="ni" onclick="go('notifications',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
     <span class="gl">Account</span>
@@ -157,19 +158,19 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <a class="ni" onclick="go('troubleshoot',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
   </nav>
   <a class="bk" href="https://www.intrak.site/"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to Documentation</a>
-  <div class="sbf">INTRAK v2.0 Â· Coordinator</div>
+  <div class="sbf">INTRAK v2.0 &middot; Coordinator</div>
 </aside>
 <main class="main">
 
 <div class="pg on" id="pg-overview">
   <div class="hero"><div class="eye">Coordinator Portal</div><div class="h1">Coordinator <em>Manual</em></div>
   <div class="hs">Your complete guide to program-wide oversight — managing students, companies, proposals, announcements, and compliance reporting.</div>
-  <div class="hm"><span class="ch b">8 Modules</span><span class="ch">Base Path: /coordinator</span></div></div>
+  <div class="hm"><span class="ch b">9 Modules</span><span class="ch">Base Path: /coordinator</span></div></div>
   <div class="bd">
     <div class="st">Your role in INTRAK</div>
     <div class="cg">
       <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="cl">Program Oversight</div><div class="cd">Monitor all students, instructors, and company placements across the program.</div></div>
-      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="cl">Company Management</div><div class="cd">Maintain partner company records and manage internship capacity.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="cl">Company Management</div><div class="cd">Maintain partner company records, MOA agreements, supervisor accounts, and internship capacity.</div></div>
       <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="cl">Announcements</div><div class="cd">Create and publish announcements to students, instructors, and partners.</div></div>
       <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="cl">Final Decisions</div><div class="cd">Make final decisions on company proposals forwarded by instructors.</div></div>
     </div>
@@ -188,13 +189,56 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 </div>
 
 <div class="pg" id="pg-students">
-  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Student <em>Management</em></div><div class="hs">Monitor all student records, assign or reassign instructors, and track progress across the program.</div><div class="hm"><span class="ch b">/coordinator/students</span></div></div>
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Student <em>Management</em></div><div class="hs">Monitor all student records, assign or reassign instructors, batch-assign, and track progress across the program.</div><div class="hm"><span class="ch b">/coordinator/students</span></div></div>
   <div class="bd">
+    <div class="st">Student list</div>
+    <div class="sd">View every student in the program with search, filters, and sorting.</div>
     <div class="cg">
       <div class="card"><div class="cl">All Students</div><div class="cd">View all students enrolled in the program — not limited to assigned instructors.</div></div>
       <div class="card"><div class="cl">Instructor Assignment</div><div class="cd">Assign or reassign instructors to students where authorized.</div></div>
       <div class="card"><div class="cl">Progress Tracking</div><div class="cd">Monitor document completion, placement status, and attendance compliance.</div></div>
       <div class="card"><div class="cl">Intervention</div><div class="cd">Identify students needing support or action based on compliance indicators.</div></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="st">Assigning an instructor</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Find the student in the list</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Click <strong>Assign</strong> next to the student</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Select an instructor from the dropdown</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Confirm the assignment</div></div>
+    </div>
+
+    <div class="st">Unassigning an instructor</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Find the student</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Click <strong>Unassign</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Confirm the removal</div></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="st">Quick Assign All (batch)</div>
+    <div class="sd">Batch-assign all currently unassigned students to an instructor in one action.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click <strong>Quick Assign All</strong> at the top of the student list</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">This selects all currently unassigned students automatically</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Choose an instructor in the mass-assign modal</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Confirm to assign all selected students at once</div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Quick Assign All only targets students who are currently <strong>unassigned</strong>. Students already assigned to an instructor are not affected.</span></div>
+
+    <div class="hr"></div>
+    <div class="st">Viewing student details</div>
+    <div class="sd">Click the view (eye) icon on any student to open their details panel.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click the <strong>view</strong> (eye) icon on a student row</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">A details panel opens showing the student's profile information</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Company Assignment</strong> — select a company from the dropdown and click <strong>Save Changes</strong> to assign or reassign</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Scroll down to the <strong>Partnership Documents</strong> section to view all documents tied to the student's partnership</div></div>
+    </div>
+    <div class="cg">
+      <div class="card"><div class="cl">Company Assignment</div><div class="cd">Use the dropdown to assign a partner company to the student, then click Save Changes.</div></div>
+      <div class="card"><div class="cl">Partnership Documents</div><div class="cd">View all partnership-related documents submitted by or for the student.</div></div>
     </div>
   </div>
 </div>
@@ -213,13 +257,76 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 </div>
 
 <div class="pg" id="pg-companies">
-  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Company <em>Management</em></div><div class="hs">Maintain the list of partner companies, manage internship capacity, and track assignments.</div><div class="hm"><span class="ch b">/coordinator/companies</span></div></div>
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Company <em>Management</em></div><div class="hs">Maintain partner companies, manage internship capacity, upload and review MOAs, and create supervisor accounts.</div><div class="hm"><span class="ch b">/coordinator/companies</span></div></div>
   <div class="bd">
+    <div class="st">Partner companies overview</div>
+    <div class="sd">Browse partner company records with search and filters.</div>
     <div class="cg">
       <div class="card"><div class="cl">Partner Companies</div><div class="cd">Full list of registered partner companies available for student placement.</div></div>
       <div class="card"><div class="cl">Capacity Tracking</div><div class="cd">Monitor slot availability and current intern assignments per company.</div></div>
       <div class="card"><div class="cl">Company Records</div><div class="cd">Edit and maintain company information and partnership context.</div></div>
     </div>
+
+    <div class="hr"></div>
+    <div class="st">Adding a company</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click <strong>Add Company</strong></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in company details:
+        <strong>Name</strong>, <strong>Address</strong>, <strong>Contact Person</strong>, <strong>Email</strong>, <strong>Phone</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Select <strong>Company Type</strong> (Public or Private)</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Set <strong>Working Days</strong> and <strong>Maximum Slots</strong> for intern capacity</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Optionally link the company to an <strong>approved company proposal</strong></div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Submit to create the company record</div></div>
+    </div>
+
+    <div class="st">Editing a company</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click <strong>Edit</strong> on a company card</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Update any fields as needed</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Click <strong>Save Changes</strong></div></div>
+    </div>
+
+    <div class="st">Deleting a company</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click <strong>Delete</strong> on a company card</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Type the <strong>company name</strong> exactly in the confirmation field to confirm deletion</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Click <strong>Confirm</strong> to permanently remove the company</div></div>
+    </div>
+    <div class="ib warn"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Deleting a company is permanent. You must type the company name exactly to confirm. This safeguard prevents accidental deletions.</span></div>
+
+    <div class="hr"></div>
+    <div class="st">Managing MOA (Memorandum of Agreement)</div>
+    <div class="sd">Upload, review, approve, or reject MOA documents for partner companies.</div>
+
+    <div class="st" style="font-size:13px">Uploading a MOA</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Click the <strong>MOA</strong> action on a company card</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in the MOA <strong>Title</strong> and <strong>Description</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Select the <strong>Student</strong> and <strong>Company</strong> associated with the agreement</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx"><strong>Upload</strong> the MOA file (PDF or document)</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Click <strong>Submit</strong> to save the MOA</div></div>
+    </div>
+
+    <div class="st" style="font-size:13px">Reviewing a MOA</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">View all MOAs for a company from the company detail view</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx"><strong>Preview</strong> — opens the document inline for viewing, or click to download</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Approve</strong> the MOA to confirm the agreement</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx"><strong>Reject</strong> the MOA — provide reasons for the rejection</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx"><strong>Download</strong> the MOA file for offline records</div></div>
+    </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>You can view all MOAs per company from the company detail view. Each MOA shows its current status (Pending, Approved, or Rejected).</span></div>
+
+    <div class="hr"></div>
+    <div class="st">Creating a Supervisor Account</div>
+    <div class="sd">Create an industry partner (supervisor) account directly from a company card.</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">On a company card, click <strong>Create Supervisor Account</strong></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in the supervisor's details (name, email, contact information)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Click <strong>Submit</strong> — the supervisor receives an email with their temporary password</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">A <strong>success confirmation</strong> is displayed confirming the account was created</div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>The supervisor will receive an email with login credentials. They can change their temporary password after first login from their Settings page.</span></div>
   </div>
 </div>
 
@@ -248,17 +355,44 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
   <div class="bd">
     <div class="st">Creating an announcement</div>
     <div class="wf">
-      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/coordinator/announcements</span> and click Create</div></div>
-      <div class="step"><div class="snum">2</div><div class="stx">Write your announcement title and body content</div></div>
-      <div class="step"><div class="snum">3</div><div class="stx">Select target audience (all users, students only, instructors, etc.)</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Optionally pin the announcement to keep it prominent</div></div>
-      <div class="step"><div class="snum">5</div><div class="stx">Publish — recipients receive notifications instantly</div></div>
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/coordinator/announcements</span> and click <strong>Create</strong></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Write your announcement <strong>Title</strong> and <strong>Content</strong> (use the AI Generate button for help drafting)</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Select <strong>Audience</strong>: All, Students, Coordinators, Instructors, or Partners</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Choose <strong>Type</strong>: Info, Warning, Success, or Urgent</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Optionally toggle <strong>Pin</strong> to keep the announcement at the top</div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Submit — recipients receive notifications instantly</div></div>
     </div>
     <div class="cg">
       <div class="card"><div class="cl">Pinned Announcements</div><div class="cd">Pinned items appear at the top of student and instructor dashboards.</div></div>
       <div class="card"><div class="cl">Audience Targeting</div><div class="cd">Target all users or specific roles for focused communication.</div></div>
-      <div class="card"><div class="cl">Manage Posts</div><div class="cd">Edit, unpublish, or delete existing announcements as needed.</div></div>
+      <div class="card"><div class="cl">Manage Posts</div><div class="cd">Edit, delete, or refresh the list of existing announcements.</div></div>
+      <div class="card"><div class="cl">Stats</div><div class="cd">View total announcements, pinned count, this week's count, and average views.</div></div>
     </div>
+  </div>
+</div>
+
+<div class="pg" id="pg-messages">
+  <div class="hero"><div class="eye">Module Guide</div><div class="h1">Partnership <em>Messages</em></div><div class="hs">Communicate with students and instructors about partnership assistance through threaded conversations.</div><div class="hm"><span class="ch b">/coordinator/messages</span></div></div>
+  <div class="bd">
+    <div class="st">Conversation list</div>
+    <div class="sd">View all partnership-related conversations with students and instructors.</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="cl">Conversations</div><div class="cd">Browse the list of ongoing partnership conversations sorted by most recent activity.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="cl">Role Badges</div><div class="cd">Each message displays a role badge (Student, Instructor, Coordinator) for clear identification.</div></div>
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="cl">Auto-Update</div><div class="cd">Conversations refresh automatically and mark as read when selected.</div></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="st">Using messages</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/coordinator/messages</span> from the sidebar</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">View the list of student conversations on the left panel</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Click a conversation to open the <strong>thread view</strong></div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Read the message history — each message shows a <strong>role badge</strong> (Student, Instructor, Coordinator)</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Type your reply in the message input and click <strong>Send</strong></div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Conversations <strong>auto-update</strong> and mark as read when you open them</div></div>
+    </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Messages are used for partnership assistance conversations. This is the same messaging flow available to instructors — all participants in a partnership thread can see the full conversation.</span></div>
   </div>
 </div>
 
@@ -303,6 +437,8 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <div class="iss"><div class="iq"><div class="ibg">!</div>A student is not appearing in my student list</div><div class="isl"><div class="ist"><div class="ibu"></div>Check if the student is enrolled and their account is active</div><div class="ist"><div class="ibu"></div>Verify the student has been assigned to an instructor in your program</div></div></div>
     <div class="iss"><div class="iq"><div class="ibg">!</div>I cannot see forwarded proposals</div><div class="isl"><div class="ist"><div class="ibu"></div>Check that the instructor has actually forwarded (not just reviewed) the proposal</div><div class="ist"><div class="ibu"></div>The status must be FORWARDED_TO_COORDINATOR for it to appear in your queue</div></div></div>
     <div class="iss"><div class="iq"><div class="ibg">!</div>Report export is not working</div><div class="isl"><div class="ist"><div class="ibu"></div>Check your browser permissions for file downloads</div><div class="ist"><div class="ibu"></div>Try a different browser or contact the Admin team</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>Supervisor did not receive their account email</div><div class="isl"><div class="ist"><div class="ibu"></div>Verify the email address entered when creating the supervisor account</div><div class="ist"><div class="ibu"></div>Ask the supervisor to check their spam/junk folder</div><div class="ist"><div class="ibu"></div>Contact the Admin team if the email needs to be resent</div></div></div>
+    <div class="iss"><div class="iq"><div class="ibg">!</div>MOA upload is failing</div><div class="isl"><div class="ist"><div class="ibu"></div>Ensure the file is a supported format (PDF or document)</div><div class="ist"><div class="ibu"></div>Check that the file size is within the allowed limit</div><div class="ist"><div class="ibu"></div>Try refreshing the page and re-uploading</div></div></div>
     <div class="hr"></div>
     <div class="st">Escalation path</div>
     <div class="wf">

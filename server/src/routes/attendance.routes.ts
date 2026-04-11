@@ -34,7 +34,6 @@ router.put(
 router.get('/', attendanceController.getAttendance);
 router.get('/qr/:studentId', attendanceController.generateQR);
 router.post('/qr/verify', guardStudentWriteByAuthenticatedUser, attendanceController.verifyQR);
-router.post('/gps', guardStudentWriteByAuthenticatedUser, attendanceController.verifyGPS);
 router.put(
   '/:id/verify',
   authorize(['INDUSTRY_PARTNER', 'COORDINATOR']),

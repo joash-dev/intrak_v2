@@ -356,7 +356,7 @@ export const generateQR = async (req: AuthRequest, res: Response) => {
 // Verify QR Attendance
 export const verifyQR = async (req: AuthRequest, res: Response) => {
   try {
-    const { token, latitude, longitude } = req.body;
+    const { token } = req.body;
 
     if (!token || typeof token !== 'string') {
       return res.status(400).json({ message: 'QR token is required' });
@@ -365,20 +365,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
 
     if (!qrToken) {
       return res.status(400).json({ message: 'Invalid or expired QR token' });
-    }
-
-    const student = await prisma.student.findUnique({
-      where: { id: qrToken.studentId },
-      include: { company: true }
-    });
-
-    let distanceMeters = null;
-    if (latitude && longitude && student?.company?.latitude && student?.company?.longitude) {
-      distanceMeters = calculateDistance(
-        latitude, longitude,
-        student.company.latitude,
-        student.company.longitude
-      );
     }
 
     // Toggle logic: if there's an open segment (no timeOut), close it; otherwise start a new one
@@ -412,9 +398,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
             verificationMetadata: {
               ...(openLog.verificationMetadata as any),
               token,
-              latitude,
-              longitude,
-              distanceMeters
             }
           }
         });
@@ -437,9 +420,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
             verificationMetadata: {
               ...(openLog.verificationMetadata as any),
               token,
-              latitude,
-              longitude,
-              distanceMeters
             }
           }
         });
@@ -457,9 +437,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
             verificationMetadata: {
               ...(openLog.verificationMetadata as any),
               token,
-              latitude,
-              longitude,
-              distanceMeters
             }
           }
         });
@@ -494,9 +471,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
           verificationMethod: 'QR',
           verificationMetadata: {
             token,
-            latitude,
-            longitude,
-            distanceMeters
           }
         }
       });
@@ -532,9 +506,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
           verificationMethod: 'QR',
           verificationMetadata: {
             token,
-            latitude,
-            longitude,
-            distanceMeters
           }
         }
       });
@@ -578,85 +549,6 @@ export const verifyAttendance = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Verification failed' });
-  }
-};
-
-// GPS Verification
-export const verifyGPS = async (req: AuthRequest, res: Response) => {
-  try {
-    const { studentId, latitude, longitude } = req.body;
-
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
-      include: { company: true }
-    });
-
-    if (!student || !student.company) {
-      return res.status(404).json({ message: 'Student or company not found' });
-    }
-
-    if (!student.company.latitude || !student.company.longitude) {
-      return res.status(400).json({ message: 'Company location not configured' });
-    }
-
-    const distanceMeters = calculateDistance(
-      latitude, longitude,
-      student.company.latitude,
-      student.company.longitude
-    );
-
-    const withinRange = distanceMeters <= student.company.radiusMeters;
-
-    // Enforce max segments/day (PHT) for GPS time-in.
-    const now = new Date();
-    const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
-    const segmentsToday = await prisma.attendanceLog.count({
-      where: {
-        studentId,
-        timeIn: { gte: start, lte: end },
-      },
-    });
-    if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
-      return res.status(400).json({
-        message: `Daily attendance limit reached for ${yyyyMmDd}.`,
-        code: 'MAX_DAILY_SEGMENTS_REACHED',
-        date: yyyyMmDd,
-        maxSegments: MAX_SEGMENTS_PER_DAY,
-      });
-    }
-
-    const officialIn = getOfficialTimeIn(segmentsToday, now);
-    const log = await prisma.attendanceLog.create({
-      data: {
-        studentId,
-        date: new Date(),
-        timeIn: officialIn,
-        verified: withinRange,
-        verificationMethod: 'GPS',
-        verificationMetadata: {
-          latitude, longitude, distanceMeters,
-          allowedRadius: student.company.radiusMeters,
-          withinRange
-        }
-      }
-    });
-
-    // GPS time-in should also initialize student start date when missing.
-    await ensureStudentStartDate(studentId, log.timeIn || new Date());
-
-    await auditLog(req.user!.id, 'ATTENDANCE_GPS_VERIFIED', { studentId, distanceMeters, withinRange }, req);
-
-    res.json({
-      log,
-      distanceMeters,
-      withinRange,
-      message: withinRange
-        ? 'Location verified successfully'
-        : `Outside allowed range (${distanceMeters.toFixed(0)}m from company)`
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'GPS verification failed' });
   }
 };
 
@@ -1031,18 +923,3 @@ export const exportDTRDocx = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-
-// SINGLE helper fn
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371e3;
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) ** 2 +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}

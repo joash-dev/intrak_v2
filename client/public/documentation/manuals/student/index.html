@@ -124,7 +124,7 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
 }</style>
 </head>
 <body>
-<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">â˜°</button>
+<button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
 <div class="sb-overlay" aria-hidden="true"></div><aside class="sidebar">
   <div class="sb-top">
     <div class="sb-logo">
@@ -132,7 +132,7 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
       <span class="sb-title">INTRAK</span>
     </div>
     <div class="role-pill">Student Manual</div>
-    <div class="sb-ver">Version 2.0 Â· 2026.03</div>
+    <div class="sb-ver">Version 2.0 · 2026.04</div>
   </div>
   <nav class="sb-nav">
     <span class="gl">Getting Started</span>
@@ -146,6 +146,8 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
     <a class="ni" onclick="go('partnership',this)"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Partnership</a>
     <a class="ni" onclick="go('attendance',this)"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Attendance</a>
     <a class="ni" onclick="go('evaluations',this)"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Evaluations</a>
+    <a class="ni" onclick="go('messages',this)"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Messages</a>
+    <a class="ni" onclick="go('announcements',this)"><svg viewBox="0 0 24 24"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>Announcements</a>
     <span class="gl">Account</span>
     <a class="ni" onclick="go('settings',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a>
     <a class="ni" onclick="go('notifications',this)"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>Notifications</a>
@@ -153,7 +155,7 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
     <a class="ni" onclick="go('troubleshoot',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
   </nav>
   <a class="sb-back" href="https://www.intrak.site/"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> Back to Documentation</a>
-  <div class="sb-ft">INTRAK v2.0 Â· Student</div>
+  <div class="sb-ft">INTRAK v2.0 · Student</div>
 </aside>
 
 <main class="main">
@@ -165,7 +167,7 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
     <div class="h1">Welcome to <em>INTRAK</em></div>
     <div class="hsub">This is your complete guide to using INTRAK as a student — from submitting your first document to viewing your final evaluation.</div>
     <div class="hmeta">
-      <span class="chip b">9 Modules Available</span>
+      <span class="chip b">11 Modules Available</span>
       <span class="chip">Base Path: /student</span>
       <span class="chip">Version 2.0</span>
     </div>
@@ -177,6 +179,8 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
       <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div class="cl">Apply to Companies</div><div class="cd">Browse partner companies and submit your placement application.</div></div>
       <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="cl">Log Attendance</div><div class="cd">Record your daily internship hours and track verification.</div></div>
       <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M9 11l3 3L22 4"/></svg></div><div class="cl">View Evaluations</div><div class="cd">See performance ratings and comments from your supervisor.</div></div>
+      <div class="card"><div class="ci" style="background:#F3EEFF"><svg viewBox="0 0 24 24" stroke="#6D5DC7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="cl">Messages</div><div class="cd">Communicate with your instructor and coordinator about your partnership.</div></div>
+      <div class="card"><div class="ci" style="background:#FAECE7"><svg viewBox="0 0 24 24" stroke="#993C1D"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg></div><div class="cl">Announcements</div><div class="cd">Read program-wide announcements from your coordinator.</div></div>
     </div>
     <div class="hr"></div>
     <div class="st">Your internship journey</div>
@@ -364,24 +368,47 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
   <div class="hero">
     <div class="eye">Module Guide</div>
     <div class="h1">Logging <em>Attendance</em></div>
-    <div class="hsub">Record your daily internship hours and track verification by your industry partner supervisor.</div>
+    <div class="hsub">Record your daily internship hours via QR code or manual entry, and track verification by your industry partner supervisor.</div>
     <div class="hmeta"><span class="chip b">/student/attendance</span></div>
   </div>
   <div class="body">
     <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Attendance is only available after you have been assigned to a company and supervisor. If the module is unavailable, check your application status.</span></div>
-    <div class="st">Logging an attendance entry</div>
+
+    <div class="st">Method 1 — QR Code Verification</div>
+    <div class="sd">The fastest way to log attendance. Your supervisor scans or enters the token for instant verification.</div>
     <div class="wf">
-      <div class="step"><div class="sn">1</div><div class="st2">Go to <span class="mono">/student/attendance</span></div></div>
-      <div class="step"><div class="sn">2</div><div class="st2">Log your attendance entry for the day (manual or QR-supported method)</div></div>
-      <div class="step"><div class="sn">3</div><div class="st2">Entry status becomes PENDING — your industry partner will verify it</div></div>
-      <div class="step"><div class="sn">4</div><div class="st2">Once verified, hours are counted toward your total completed hours</div></div>
+      <div class="step"><div class="sn">1</div><div class="st2">Go to <span class="mono">/student/attendance</span> and click <strong>Generate QR</strong></div></div>
+      <div class="step"><div class="sn">2</div><div class="st2">A QR code is displayed along with an expiry timer and a token code</div></div>
+      <div class="step"><div class="sn">3</div><div class="st2">Show the QR code to your supervisor to scan, or give them the token for manual entry</div></div>
+      <div class="step"><div class="sn">4</div><div class="st2">Once your supervisor scans or enters the code, the system records your time-in or time-out</div></div>
+      <div class="step"><div class="sn">5</div><div class="st2">A success message confirms the action — the entry is <strong>automatically verified</strong></div></div>
     </div>
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>QR-verified entries are approved instantly with no further action required from your supervisor.</span></div>
+
+    <div class="st">Method 2 — Manual Entry</div>
+    <div class="sd">Use manual entry when QR scanning is not available. These entries require supervisor approval.</div>
+    <div class="wf">
+      <div class="step"><div class="sn">1</div><div class="st2">Go to <span class="mono">/student/attendance</span> and click <strong>Manual</strong></div></div>
+      <div class="step"><div class="sn">2</div><div class="st2">Optionally add remarks explaining the manual entry</div></div>
+      <div class="step"><div class="sn">3</div><div class="st2">Submit — the system determines whether this is a time-in or time-out based on your existing logs</div></div>
+      <div class="step"><div class="sn">4</div><div class="st2">Entry status becomes <strong>PENDING</strong> — your supervisor must approve or reject it</div></div>
+    </div>
+    <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Manual entries are not counted toward your total hours until your supervisor approves them.</span></div>
+
+    <div class="hr"></div>
+    <div class="st">Attendance rules and limits</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="cl">2 Segments per Day</div><div class="cd">You can log up to two attendance segments per day (e.g., morning and afternoon). The system notifies you if the maximum is reached.</div></div>
+      <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="cl">Saturday Attendance</div><div class="cd">Saturday logging may be available for private companies, depending on the company settings configured by your coordinator.</div></div>
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="cl">No-Work Notices</div><div class="cd">If attendance is logged on a day with a no-work notice, the system will inform you accordingly.</div></div>
+    </div>
+
     <div class="st">What you can view</div>
     <div class="cg">
-      <div class="card"><div class="cl">Attendance Logs</div><div class="cd">Full list of all your logged entries with dates, times, and verification status.</div></div>
-      <div class="card"><div class="cl">Total Hours</div><div class="cd">Running total of verified hours completed so far.</div></div>
-      <div class="card"><div class="cl">Verification Status</div><div class="cd">Whether each entry has been approved, rejected, or is still pending.</div></div>
-      <div class="card"><div class="cl">Export</div><div class="cd">Export your attendance records where available in the UI.</div></div>
+      <div class="card"><div class="cl">Attendance Logs</div><div class="cd">Full list of all your logged entries with dates, times, and verification status. Switch between calendar and list views.</div></div>
+      <div class="card"><div class="cl">Total Hours</div><div class="cd">Running total of verified hours completed so far toward your required internship hours.</div></div>
+      <div class="card"><div class="cl">Verification Status</div><div class="cd">Each entry shows its method (QR or Manual) and status — approved, rejected, or pending.</div></div>
+      <div class="card"><div class="cl">Export</div><div class="cd">Export your attendance records when needed for reporting or documentation purposes.</div></div>
     </div>
   </div>
 </div>
@@ -391,7 +418,7 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
   <div class="hero">
     <div class="eye">Module Guide</div>
     <div class="h1">Your <em>Evaluations</em></div>
-    <div class="hsub">View the performance evaluation submitted by your industry partner supervisor.</div>
+    <div class="hsub">View the official performance evaluations submitted by your industry partner supervisor across three standardized forms.</div>
     <div class="hmeta"><span class="chip b">/student/evaluations</span></div>
   </div>
   <div class="body">
@@ -400,14 +427,85 @@ body{font-family:var(--ff-body);font-size:14px;line-height:1.65;color:var(--text
       <div class="step"><div class="sn">1</div><div class="st2">Your industry partner submits your evaluation after sufficient hours are logged</div></div>
       <div class="step"><div class="sn">2</div><div class="st2">You receive a notification when an evaluation has been submitted</div></div>
       <div class="step"><div class="sn">3</div><div class="st2">Go to <span class="mono">/student/evaluations</span> to view your ratings and comments</div></div>
+      <div class="step"><div class="sn">4</div><div class="st2">Click any form to preview the full evaluation details</div></div>
+      <div class="step"><div class="sn">5</div><div class="st2">Download or export the official form document when available</div></div>
     </div>
-    <div class="st">What evaluations contain</div>
+
+    <div class="hr"></div>
+    <div class="st">Official Evaluation Forms</div>
+    <div class="sd">Three standardized forms are used to evaluate your internship performance.</div>
+
+    <div class="sl">
+      <div class="sr"><div class="si" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div style="flex:1"><div class="sn2">Form 11 — Internship Evaluation</div><div class="sd2">8 weighted competency areas rated on a 1–5 scale by your supervisor. Covers technical skills, work quality, initiative, and professional conduct.</div></div></div>
+      <div class="sr"><div class="si" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div style="flex:1"><div class="sn2">Form 18 — Supervisor Feedback</div><div class="sd2">Star-based ratings across key areas: punctuality, knowledge, teamwork, communication, adaptability, and overall performance.</div></div></div>
+      <div class="sr"><div class="si" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div><div style="flex:1"><div class="sn2">Form 19b — Agency Self-Evaluation</div><div class="sd2">Includes demographic information and multi-criterion ratings. Provides a self-assessment perspective alongside supervisor evaluations.</div></div></div>
+    </div>
+
+    <div class="st">For each form you can</div>
     <div class="cg">
-      <div class="card"><div class="cl">Criteria Ratings</div><div class="cd">Numerical or scale-based ratings across defined performance areas.</div></div>
-      <div class="card"><div class="cl">Comments</div><div class="cd">Qualitative feedback notes from your industry partner supervisor.</div></div>
-      <div class="card"><div class="cl">Evaluation History</div><div class="cd">All evaluations submitted across your internship period.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="cl">Preview</div><div class="cd">View the full evaluation details, ratings, and comments inline before downloading.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div class="cl">Export / Download</div><div class="cd">Download the official form document for your records or submission to your department.</div></div>
     </div>
+
     <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>You cannot edit or dispute evaluations inside INTRAK. If you have concerns, speak directly with your instructor or coordinator.</span></div>
+  </div>
+</div>
+
+<!-- MESSAGES -->
+<div class="page" id="pg-messages">
+  <div class="hero">
+    <div class="eye">Module Guide</div>
+    <div class="h1">Partnership <em>Messages</em></div>
+    <div class="hsub">Communicate with your instructor and coordinator about your partnership assistance proposal through a dedicated messaging thread.</div>
+    <div class="hmeta"><span class="chip b">/student/messages</span></div>
+  </div>
+  <div class="body">
+    <div class="st">Sending and viewing messages</div>
+    <div class="wf">
+      <div class="step"><div class="sn">1</div><div class="st2">Go to <span class="mono">/student/messages</span> from the sidebar</div></div>
+      <div class="step"><div class="sn">2</div><div class="st2">View the conversation thread related to your partnership proposal</div></div>
+      <div class="step"><div class="sn">3</div><div class="st2">Type your message in the input area and click send</div></div>
+      <div class="step"><div class="sn">4</div><div class="st2">You can reply to a specific message to create a threaded response</div></div>
+      <div class="step"><div class="sn">5</div><div class="st2">Messages auto-update every 3 seconds — no need to refresh the page</div></div>
+    </div>
+
+    <div class="st">Message features</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="cl">Role Badges</div><div class="cd">Each message displays a badge showing the sender's role — Student, Instructor, or Coordinator.</div></div>
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></div><div class="cl">Reply Threading</div><div class="cd">Reply to a specific message to keep discussions organized and contextual.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div><div class="cl">Auto-Update</div><div class="cd">The conversation refreshes automatically every 3 seconds so you always see the latest messages.</div></div>
+    </div>
+
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Messages are specifically for partnership assistance communication. Use this channel to discuss proposal questions, corrections, and status updates with your instructor and coordinator.</span></div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENTS -->
+<div class="page" id="pg-announcements">
+  <div class="hero">
+    <div class="eye">Module Guide</div>
+    <div class="h1">Browse <em>Announcements</em></div>
+    <div class="hsub">Read program-wide announcements targeted to all users or specifically to students. Stay informed about important updates and deadlines.</div>
+    <div class="hmeta"><span class="chip b">/student/announcements</span></div>
+  </div>
+  <div class="body">
+    <div class="st">Viewing announcements</div>
+    <div class="wf">
+      <div class="step"><div class="sn">1</div><div class="st2">Go to <span class="mono">/student/announcements</span> from the sidebar</div></div>
+      <div class="step"><div class="sn">2</div><div class="st2">Browse announcements targeted to <strong>All</strong> or <strong>Students</strong></div></div>
+      <div class="step"><div class="sn">3</div><div class="st2">Click an announcement to expand and read the full content</div></div>
+      <div class="step"><div class="sn">4</div><div class="st2">Use the search bar to find specific announcements by keyword</div></div>
+    </div>
+
+    <div class="st">Announcement features</div>
+    <div class="cg">
+      <div class="card"><div class="ci" style="background:#E1F5EE"><svg viewBox="0 0 24 24" stroke="#1D9E75"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="cl">Search</div><div class="cd">Use the search bar to quickly find announcements by title or content keywords.</div></div>
+      <div class="card"><div class="ci" style="background:#FAEEDA"><svg viewBox="0 0 24 24" stroke="#BA7517"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="cl">View Count</div><div class="cd">Each announcement tracks how many times it has been viewed across the system.</div></div>
+      <div class="card"><div class="ci" style="background:#EEEDFE"><svg viewBox="0 0 24 24" stroke="#534AB7"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><line x1="3" y1="15" x2="9" y2="15"/></svg></div><div class="cl">Expand to Read</div><div class="cd">Click any announcement row to expand it inline and read the full content without navigating away.</div></div>
+      <div class="card"><div class="ci" style="background:#E6F1FB"><svg viewBox="0 0 24 24" stroke="#185FA5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="cl">Targeted Audience</div><div class="cd">Announcements are filtered by audience — you only see those targeted to All users or specifically to Students.</div></div>
+    </div>
+
+    <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Check announcements regularly for important deadlines, schedule changes, and program updates from your coordinator.</span></div>
   </div>
 </div>
 

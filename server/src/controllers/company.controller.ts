@@ -420,18 +420,34 @@ export const updateCompany = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Prepare update data
+    // Prepare update data (only touch geo/radius when explicitly sent — avoids wiping fields on partial payloads)
     const updateData: any = {
       name,
       address,
       contactPerson,
       contactEmail,
       contactNumber,
-      latitude: latitude ? parseFloat(latitude) : null,
-      longitude: longitude ? parseFloat(longitude) : null,
-      radiusMeters: radiusMeters ? parseInt(radiusMeters) : 100,
       maxSlots: typeof maxSlots === 'number' ? maxSlots : maxSlots ? parseInt(maxSlots) : existingCompany.maxSlots,
     };
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'latitude')) {
+      updateData.latitude =
+        latitude !== undefined && latitude !== null && latitude !== ''
+          ? parseFloat(String(latitude))
+          : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'longitude')) {
+      updateData.longitude =
+        longitude !== undefined && longitude !== null && longitude !== ''
+          ? parseFloat(String(longitude))
+          : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'radiusMeters')) {
+      updateData.radiusMeters =
+        radiusMeters !== undefined && radiusMeters !== null && radiusMeters !== ''
+          ? parseInt(String(radiusMeters), 10)
+          : existingCompany.radiusMeters;
+    }
 
     // Update company type if provided
     if (companyType !== undefined) {

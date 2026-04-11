@@ -71,6 +71,7 @@ const InstructorApplications: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [approveError, setApproveError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDropdownActive, setStatusDropdownActive] = useState(false);
   const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(
@@ -130,6 +131,7 @@ const InstructorApplications: React.FC = () => {
 
   const handleApprove = (application: CompanyApplication) => {
     setSelectedApplication(application);
+    setApproveError(null);
     setShowApproveModal(true);
   };
 
@@ -154,9 +156,10 @@ const InstructorApplications: React.FC = () => {
       await loadApplications();
     } catch (error: any) {
       console.error("Error approving application:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to approve application"
-      );
+      const msg =
+        error.response?.data?.message || "Failed to approve application";
+      setApproveError(msg);
+      toast.error(msg);
     } finally {
       setProcessing(false);
     }
@@ -712,11 +715,21 @@ const InstructorApplications: React.FC = () => {
               </p>
             </div>
 
+            {approveError && (
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl p-3.5 mb-5 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-800 dark:text-red-200 leading-relaxed">
+                  {approveError}
+                </p>
+              </div>
+            )}
+
             <div className="flex space-x-3">
               <button
                 onClick={() => {
                   setShowApproveModal(false);
                   setSelectedApplication(null);
+                  setApproveError(null);
                 }}
                 disabled={processing}
                 className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm disabled:opacity-50"

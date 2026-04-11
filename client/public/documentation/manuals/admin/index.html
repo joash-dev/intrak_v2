@@ -137,7 +137,7 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
       <span class="sbt2">INTRAK</span>
     </div>
     <div class="rp">Admin Manual</div>
-    <div class="ver">Version 2.0 Â· 2026.03</div>
+    <div class="ver">Version 2.0 Â· 2026.04</div>
   </div>
   <nav class="nav">
     <span class="gl">Getting Started</span>
@@ -188,11 +188,12 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
   <div class="bd">
     <div class="st">Creating a new user</div>
     <div class="wf">
-      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/admin/users</span> and click Create User</div></div>
-      <div class="step"><div class="snum">2</div><div class="stx">Fill in the user's name, email, and assign the appropriate role</div></div>
-      <div class="step"><div class="snum">3</div><div class="stx">Set initial account state (active/inactive)</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Save — the user receives login credentials via email</div></div>
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/admin/users</span> and click <strong>Add User</strong></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in the user's name and email, then select the <strong>Role</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">For the <strong>Student</strong> role, additional fields appear: <strong>Student Number</strong> (format <span class="mono">22-UR-0592</span>), <strong>Year</strong>, and <strong>Program</strong> (e.g. Computer Engineering — pre-filled)</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Save — a <strong>temporary password</strong> is automatically generated and emailed to the user</div></div>
     </div>
+    <div class="ib note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>When creating a Student, the Student Number field must follow the institutional format (e.g. <span class="mono">22-UR-0592</span>). Year and Program are also required.</span></div>
     <div class="st">User roles you can create</div>
     <div class="cg">
       <div class="card"><div class="cl" style="color:#1D9E75">Student</div><div class="cd">Path: /student — OJT/internship students</div></div>
@@ -205,9 +206,12 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
     <div class="wf">
       <div class="step"><div class="snum">1</div><div class="stx">Search for the user by name, email, or role</div></div>
       <div class="step"><div class="snum">2</div><div class="stx">Edit profile details, role, or account state as needed</div></div>
-      <div class="step"><div class="snum">3</div><div class="stx">Deactivate accounts to suspend access without deleting data</div></div>
-      <div class="step"><div class="snum">4</div><div class="stx">Remove users where permitted — this action may be irreversible</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">For student rows, use the <strong>Assign to Instructor</strong> action to link students with their faculty supervisor</div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Deactivate accounts to suspend access without deleting data</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Remove users where permitted — this action may be irreversible</div></div>
     </div>
+    <div class="st">Export</div>
+    <div class="sd">Use the <strong>Export</strong> button to download user data as a spreadsheet file for reporting and record-keeping.</div>
     <div class="ib warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Prefer deactivating over deleting users. Deletion may remove associated records and cannot be undone.</span></div>
   </div>
 </div>
@@ -215,11 +219,25 @@ body{font-family:var(--fb);font-size:14px;line-height:1.65;color:var(--t);backgr
 <div class="pg" id="pg-companies">
   <div class="hero"><div class="eye">Module Guide</div><div class="h1">Company <em>Management</em></div><div class="hs">Maintain the master company database that powers student placement across the platform.</div><div class="hm"><span class="ch b">/admin/companies</span></div></div>
   <div class="bd">
-    <div class="cg">
-      <div class="card"><div class="cl">Master Records</div><div class="cd">The canonical list of all companies available for student placement.</div></div>
-      <div class="card"><div class="cl">Add Companies</div><div class="cd">Register new partner companies with all required institutional data.</div></div>
-      <div class="card"><div class="cl">Edit Records</div><div class="cd">Update company details, contact info, and partnership status.</div></div>
-      <div class="card"><div class="cl">Governance</div><div class="cd">Manage institutional data policies for company records.</div></div>
+    <div class="st">Adding a company</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Go to <span class="mono">/admin/companies</span> and click <strong>Add Company</strong></div></div>
+      <div class="step"><div class="snum">2</div><div class="stx">Fill in the company <strong>Name</strong> and <strong>Address</strong></div></div>
+      <div class="step"><div class="snum">3</div><div class="stx">Enter the <strong>Contact Person</strong>, <strong>Contact Email</strong>, and <strong>Contact Number</strong></div></div>
+      <div class="step"><div class="snum">4</div><div class="stx">Select the company <strong>Type</strong>: Public or Private</div></div>
+      <div class="step"><div class="snum">5</div><div class="stx">Specify the <strong>Working Days</strong> for the company</div></div>
+      <div class="step"><div class="snum">6</div><div class="stx">Save — the company is now available for student placement</div></div>
+    </div>
+    <div class="st">Filtering companies</div>
+    <div class="pw">
+      <div class="sp"><div class="pd" style="background:#1D9E75"></div><span class="pn">Active</span><span class="ps">— has students currently assigned</span></div>
+      <div class="sp"><div class="pd" style="background:#9a9890"></div><span class="pn">Inactive</span><span class="ps">— no students currently assigned</span></div>
+    </div>
+    <div class="st">Managing companies</div>
+    <div class="wf">
+      <div class="step"><div class="snum">1</div><div class="stx">Search or browse the company list, filter by status (Active / Inactive)</div></div>
+      <div class="step"><div class="snum">2</div><div class="stx"><strong>Edit</strong> a company to update its name, address, contacts, type, or working days</div></div>
+      <div class="step"><div class="snum">3</div><div class="stx"><strong>Delete</strong> a company if no longer needed — this removes it from student placement options</div></div>
     </div>
     <div class="ib tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Companies added here become available for student browsing and placement applications. Ensure all details are accurate before saving.</span></div>
   </div>

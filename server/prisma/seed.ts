@@ -155,9 +155,6 @@ async function main() {
         contactPerson: 'Robert Manager',
         contactEmail: 'robert@techinnovations.com',
         contactNumber: '09171234567',
-        latitude: 15.9759,
-        longitude: 120.5711,
-        radiusMeters: 100
       }
     });
   }
@@ -173,9 +170,6 @@ async function main() {
         contactPerson: 'Lisa Chen',
         contactEmail: 'lisa@digitalsolutions.com',
         contactNumber: '09171234568',
-        latitude: 16.0439,
-        longitude: 120.3327,
-        radiusMeters: 100
       }
     });
   }
@@ -191,9 +185,6 @@ async function main() {
         contactPerson: 'Mark Thompson',
         contactEmail: 'mark@softwarehub.com',
         contactNumber: '09171234569',
-        latitude: 16.6159,
-        longitude: 120.3166,
-        radiusMeters: 100
       }
     });
   }

@@ -44,3 +44,6 @@ coverage/
 # Ignore uploads (if local, not versioned)
 uploads/
 server/uploads/
+
+#system architecture files
+system-architecture/

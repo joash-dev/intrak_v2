@@ -144,9 +144,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
     contactPerson: "",
     contactEmail: "",
     contactNumber: "",
-    latitude: "",
-    longitude: "",
-    radiusMeters: 100,
     maxSlots: "0",
     companyType: "PUBLIC" as "PUBLIC" | "PRIVATE",
     workingDays: getWorkingDaysByType("PUBLIC") as string[],
@@ -177,15 +174,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
       contactPerson: company.contactPerson || "",
       contactEmail: company.contactEmail || "",
       contactNumber: company.contactNumber || "",
-      latitude:
-        company.latitude !== undefined && company.latitude !== null
-          ? String(company.latitude)
-          : "",
-      longitude:
-        company.longitude !== undefined && company.longitude !== null
-          ? String(company.longitude)
-          : "",
-      radiusMeters: company.radiusMeters ?? 100,
       maxSlots: (company.maxSlots ?? 0).toString(),
       companyType: (company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE",
       workingDays: getWorkingDaysByType((company.companyType || "PUBLIC") as "PUBLIC" | "PRIVATE"),
@@ -448,13 +436,6 @@ const CoordinatorCompanyManagement: React.FC = () => {
 
       const companyData = {
         ...restCompanyForm,
-        latitude: companyForm.latitude
-          ? parseFloat(companyForm.latitude)
-          : undefined,
-        longitude: companyForm.longitude
-          ? parseFloat(companyForm.longitude)
-          : undefined,
-        radiusMeters: parseInt(companyForm.radiusMeters.toString()),
         maxSlots: Number.isNaN(maxSlotsValue) ? 0 : maxSlotsValue,
         companyType: companyForm.companyType,
         // Working days are derived from company type in coordinator flow

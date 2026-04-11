@@ -580,6 +580,33 @@ export const updateStudent = async (req: AuthRequest, res: Response) => {
     if (updateData.year) updateData.year = parseInt(updateData.year);
     if (updateData.totalHours) updateData.totalHours = parseInt(updateData.totalHours);
 
+    // Block company assignment when required pre-deployment documents are not all approved
+    if (updateData.companyId) {
+      const approvedDocs = await prisma.document.findMany({
+        where: { studentId: id, status: 'APPROVED' },
+        select: { type: true },
+      });
+      const approvedTypes = new Set(approvedDocs.map((d) => d.type));
+      const PRE_DEPLOYMENT_SLOTS: readonly (readonly string[])[] = [
+        ['APPLICATION_INTERNSHIP'],
+        ['MEDICAL_CERTIFICATE'],
+        ['CERTIFICATION_UNITS'],
+        ['INTERNSHIP_RESUME'],
+        ['CONSENT_FORM'],
+        ['ENDORSEMENT_LETTER', 'ENDORSEMENT_LETTER_MULTI'],
+        ['INTERNSHIP_RELEASE'],
+        ['RECORD_FILE'],
+      ];
+      const missingSlots = PRE_DEPLOYMENT_SLOTS
+        .filter((slot) => !slot.some((t) => approvedTypes.has(t)))
+        .map((slot) => slot[0].replace(/_/g, ' ').toLowerCase());
+      if (missingSlots.length > 0) {
+        return res.status(400).json({
+          message: `Cannot assign company. The student has incomplete pre-deployment documents. Missing: ${missingSlots.join(', ')}.`
+        });
+      }
+    }
+
     const student = await prisma.student.update({
       where: { id },
       data: updateData,

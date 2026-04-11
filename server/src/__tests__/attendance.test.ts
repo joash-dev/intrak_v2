@@ -119,10 +119,7 @@ describe('Attendance routes', () => {
     }));
     studentFindUnique.mockImplementation(async () => ({
       id: 'student-1',
-      company: {
-        latitude: 1,
-        longitude: 1,
-      },
+      company: {},
     }));
     // No open attendance log → will create a new one (login action)
     attendanceLogFindFirst.mockImplementation(async () => null);
@@ -132,7 +129,7 @@ describe('Attendance routes', () => {
     const response = await request(app)
       .post('/api/attendance/qr/verify')
       .set('Authorization', 'Bearer fake-token')
-      .send({ token: 'valid-token', latitude: 1, longitude: 1 })
+      .send({ token: 'valid-token' })
       .expect(200);
 
     expect(verifyQRTokenMock).toHaveBeenCalledWith('valid-token');

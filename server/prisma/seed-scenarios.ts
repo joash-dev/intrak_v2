@@ -36,7 +36,6 @@ async function main() {
                 contactPerson: 'Robert Manager',
                 contactEmail: 'robert@techinnovations.com',
                 contactNumber: '09171234567',
-                radiusMeters: 100
             }
         });
     }

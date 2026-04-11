@@ -362,30 +362,6 @@ const SupervisorAttendance = () => {
     }
   }, []);
 
-  const requestCoordinates = useCallback(async () => {
-    if (!("geolocation" in navigator)) {
-      return undefined;
-    }
-
-    return new Promise<{ latitude: number; longitude: number } | undefined>(
-      (resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            resolve({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            });
-          },
-          () => resolve(undefined),
-          {
-            enableHighAccuracy: true,
-            timeout: 5000,
-          }
-        );
-      }
-    );
-  }, []);
-
   const handleTokenVerification = useCallback(
     async (rawToken: string) => {
       const token = rawToken.trim();
@@ -404,11 +380,8 @@ const SupervisorAttendance = () => {
       setScanError(null);
 
       try {
-        const coords = await requestCoordinates();
         const response = await supervisorService.verifyAttendanceWithQR({
           token,
-          latitude: coords?.latitude,
-          longitude: coords?.longitude,
         });
         setScannedToken(token);
         setManualToken("");
@@ -430,7 +403,7 @@ const SupervisorAttendance = () => {
         isProcessingRef.current = false;
       }
     },
-    [fetchAttendanceLogs, requestCoordinates, stopScanner]
+    [fetchAttendanceLogs, stopScanner]
   );
 
   const restartScanner = useCallback(() => {

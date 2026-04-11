@@ -25,7 +25,7 @@
 html{scroll-behavior:smooth;font-size:15px}
 body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 
-/* â•â•â• TOP NAV â•â•â• */
+/* ═══ TOP NAV ═══ */
 .topnav{
   position:fixed;top:0;left:0;right:0;z-index:200;
   height:56px;background:rgba(255,255,255,0.95);
@@ -47,10 +47,10 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px;border:none;background:none}
 .hamburger span{width:20px;height:2px;background:var(--t2);border-radius:2px;transition:all .2s}
 
-/* â•â•â• LAYOUT â•â•â• */
+/* ═══ LAYOUT ═══ */
 .layout{display:flex;margin-top:56px;min-height:calc(100vh - 56px)}
 
-/* â•â•â• LEFT SIDEBAR â•â•â• */
+/* ═══ LEFT SIDEBAR ═══ */
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;
   position:sticky;top:56px;height:calc(100vh - 56px);
@@ -76,14 +76,14 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .sb-sub.active{color:var(--brand);font-weight:500}
 .sb-divider{height:1px;background:var(--border);margin:.5rem 1.25rem}
 
-/* â•â•â• MAIN CONTENT â•â•â• */
+/* ═══ MAIN CONTENT ═══ */
 .content{
   flex:1;min-width:0;
   max-width:820px;
   padding:3rem 3.5rem 6rem;
 }
 
-/* â•â•â• RIGHT TOC â•â•â• */
+/* ═══ RIGHT TOC ═══ */
 .toc{
   width:var(--toc-w);flex-shrink:0;
   position:sticky;top:56px;height:calc(100vh - 56px);
@@ -99,7 +99,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .toc-link.active{color:var(--brand);border-left-color:var(--brand);font-weight:500}
 .toc-link.sub{padding-left:1.25rem;font-size:11px}
 
-/* â•â•â• TYPOGRAPHY â•â•â• */
+/* ═══ TYPOGRAPHY ═══ */
 .manual-section{margin-bottom:4rem;padding-bottom:3rem;border-bottom:1px solid var(--border)}
 .manual-section:last-child{border-bottom:none;margin-bottom:0}
 
@@ -113,7 +113,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .prose{font-size:14px;color:var(--t2);line-height:1.75;margin-bottom:1.25rem;font-weight:300}
 .prose strong{color:var(--t);font-weight:500}
 
-/* â•â•â• ROLE HERO BANNER â•â•â• */
+/* ═══ ROLE HERO BANNER ═══ */
 .role-banner{border-radius:var(--r);padding:1.5rem 1.75rem;margin-bottom:2rem;display:flex;align-items:center;gap:1rem;border:1px solid}
 .rb-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rb-icon svg{width:20px;height:20px;stroke-width:1.75;fill:none}
@@ -121,7 +121,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .rb-desc{font-size:13px;font-weight:300;opacity:.85}
 .rb-path{font-size:11px;font-family:monospace;opacity:.65;margin-top:4px}
 
-/* â•â•â• CARDS â•â•â• */
+/* ═══ CARDS ═══ */
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin:1rem 0 1.5rem}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;transition:border-color .15s}
 .card:hover{border-color:var(--border2)}
@@ -131,7 +131,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .card-path{font-size:10px;color:var(--t3);font-family:monospace;margin-bottom:4px;display:block}
 .card-desc{font-size:12px;color:var(--t2);line-height:1.45;font-weight:300}
 
-/* â•â•â• STEPS â•â•â• */
+/* ═══ STEPS ═══ */
 .steps{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;margin:1rem 0}
 .step{display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--t2)}
 .step:last-child{border-bottom:none;padding-bottom:0}
@@ -139,28 +139,28 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .step-t{flex:1;line-height:1.5}
 .step-r{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;flex-shrink:0;background:var(--bl);color:var(--bd);margin-top:2px}
 
-/* â•â•â• STATUS PILLS â•â•â• */
+/* ═══ STATUS PILLS ═══ */
 .pill-row{display:flex;flex-wrap:wrap;gap:6px;margin:1rem 0}
 .pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rm);padding:5px 11px;font-size:12px}
 .pill-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .pill-name{font-weight:500;color:var(--t)}
 .pill-note{color:var(--t2);font-size:11px}
 
-/* â•â•â• INFO BOXES â•â•â• */
+/* ═══ INFO BOXES ═══ */
 .info{border-radius:var(--rm);padding:11px 14px;margin:1rem 0;display:flex;gap:9px;align-items:flex-start;border:1px solid;font-size:13px}
 .info svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2}
 .info.tip{background:var(--bl);border-color:var(--bm);color:var(--bd)}
 .info.warn{background:#FAEEDA;border-color:#FAC775;color:#633806}
 .info.note{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
 
-/* â•â•â• TABLE â•â•â• */
+/* ═══ TABLE ═══ */
 .mtable{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0}
 .mtable th{background:var(--bg2);text-align:left;padding:8px 12px;font-weight:500;color:var(--t);border-bottom:2px solid var(--border2);font-size:12px}
 .mtable td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--t2);vertical-align:top}
 .mtable tr:last-child td{border-bottom:none}
 .mtable tr:hover td{background:var(--bg2)}
 
-/* â•â•â• SETTINGS LIST â•â•â• */
+/* ═══ SETTINGS LIST ═══ */
 .settings{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:1rem 0}
 .setting{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)}
 .setting:last-child{border-bottom:none}
@@ -169,7 +169,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .set-name{font-size:13px;font-weight:500;color:var(--t);flex:1}
 .set-desc{font-size:12px;color:var(--t2);font-weight:300}
 
-/* â•â•â• ISSUE CARDS â•â•â• */
+/* ═══ ISSUE CARDS ═══ */
 .issue{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:8px}
 .issue-q{font-size:13.5px;font-weight:500;color:var(--t);margin-bottom:7px;display:flex;align-items:flex-start;gap:8px}
 .issue-badge{width:20px;height:20px;border-radius:50%;background:#FAEEDA;color:#BA7517;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:500;flex-shrink:0;margin-top:1px}
@@ -177,18 +177,18 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .issue-item{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;color:var(--t2)}
 .issue-dot{width:4px;height:4px;border-radius:50%;background:var(--t3);flex-shrink:0;margin-top:6px}
 
-/* â•â•â• ESCALATION â•â•â• */
+/* ═══ ESCALATION ═══ */
 .esc{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;flex-wrap:wrap;margin:1rem 0}
 .esc-node{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:80px}
 .esc-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:2px solid}
 .esc-arrow{color:var(--t3);font-size:18px;flex-shrink:0}
 .esc-label{font-size:11px;color:var(--t2);text-align:center}
 
-/* â•â•â• DIVIDER â•â•â• */
+/* ═══ DIVIDER ═══ */
 .hr{height:1px;background:var(--border);margin:2rem 0}
 .mono{font-family:monospace;font-size:12px;background:var(--bg2);padding:1px 5px;border-radius:4px;border:1px solid var(--border)}
 
-/* â•â•â• MODULE TAG â•â•â• */
+/* ═══ MODULE TAG ═══ */
 .tag{font-size:11px;background:var(--bg2);color:var(--t2);padding:2px 8px;border-radius:4px;border:1px solid var(--border);display:inline-block;margin:2px}
 .tag.green{background:var(--bl);color:var(--bd);border-color:var(--bm)}
 .tag.purple{background:var(--pl);color:var(--pd);border-color:#AFA9EC}
@@ -196,7 +196,10 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 .tag.blue{background:var(--blu);color:var(--bld);border-color:#B5D4F4}
 .tag.red{background:var(--rl);color:var(--rd);border-color:#F7C1C1}
 
-/* â•â•â• PRINT STYLES â•â•â• */
+/* ═══ CODE BLOCK ═══ */
+.codeblock{background:#1e1e2e;color:#cdd6f4;border-radius:var(--rm);padding:1rem 1.25rem;font-family:monospace;font-size:12px;line-height:1.65;overflow-x:auto;margin:1rem 0;white-space:pre}
+
+/* ═══ PRINT STYLES ═══ */
 @media print{
   .topnav,.sidebar,.toc,.hamburger{display:none!important}
   .layout{display:block}
@@ -206,7 +209,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   .steps,.card,.issue{break-inside:avoid}
 }
 
-/* â•â•â• RESPONSIVE â•â•â• */
+/* ═══ RESPONSIVE ═══ */
 @media(max-width:1200px){
   .toc{display:none}
   .content{max-width:none;flex:1}
@@ -289,16 +292,21 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <a href="#s-partnership" class="sb-sub">Partnership Assistance</a>
     <a href="#s-attendance" class="sb-sub">Attendance</a>
     <a href="#s-evaluations" class="sb-sub">Evaluations</a>
+    <a href="#s-announcements" class="sb-sub">Announcements</a>
+    <a href="#s-messages" class="sb-sub">Messages</a>
     <a href="#s-settings" class="sb-sub">Settings</a>
   </div>
   <div class="sb-divider"></div>
   <div class="sb-section">
     <span class="sb-group">Instructor Portal</span>
     <a href="#instructor" class="sb-link"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Instructor Overview</a>
+    <a href="#i-students" class="sb-sub">Students</a>
     <a href="#i-documents" class="sb-sub">Student Documents</a>
+    <a href="#i-checklist" class="sb-sub">Document Checklist</a>
     <a href="#i-applications" class="sb-sub">Company Applications</a>
     <a href="#i-proposals" class="sb-sub">Company Proposals</a>
-    <a href="#i-students" class="sb-sub">Students</a>
+    <a href="#i-announcements" class="sb-sub">Announcements</a>
+    <a href="#i-messages" class="sb-sub">Messages</a>
     <a href="#i-reports" class="sb-sub">Reports</a>
   </div>
   <div class="sb-divider"></div>
@@ -307,8 +315,10 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <a href="#coordinator" class="sb-link"><svg viewBox="0 0 24 24"><path d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>Coordinator Overview</a>
     <a href="#c-students" class="sb-sub">Students</a>
     <a href="#c-companies" class="sb-sub">Companies</a>
+    <a href="#c-moa" class="sb-sub">MOA Management</a>
     <a href="#c-proposals" class="sb-sub">Company Proposals</a>
     <a href="#c-announcements" class="sb-sub">Announcements</a>
+    <a href="#c-messages" class="sb-sub">Messages</a>
     <a href="#c-reports" class="sb-sub">Reports</a>
   </div>
   <div class="sb-divider"></div>
@@ -316,6 +326,8 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <span class="sb-group">Industry Partner Portal</span>
     <a href="#partner" class="sb-link"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-4-4h-1"/></svg>Partner Overview</a>
     <a href="#p-attendance" class="sb-sub">Attendance Verification</a>
+    <a href="#p-scanner" class="sb-sub">Scanner</a>
+    <a href="#p-nowork" class="sb-sub">No-Work Notices</a>
     <a href="#p-evaluations" class="sb-sub">Evaluations</a>
   </div>
   <div class="sb-divider"></div>
@@ -330,6 +342,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <div class="sb-section">
     <span class="sb-group">Reference</span>
     <a href="#statuses" class="sb-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Status Definitions</a>
+    <a href="#doc-completeness" class="sb-link"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>Document Completeness</a>
     <a href="#security" class="sb-link"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security</a>
     <a href="#troubleshoot" class="sb-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Troubleshooting</a>
     <a href="#support" class="sb-link"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Support &amp; Escalation</a>
@@ -339,9 +352,9 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 <!-- MAIN CONTENT -->
 <main class="content" id="content">
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INTRO -->
+<!-- ═════════════════════════════════════════ INTRO -->
 <section class="manual-section" id="intro">
-  <span class="section-eye">System Documentation Â· Version 2.0</span>
+  <span class="section-eye">System Documentation · Version 2.0</span>
   <h1 class="section-h1">INTRAK <em>User Manual</em></h1>
   <p class="section-lead">INTRAK is the Internship and OJT Tracking and Management System. This manual covers every feature, workflow, and setting available to all five user roles — students, instructors, coordinators, industry partners, and administrators.</p>
 
@@ -356,7 +369,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ACCESS & LOGIN -->
+<!-- ═════════════════════════════════════════ ACCESS & LOGIN -->
 <section class="manual-section" id="access">
   <span class="section-eye">Authentication</span>
   <h2 class="section-h2">Access &amp; Login</h2>
@@ -387,7 +400,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>If you do not receive the reset email after a few minutes, check your spam folder, then contact your instructor or admin.</span></div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• NAVIGATION -->
+<!-- ═════════════════════════════════════════ NAVIGATION -->
 <section class="manual-section" id="navigation">
   <span class="section-eye">Interface</span>
   <h2 class="section-h2">Navigation &amp; Interface</h2>
@@ -404,7 +417,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ROLES -->
+<!-- ═════════════════════════════════════════ ROLES -->
 <section class="manual-section" id="roles">
   <span class="section-eye">Permissions</span>
   <h2 class="section-h2">Role Access Matrix</h2>
@@ -413,17 +426,17 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <table class="mtable">
     <thead><tr><th>Role</th><th>Base Path</th><th>Key Modules</th></tr></thead>
     <tbody>
-      <tr><td><span class="tag green">Student</span></td><td><span class="mono">/student</span></td><td>Dashboard, Documents, Templates, Companies, Partnership, Attendance, Evaluations, Settings</td></tr>
-      <tr><td><span class="tag purple">Instructor</span></td><td><span class="mono">/instructor</span></td><td>Dashboard, Documents, Applications, Proposals, Students, Reports, Settings</td></tr>
-      <tr><td><span class="tag amber">Coordinator</span></td><td><span class="mono">/coordinator</span></td><td>Dashboard, Students, Documents, Companies, Proposals, Announcements, Reports, Settings</td></tr>
-      <tr><td><span class="tag blue">Industry Partner</span></td><td><span class="mono">/industry-partner</span></td><td>Dashboard, Attendance, Documents, Evaluations, Settings</td></tr>
+      <tr><td><span class="tag green">Student</span></td><td><span class="mono">/student</span></td><td>Dashboard, Documents, Templates, Companies, Partnership, Attendance, Evaluations, Announcements, Messages, Settings</td></tr>
+      <tr><td><span class="tag purple">Instructor</span></td><td><span class="mono">/instructor</span></td><td>Dashboard, Students, Documents, Checklist, Applications, Proposals, Announcements, Messages, Reports, Settings</td></tr>
+      <tr><td><span class="tag amber">Coordinator</span></td><td><span class="mono">/coordinator</span></td><td>Dashboard, Students, Documents, Companies, MOA, Proposals, Announcements, Messages, Reports, Settings</td></tr>
+      <tr><td><span class="tag blue">Industry Partner</span></td><td><span class="mono">/industry-partner</span></td><td>Dashboard, Attendance, Scanner, No-Work, Documents, Evaluations, Announcements, Settings</td></tr>
       <tr><td><span class="tag red">Admin</span></td><td><span class="mono">/admin</span></td><td>Dashboard, Users, Companies, Settings, Notifications</td></tr>
     </tbody>
   </table>
   <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Users can only access modules within their assigned role. Attempting to access another role's path redirects to the login page.</span></div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• WORKFLOWS -->
+<!-- ═════════════════════════════════════════ WORKFLOWS -->
 <section class="manual-section" id="wf-documents">
   <span class="section-eye">Core Workflows</span>
   <h2 class="section-h2">1 — Document Compliance Workflow</h2>
@@ -482,7 +495,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Attendance and Evaluation modules are only accessible after a student has an approved placement with a company and supervisor assigned.</span></div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• STUDENT -->
+<!-- ═════════════════════════════════════════ STUDENT -->
 <section class="manual-section" id="student">
   <span class="section-eye">Portal Guide</span>
   <h1 class="section-h1">Student <em>Portal</em></h1>
@@ -491,7 +504,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div>
       <div class="rb-name" style="color:#1E3A8A">Student</div>
       <div class="rb-desc" style="color:#1E3A8A">Submit documents, apply to companies, log attendance, and view your evaluations.</div>
-      <div class="rb-path" style="color:#1E3A8A">Base path: /student Â· 9 modules available</div>
+      <div class="rb-path" style="color:#1E3A8A">Base path: /student · 11 modules available</div>
     </div>
   </div>
   <p class="section-lead">The Student Portal is your primary workspace throughout the internship program. Every document you submit, every application you make, and every attendance entry you log is managed here.</p>
@@ -568,17 +581,53 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <h2 class="section-h2">Attendance</h2>
   <p class="prose">Log your daily internship attendance and track your total verified hours. <strong>Path:</strong> <span class="mono">/student/attendance</span></p>
   <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>This module is only available after you have been assigned to a company and supervisor. Check your application status if attendance is unavailable.</span></div>
+
+  <h3 class="section-h3">Method 1 — QR Code</h3>
   <div class="steps">
-    <div class="step"><div class="step-n">1</div><div class="step-t">Log your attendance entry for the day (manual or QR-supported method)</div></div>
-    <div class="step"><div class="step-n">2</div><div class="step-t">Entry status becomes PENDING — your industry partner will verify it</div></div>
-    <div class="step"><div class="step-n">3</div><div class="step-t">Once verified and approved, hours are counted toward your total</div></div>
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Attendance</strong> from the sidebar and click <strong>Generate QR</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">A QR code is displayed along with an expiry time and a token code</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Show the QR code to your supervisor to scan, or give them the token for manual entry</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Once your supervisor scans/enters the code, the system records your time-in or time-out</div></div>
   </div>
-  <p class="prose">You can view your full attendance log, total completed hours, verification status per entry, and export attendance records where available.</p>
+
+  <h3 class="section-h3">Method 2 — Manual Entry</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Attendance</strong> and click <strong>Manual</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Optionally add remarks explaining the manual entry</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Submit — the system determines whether this is a time-in or time-out based on your existing logs</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Manual entries go to your supervisor for verification (approve/reject)</div></div>
+  </div>
+
+  <h3 class="section-h3">Viewing Your Attendance</h3>
+  <p class="prose">Switch between <strong>calendar view</strong> and <strong>list view</strong> to review your logs. Each entry shows: date, time-in, time-out, verification method (QR/Manual), and status. Track your <strong>total completed hours</strong> and export records when needed. You can log up to two attendance segments per day (e.g., morning and afternoon). Saturday attendance may be available for private companies based on company settings.</p>
 </section>
 
 <section class="manual-section" id="s-evaluations">
   <h2 class="section-h2">Evaluations</h2>
   <p class="prose">View the performance evaluation submitted by your industry partner supervisor. <strong>Path:</strong> <span class="mono">/student/evaluations</span><br>You will receive a notification when a new evaluation is submitted. Evaluations include criteria ratings and qualitative comments. You cannot edit evaluations — contact your instructor or coordinator if you have concerns.</p>
+</section>
+
+<section class="manual-section" id="s-announcements">
+  <h2 class="section-h2">Announcements</h2>
+  <p class="prose">Browse program announcements targeted to your role. <strong>Path:</strong> <span class="mono">/student/announcements</span></p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Announcements</strong> from the sidebar</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Browse announcements targeted to <strong>All</strong> or <strong>Students</strong></div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Click an announcement to expand and read the full content</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Use the search bar to find specific announcements by keyword</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="s-messages">
+  <h2 class="section-h2">Messages</h2>
+  <p class="prose">Messaging is used for <strong>partnership assistance</strong> communication with your instructor and coordinator. <strong>Path:</strong> <span class="mono">/student/messages</span></p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Messages</strong> from the sidebar</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">View the conversation thread related to your partnership proposal</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Type a message and send — you can reply to specific messages</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Messages update automatically (polling every 3 seconds)</div></div>
+  </div>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Role badges (<strong>Student</strong> / <strong>Instructor</strong> / <strong>Coordinator</strong>) appear on each message so you always know who sent it.</span></div>
 </section>
 
 <section class="manual-section" id="s-settings">
@@ -596,7 +645,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INSTRUCTOR -->
+<!-- ═════════════════════════════════════════ INSTRUCTOR -->
 <section class="manual-section" id="instructor">
   <span class="section-eye">Portal Guide</span>
   <h1 class="section-h1">Instructor <em>Portal</em></h1>
@@ -605,10 +654,34 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div>
       <div class="rb-name" style="color:#3C3489">Instructor</div>
       <div class="rb-desc" style="color:#3C3489">Review documents, manage applications and proposals, and monitor your assigned students.</div>
-      <div class="rb-path" style="color:#3C3489">Base path: /instructor Â· 7 modules available</div>
+      <div class="rb-path" style="color:#3C3489">Base path: /instructor · 9 modules available</div>
     </div>
   </div>
   <p class="section-lead">As an instructor, you are the first reviewer in the document compliance and company proposal workflows. You are responsible for your assigned students' progress and placement readiness.</p>
+</section>
+
+<section class="manual-section" id="i-students">
+  <h2 class="section-h2">Students</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/students</span><br>View profiles, activity timelines, document completion rates, and placement information for all students assigned to you. Use this view to monitor progress and identify students who need follow-up.</p>
+
+  <h3 class="section-h3">Adding a Single Student</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Add Student</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in the required fields: <strong>Student Number</strong> (format: <span class="mono">22-UR-0592</span>), <strong>Name</strong>, <strong>Email</strong>, <strong>Year</strong>, <strong>Phone</strong>, and <strong>Program</strong> (fixed to BS Computer Engineering)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Click submit — a temporary password is generated and emailed to the student</div></div>
+  </div>
+
+  <h3 class="section-h3">Bulk Adding Students via CSV</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Bulk Add</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click <strong>Download Template</strong> to get the CSV format</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Open the template — it has these columns: <span class="mono">studentNumber</span>, <span class="mono">name</span>, <span class="mono">email</span>, <span class="mono">year</span>, <span class="mono">phone</span></div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Fill in your student data (one row per student). Student number format: <span class="mono">22-UR-0592</span></div></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">Upload the completed CSV file (or paste the CSV text)</div></div>
+    <div class="step"><div class="step-n">6</div><div class="step-t">Click <strong>Preview</strong> to review the parsed data and verify entries</div></div>
+    <div class="step"><div class="step-n">7</div><div class="step-t">Click <strong>Add Students</strong> to create all accounts at once — each student receives an email with their temporary password</div></div>
+  </div>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>The CSV template columns are: <strong>studentNumber</strong>, <strong>name</strong>, <strong>email</strong>, <strong>year</strong>, <strong>phone</strong>. Student numbers must follow the format <span class="mono">22-UR-0592</span> (year-campus-sequence).</span></div>
 </section>
 
 <section class="manual-section" id="i-documents">
@@ -619,6 +692,18 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div class="step"><div class="step-n">2</div><div class="step-t">Review the uploaded file or form content</div></div>
     <div class="step"><div class="step-n">3</div><div class="step-t">Choose Approve, Reject, or Request Resubmission and add a remark</div></div>
     <div class="step"><div class="step-n">4</div><div class="step-t">Submit your decision — the student is notified automatically</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="i-checklist">
+  <h2 class="section-h2">Document Checklist</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/checklist</span><br>The Document Checklist gives you a per-student overview of all required PSU forms and their completion status across all deployment phases.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to the <strong>Checklist</strong> tab from the sidebar</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">View a list of your assigned students, each showing a progress bar (percentage of required documents approved)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Expand a student to see individual document rows organized by phase: <strong>Pre-deployment</strong>, <strong>Upon-approval</strong>, <strong>Post-OJT</strong></div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Each document row shows its current status: Pending / Submitted / Approved / Rejected</div></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">Use <strong>Search</strong> to find a student quickly, or <strong>Filters</strong> to show only specific statuses or document categories</div></div>
   </div>
 </section>
 
@@ -638,9 +723,26 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<section class="manual-section" id="i-students">
-  <h2 class="section-h2">Students</h2>
-  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/students</span><br>View profiles, activity timelines, document completion rates, and placement information for all students assigned to you. Use this view to monitor progress and identify students who need follow-up.</p>
+<section class="manual-section" id="i-announcements">
+  <h2 class="section-h2">Announcements</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/announcements</span><br>Browse announcements targeted to <strong>All</strong> or <strong>Instructors</strong>.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Announcements</strong> from the sidebar</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Expand an announcement to read the full content</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Search for specific announcements using the search bar</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="i-messages">
+  <h2 class="section-h2">Messages</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/messages</span><br>Used for partnership assistance communication with students.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Messages</strong> from the sidebar — a list of conversations appears (one per student with an active partnership proposal)</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click a student's conversation to open the thread</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Type a message and send — the thread shows messages from all participants (Student, Instructor, Coordinator) with role badges</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Conversations auto-update (polling every 12 seconds for the list, every 3 seconds for the active thread)</div></div>
+  </div>
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Unread conversations are visually marked. Selecting a conversation automatically marks it as read.</span></div>
 </section>
 
 <section class="manual-section" id="i-reports">
@@ -648,7 +750,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <p class="prose"><strong>Path:</strong> <span class="mono">/instructor/reports</span><br>Generate monitoring and compliance reports for your assigned students. Available reports include attendance summaries, document completion rates, and placement status overviews. Export is available where enabled in the UI.</p>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• COORDINATOR -->
+<!-- ═════════════════════════════════════════ COORDINATOR -->
 <section class="manual-section" id="coordinator">
   <span class="section-eye">Portal Guide</span>
   <h1 class="section-h1">Coordinator <em>Portal</em></h1>
@@ -657,7 +759,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div>
       <div class="rb-name" style="color:#633806">Coordinator</div>
       <div class="rb-desc" style="color:#633806">Program-wide oversight — students, companies, proposals, announcements, and reporting.</div>
-      <div class="rb-path" style="color:#633806">Base path: /coordinator Â· 8 modules available</div>
+      <div class="rb-path" style="color:#633806">Base path: /coordinator · 9 modules available</div>
     </div>
   </div>
   <p class="section-lead">Coordinators have the highest level of program oversight. You make final decisions on proposals, manage the partner company list, publish announcements, and generate program-wide reports.</p>
@@ -666,11 +768,79 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 <section class="manual-section" id="c-students">
   <h2 class="section-h2">Students</h2>
   <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/students</span><br>Monitor all students enrolled in the program — not limited to a single instructor's assignment. You can assign or reassign instructors to students, track document compliance, and identify students needing intervention.</p>
+
+  <h3 class="section-h3">Assigning an Instructor</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Find the student in the list and click <strong>Assign</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Select an instructor from the dropdown and confirm</div></div>
+  </div>
+
+  <h3 class="section-h3">Quick Assign All (Batch)</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Quick Assign All</strong> at the top — this selects all currently unassigned students</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Choose an instructor in the mass-assign modal and confirm</div></div>
+  </div>
+
+  <h3 class="section-h3">Viewing Student Details</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click the view (eye) icon on a student to open the details panel</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">View student profile, <strong>Company Assignment</strong> (select a company and click Save Changes), and <strong>Partnership Documents</strong></div></div>
+  </div>
 </section>
 
 <section class="manual-section" id="c-companies">
   <h2 class="section-h2">Companies</h2>
-  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/companies</span><br>Manage the partner company records visible to students for placement applications. Track internship slot capacity and current assignments per company. Add new companies or update existing records as needed.</p>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/companies</span><br>Manage the partner company records visible to students for placement applications. Track internship slot capacity and current assignments per company.</p>
+
+  <h3 class="section-h3">Adding a Company</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Add Company</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in company details: <strong>name</strong>, <strong>address</strong>, <strong>contact person</strong>, <strong>email</strong>, <strong>phone</strong>, <strong>company type</strong> (Public/Private), <strong>working days</strong>, <strong>maximum slots</strong></div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Optionally link to an approved company proposal</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Submit</div></div>
+  </div>
+
+  <h3 class="section-h3">Editing a Company</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Edit</strong> on a company card</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Update the fields as needed and save changes</div></div>
+  </div>
+
+  <h3 class="section-h3">Creating a Supervisor Account</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">On a company card, click <strong>Create Supervisor Account</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in the supervisor's details (name, email)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Submit — the supervisor receives an email with their temporary password</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">A success confirmation shows the account was created</div></div>
+  </div>
+
+  <h3 class="section-h3">Deleting a Company</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Delete</strong> on a company card</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Type the company name to confirm deletion</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Confirm — this action is irreversible</div></div>
+  </div>
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Deleting a company requires typing the exact company name to prevent accidental removal. Ensure no students are currently assigned before deleting.</span></div>
+</section>
+
+<section class="manual-section" id="c-moa">
+  <h2 class="section-h2">MOA Management</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/companies</span> (MOA actions on company cards)<br>Manage Memorandums of Agreement (MOA) for partner companies.</p>
+
+  <h3 class="section-h3">Uploading a MOA</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click the MOA action on a company card</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in: <strong>title</strong>, <strong>description</strong>, select the <strong>student</strong> and <strong>company</strong></div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Upload the MOA file and submit</div></div>
+  </div>
+
+  <h3 class="section-h3">Reviewing a MOA</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">View all MOAs for a company</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t"><strong>Preview</strong> — opens the document for inline viewing or download</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t"><strong>Approve</strong> or <strong>Reject</strong> the MOA (with reasons for rejection)</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t"><strong>Download</strong> the MOA file for local storage or printing</div></div>
+  </div>
 </section>
 
 <section class="manual-section" id="c-proposals">
@@ -687,10 +857,27 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <h2 class="section-h2">Announcements</h2>
   <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/announcements</span><br>Create, publish, and manage program announcements targeted to specific user groups. Pinned announcements appear prominently on student and instructor dashboards.</p>
   <div class="steps">
-    <div class="step"><div class="step-n">1</div><div class="step-t">Click Create and write the announcement title and body</div></div>
-    <div class="step"><div class="step-n">2</div><div class="step-t">Select the target audience (all users, students only, instructors, etc.)</div></div>
-    <div class="step"><div class="step-n">3</div><div class="step-t">Optionally pin the announcement for prominent display</div></div>
-    <div class="step"><div class="step-n">4</div><div class="step-t">Publish — recipients receive notifications immediately</div></div>
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Create</strong> and write the announcement title and body (you can use the <strong>AI Generate</strong> button for help drafting)</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Select the target <strong>audience</strong>: All, Students, Coordinators, Instructors, or Partners</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Choose the <strong>type</strong>: Info, Warning, Success, or Urgent</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Optionally <strong>pin</strong> the announcement for prominent display, then publish</div></div>
+  </div>
+  <h3 class="section-h3">Managing Announcements</h3>
+  <div class="card-grid">
+    <div class="card"><div class="card-label">Edit</div><div class="card-desc">Update an existing announcement's title, content, audience, or type.</div></div>
+    <div class="card"><div class="card-label">Delete</div><div class="card-desc">Remove an announcement permanently.</div></div>
+    <div class="card"><div class="card-label">Stats</div><div class="card-desc">View total announcements, pinned count, this week's count, and average views.</div></div>
+  </div>
+</section>
+
+<section class="manual-section" id="c-messages">
+  <h2 class="section-h2">Messages</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/messages</span><br>Same as the Instructor messaging flow — used for partnership assistance conversations.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">View the list of student conversations</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click a conversation to open the thread</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Send messages and reply to students/instructors</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Conversations auto-update and mark as read when selected</div></div>
   </div>
 </section>
 
@@ -699,7 +886,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <p class="prose"><strong>Path:</strong> <span class="mono">/coordinator/reports</span><br>Generate program-wide operational reports including total placements, pending document counts, compliance rates, and aggregate attendance data. Export to available formats for institutional submission and administration.</p>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• INDUSTRY PARTNER -->
+<!-- ═════════════════════════════════════════ INDUSTRY PARTNER -->
 <section class="manual-section" id="partner">
   <span class="section-eye">Portal Guide</span>
   <h1 class="section-h1">Industry Partner <em>Portal</em></h1>
@@ -708,37 +895,92 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div>
       <div class="rb-name" style="color:#0C447C">Industry Partner</div>
       <div class="rb-desc" style="color:#0C447C">Verify intern attendance and submit structured performance evaluations.</div>
-      <div class="rb-path" style="color:#0C447C">Base path: /industry-partner Â· 5 modules available</div>
+      <div class="rb-path" style="color:#0C447C">Base path: /industry-partner · 6 modules available</div>
     </div>
   </div>
-  <p class="section-lead">As an industry partner, you supervise interns from the institution at your company. Your two primary responsibilities are verifying their daily attendance and submitting performance evaluations.</p>
+  <p class="section-lead">As an industry partner, you supervise interns from the institution at your company. Your primary responsibilities are verifying their daily attendance and submitting performance evaluations.</p>
   <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Interns are assigned to you by the institution's coordinator. You will only see the interns under your direct supervision. Contact the coordinator if an expected intern does not appear in your portal.</span></div>
 </section>
 
 <section class="manual-section" id="p-attendance">
-  <h2 class="section-h2">Attendance Verification</h2>
-  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/attendance</span><br>Review and verify daily attendance entries submitted by your interns. Only approved entries count toward the intern's total completed hours.</p>
+  <h2 class="section-h2">Attendance Verification — Logs Tab</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/attendance</span><br>The Attendance module has three tabs: <strong>Logs</strong>, <strong>Scanner</strong>, and <strong>No-Work</strong>. The Logs tab is for reviewing and verifying daily attendance entries submitted by your interns.</p>
   <div class="steps">
-    <div class="step"><div class="step-n">1</div><div class="step-t">Open a PENDING attendance entry and review the date, time, and intern details</div></div>
-    <div class="step"><div class="step-n">2</div><div class="step-t">Approve if the entry is accurate, or Reject with a remark explaining why it is invalid</div></div>
-    <div class="step"><div class="step-n">3</div><div class="step-t">Submit your verification — the intern is notified of the result</div></div>
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Attendance</strong> — the <strong>Logs</strong> tab shows pending attendance entries grouped by student and date</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">For each entry: <strong>Approve</strong> (confirm the student was present, add optional remarks) or <strong>Reject</strong> (add required remarks explaining why)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">View approved attendance with per-student summaries</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Drill down by date to see up to two time segments per day (e.g., morning and afternoon)</div></div>
   </div>
   <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>Please verify attendance entries promptly and accurately. Delayed verification prevents interns from tracking their progress.</span></div>
 </section>
 
+<section class="manual-section" id="p-scanner">
+  <h2 class="section-h2">Attendance — Scanner Tab</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/attendance</span> (Scanner tab)<br>Use the Scanner tab to verify student attendance via QR code or manual token entry.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Switch to the <strong>Scanner</strong> tab</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Use your device's <strong>camera</strong> to scan the student's QR code</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Alternatively, enter the student's <strong>token code</strong> manually in the text field</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">The system verifies and records the attendance automatically</div></div>
+  </div>
+  <div class="info tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>QR codes have a limited validity window. If a student's QR has expired, ask them to generate a new one or use the manual token entry instead.</span></div>
+</section>
+
+<section class="manual-section" id="p-nowork">
+  <h2 class="section-h2">Attendance — No-Work Tab</h2>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/attendance</span> (No-Work tab)<br>Review and act on no-work notices submitted by students for days when they could not report to the office.</p>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Switch to the <strong>No-Work</strong> tab</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">View no-work notices submitted by students</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t"><strong>Approve</strong> or <strong>Reject</strong> each notice</div></div>
+  </div>
+</section>
+
 <section class="manual-section" id="p-evaluations">
   <h2 class="section-h2">Evaluations</h2>
-  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/evaluations</span><br>Submit structured performance evaluations for your assigned interns. Evaluations are visible to the intern and their instructor once submitted.</p>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/industry-partner/evaluations</span><br>Submit structured performance evaluations for your assigned interns. The module has three tabs for three official evaluation forms.</p>
+
+  <h3 class="section-h3">Form 11 — Internship Evaluation</h3>
   <div class="steps">
-    <div class="step"><div class="step-n">1</div><div class="step-t">Go to Evaluations and select the intern to evaluate</div></div>
-    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in ratings for each defined performance criterion</div></div>
-    <div class="step"><div class="step-n">3</div><div class="step-t">Add qualitative comments — be specific, professional, and constructive</div></div>
-    <div class="step"><div class="step-n">4</div><div class="step-t">Submit — the intern and instructor are notified immediately</div></div>
+    <div class="step"><div class="step-n">1</div><div class="step-t">Go to <strong>Evaluations</strong> and view the list of your assigned interns</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Click <strong>Start Evaluation</strong> on a student</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Rate the student on <strong>8 weighted competencies</strong> using a <strong>1–5 scale</strong></div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Check any applicable <strong>termination</strong> checkboxes (if relevant)</div></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">Add overall comments and click <strong>Submit</strong></div></div>
+    <div class="step"><div class="step-n">6</div><div class="step-t">After submission, you can <strong>Export</strong> the official form</div></div>
   </div>
+
+  <h3 class="section-h3">Form 18 — Supervisor Feedback</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Switch to the <strong>Form 18</strong> tab and select a student</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Rate with <strong>star ratings</strong> on the following criteria:</div></div>
+  </div>
+  <div class="pill-row">
+    <div class="pill"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">Punctuality</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#534AB7"></div><span class="pill-name">Knowledge</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#BA7517"></div><span class="pill-name">Teamwork</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#185FA5"></div><span class="pill-name">Task Performance</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#993C1D"></div><span class="pill-name">Policy Compliance</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#A32D2D"></div><span class="pill-name">Conduct</span></div>
+    <div class="pill"><div class="pill-dot" style="background:#3C3489"></div><span class="pill-name">Traits</span></div>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-n">3</div><div class="step-t">Add comments, then save or submit</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t"><strong>Export</strong> when complete</div></div>
+  </div>
+
+  <h3 class="section-h3">Form 19b — Agency Self-Evaluation</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Switch to the <strong>Form 19b</strong> tab</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in <strong>demographic fields</strong> (agency information)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Rate on <strong>multiple criteria</strong> (multi-criterion evaluation)</div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">Submit and <strong>Export</strong> when complete</div></div>
+  </div>
+
   <div class="info tip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Your comments are the most valuable part of the evaluation for the intern's development. Be specific about both strengths and areas for improvement.</span></div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ADMIN -->
+<!-- ═════════════════════════════════════════ ADMIN -->
 <section class="manual-section" id="admin">
   <span class="section-eye">Portal Guide</span>
   <h1 class="section-h1">Admin <em>Portal</em></h1>
@@ -747,7 +989,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div>
       <div class="rb-name" style="color:#791F1F">Admin</div>
       <div class="rb-desc" style="color:#791F1F">Platform-level controls: users, companies, system settings, and maintenance mode.</div>
-      <div class="rb-path" style="color:#791F1F">Base path: /admin Â· 5 modules available</div>
+      <div class="rb-path" style="color:#791F1F">Base path: /admin · 5 modules available</div>
     </div>
   </div>
   <p class="section-lead">Administrators manage the platform infrastructure. Admin actions often affect all users — proceed carefully, especially for user deletion and maintenance mode.</p>
@@ -757,8 +999,17 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 <section class="manual-section" id="a-users">
   <h2 class="section-h2">User Management</h2>
   <p class="prose"><strong>Path:</strong> <span class="mono">/admin/users</span><br>Create, update, deactivate, and remove user accounts for all five roles. When creating a user, assign the appropriate role — the user will be redirected to the correct portal upon login.</p>
-  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Prefer <strong>deactivating</strong> over deleting users. Deactivation suspends access without removing any associated data or records.</span></div>
-  <h3 class="section-h3">Roles you can create</h3>
+
+  <h3 class="section-h3">Adding a New User</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Add User</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Select the <strong>Role</strong> (Student, Instructor, Coordinator, Industry Partner, Admin)</div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Fill in <strong>Name</strong> and <strong>Email</strong></div></div>
+    <div class="step"><div class="step-n">4</div><div class="step-t">If the role is <strong>Student</strong>, additional fields appear: <strong>Student Number</strong> (format: <span class="mono">22-UR-0592</span>), <strong>Year</strong>, and <strong>Program</strong> (Computer Engineering — pre-filled)</div></div>
+    <div class="step"><div class="step-n">5</div><div class="step-t">Submit — a <strong>temporary password</strong> is generated and emailed to the new user</div></div>
+  </div>
+
+  <h3 class="section-h3">Roles You Can Create</h3>
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0">
     <span class="tag green">Student — /student</span>
     <span class="tag purple">Instructor — /instructor</span>
@@ -766,11 +1017,44 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <span class="tag blue">Industry Partner — /industry-partner</span>
     <span class="tag red">Admin — /admin</span>
   </div>
+
+  <h3 class="section-h3">Editing a User</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Edit</strong> on a user row</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Update the fields as needed and save</div></div>
+  </div>
+
+  <h3 class="section-h3">Assigning a Student to an Instructor</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">On a student row, click <strong>Assign to Instructor</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Select the instructor and confirm</div></div>
+  </div>
+
+  <h3 class="section-h3">Exporting User Data</h3>
+  <p class="prose">Click the <strong>Export</strong> button to download a file containing user data. This is useful for record keeping and institutional reporting.</p>
+
+  <h3 class="section-h3">Deleting a User</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Delete</strong> on a user row</div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Confirm deletion</div></div>
+  </div>
+
+  <div class="info note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Prefer <strong>deactivating</strong> over deleting users. Deactivation suspends access without removing any associated data or records.</span></div>
 </section>
 
 <section class="manual-section" id="a-companies">
   <h2 class="section-h2">Company Management</h2>
-  <p class="prose"><strong>Path:</strong> <span class="mono">/admin/companies</span><br>Maintain the master company database. Companies added here become available for student placement applications. Ensure all company details are accurate before saving — students rely on this information when choosing where to apply.</p>
+  <p class="prose"><strong>Path:</strong> <span class="mono">/admin/companies</span><br>Maintain the master company database. Companies added here become available for student placement applications.</p>
+
+  <h3 class="section-h3">Adding a Company</h3>
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><div class="step-t">Click <strong>Add Company</strong></div></div>
+    <div class="step"><div class="step-n">2</div><div class="step-t">Fill in: <strong>name</strong>, <strong>address</strong>, <strong>contact person</strong>, <strong>contact email</strong>, <strong>contact number</strong>, <strong>company type</strong> (Public/Private), <strong>working days</strong></div></div>
+    <div class="step"><div class="step-n">3</div><div class="step-t">Submit</div></div>
+  </div>
+
+  <h3 class="section-h3">Filtering Companies</h3>
+  <p class="prose">Filter by status: <strong>Active</strong> (has assigned students) or <strong>Inactive</strong> (no current assignments). Use search to find specific company records.</p>
 </section>
 
 <section class="manual-section" id="a-settings">
@@ -785,7 +1069,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• STATUS DEFINITIONS -->
+<!-- ═════════════════════════════════════════ STATUS DEFINITIONS -->
 <section class="manual-section" id="statuses">
   <span class="section-eye">Reference</span>
   <h1 class="section-h1">Status <em>Definitions</em></h1>
@@ -818,9 +1102,37 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
     <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#2563EB"></div><span class="pill-name">APPROVED</span></div>
     <div class="pill" style="width:fit-content"><div class="pill-dot" style="background:#E24B4A"></div><span class="pill-name">REJECTED</span></div>
   </div>
+
+  <h3 class="section-h3">Attendance</h3>
+  <p class="prose">Verification methods: <strong>QR</strong> and <strong>Manual</strong>. Up to <strong>two segments per day</strong> (e.g., morning and afternoon shifts). Manual entries require <strong>supervisor verification</strong> (approve/reject). QR-verified entries are recorded automatically upon scan. Saturday attendance is configurable based on company settings (private companies).</p>
+
+  <h3 class="section-h3">Evaluations</h3>
+  <p class="prose">Three official forms: <strong>Form 11</strong> (Internship Evaluation), <strong>Form 18</strong> (Supervisor Feedback), <strong>Form 19b</strong> (Agency Self-Evaluation). Only the <strong>Industry Partner (supervisor)</strong> can submit evaluations. Students can <strong>view</strong> and <strong>export</strong> evaluations after submission. Evaluations require an assigned company and supervisor.</p>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECURITY -->
+<!-- ═════════════════════════════════════════ DOCUMENT COMPLETENESS -->
+<section class="manual-section" id="doc-completeness">
+  <h2 class="section-h2">Document Completeness Requirement</h2>
+  <p class="prose">The system enforces a <strong>document completeness check</strong> before a student can be approved for company placement or assigned to a company. If any of the following pre-deployment documents are not yet approved, the system will <strong>block the action</strong> and display which documents are still missing.</p>
+
+  <table class="mtable">
+    <thead><tr><th>Required Pre-Deployment Document</th></tr></thead>
+    <tbody>
+      <tr><td>Application for Internship</td></tr>
+      <tr><td>Medical Certificate</td></tr>
+      <tr><td>Certification of Units</td></tr>
+      <tr><td>Internship Resume</td></tr>
+      <tr><td>Consent Form</td></tr>
+      <tr><td>Endorsement Letter (single or multi)</td></tr>
+      <tr><td>Internship Release</td></tr>
+      <tr><td>Record File</td></tr>
+    </tbody>
+  </table>
+
+  <div class="info warn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>This ensures that no student is released for OJT with incomplete requirements, preventing bias or oversight in the approval process.</span></div>
+</section>
+
+<!-- ═════════════════════════════════════════ SECURITY -->
 <section class="manual-section" id="security">
   <span class="section-eye">Account Security</span>
   <h1 class="section-h1">Security &amp; <em>Account Settings</em></h1>
@@ -834,7 +1146,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TROUBLESHOOTING -->
+<!-- ═════════════════════════════════════════ TROUBLESHOOTING -->
 <section class="manual-section" id="troubleshoot">
   <span class="section-eye">Help</span>
   <h1 class="section-h1">Troubleshooting <em>Guide</em></h1>
@@ -900,9 +1212,18 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
       <div class="issue-item"><div class="issue-dot"></div>Confirm your account is active and you are logged in to the correct portal</div>
     </div>
   </div>
+
+  <div class="issue">
+    <div class="issue-q"><div class="issue-badge">!</div>QR code not scanning</div>
+    <div class="issue-list">
+      <div class="issue-item"><div class="issue-dot"></div>Ensure the QR code has not expired (check the timer)</div>
+      <div class="issue-item"><div class="issue-dot"></div>Make sure the camera has permission to access in your browser</div>
+      <div class="issue-item"><div class="issue-dot"></div>Try using the manual token entry as an alternative</div>
+    </div>
+  </div>
 </section>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SUPPORT -->
+<!-- ═════════════════════════════════════════ SUPPORT -->
 <section class="manual-section" id="support">
   <span class="section-eye">Help &amp; Escalation</span>
   <h1 class="section-h1">Support &amp; <em>Escalation</em></h1>
@@ -943,7 +1264,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <div class="info tip"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>The more detail you provide, the faster the issue can be diagnosed and resolved. Screenshots that clearly show the error message or unexpected behavior are especially helpful.</span></div>
 
   <div class="hr"></div>
-  <p class="prose" style="text-align:center;color:var(--t3);font-size:13px">INTRAK User Manual Â· Version 2.0 Â· Manual 2026.03<br>Internship &amp; OJT Tracking and Management System</p>
+  <p class="prose" style="text-align:center;color:var(--t3);font-size:13px">INTRAK User Manual · Version 2.0 · Manual 2026.04<br>Internship &amp; OJT Tracking and Management System</p>
 </section>
 
 </main>
@@ -964,11 +1285,26 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
   <a href="#s-documents" class="toc-link sub">↳ Documents</a>
   <a href="#s-companies" class="toc-link sub">↳ Companies</a>
   <a href="#s-attendance" class="toc-link sub">↳ Attendance</a>
+  <a href="#s-announcements" class="toc-link sub">↳ Announcements</a>
+  <a href="#s-messages" class="toc-link sub">↳ Messages</a>
   <a href="#instructor" class="toc-link">Instructor Portal</a>
+  <a href="#i-students" class="toc-link sub">↳ Students &amp; CSV Import</a>
+  <a href="#i-checklist" class="toc-link sub">↳ Document Checklist</a>
+  <a href="#i-announcements" class="toc-link sub">↳ Announcements</a>
+  <a href="#i-messages" class="toc-link sub">↳ Messages</a>
   <a href="#coordinator" class="toc-link">Coordinator Portal</a>
+  <a href="#c-companies" class="toc-link sub">↳ Companies</a>
+  <a href="#c-moa" class="toc-link sub">↳ MOA Management</a>
+  <a href="#c-messages" class="toc-link sub">↳ Messages</a>
   <a href="#partner" class="toc-link">Industry Partner Portal</a>
+  <a href="#p-attendance" class="toc-link sub">↳ Attendance Logs</a>
+  <a href="#p-scanner" class="toc-link sub">↳ Scanner</a>
+  <a href="#p-nowork" class="toc-link sub">↳ No-Work Notices</a>
+  <a href="#p-evaluations" class="toc-link sub">↳ Evaluations (Forms 11, 18, 19b)</a>
   <a href="#admin" class="toc-link">Admin Portal</a>
+  <a href="#a-users" class="toc-link sub">↳ User Management</a>
   <a href="#statuses" class="toc-link">Status Definitions</a>
+  <a href="#doc-completeness" class="toc-link">Document Completeness</a>
   <a href="#security" class="toc-link">Security</a>
   <a href="#troubleshoot" class="toc-link">Troubleshooting</a>
   <a href="#support" class="toc-link">Support &amp; Escalation</a>
@@ -977,7 +1313,7 @@ body{font-family:var(--fb);color:var(--t);background:var(--bg);line-height:1.7}
 </div><!-- end layout -->
 
 <script>
-// â”€â”€ HAMBURGER â”€â”€
+// ── HAMBURGER ──
 const ham = document.getElementById('hamburger');
 const sb = document.getElementById('sidebar');
 const ov = document.getElementById('overlay');
@@ -993,7 +1329,6 @@ ov.addEventListener('click', () => {
   ham.classList.remove('active');
 });
 
-// close sidebar on link click (mobile)
 document.querySelectorAll('.sb-link, .sb-sub').forEach(link => {
   link.addEventListener('click', () => {
     if (window.innerWidth <= 860) {
@@ -1004,7 +1339,7 @@ document.querySelectorAll('.sb-link, .sb-sub').forEach(link => {
   });
 });
 
-// â”€â”€ SCROLL SPY â”€â”€
+// ── SCROLL SPY ──
 const sections = document.querySelectorAll('section[id]');
 const sbLinks = document.querySelectorAll('.sb-link, .sb-sub');
 const tocLinks = document.querySelectorAll('.toc-link');
@@ -1028,7 +1363,6 @@ function updateNav() {
     const href = a.getAttribute('href');
     a.classList.toggle('active', href === '#' + id);
   });
-  // scroll active toc link into view
   const activeToc = document.querySelector('.toc-link.active');
   if (activeToc) activeToc.scrollIntoView({ block: 'nearest' });
 }
@@ -1036,12 +1370,11 @@ function updateNav() {
 window.addEventListener('scroll', updateNav, { passive: true });
 updateNav();
 
-// â”€â”€ SIMPLE SEARCH HIGHLIGHT â”€â”€
+// ── SIMPLE SEARCH HIGHLIGHT ──
 document.querySelector('.tn-search').addEventListener('click', () => {
   const q = prompt('Search manual:');
   if (!q || q.trim() === '') return;
   const content = document.getElementById('content');
-  // remove old highlights
   content.querySelectorAll('mark').forEach(m => {
     const parent = m.parentNode;
     parent.replaceChild(document.createTextNode(m.textContent), m);

@@ -410,11 +410,7 @@ class SupervisorService {
     }
   }
 
-  async verifyAttendanceWithQR(payload: {
-    token: string;
-    latitude?: number;
-    longitude?: number;
-  }): Promise<{ action: 'login' | 'logout'; log: any }> {
+  async verifyAttendanceWithQR(payload: { token: string }): Promise<{ action: 'login' | 'logout'; log: any }> {
     try {
       const response = await api.post('/attendance/qr/verify', payload);
       return response.data;

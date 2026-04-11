@@ -323,6 +323,31 @@ export const approveApplication = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Block approval when required pre-deployment documents are not all approved
+    const approvedDocs = await prisma.document.findMany({
+      where: { studentId: application.studentId, status: 'APPROVED' },
+      select: { type: true },
+    });
+    const approvedTypes = new Set(approvedDocs.map((d) => d.type));
+    const PRE_DEPLOYMENT_SLOTS: readonly (readonly string[])[] = [
+      ['APPLICATION_INTERNSHIP'],
+      ['MEDICAL_CERTIFICATE'],
+      ['CERTIFICATION_UNITS'],
+      ['INTERNSHIP_RESUME'],
+      ['CONSENT_FORM'],
+      ['ENDORSEMENT_LETTER', 'ENDORSEMENT_LETTER_MULTI'],
+      ['INTERNSHIP_RELEASE'],
+      ['RECORD_FILE'],
+    ];
+    const missingSlots = PRE_DEPLOYMENT_SLOTS
+      .filter((slot) => !slot.some((t) => approvedTypes.has(t)))
+      .map((slot) => slot[0].replace(/_/g, ' ').toLowerCase());
+    if (missingSlots.length > 0) {
+      return res.status(400).json({
+        message: `Cannot approve. The student has incomplete pre-deployment documents. Missing: ${missingSlots.join(', ')}.`
+      });
+    }
+
     // Update application and assign student to company in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Update application status
