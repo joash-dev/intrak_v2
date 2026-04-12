@@ -887,6 +887,65 @@ Open in INTRAK: ${template.targetUrl}
     const errorMsg = 'Email service not configured. Please set either RESEND_API_KEY and RESEND_FROM_EMAIL, or SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables.';
     return { success: false, error: errorMsg };
   }
+
+  /**
+   * Send NAS status change alert to a list of admin emails.
+   * @param event 'down' when NAS went offline, 'up' when it recovered
+   * @param adminEmails list of admin email addresses
+   */
+  async sendNASStatusAlert(
+    event: 'down' | 'up',
+    adminEmails: string[],
+  ): Promise<void> {
+    if (adminEmails.length === 0) return;
+
+    const isDown = event === 'down';
+    const subject = isDown
+      ? 'NAS Storage Offline — INTRAK'
+      : 'NAS Storage Back Online — INTRAK';
+
+    const content = isDown
+      ? `
+        <p>The NAS storage device is <strong style="color:#dc2626;">no longer reachable</strong>.</p>
+        <p>INTRAK has automatically switched to <strong>local server storage</strong> so the system continues to work normally. No action is needed from users.</p>
+        <div class="credentials-box">
+          <p><strong>What this means:</strong></p>
+          <ul style="text-align:left; margin:0 auto; display:inline-block;">
+            <li>New file uploads are saved to the server's local disk.</li>
+            <li>Files that only exist on the NAS may be temporarily unavailable.</li>
+            <li>When the NAS comes back online, local files will be synced automatically.</li>
+          </ul>
+        </div>
+        <p>Please check the NAS device and network connection when possible.</p>
+        <p><br><strong>– INTRAK System</strong></p>
+      `
+      : `
+        <p>The NAS storage device is <strong style="color:#16a34a;">back online</strong> and reachable.</p>
+        <p>INTRAK will resume using NAS storage for all file operations. Any files uploaded while the NAS was offline will be synced to the NAS automatically during the next backup cycle.</p>
+        <p>No further action is needed.</p>
+        <p><br><strong>– INTRAK System</strong></p>
+      `;
+
+    const html = this.generateEmailTemplate(
+      content,
+      isDown ? 'NAS Offline' : 'NAS Online',
+      isDown
+        ? 'https://img.icons8.com/ios-filled/50/ffffff/error--v1.png'
+        : 'https://img.icons8.com/ios-filled/50/ffffff/checkmark--v1.png',
+    );
+
+    const text = isDown
+      ? 'INTRAK Alert: NAS storage is offline. The system is using local storage as a fallback. Files will sync when the NAS recovers.'
+      : 'INTRAK Alert: NAS storage is back online. File operations have resumed using the NAS. Local files will be synced automatically.';
+
+    for (const email of adminEmails) {
+      try {
+        await this.sendEmail({ to: email, subject, html, text });
+      } catch (err) {
+        console.error(`[NAS Alert] Failed to send alert to ${email}:`, err);
+      }
+    }
+  }
 }
 
 export const emailService = new EmailService();

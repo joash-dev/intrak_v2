@@ -3,6 +3,23 @@ import type { ScheduledTask } from 'node-cron';
 import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { prisma } from '../config/database';
 import { recordScheduledNASBackupRun, setSyncInProgress } from '../services/nasBackupStatus.store';
+import { emailService } from '../services/email.service';
+
+async function notifyAdminsNASStatus(event: 'down' | 'up'): Promise<void> {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: 'ADMIN', active: true },
+      select: { email: true },
+    });
+    const emails = admins.map((a) => a.email).filter(Boolean);
+    if (emails.length > 0) {
+      await emailService.sendNASStatusAlert(event, emails);
+      console.log(`[NAS Alert] Sent "${event}" email to ${emails.length} admin(s)`);
+    }
+  } catch (err) {
+    console.error('[NAS Alert] Failed to send admin notification:', err);
+  }
+}
 
 let syncTask: ScheduledTask | null = null;
 let healthCheckTask: ScheduledTask | null = null;
@@ -68,8 +85,10 @@ export const startNASSyncJob = (): void => {
 
       if (isNASAvailable && !wasNASAvailable) {
         console.log('[NAS Sync] NAS is now available! Reconnected successfully.');
+        notifyAdminsNASStatus('up');
       } else if (!isNASAvailable && wasNASAvailable) {
         console.warn('[NAS Sync] NAS has gone offline. Using local storage fallback.');
+        notifyAdminsNASStatus('down');
       } else if (!isNASAvailable) {
         console.log('[NAS Sync] NAS still unavailable, skipping sync (will retry next cycle)');
       }
@@ -139,8 +158,10 @@ export const startNASSyncJob = (): void => {
 
         if (isUp && !wasNASAvailable) {
           console.log('[NAS Health] NAS is back online — cache updated to available');
+          notifyAdminsNASStatus('up');
         } else if (!isUp && wasNASAvailable) {
           console.warn('[NAS Health] NAS went offline — cache updated to unavailable');
+          notifyAdminsNASStatus('down');
         }
 
         wasNASAvailable = isUp;
