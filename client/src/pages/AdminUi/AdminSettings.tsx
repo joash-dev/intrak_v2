@@ -37,6 +37,7 @@ import {
 import {
   adminService,
   type NASBackupRunRecord,
+  type NASBackupStatus,
   type SystemInfo,
   type SystemAlert,
 } from "../../services/adminService";
@@ -259,34 +260,62 @@ function SystemInformationPanel({ systemInfo }: { systemInfo: SystemInfo }) {
   );
 }
 
-function describeNasBackupRun(run: NASBackupRunRecord | null | undefined): string {
-  if (!run) return "";
+function getNasBackupHeadline(
+  backup: NASBackupStatus,
+): { text: string; color: "green" | "amber" | "red" | "gray" | "blue" } {
+  if (backup.syncInProgress) {
+    return { text: "Backup in progress — syncing files to NAS...", color: "blue" };
+  }
+  if (!backup.nasFeatureEnabled) {
+    return { text: "NAS is disabled. Files are only stored on the server.", color: "amber" };
+  }
+  const run = backup.lastScheduled;
+  if (!run) {
+    return {
+      text: "Waiting for first backup check. The server checks every 30 minutes automatically.",
+      color: "gray",
+    };
+  }
+  if (run.status === "completed" && run.summary === "up_to_date") {
+    return { text: "All files are backed up. No new files needed copying.", color: "green" };
+  }
+  if (run.status === "completed" && run.summary === "files_copied") {
+    const f = run.failed ?? 0;
+    if (f > 0) {
+      return {
+        text: `Backup finished — ${run.synced} file(s) copied, but ${f} failed. Check server logs.`,
+        color: "amber",
+      };
+    }
+    return { text: `Backup complete — ${run.synced} file(s) copied to NAS successfully.`, color: "green" };
+  }
   if (run.status === "skipped") {
     switch (run.skipReason) {
-      case "sync_already_running":
-        return "Skipped — another sync was already running.";
-      case "auto_backup_disabled":
-        return "Skipped — Auto backup is off in Admin settings.";
       case "nas_unavailable":
-        return "Skipped — NAS unreachable.";
-      case "nas_disabled":
-        return "Skipped — NAS disabled (USE_NAS).";
+        return { text: "NAS is unreachable. Backup was skipped. Files stay on the server until the NAS is back.", color: "red" };
+      case "auto_backup_disabled":
+        return { text: "Automatic backup is turned off in your settings.", color: "amber" };
+      case "sync_already_running":
+        return { text: "A backup was already in progress when the next one was scheduled.", color: "gray" };
       default:
-        return "Skipped.";
+        return { text: "Backup was skipped.", color: "gray" };
     }
   }
   if (run.status === "error") {
-    return run.errorMessage || "Sync error.";
+    return { text: `Backup error: ${run.errorMessage || "Unknown error. Check server logs."}`, color: "red" };
   }
-  if (run.summary === "up_to_date") {
-    return "Everything up to date (no files needed copying).";
-  }
-  const parts: string[] = [];
-  if (run.synced != null) parts.push(`${run.synced} synced`);
-  if (run.failed != null && run.failed > 0) parts.push(`${run.failed} failed`);
-  if (run.hashVerified != null) parts.push(`${run.hashVerified} hash-verified`);
-  if (run.hashFailed != null && run.hashFailed > 0) parts.push(`${run.hashFailed} hash issues`);
-  return parts.length > 0 ? parts.join(" · ") : "Completed.";
+  return { text: "Backup status unknown.", color: "gray" };
+}
+
+function formatTimeAgo(isoDate: string): string {
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ${mins % 60}m ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ${hrs % 24}h ago`;
 }
 
 const AdminSettings = () => {
@@ -1917,90 +1946,73 @@ const AdminSettings = () => {
                         </div>
                       </div>
 
-                      {/* NAS scheduled backup status (mirrors server logs) */}
-                      {systemInfo.nasBackup && (
-                        <div className="px-4 py-3.5 space-y-3 border-t border-gray-200 dark:border-gray-700">
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                NAS backup (sync)
-                              </span>
-                              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                Same data as{" "}
-                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800">[NAS Sync]</code> in server
-                                logs. Resets if the server restarts.
-                              </p>
+                      {/* NAS Backup Status — admin-friendly */}
+                      {systemInfo.nasBackup && (() => {
+                        const headline = getNasBackupHeadline(systemInfo.nasBackup);
+                        const colorMap = {
+                          green: { dot: "bg-green-500", text: "text-green-800 dark:text-green-200", bg: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" },
+                          amber: { dot: "bg-amber-500", text: "text-amber-800 dark:text-amber-200", bg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800" },
+                          red:   { dot: "bg-red-500",   text: "text-red-800 dark:text-red-200",     bg: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800" },
+                          blue:  { dot: "bg-blue-500",  text: "text-blue-800 dark:text-blue-200",   bg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800" },
+                          gray:  { dot: "bg-gray-400",  text: "text-gray-700 dark:text-gray-300",   bg: "bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700" },
+                        };
+                        const c = colorMap[headline.color];
+                        const lastRun = systemInfo.nasBackup.lastScheduled;
+                        return (
+                          <div className="px-4 py-3.5 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                              NAS Backup
+                            </span>
+
+                            {/* Main status banner */}
+                            <div className={`flex items-start gap-3 rounded-lg border p-3 ${c.bg}`}>
+                              <div className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${c.dot} ${headline.color === "blue" ? "animate-pulse" : ""}`} />
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-sm font-medium leading-snug ${c.text}`}>
+                                  {headline.text}
+                                </p>
+                                {lastRun && (
+                                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Last checked {formatTimeAgo(lastRun.finishedAt)} ({lastRun.durationSeconds}s)
+                                  </p>
+                                )}
+                                {!lastRun && !systemInfo.nasBackup.syncInProgress && (
+                                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    The server automatically checks every 30 minutes.
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right text-[10px] text-gray-500 dark:text-gray-400 space-y-0.5 max-w-[220px]">
-                              <p>
-                                <span className="font-medium text-gray-600 dark:text-gray-300">Sync cron</span>{" "}
-                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800 break-all">
-                                  {systemInfo.nasBackup.scheduledCron}
-                                </code>
-                              </p>
-                              <p>
-                                <span className="font-medium text-gray-600 dark:text-gray-300">Health cron</span>{" "}
-                                <code className="rounded bg-gray-100 px-1 dark:bg-gray-800 break-all">
-                                  {systemInfo.nasBackup.healthCheckCron}
-                                </code>
-                              </p>
-                            </div>
-                          </div>
-                          {!systemInfo.nasBackup.nasFeatureEnabled && (
-                            <p className="text-xs text-amber-800 dark:text-amber-200">
-                              USE_NAS is off — the job runs but does not copy files to NAS.
+
+                            {/* Quick stats (only when there's data) */}
+                            {lastRun && lastRun.status === "completed" && lastRun.summary === "files_copied" && (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                                <div className="rounded-md bg-gray-50 dark:bg-gray-800/50 py-2">
+                                  <p className="text-lg font-bold text-gray-900 dark:text-white">{lastRun.synced ?? 0}</p>
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Copied</p>
+                                </div>
+                                <div className="rounded-md bg-gray-50 dark:bg-gray-800/50 py-2">
+                                  <p className="text-lg font-bold text-gray-900 dark:text-white">{lastRun.hashVerified ?? 0}</p>
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Verified</p>
+                                </div>
+                                <div className="rounded-md bg-gray-50 dark:bg-gray-800/50 py-2">
+                                  <p className={`text-lg font-bold ${(lastRun.failed ?? 0) > 0 ? "text-red-600" : "text-gray-900 dark:text-white"}`}>{lastRun.failed ?? 0}</p>
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Failed</p>
+                                </div>
+                                <div className="rounded-md bg-gray-50 dark:bg-gray-800/50 py-2">
+                                  <p className={`text-lg font-bold ${(lastRun.hashFailed ?? 0) > 0 ? "text-amber-600" : "text-gray-900 dark:text-white"}`}>{lastRun.hashFailed ?? 0}</p>
+                                  <p className="text-[10px] uppercase tracking-wide text-gray-500">Hash Issues</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Backup schedule info */}
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Backup runs every 30 minutes. NAS health is checked every 2 minutes.
                             </p>
-                          )}
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-3 space-y-1.5">
-                              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                Last scheduled run
-                              </p>
-                              {systemInfo.nasBackup.lastScheduled ? (
-                                <>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    {new Date(
-                                      systemInfo.nasBackup.lastScheduled.finishedAt,
-                                    ).toLocaleString()}
-                                    {" · "}
-                                    {systemInfo.nasBackup.lastScheduled.durationSeconds}s
-                                  </p>
-                                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug">
-                                    {describeNasBackupRun(systemInfo.nasBackup.lastScheduled)}
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="text-xs text-gray-500 italic">
-                                  No run recorded yet (server may have just started).
-                                </p>
-                              )}
-                            </div>
-                            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/30 p-3 space-y-1.5">
-                              <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
-                                Last manual sync (API)
-                              </p>
-                              {systemInfo.nasBackup.lastManual ? (
-                                <>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                                    {new Date(
-                                      systemInfo.nasBackup.lastManual.finishedAt,
-                                    ).toLocaleString()}
-                                    {" · "}
-                                    {systemInfo.nasBackup.lastManual.durationSeconds}s
-                                  </p>
-                                  <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug">
-                                    {describeNasBackupRun(systemInfo.nasBackup.lastManual)}
-                                  </p>
-                                </>
-                              ) : (
-                                <p className="text-xs text-gray-500 italic">
-                                  No manual sync since last server start.
-                                </p>
-                              )}
-                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Memory */}
                       <div className="px-4 py-3.5">

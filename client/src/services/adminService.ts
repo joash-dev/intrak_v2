@@ -222,6 +222,7 @@ export interface NASBackupRunRecord {
 export interface NASBackupStatus {
   lastScheduled: NASBackupRunRecord | null;
   lastManual: NASBackupRunRecord | null;
+  syncInProgress: boolean;
   scheduledCron: string;
   healthCheckCron: string;
   nasFeatureEnabled: boolean;

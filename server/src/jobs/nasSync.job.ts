@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import type { ScheduledTask } from 'node-cron';
 import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { prisma } from '../config/database';
-import { recordScheduledNASBackupRun } from '../services/nasBackupStatus.store';
+import { recordScheduledNASBackupRun, setSyncInProgress } from '../services/nasBackupStatus.store';
 
 let syncTask: ScheduledTask | null = null;
 let healthCheckTask: ScheduledTask | null = null;
@@ -41,6 +41,7 @@ export const startNASSyncJob = (): void => {
     }
 
     isSyncing = true;
+    setSyncInProgress(true);
     const startTime = Date.now();
     const elapsedSec = () => Number(((Date.now() - startTime) / 1000).toFixed(1));
 
@@ -120,6 +121,7 @@ export const startNASSyncJob = (): void => {
       });
     } finally {
       isSyncing = false;
+      setSyncInProgress(false);
     }
   });
 
