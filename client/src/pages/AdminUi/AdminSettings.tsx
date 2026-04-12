@@ -36,7 +36,6 @@ import {
 } from "../../services/settingsService";
 import {
   adminService,
-  type NASBackupRunRecord,
   type NASBackupStatus,
   type SystemInfo,
   type SystemAlert,
