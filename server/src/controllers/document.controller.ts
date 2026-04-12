@@ -4,7 +4,7 @@ import { generatePreviewHtml, generatePdf } from '../services/pdfGenerator.servi
 import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { validateNASConnection, getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
+import { validateNASConnection, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import path from 'path';
@@ -12,9 +12,6 @@ import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
-// generateDTRPDF no longer used - TIME_FRAMES now uses the HTML template pipeline
-// Note: uploadPath is now determined dynamically with fallback in uploadDocument
-const uploadPath = getStoragePath(); // Fallback for other uses
 
 /** Pre-deployment types other than RECORD_FILE — Record File checklist row shows ✔ last (after these exist). */
 const PRE_DEPLOYMENT_TYPES_EXCEPT_RECORD_FILE = [

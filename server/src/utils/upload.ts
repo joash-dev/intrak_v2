@@ -1,16 +1,38 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { getStoragePath, ensureNASDirectoryExists } from '../config/nas';
+import { getStoragePathWithFallback, invalidateNASCache } from '../config/nas';
+
+const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     try {
-      const dir = path.join(getStoragePath(), 'documents', 'temp');
-      await ensureNASDirectoryExists(dir);
+      const { storagePath, isUsingFallback } = getStoragePathWithFallback();
+      const dir = path.join(storagePath, 'documents', 'temp');
+      await fs.promises.mkdir(dir, { recursive: true });
       cb(null, dir);
+
+      if (isUsingFallback) {
+        console.warn('[Upload] Using local fallback for temp upload directory');
+      }
     } catch (error) {
-      console.error('Upload destination error:', error);
+      const code = (error as NodeJS.ErrnoException)?.code;
+      if (code && NAS_IO_ERRORS.includes(code)) {
+        console.warn(`[Upload] NAS write failed (${code}), retrying with local storage`);
+        invalidateNASCache();
+        try {
+          const localDir = path.join(process.env.UPLOAD_PATH || './uploads', 'documents', 'temp');
+          await fs.promises.mkdir(localDir, { recursive: true });
+          cb(null, localDir);
+          return;
+        } catch (localErr) {
+          console.error('[Upload] Local fallback also failed:', localErr);
+          cb(localErr as Error, '');
+          return;
+        }
+      }
+      console.error('[Upload] Destination error:', error);
       cb(error as Error, '');
     }
   },

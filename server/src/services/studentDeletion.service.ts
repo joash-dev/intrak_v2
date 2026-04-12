@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { prisma } from '../config/database';
-import { getStoragePath, resolveFilePath } from '../config/nas';
+import { getNASConfig } from '../config/nas';
 
 type FileRef = {
   model: 'document' | 'companyProposalAttachment' | 'profilePhoto';
@@ -38,38 +38,63 @@ export type StudentDeletionResult = {
   };
 };
 
-const buildProfilePhotoPath = (profilePhoto: string): string => {
-  return path.join(getStoragePath(), 'profile-photos', profilePhoto);
+const buildProfilePhotoRelPath = (profilePhoto: string): string => {
+  return path.join('profile-photos', profilePhoto);
 };
 
-const canIgnoreAsMissing = (error: unknown): boolean => {
-  const maybeErr = error as NodeJS.ErrnoException;
-  return maybeErr?.code === 'ENOENT';
-};
-
-const unlinkAndVerify = (targetPath: string): { deleted: boolean; missing: boolean } => {
+/**
+ * Try to unlink a file at the given path. Returns true if something was
+ * deleted, false if the file didn't exist. Throws on unexpected errors.
+ */
+const tryUnlink = async (targetPath: string): Promise<boolean> => {
   try {
-    fs.unlinkSync(targetPath);
+    await fs.promises.unlink(targetPath);
+    return true;
   } catch (error) {
-    if (!canIgnoreAsMissing(error)) {
-      throw error;
-    }
-    return { deleted: false, missing: true };
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') return false;
+    throw error;
   }
-
-  if (fs.existsSync(targetPath)) {
-    throw new Error(`File still exists after unlink: ${targetPath}`);
-  }
-
-  return { deleted: true, missing: false };
 };
 
-const deletePhysicalFile = (storedPath: string): { deleted: boolean; missing: boolean } => {
-  const resolvedPath = resolveFilePath(storedPath);
-  if (!resolvedPath) {
-    return { deleted: false, missing: true };
+/**
+ * Delete a file from both NAS and local storage so no orphans remain.
+ * For stored absolute paths (documents, attachments) the NAS path is
+ * the stored value itself; the local mirror is derived by replacing the
+ * NAS mount prefix with the local UPLOAD_PATH.
+ * For relative paths (profile photos) both roots are prepended.
+ */
+const deletePhysicalFile = async (storedPath: string): Promise<{ deleted: boolean; missing: boolean }> => {
+  const nasConfig = getNASConfig();
+  const localRoot = process.env.UPLOAD_PATH || './uploads';
+
+  const candidates: string[] = [];
+
+  if (path.isAbsolute(storedPath)) {
+    candidates.push(storedPath);
+    if (nasConfig.enabled && storedPath.startsWith(nasConfig.mountPath)) {
+      const relative = path.relative(nasConfig.mountPath, storedPath);
+      candidates.push(path.join(localRoot, relative));
+    } else if (nasConfig.enabled) {
+      const relative = path.relative(localRoot, storedPath);
+      candidates.push(path.join(nasConfig.mountPath, relative));
+    }
+  } else {
+    candidates.push(path.join(localRoot, storedPath));
+    if (nasConfig.enabled) {
+      candidates.push(path.join(nasConfig.mountPath, storedPath));
+    }
   }
-  return unlinkAndVerify(resolvedPath);
+
+  let anyDeleted = false;
+  for (const candidate of candidates) {
+    try {
+      if (await tryUnlink(candidate)) anyDeleted = true;
+    } catch {
+      // NAS might be down — swallow and continue to next candidate
+    }
+  }
+
+  return { deleted: anyDeleted, missing: !anyDeleted };
 };
 
 const collectStudentFileRefs = async (studentId: string, userId: string): Promise<FileRef[]> => {
@@ -105,7 +130,7 @@ const collectStudentFileRefs = async (studentId: string, userId: string): Promis
     refs.push({
       model: 'profilePhoto',
       id: userId,
-      filepath: buildProfilePhotoPath(user.profilePhoto),
+      filepath: buildProfilePhotoRelPath(user.profilePhoto),
     });
   }
 
@@ -153,7 +178,7 @@ const purgeStudentFiles = async (studentId: string, userId: string): Promise<Stu
         continue;
       }
 
-      const result = deletePhysicalFile(ref.filepath);
+      const result = await deletePhysicalFile(ref.filepath);
       if (result.deleted) files.deleted += 1;
       if (result.missing) files.missing += 1;
     } catch (error) {

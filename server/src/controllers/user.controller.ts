@@ -6,7 +6,7 @@ import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
-import { getStoragePath, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, getNASConfig, invalidateNASCache } from '../config/nas';
+import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, getNASConfig, invalidateNASCache } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
@@ -678,7 +678,8 @@ export const getProfilePhoto = async (req: any, res: Response) => {
       return res.status(404).json({ message: 'Invalid profile photo filename' });
     }
 
-    const candidatePath = path.join(getStoragePath(), 'profile-photos', filename);
+    const localRoot = process.env.UPLOAD_PATH || './uploads';
+    const candidatePath = path.join(localRoot, 'profile-photos', filename);
     const resolved = resolveFilePath(candidatePath);
 
     if (!resolved) {

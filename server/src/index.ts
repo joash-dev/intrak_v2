@@ -10,7 +10,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
-import { validateNASConnection, getStoragePath, syncLocalToNAS } from './config/nas';
+import { validateNASConnection, syncLocalToNAS } from './config/nas';
 import { startNASSyncJob } from './jobs/nasSync.job';
 import { startAttendanceAutoTimeoutJob } from './jobs/attendanceAutoTimeout.job';
 import { testDatabaseConnection, prisma } from './config/database';
