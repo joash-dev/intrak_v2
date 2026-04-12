@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import puppeteer from 'puppeteer';
 import { getStoragePathWithFallback, ensureNASDirectoryExists, createLocalBackup } from '../config/nas';
+import { getMirrorNasUploadsToLocalEnabled } from './adminSettingsFlags.service';
 
 const TEMPLATES_DIR = path.resolve(__dirname, '../templates/html');
 
@@ -126,8 +127,9 @@ export async function generatePdf(
         // Write PDF to storage
         fs.writeFileSync(filepath, buffer);
 
-        // Create local backup if on NAS
-        createLocalBackup(filepath, buffer);
+        if (await getMirrorNasUploadsToLocalEnabled()) {
+          createLocalBackup(filepath, buffer);
+        }
 
         return { filepath, filename, buffer };
     } catch (error) {

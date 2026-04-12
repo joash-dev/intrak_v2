@@ -6,6 +6,7 @@ import { prisma } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createLocalBackup, ensureNASDirectoryExists, getStoragePathWithFallback, resolveFilePath } from '../config/nas';
 import { logActivity } from './activity.controller';
+import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
 import { notificationService } from '../services/notification.service';
 import { emitStudentPortalSync } from '../utils/socketEmitters';
 
@@ -660,7 +661,11 @@ export const uploadProposalAttachment = async (req: AuthRequest, res: Response) 
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
 
-      if (!isUsingFallback && finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
+      if (
+        !isUsingFallback &&
+        finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
+        (await getMirrorNasUploadsToLocalEnabled())
+      ) {
         createLocalBackup(finalPath, finalPath);
       }
     } catch (moveError) {

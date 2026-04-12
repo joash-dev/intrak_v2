@@ -6,10 +6,11 @@ import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
-import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, getNASConfig, invalidateNASCache } from '../config/nas';
+import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, getNASConfig, invalidateNASCache } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
+import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
 
 /** Strip non-digits; preserve optional leading + (e.g. +639…). */
 function normalizePhoneForStorage(phone: string): string {
@@ -604,6 +605,15 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
         throw new Error('Failed to save profile photo');
+      }
+    }
+
+    // Optional local mirror when primary save is on NAS (admin toggle)
+    const nasMount = getNASConfig().mountPath;
+    if (filepath.startsWith(nasMount) && (await getMirrorNasUploadsToLocalEnabled())) {
+      const backupPath = createLocalBackup(filepath, filepath);
+      if (backupPath) {
+        console.log(`[NAS] Profile photo local backup: ${backupPath}`);
       }
     }
 

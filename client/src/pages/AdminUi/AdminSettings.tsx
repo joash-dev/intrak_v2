@@ -72,6 +72,7 @@ interface SystemSettings {
   emailNotifications: boolean;
   systemAlerts: boolean;
   autoBackup: boolean;
+  mirrorNasUploadsToLocal: boolean;
   sessionTimeout: number;
   maxLoginAttempts: number;
 }
@@ -339,6 +340,7 @@ const AdminSettings = () => {
     emailNotifications: true,
     systemAlerts: true,
     autoBackup: true,
+    mirrorNasUploadsToLocal: true,
     sessionTimeout: 30,
     maxLoginAttempts: 5,
   });
@@ -532,6 +534,7 @@ const AdminSettings = () => {
         emailNotifications: settings.emailNotifications,
         systemAlerts: settings.systemAlerts,
         autoBackup: settings.autoBackup,
+        mirrorNasUploadsToLocal: settings.mirrorNasUploadsToLocal ?? true,
         sessionTimeout: settings.sessionTimeout,
         maxLoginAttempts: settings.maxLoginAttempts,
       });
@@ -811,6 +814,7 @@ const AdminSettings = () => {
         emailNotifications: systemSettings.emailNotifications,
         systemAlerts: systemSettings.systemAlerts,
         autoBackup: systemSettings.autoBackup,
+        mirrorNasUploadsToLocal: systemSettings.mirrorNasUploadsToLocal,
         sessionTimeout: systemSettings.sessionTimeout,
         maxLoginAttempts: systemSettings.maxLoginAttempts,
       });
@@ -944,6 +948,7 @@ const AdminSettings = () => {
           emailNotifications: importedSettings.emailNotifications,
           systemAlerts: importedSettings.systemAlerts,
           autoBackup: importedSettings.autoBackup,
+          mirrorNasUploadsToLocal: importedSettings.mirrorNasUploadsToLocal ?? true,
           sessionTimeout: importedSettings.sessionTimeout,
           maxLoginAttempts: importedSettings.maxLoginAttempts,
         });
@@ -2187,7 +2192,7 @@ const AdminSettings = () => {
                             Auto Backup
                           </span>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Automatically backup system data
+                            Scheduled sync from local storage to NAS (when NAS is available)
                           </p>
                         </div>
                         <button
@@ -2204,6 +2209,37 @@ const AdminSettings = () => {
                         >
                           <span
                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${systemSettings.autoBackup
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                              }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Mirror NAS uploads to local
+                          </span>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            When NAS is online, duplicate new files to local disk for offline preview. Does not change uploads when NAS is down or scheduled backup to NAS.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSystemSettings({
+                              ...systemSettings,
+                              mirrorNasUploadsToLocal: !systemSettings.mirrorNasUploadsToLocal,
+                            })
+                          }
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${systemSettings.mirrorNasUploadsToLocal
+                            ? "bg-green-600"
+                            : "bg-gray-600"
+                            }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${systemSettings.mirrorNasUploadsToLocal
                               ? "translate-x-6"
                               : "translate-x-1"
                               }`}

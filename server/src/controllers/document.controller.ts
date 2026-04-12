@@ -12,6 +12,7 @@ import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
+import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
 
 /** Pre-deployment types other than RECORD_FILE — Record File checklist row shows ✔ last (after these exist). */
 const PRE_DEPLOYMENT_TYPES_EXCEPT_RECORD_FILE = [
@@ -252,8 +253,12 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
 
-      // Create local backup if saving to NAS (for redundancy)
-      if (!isUsingFallback && finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
+      // Optional local mirror when primary save is on NAS (admin toggle)
+      if (
+        !isUsingFallback &&
+        finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
+        (await getMirrorNasUploadsToLocalEnabled())
+      ) {
         const backupPath = createLocalBackup(finalPath, finalPath);
         if (backupPath) {
           console.log(`[NAS] Created local backup: ${backupPath}`);

@@ -51,6 +51,8 @@ export interface AdminSettingsRecord {
   emailNotifications: boolean;
   systemAlerts: boolean;
   autoBackup: boolean;
+  /** When NAS is online, mirror uploads to local disk (documents, templates, photos, PDFs). */
+  mirrorNasUploadsToLocal: boolean;
   sessionTimeout: number;
   maxLoginAttempts: number;
   emailSystemAlerts: boolean;
@@ -75,6 +77,7 @@ export interface AdminSettingsImportPayload {
     emailNotifications: boolean;
     systemAlerts: boolean;
     autoBackup: boolean;
+    mirrorNasUploadsToLocal: boolean;
     sessionTimeout: number | string;
     maxLoginAttempts: number | string;
   }>;
@@ -341,6 +344,7 @@ class AdminService {
     emailNotifications?: boolean;
     systemAlerts?: boolean;
     autoBackup?: boolean;
+    mirrorNasUploadsToLocal?: boolean;
     sessionTimeout?: number;
     maxLoginAttempts?: number;
     emailSystemAlerts?: boolean;

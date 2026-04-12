@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
+import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
 import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
@@ -65,8 +66,12 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
       fs.copyFileSync(req.file.path, filepath);
       fs.unlinkSync(req.file.path);
       
-      // Create local backup if saving to NAS (for redundancy)
-      if (!isUsingFallback && filepath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak')) {
+      // Optional local mirror when primary save is on NAS (admin toggle)
+      if (
+        !isUsingFallback &&
+        filepath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
+        (await getMirrorNasUploadsToLocalEnabled())
+      ) {
         const backupPath = createLocalBackup(filepath, filepath);
         if (backupPath) {
           console.log(`[NAS] Created local backup for template: ${backupPath}`);

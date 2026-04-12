@@ -4,7 +4,7 @@
 
 - **System Name:** INTRAK (Internship/OJT Tracking and Management System)
 - **Version:** 2.0
-- **Manual Version:** 2026.04
+- **Manual Version:** 2026.04.2
 - **Audience:** Students, Instructors, Coordinators, Industry Partners, Administrators
 - **Purpose:** Step-by-step guidance for every feature in the system, organized by role
 
@@ -20,6 +20,7 @@
 - [6. Coordinator Guide](#6-coordinator-guide)
 - [7. Industry Partner (Supervisor) Guide](#7-industry-partner-supervisor-guide)
 - [8. Admin Guide](#8-admin-guide)
+  - [8.4.1 NAS storage and failover](#841-nas-storage-and-failover)
 - [9. Security and Account Settings](#9-security-and-account-settings)
 - [10. Status Definitions and Business Rules](#10-status-definitions-and-business-rules)
 - [11. Troubleshooting Guide](#11-troubleshooting-guide)
@@ -784,6 +785,36 @@ View high-level system health and operational indicators at a glance.
 - **Maintenance Mode** — enable/disable maintenance mode (blocks non-admin users)
 - **Export/Import** — manage admin setting files
 - **NAS Operations** — manage NAS-related settings (when configured)
+- **System / storage status** — when NAS is enabled, a panel summarizes recent backup activity in plain language (last run, skipped runs, files copied or verified, and whether a sync is in progress)
+
+#### 8.4.1 NAS storage and failover
+
+This section applies when the deployment uses **Network-Attached Storage (NAS)** for uploads (optional; see Appendix A).
+
+**Normal operation (NAS online)**  
+The application prefers the NAS mount for storing new uploads (documents, templates, profile photos, etc.) when connectivity checks show the NAS is reachable.
+
+**When the NAS goes offline**  
+The system **does not stop**. It switches to **local server storage** (the application’s configured upload directory, e.g. the Docker `uploads` volume) so users can still upload and use the app. New files saved during the outage are stored locally first.
+
+**After the NAS comes back**  
+Scheduled **backup/sync** jobs copy local files to the NAS again (subject to the **Auto backup** admin setting). You do not need to re-enter data in the database for files that were uploaded locally while the NAS was down.
+
+**Health checks vs full sync**  
+- A **short, frequent health check** (default about every two minutes) only updates whether the NAS is considered up or down. It does **not** copy all files each time.  
+- A **separate scheduled sync** (default about every thirty minutes) performs the actual copy/verify work when NAS is available and auto backup is on.
+
+**Email alerts for admins**  
+If outbound email is configured (Resend or SMTP), **each active Admin** receives an email when the NAS **becomes unreachable** and again when it **becomes reachable**. Alerts are sent on **status changes**, not on every routine check, so inboxes are not flooded.
+
+**Admin: Mirror NAS uploads to local**  
+In **Admin → Settings**, **Mirror NAS uploads to local** controls whether **new** files are **duplicated** to the server’s local upload volume **when the NAS is online** (documents, generated PDFs, templates, proposal attachments, profile photos). **Off:** primary copy is only on NAS for those uploads (smaller local disk use; previews may fail if NAS is later offline and no local copy exists). **On (default):** same redundancy as before. This setting does **not** disable saving to local when the NAS is offline, and it does **not** disable **Auto backup** (scheduled local → NAS sync).
+
+**Important limitation — “NAS-only” files**  
+Some older files may exist **only on the NAS** and never had a copy on local disk. While the NAS is offline, those files **cannot be opened or shown** (for example a profile photo may appear broken or return “not found”). This is **temporary**: when the NAS is restored, the same links usually work again. The only way to avoid that gap is to keep **local copies** of everything (for example ongoing sync from NAS to local — a deployment enhancement your technical team may add).
+
+**Student account deletion**  
+When a student account is removed, the system attempts to delete related files from **both** NAS and local locations where paths are known, so leftover copies are less likely on either disk.
 
 ### 8.5 Notifications
 
@@ -828,6 +859,8 @@ Monitor system-level notifications and alerts.
 2. Click **Upload** and select an image.
 3. Your photo appears across the portal (header, profile panels).
 4. Click **Remove** to delete your current photo.
+
+**If your school uses NAS storage:** When you upload while the NAS is online and **Mirror NAS uploads to local** is enabled in Admin settings, the system saves your photo on the NAS **and** keeps a **local copy** on the server (same idea as document uploads). The server resolves your image from **local first**, then the NAS when online. If you uploaded **only** while the NAS was down (local-only save) or an old photo never got a local mirror, the image may be missing until the NAS is back or you upload again.
 
 ---
 
@@ -937,6 +970,13 @@ This ensures that no student is released for OJT with incomplete requirements, p
 1. Ensure the QR code has not expired (check the timer).
 2. Make sure the camera has permission to access in your browser.
 3. Try using the **manual token** entry as an alternative.
+
+### Profile photo or document missing; uploads feel slow
+
+1. Your institution may use **NAS** storage. If the NAS is offline, the app keeps running on **local server storage**; **new** uploads should still work.
+2. **Older files** that were never copied to local disk may be **unavailable** until the NAS is back (broken image, 404, or download error). Wait for IT to restore the NAS, then refresh the page.
+3. If a profile picture stays missing after NAS is restored, try **uploading the photo again** from **Settings > Profile Photo**.
+4. **Admins** can check **Admin > Settings** for NAS/backup status and server logs for `[NAS]` messages.
 
 ---
 
@@ -1089,6 +1129,9 @@ An Elastic IP gives your server a **permanent public IP** that does not change w
 | `docker-compose.aws.nas.yml` | Optional overlay: bind-mounts host `/mnt/nas` and sets `NAS_PATH` for NAS storage. |
 | `server/Dockerfile` | Builds the API image; CMD runs `scripts/aws-start.sh`. |
 | `client/Dockerfile` | Multi-stage build: Vite compiles the SPA, then copies output to Nginx Alpine with `nginx.conf`. |
+
+**NAS behaviour in production (summary)**  
+With `USE_NAS=true` and the NAS overlay, the API treats the NAS mount as primary storage when health checks succeed; otherwise it uses `UPLOAD_PATH` inside the container (typically backed by the `uploads_data` volume). Environment variables such as `NAS_SYNC_CRON` and `NAS_HEALTH_CRON` control how often a full **local → NAS** sync runs versus how often **availability** is re-checked. Admin **Auto backup** can disable scheduled sync runs. **Admin email alerts** on NAS up/down transitions require a working Resend or SMTP configuration in `.env`. For end-user-facing detail, see **§8.4.1 NAS storage and failover**.
 
 ### A.8 Updating / Redeploying
 
