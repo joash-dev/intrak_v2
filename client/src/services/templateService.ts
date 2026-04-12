@@ -1,4 +1,5 @@
 import api from './api';
+import { getMessageFromAxiosError } from '../utils/axiosErrorMessage';
 
 export interface DocumentTemplate {
   id: string;
@@ -118,6 +119,10 @@ class TemplateService {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading template:', error);
+      const parsed = await getMessageFromAxiosError(error);
+      if (parsed) {
+        throw new Error(parsed);
+      }
       throw error;
     }
   }

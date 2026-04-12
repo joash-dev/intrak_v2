@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../../constants/storageMessages';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -118,9 +119,9 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
                         </div>
                     }
                     error={
-                        <div className="flex flex-col items-center justify-center p-10 text-red-500">
-                            <p className="font-semibold">Failed to load PDF.</p>
-                            <p className="text-sm">The file might be corrupted or inaccessible.</p>
+                        <div className="flex flex-col items-center justify-center p-10 text-amber-700 dark:text-amber-400 max-w-md text-center">
+                            <p className="font-semibold">Could not open this PDF.</p>
+                            <p className="text-sm mt-2 text-gray-600 dark:text-gray-400">{FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE}</p>
                         </div>
                     }
                     className="shadow-xl"

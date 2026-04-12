@@ -414,9 +414,9 @@ const CoordinatorDocumentsTab: React.FC = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success("Download started");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error downloading document:", err);
-      toast.error(err.message || "Failed to download document");
+      toast.error(err instanceof Error ? err.message : "Failed to download document");
     }
   };
 
@@ -427,9 +427,14 @@ const CoordinatorDocumentsTab: React.FC = () => {
       const blob = await documentService.downloadDocument(doc.id);
       const url = window.URL.createObjectURL(blob);
       setPreviewUrl(url);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error previewing document:", err);
-      toast.error(err.message || "Failed to preview document");
+      const msg =
+        err instanceof Error
+          ? err.message
+          : (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            "Failed to preview document";
+      toast.error(msg);
       setPreviewDoc(null);
     } finally {
       setPreviewLoading(false);

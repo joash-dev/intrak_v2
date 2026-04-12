@@ -82,9 +82,9 @@ const SupervisorDocuments = () => {
     try {
       await supervisorService.downloadDocument(doc.id);
       toast.success(`Downloading ${doc.filename}`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error downloading document:", error);
-      toast.error("Failed to download document");
+      toast.error(error instanceof Error ? error.message : "Failed to download document");
     }
   };
 

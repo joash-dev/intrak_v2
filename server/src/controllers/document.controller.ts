@@ -4,7 +4,7 @@ import { generatePreviewHtml, generatePdf } from '../services/pdfGenerator.servi
 import { DocumentFeedbackType, NotificationType } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { validateNASConnection, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
+import { validateNASConnection, getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, invalidateNASCache, getNASConfig } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import path from 'path';
@@ -12,7 +12,7 @@ import fs from 'fs';
 import { notificationService } from '../services/notification.service';
 import { emitDocumentUploaded, emitDocumentStatusChanged } from '../utils/socketEmitters';
 import { prisma } from '../config/database';
-import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../constants/storageMessages';
 
 /** Pre-deployment types other than RECORD_FILE — Record File checklist row shows ✔ last (after these exist). */
 const PRE_DEPLOYMENT_TYPES_EXCEPT_RECORD_FILE = [
@@ -252,18 +252,6 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     try {
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
-
-      // Optional local mirror when primary save is on NAS (admin toggle)
-      if (
-        !isUsingFallback &&
-        finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
-        (await getMirrorNasUploadsToLocalEnabled())
-      ) {
-        const backupPath = createLocalBackup(finalPath, finalPath);
-        if (backupPath) {
-          console.log(`[NAS] Created local backup: ${backupPath}`);
-        }
-      }
     } catch (moveError: any) {
       if (NAS_IO_ERRORS.includes(moveError?.code)) invalidateNASCache();
       console.error('Error moving file:', moveError);
@@ -1006,7 +994,8 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
       console.error('Stored filepath:', document.filepath);
       console.error('Resolved filepath:', filepath);
       return res.status(404).json({
-        message: 'File not found. The file may be on disconnected storage.',
+        message: FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE,
+        code: 'FILE_NOT_AVAILABLE',
         details: process.env.NODE_ENV === 'development' ? {
           storedPath: document.filepath,
           resolvedPath: filepath

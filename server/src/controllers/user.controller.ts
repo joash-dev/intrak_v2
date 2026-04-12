@@ -6,11 +6,11 @@ import fs from 'fs';
 import { auditLog } from '../services/audit.service';
 import { logActivity } from './activity.controller';
 import { prisma } from '../config/database';
-import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, getNASConfig, invalidateNASCache } from '../config/nas';
+import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, getNASConfig, invalidateNASCache } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import { deleteStudentAccountWithNASPurge } from '../services/studentDeletion.service';
-import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../constants/storageMessages';
 
 /** Strip non-digits; preserve optional leading + (e.g. +639…). */
 function normalizePhoneForStorage(phone: string): string {
@@ -608,15 +608,6 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Optional local mirror when primary save is on NAS (admin toggle)
-    const nasMount = getNASConfig().mountPath;
-    if (filepath.startsWith(nasMount) && (await getMirrorNasUploadsToLocalEnabled())) {
-      const backupPath = createLocalBackup(filepath, filepath);
-      if (backupPath) {
-        console.log(`[NAS] Profile photo local backup: ${backupPath}`);
-      }
-    }
-
     // Delete old profile photo from both NAS and local to avoid orphans
     const user = await prisma.user.findUnique({
       where: { id: userId }
@@ -694,7 +685,10 @@ export const getProfilePhoto = async (req: any, res: Response) => {
 
     if (!resolved) {
       console.log(`📸 File not found (NAS + local): ${candidatePath}`);
-      return res.status(404).json({ message: 'Profile photo file not found' });
+      return res.status(404).json({
+        message: FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE,
+        code: 'FILE_NOT_AVAILABLE',
+      });
     }
 
     console.log(`📸 Serving profile photo: ${resolved}`);

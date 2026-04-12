@@ -255,16 +255,14 @@ const InstructorDocumentsTab = () => {
   const loadDocumentPreview = async (doc: InstructorDocument) => {
     try {
       const blob = await instructorService.downloadDocument(doc.id);
-      if (blob) {
-        const url = window.URL.createObjectURL(blob);
-        setPreviewUrl(url); // Note: Cleanup of old URL is handled by useEffect
-        setPreviewType(blob.type);
-        setSelectedDoc(doc);
-        return true;
-      }
-      return false;
-    } catch (error) {
+      const url = window.URL.createObjectURL(blob);
+      setPreviewUrl(url); // Note: Cleanup of old URL is handled by useEffect
+      setPreviewType(blob.type);
+      setSelectedDoc(doc);
+      return true;
+    } catch (error: unknown) {
       console.error("Error loading preview:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load document preview");
       return false;
     }
   };
@@ -362,28 +360,22 @@ const InstructorDocumentsTab = () => {
   const handleDownload = async (doc: InstructorDocument) => {
     try {
       const blob = await instructorService.downloadDocument(doc.id);
-      if (blob) {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = doc.fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      toast.error("Failed to download document");
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = doc.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to download document");
     }
   };
 
   const handlePrint = async (doc: InstructorDocument) => {
     try {
       const blob = await instructorService.downloadDocument(doc.id);
-      if (!blob) {
-        toast.error("Failed to load document for printing");
-        return;
-      }
 
       const url = window.URL.createObjectURL(blob);
       const printWindow = window.open('', '_blank');
@@ -425,8 +417,8 @@ const InstructorDocumentsTab = () => {
         printWindow.location.href = url;
       }
       printWindow.document.close();
-    } catch (error) {
-      toast.error("Failed to print document");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to print document");
     }
   };
 
@@ -446,12 +438,16 @@ const InstructorDocumentsTab = () => {
       // Fetch all document blobs in parallel
       const blobResults = await Promise.all(
         approvedOrPendingDocs.map(async (doc) => {
-          const blob = await instructorService.downloadDocument(doc.id);
-          return { doc, blob };
+          try {
+            const blob = await instructorService.downloadDocument(doc.id);
+            return { doc, blob };
+          } catch {
+            return { doc, blob: null as Blob | null };
+          }
         })
       );
 
-      const validResults = blobResults.filter(r => r.blob !== null);
+      const validResults = blobResults.filter((r): r is { doc: InstructorDocument; blob: Blob } => r.blob !== null);
 
       if (validResults.length === 0) {
         toast.error("Failed to load any documents");

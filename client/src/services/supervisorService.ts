@@ -1,4 +1,5 @@
 import api from './api';
+import { getMessageFromAxiosError } from '../utils/axiosErrorMessage';
 import type { AttendanceNoWorkNotice } from './attendanceService';
 
 // Interfaces
@@ -262,6 +263,10 @@ class SupervisorService {
       window.URL.revokeObjectURL(link.href);
     } catch (error) {
       console.error('Error downloading document:', error);
+      const parsed = await getMessageFromAxiosError(error);
+      if (parsed) {
+        throw new Error(parsed);
+      }
       throw error;
     }
   }

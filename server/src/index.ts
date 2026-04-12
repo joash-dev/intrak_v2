@@ -11,6 +11,7 @@ import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, syncLocalToNAS } from './config/nas';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from './constants/storageMessages';
 import { startNASSyncJob } from './jobs/nasSync.job';
 import { startAttendanceAutoTimeoutJob } from './jobs/attendanceAutoTimeout.job';
 import { testDatabaseConnection, prisma } from './config/database';
@@ -127,6 +128,17 @@ if (process.env.USE_NAS === 'true') {
   const nasPath = process.env.NAS_PATH || '/mnt/nas/intrak';
   app.use('/uploads', uploadsCorsMw, express.static(nasPath));
 }
+
+// Direct /uploads/* hits that miss both local and NAS static (e.g. NAS offline, file only on remote disk)
+app.use('/uploads', (req, res) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+  res.status(404).json({
+    message: FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE,
+    code: 'FILE_NOT_AVAILABLE',
+  });
+});
 
 // Serve profile photos with proper headers
 app.use('/api/users/profile-photo', (req, res, next) => {
@@ -336,6 +348,9 @@ if (process.env.NODE_ENV !== 'test') {
       if (process.env.USE_NAS === 'true') {
         console.log(`Storage: NAS (${process.env.NAS_PATH}) - with local fallback`);
         console.log(`NAS Sync: Scheduled (${process.env.NAS_SYNC_CRON || '*/30 * * * *'})`);
+        console.log(
+          `NAS local staging cleanup: ${process.env.LOCAL_NAS_STAGING_CLEANUP_ENABLED === 'false' ? 'disabled' : `scheduled (${process.env.LOCAL_NAS_STAGING_CLEANUP_CRON || '0 3 * * *'})`}`,
+        );
       } else {
         console.log(`Storage: Local (${process.env.UPLOAD_PATH || './uploads'})`);
       }

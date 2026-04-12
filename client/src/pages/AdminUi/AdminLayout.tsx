@@ -9,6 +9,7 @@ import {
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { settingsService } from "../../services/settingsService";
 import api from "../../services/api";
+import SafeImage from "../../components/SafeImage";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -148,7 +149,16 @@ const AdminLayout = () => {
           <div className="flex items-center space-x-2">
             <button onClick={() => navigate("/admin/settings")} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
               <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                {profilePhoto ? (
+                  <SafeImage
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    fallback={<span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>
+                )}
               </div>
             </button>
           </div>
@@ -202,7 +212,16 @@ const AdminLayout = () => {
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <button onClick={() => navigate("/admin/settings")} className={`w-full flex items-center ${sidebarExpanded ? "space-x-3 px-3 py-2.5" : "lg:justify-center lg:px-2 lg:py-3 space-x-3 px-3 py-2.5"} hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg`}>
               <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                {profilePhoto ? <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                {profilePhoto ? (
+                  <SafeImage
+                    src={profilePhoto}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    fallback={<span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>
+                )}
               </div>
               <div className={`flex-1 text-left min-w-0 ${sidebarExpanded ? "" : "lg:hidden"}`}>
                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{currentUser?.name}</p>

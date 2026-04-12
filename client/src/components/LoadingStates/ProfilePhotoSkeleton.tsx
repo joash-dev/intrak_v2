@@ -1,4 +1,5 @@
 import React from 'react';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../../constants/storageMessages';
 
 interface ProfilePhotoSkeletonProps {
     size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -127,6 +128,7 @@ export const ProfilePhoto: React.FC<ProfilePhotoProps> = ({
     return (
         <div
             className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ${className}`}
+            title={imageError && src ? FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE : undefined}
         >
             {src && !imageError ? (
                 <img

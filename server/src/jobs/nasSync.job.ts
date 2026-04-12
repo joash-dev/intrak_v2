@@ -4,6 +4,7 @@ import { syncLocalToNAS, validateNASConnection } from '../config/nas';
 import { prisma } from '../config/database';
 import { recordScheduledNASBackupRun, setSyncInProgress } from '../services/nasBackupStatus.store';
 import { emailService } from '../services/email.service';
+import { runLocalNasStagingCleanup } from '../services/localNasStagingCleanup.service';
 
 async function notifyAdminsNASStatus(event: 'down' | 'up'): Promise<void> {
   try {
@@ -23,6 +24,7 @@ async function notifyAdminsNASStatus(event: 'down' | 'up'): Promise<void> {
 
 let syncTask: ScheduledTask | null = null;
 let healthCheckTask: ScheduledTask | null = null;
+let stagingCleanupTask: ScheduledTask | null = null;
 let isSyncing = false;
 let wasNASAvailable = false;
 
@@ -174,6 +176,27 @@ export const startNASSyncJob = (): void => {
   } else {
     console.error(`[NAS Health] Invalid NAS_HEALTH_CRON expression: "${healthSchedule}". Health check not started.`);
   }
+
+  // Remove aged local staging copies once NAS holds a verified identical file (size + MD5).
+  // Default: daily at 03:00. Override with LOCAL_NAS_STAGING_CLEANUP_CRON; disable with LOCAL_NAS_STAGING_CLEANUP_ENABLED=false.
+  const cleanupSchedule = process.env.LOCAL_NAS_STAGING_CLEANUP_CRON || '0 3 * * *';
+  if (cron.validate(cleanupSchedule)) {
+    stagingCleanupTask = cron.schedule(cleanupSchedule, async () => {
+      try {
+        const result = await runLocalNasStagingCleanup();
+        if (result.errors.length > 0) {
+          console.warn(`[NAS Staging Cleanup] Completed with ${result.errors.length} error(s)`);
+        }
+      } catch (err) {
+        console.error('[NAS Staging Cleanup] Job error:', err);
+      }
+    });
+    console.log(`[NAS Staging Cleanup] Cron started (schedule: "${cleanupSchedule}")`);
+  } else {
+    console.error(
+      `[NAS Staging Cleanup] Invalid LOCAL_NAS_STAGING_CLEANUP_CRON: "${cleanupSchedule}". Cleanup job not started.`,
+    );
+  }
 };
 
 /**
@@ -189,5 +212,10 @@ export const stopNASSyncJob = (): void => {
     healthCheckTask.stop();
     healthCheckTask = null;
     console.log('[NAS Health] Health-check cron stopped');
+  }
+  if (stagingCleanupTask) {
+    stagingCleanupTask.stop();
+    stagingCleanupTask = null;
+    console.log('[NAS Staging Cleanup] Cron stopped');
   }
 };

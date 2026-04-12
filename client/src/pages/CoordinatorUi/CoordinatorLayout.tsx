@@ -26,6 +26,7 @@ import {
     COORDINATOR_NAV_BADGES_REFRESH,
     type CoordinatorNavBadgeCounts,
 } from "../../services/coordinatorService";
+import SafeImage from "../../components/SafeImage";
 // Define the context type for shared data
 type CoordinatorContextType = {
     currentUser: {
@@ -517,10 +518,15 @@ const CoordinatorLayout: React.FC = () => {
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
                                 ) : profilePhoto ? (
-                                    <img
+                                    <SafeImage
                                         src={profilePhoto}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
+                                        fallback={
+                                            <span className="text-white font-semibold text-sm">
+                                                {currentUser?.initials || "CO"}
+                                            </span>
+                                        }
                                     />
                                 ) : (
                                     <span className="text-white font-semibold text-sm">
@@ -667,10 +673,15 @@ const CoordinatorLayout: React.FC = () => {
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
                                 ) : profilePhoto ? (
-                                    <img
+                                    <SafeImage
                                         src={profilePhoto}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
+                                        fallback={
+                                            <span className="text-white font-semibold text-sm">
+                                                {currentUser?.initials || "CO"}
+                                            </span>
+                                        }
                                     />
                                 ) : (
                                     <span className="text-white font-semibold text-sm">

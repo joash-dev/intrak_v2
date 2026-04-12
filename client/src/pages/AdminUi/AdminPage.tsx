@@ -30,6 +30,7 @@ import {
 } from "../../services/adminService";
 import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
+import SafeImage from "../../components/SafeImage";
 
 // Admin Data Interface
 interface AdminData {
@@ -713,10 +714,21 @@ const AdminDashboard = () => {
                 >
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-sm">
                     {profilePhoto ? (
-                      <img
+                      <SafeImage
                         src={profilePhoto}
                         alt="Profile"
                         className="w-full h-full object-cover"
+                        fallback={
+                          <span className="text-white text-sm font-semibold">
+                            {displayName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .filter(Boolean)
+                              .join("")
+                              .substring(0, 2)
+                              .toUpperCase() || "AU"}
+                          </span>
+                        }
                       />
                     ) : (
                       <span className="text-white text-sm font-semibold">
@@ -748,10 +760,21 @@ const AdminDashboard = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
                           {profilePhoto ? (
-                            <img
+                            <SafeImage
                               src={profilePhoto}
                               alt="Profile"
                               className="w-full h-full object-cover"
+                              fallback={
+                                <span className="text-white font-semibold">
+                                  {(adminProfile?.name || "Admin User")
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .filter(Boolean)
+                                    .join("")
+                                    .substring(0, 2)
+                                    .toUpperCase() || "AU"}
+                                </span>
+                              }
                             />
                           ) : (
                             <span className="text-white font-semibold">

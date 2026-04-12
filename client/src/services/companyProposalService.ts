@@ -1,4 +1,5 @@
 import api from './api';
+import { getMessageFromAxiosError } from '../utils/axiosErrorMessage';
 
 export type CompanyProposalStatus =
   | 'DRAFT'
@@ -139,10 +140,18 @@ export const companyProposalService = {
   uploadAttachment,
 
   async downloadAttachment(attachmentId: string): Promise<Blob> {
-    const response = await api.get(`/company-proposals/attachments/${attachmentId}/download`, {
-      responseType: 'blob',
-    });
-    return response.data;
+    try {
+      const response = await api.get(`/company-proposals/attachments/${attachmentId}/download`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (err) {
+      const parsed = await getMessageFromAxiosError(err);
+      if (parsed) {
+        throw new Error(parsed);
+      }
+      throw err;
+    }
   },
 
   async deleteAttachment(attachmentId: string): Promise<void> {

@@ -28,6 +28,7 @@ import Skeleton from "../../components/Skeleton";
 import { toast } from "react-hot-toast";
 import PDFViewer from "../../components/document/PDFViewer";
 import { formatDateMMDDYYYY } from "../../utils/formatDate";
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from "../../constants/storageMessages";
 
 const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
@@ -40,6 +41,8 @@ const StudentDocumentsTab: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [reuploadingDoc, setReuploadingDoc] = useState<Document | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -665,25 +668,45 @@ const StudentDocumentsTab: React.FC = () => {
 
   // Load preview when opening the modal
   useEffect(() => {
-    const loadPreview = async () => {
-      if (!viewModalOpen || !selectedDoc) return;
+    if (!viewModalOpen || !selectedDoc) {
+      setPreviewLoading(false);
+      setPreviewError(null);
+      return;
+    }
+
+    setPreviewLoading(true);
+    setPreviewError(null);
+    setPreviewUrl(null);
+    setPreviewType(null);
+    let createdUrl: string | null = null;
+    let cancelled = false;
+
+    (async () => {
       try {
         const blob = await documentService.downloadDocument(selectedDoc.id);
-        const url = window.URL.createObjectURL(blob);
-        setPreviewUrl(url);
+        if (cancelled) return;
+        createdUrl = window.URL.createObjectURL(blob);
+        setPreviewUrl(createdUrl);
         setPreviewType(blob.type || null);
       } catch (e) {
+        if (cancelled) return;
         setPreviewUrl(null);
         setPreviewType(null);
+        const msg = e instanceof Error ? e.message : FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE;
+        setPreviewError(msg);
+        toast.error(msg);
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
       }
-    };
-    loadPreview();
+    })();
+
     return () => {
-      if (previewUrl) {
-        window.URL.revokeObjectURL(previewUrl);
-      }
+      cancelled = true;
+      if (createdUrl) window.URL.revokeObjectURL(createdUrl);
       setPreviewUrl(null);
       setPreviewType(null);
+      setPreviewLoading(false);
+      setPreviewError(null);
     };
   }, [viewModalOpen, selectedDoc]);
 
@@ -1429,7 +1452,21 @@ const StudentDocumentsTab: React.FC = () => {
             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
               {/* Document Preview Area */}
               <div className="flex-1 bg-gray-50 dark:bg-[#0f0f11] p-6 overflow-y-auto flex items-center justify-center relative">
-                {previewUrl ? (
+                {previewLoading ? (
+                  <div className="text-center">
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
+                      <img src="/logo_intrak_only-nbg.png" alt="Loading..." className="relative w-16 h-16 object-contain z-10" />
+                    </div>
+                    <p className="text-gray-500 font-medium">Loading preview...</p>
+                  </div>
+                ) : previewError ? (
+                  <div className="text-center max-w-md px-4">
+                    <AlertCircle className="w-12 h-12 mx-auto mb-3 text-amber-500" aria-hidden />
+                    <p className="text-gray-800 dark:text-gray-200 font-medium mb-1">Preview unavailable</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{previewError}</p>
+                  </div>
+                ) : previewUrl ? (
                   previewType?.includes("image") ? (
                     <img
                       src={previewUrl}
@@ -1451,15 +1488,7 @@ const StudentDocumentsTab: React.FC = () => {
                       )}
                     </div>
                   )
-                ) : (
-                  <div className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-4">
-                      <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping"></div>
-                      <img src="/logo_intrak_only-nbg.png" alt="Loading..." className="relative w-16 h-16 object-contain z-10" />
-                    </div>
-                    <p className="text-gray-500 font-medium">Loading preview...</p>
-                  </div>
-                )}
+                ) : null}
               </div>
 
             </div>

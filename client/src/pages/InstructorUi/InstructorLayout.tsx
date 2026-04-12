@@ -23,6 +23,7 @@ import {
     INSTRUCTOR_NAV_BADGES_REFRESH,
     type InstructorNavBadgeCounts,
 } from "../../services/instructorService";
+import SafeImage from "../../components/SafeImage";
 
 const ZERO_NAV_BADGES: InstructorNavBadgeCounts = {
     documentsAction: 0,
@@ -315,7 +316,16 @@ const InstructorLayout = () => {
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                                ) : profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                ) : profilePhoto ? (
+                                    <SafeImage
+                                        src={profilePhoto}
+                                        alt="User Profile"
+                                        className="w-full h-full object-cover"
+                                        fallback={<span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                    />
+                                ) : (
+                                    <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>
+                                )}
                             </div>
                         </button>
                     </div>
@@ -399,7 +409,16 @@ const InstructorLayout = () => {
                             <div className="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
-                                ) : profilePhoto ? <img src={profilePhoto} alt="User Profile" className="w-full h-full object-cover" /> : <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                ) : profilePhoto ? (
+                                    <SafeImage
+                                        src={profilePhoto}
+                                        alt="User Profile"
+                                        className="w-full h-full object-cover"
+                                        fallback={<span className="text-white font-semibold text-sm">{currentUser?.initials}</span>}
+                                    />
+                                ) : (
+                                    <span className="text-white font-semibold text-sm">{currentUser?.initials}</span>
+                                )}
                             </div>
                             <div className={`flex-1 text-left min-w-0 ${sidebarExpanded ? "" : "lg:hidden"}`}>
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{currentUser?.name}</p>

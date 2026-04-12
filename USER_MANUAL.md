@@ -4,7 +4,7 @@
 
 - **System Name:** INTRAK (Internship/OJT Tracking and Management System)
 - **Version:** 2.0
-- **Manual Version:** 2026.04.2
+- **Manual Version:** 2026.04.3
 - **Audience:** Students, Instructors, Coordinators, Industry Partners, Administrators
 - **Purpose:** Step-by-step guidance for every feature in the system, organized by role
 
@@ -791,14 +791,17 @@ View high-level system health and operational indicators at a glance.
 
 This section applies when the deployment uses **Network-Attached Storage (NAS)** for uploads (optional; see Appendix A).
 
+**How this matches the system scope**  
+INTRAK is designed to **utilize a NAS for secure, centralized storage and controlled access** to internship-related documents. When NAS is enabled and reachable, the **NAS is the main place** those files live: one shared, school-controlled location rather than scattering files only on the application server. The **local server disk** is not a replacement for that goal—it is used for **continuity** when the NAS is unreachable (**temporary staging / failover**). Scheduled **local → NAS** sync brings those files back to the NAS when it is available again.
+
 **Normal operation (NAS online)**  
-The application prefers the NAS mount for storing new uploads (documents, templates, profile photos, etc.) when connectivity checks show the NAS is reachable.
+New uploads (documents, templates, profile photos, proposal attachments, generated PDFs, etc.) are written to the **NAS** when connectivity checks show it is reachable. That is the **primary** storage path for ongoing use and backup policy.
 
 **When the NAS goes offline**  
-The system **does not stop**. It switches to **local server storage** (the application’s configured upload directory, e.g. the Docker `uploads` volume) so users can still upload and use the app. New files saved during the outage are stored locally first.
+The system **does not stop**. It **temporarily** stores new uploads on **local server storage** (the application’s configured upload directory, e.g. the Docker `uploads` volume) so students and staff can keep working. This is **failover**, not a change to the design goal: the NAS remains the intended **main** store once it is available again.
 
 **After the NAS comes back**  
-Scheduled **backup/sync** jobs copy local files to the NAS again (subject to the **Auto backup** admin setting). You do not need to re-enter data in the database for files that were uploaded locally while the NAS was down.
+Scheduled **backup/sync** jobs copy files that accumulated on local storage **up to the NAS** again (subject to the **Auto backup** admin setting), so the NAS regains its role as the centralized copy. You do not need to re-enter data in the database for files that were saved locally while the NAS was down.
 
 **Health checks vs full sync**  
 - A **short, frequent health check** (default about every two minutes) only updates whether the NAS is considered up or down. It does **not** copy all files each time.  
@@ -807,11 +810,11 @@ Scheduled **backup/sync** jobs copy local files to the NAS again (subject to the
 **Email alerts for admins**  
 If outbound email is configured (Resend or SMTP), **each active Admin** receives an email when the NAS **becomes unreachable** and again when it **becomes reachable**. Alerts are sent on **status changes**, not on every routine check, so inboxes are not flooded.
 
-**Admin: Mirror NAS uploads to local**  
-In **Admin → Settings**, **Mirror NAS uploads to local** controls whether **new** files are **duplicated** to the server’s local upload volume **when the NAS is online** (documents, generated PDFs, templates, proposal attachments, profile photos). **Off:** primary copy is only on NAS for those uploads (smaller local disk use; previews may fail if NAS is later offline and no local copy exists). **On (default):** same redundancy as before. This setting does **not** disable saving to local when the NAS is offline, and it does **not** disable **Auto backup** (scheduled local → NAS sync).
+**Local staging cleanup (disk use)**  
+After the NAS holds a **verified** copy of a file (same size and checksum as on local disk), the system may **remove older local copies** under the upload tree so the server volume does not grow forever with duplicates. By default, only files **older than 15 days** are considered, and only if the matching path on the NAS exists and matches. Before deleting a local file, any database rows that still pointed at the **local absolute path** are updated to the **NAS path**. Operators can tune retention and schedule with environment variables (for example `LOCAL_NAS_STAGING_RETENTION_DAYS`, `LOCAL_NAS_STAGING_CLEANUP_CRON`, and `LOCAL_NAS_STAGING_CLEANUP_ENABLED`); see your deployment `.env` / Compose file. **Temp** uploads (e.g. under `documents/temp`) are not removed by this job.
 
-**Important limitation — “NAS-only” files**  
-Some older files may exist **only on the NAS** and never had a copy on local disk. While the NAS is offline, those files **cannot be opened or shown** (for example a profile photo may appear broken or return “not found”). This is **temporary**: when the NAS is restored, the same links usually work again. The only way to avoid that gap is to keep **local copies** of everything (for example ongoing sync from NAS to local — a deployment enhancement your technical team may add).
+**Important limitation — files that exist only on the NAS**  
+Because the NAS is the **main** store, some items may exist **only** there and not on local disk. While the NAS is offline, those files **cannot be opened or shown** (for example a broken profile image or a 404). That is **temporary**: when the NAS is restored, the same links usually work again. New uploads while the NAS is online are written primarily to the NAS; local disk holds failover copies and staged data until sync and optional cleanup run.
 
 **Student account deletion**  
 When a student account is removed, the system attempts to delete related files from **both** NAS and local locations where paths are known, so leftover copies are less likely on either disk.
@@ -860,7 +863,7 @@ Monitor system-level notifications and alerts.
 3. Your photo appears across the portal (header, profile panels).
 4. Click **Remove** to delete your current photo.
 
-**If your school uses NAS storage:** When you upload while the NAS is online and **Mirror NAS uploads to local** is enabled in Admin settings, the system saves your photo on the NAS **and** keeps a **local copy** on the server (same idea as document uploads). The server resolves your image from **local first**, then the NAS when online. If you uploaded **only** while the NAS was down (local-only save) or an old photo never got a local mirror, the image may be missing until the NAS is back or you upload again.
+**If your school uses NAS storage:** The **main** copy of your photo is intended to be on the **NAS** (centralized storage). The server resolves your image from **local first** (for example a recent failover copy), then the NAS when online. If you uploaded **only** while the NAS was down (temporary local save) or the file exists only on the NAS, the image may be missing until the NAS is back, sync completes, or you upload again.
 
 ---
 
@@ -973,8 +976,8 @@ This ensures that no student is released for OJT with incomplete requirements, p
 
 ### Profile photo or document missing; uploads feel slow
 
-1. Your institution may use **NAS** storage. If the NAS is offline, the app keeps running on **local server storage**; **new** uploads should still work.
-2. **Older files** that were never copied to local disk may be **unavailable** until the NAS is back (broken image, 404, or download error). Wait for IT to restore the NAS, then refresh the page.
+1. Your institution may use **NAS** as the **main** storage for files. If the NAS is offline, the app keeps running using **local server storage** for **new** uploads until the NAS returns.
+2. Files that exist **only on the NAS** may be **unavailable** until the NAS is back (broken image, 404, or download error). Wait for IT to restore the NAS, then refresh the page.
 3. If a profile picture stays missing after NAS is restored, try **uploading the photo again** from **Settings > Profile Photo**.
 4. **Admins** can check **Admin > Settings** for NAS/backup status and server logs for `[NAS]` messages.
 
@@ -1131,7 +1134,7 @@ An Elastic IP gives your server a **permanent public IP** that does not change w
 | `client/Dockerfile` | Multi-stage build: Vite compiles the SPA, then copies output to Nginx Alpine with `nginx.conf`. |
 
 **NAS behaviour in production (summary)**  
-With `USE_NAS=true` and the NAS overlay, the API treats the NAS mount as primary storage when health checks succeed; otherwise it uses `UPLOAD_PATH` inside the container (typically backed by the `uploads_data` volume). Environment variables such as `NAS_SYNC_CRON` and `NAS_HEALTH_CRON` control how often a full **local → NAS** sync runs versus how often **availability** is re-checked. Admin **Auto backup** can disable scheduled sync runs. **Admin email alerts** on NAS up/down transitions require a working Resend or SMTP configuration in `.env`. For end-user-facing detail, see **§8.4.1 NAS storage and failover**.
+With `USE_NAS=true` and the NAS overlay, the API uses the **NAS as main storage** for internship-related files when health checks succeed—aligned with centralized, school-controlled storage. When the NAS is not reachable, the API falls back to `UPLOAD_PATH` inside the container (typically the `uploads_data` volume) so service continues. Environment variables such as `NAS_SYNC_CRON` and `NAS_HEALTH_CRON` control how often a full **local → NAS** sync runs versus how often **availability** is re-checked. Optional **local staging cleanup** (`LOCAL_NAS_STAGING_RETENTION_DAYS`, `LOCAL_NAS_STAGING_CLEANUP_CRON`, `LOCAL_NAS_STAGING_CLEANUP_ENABLED`) removes aged local duplicates once the NAS holds a verified copy. Admin **Auto backup** can disable scheduled sync runs. **Admin email alerts** on NAS up/down transitions require a working Resend or SMTP configuration in `.env`. For end-user-facing detail, see **§8.4.1 NAS storage and failover**.
 
 ### A.8 Updating / Redeploying
 

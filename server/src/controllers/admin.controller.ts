@@ -29,7 +29,6 @@ const DEFAULT_ADMIN_SETTINGS = {
   emailNotifications: true,
   systemAlerts: true,
   autoBackup: true,
-  mirrorNasUploadsToLocal: true,
   sessionTimeout: 30,
   maxLoginAttempts: 5,
   emailSystemAlerts: true,
@@ -325,7 +324,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
       emailNotifications,
       systemAlerts,
       autoBackup,
-      mirrorNasUploadsToLocal,
       sessionTimeout,
       maxLoginAttempts,
       emailSystemAlerts,
@@ -365,7 +363,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
     if (emailNotifications !== undefined) updateData.emailNotifications = emailNotifications;
     if (systemAlerts !== undefined) updateData.systemAlerts = systemAlerts;
     if (autoBackup !== undefined) updateData.autoBackup = autoBackup;
-    if (mirrorNasUploadsToLocal !== undefined) updateData.mirrorNasUploadsToLocal = mirrorNasUploadsToLocal;
     if (sessionTimeout !== undefined) updateData.sessionTimeout = sessionTimeout;
     if (maxLoginAttempts !== undefined) updateData.maxLoginAttempts = maxLoginAttempts;
     if (emailSystemAlerts !== undefined) updateData.emailSystemAlerts = emailSystemAlerts;
@@ -384,7 +381,6 @@ export const updateAdminSettings = async (req: AuthRequest, res: Response) => {
         emailNotifications: emailNotifications ?? true,
         systemAlerts: systemAlerts ?? true,
         autoBackup: autoBackup ?? true,
-        mirrorNasUploadsToLocal: mirrorNasUploadsToLocal ?? true,
         sessionTimeout: sessionTimeout ?? 30,
         maxLoginAttempts: maxLoginAttempts ?? 5,
         emailSystemAlerts: emailSystemAlerts ?? true,
@@ -451,7 +447,6 @@ export const exportAdminSettingsFile = async (req: AuthRequest, res: Response) =
         emailNotifications: adminSettings.emailNotifications,
         systemAlerts: adminSettings.systemAlerts,
         autoBackup: adminSettings.autoBackup,
-        mirrorNasUploadsToLocal: adminSettings.mirrorNasUploadsToLocal,
         sessionTimeout: adminSettings.sessionTimeout,
         maxLoginAttempts: adminSettings.maxLoginAttempts,
       },
@@ -547,9 +542,6 @@ export const importAdminSettingsFile = async (req: AuthRequest, res: Response) =
           ...(toBoolean(systemSettings?.autoBackup) !== undefined && {
             autoBackup: systemSettings.autoBackup,
           }),
-          ...(toBoolean(systemSettings?.mirrorNasUploadsToLocal) !== undefined && {
-            mirrorNasUploadsToLocal: systemSettings.mirrorNasUploadsToLocal,
-          }),
           ...(toNumber(systemSettings?.sessionTimeout) !== undefined && {
             sessionTimeout: toNumber(systemSettings.sessionTimeout),
           }),
@@ -584,9 +576,6 @@ export const importAdminSettingsFile = async (req: AuthRequest, res: Response) =
           autoBackup:
             toBoolean(systemSettings?.autoBackup) ??
             DEFAULT_ADMIN_SETTINGS.autoBackup,
-          mirrorNasUploadsToLocal:
-            toBoolean(systemSettings?.mirrorNasUploadsToLocal) ??
-            DEFAULT_ADMIN_SETTINGS.mirrorNasUploadsToLocal,
           sessionTimeout:
             toNumber(systemSettings?.sessionTimeout) ??
             DEFAULT_ADMIN_SETTINGS.sessionTimeout,

@@ -1,4 +1,5 @@
 import api from './api';
+import { getMessageFromAxiosError } from '../utils/axiosErrorMessage';
 import { calculateAttendanceStats } from '../utils/attendanceCalculations';
 import { announcementService, type Announcement } from './announcementService';
 import { companyProposalService } from './companyProposalService';
@@ -809,7 +810,7 @@ class InstructorService {
   }
 
   // Download a document
-  async downloadDocument(documentId: string): Promise<Blob | null> {
+  async downloadDocument(documentId: string): Promise<Blob> {
     try {
       const response = await api.get(`/documents/${documentId}/download`, {
         responseType: 'blob',
@@ -817,7 +818,11 @@ class InstructorService {
       return response.data;
     } catch (error) {
       console.error('Error downloading document:', error);
-      return null;
+      const parsed = await getMessageFromAxiosError(error);
+      if (parsed) {
+        throw new Error(parsed);
+      }
+      throw error;
     }
   }
 

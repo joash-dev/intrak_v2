@@ -661,8 +661,6 @@ model AdminSettings {
   emailNotifications Boolean  @default(true)
   systemAlerts       Boolean  @default(true)
   autoBackup         Boolean  @default(true)
-  /// When NAS is online, duplicate NAS writes to local upload storage (documents, templates, etc.). Does not affect NAS-down fallback or scheduled sync.
-  mirrorNasUploadsToLocal Boolean @default(true)
   sessionTimeout     Int      @default(30)
   maxLoginAttempts   Int      @default(5)
   emailSystemAlerts  Boolean  @default(true)

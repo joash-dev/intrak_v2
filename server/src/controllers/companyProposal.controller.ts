@@ -4,11 +4,11 @@ import path from 'path';
 import { CompanyProposalStatus, NotificationType, Role } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
-import { createLocalBackup, ensureNASDirectoryExists, getStoragePathWithFallback, resolveFilePath } from '../config/nas';
+import { ensureNASDirectoryExists, getStoragePathWithFallback, resolveFilePath } from '../config/nas';
 import { logActivity } from './activity.controller';
-import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
 import { notificationService } from '../services/notification.service';
 import { emitStudentPortalSync } from '../utils/socketEmitters';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../constants/storageMessages';
 
 const STUDENT_UPLOADABLE_STATUSES: CompanyProposalStatus[] = ['DRAFT', 'RETURNED_BY_INSTRUCTOR'];
 
@@ -660,14 +660,6 @@ export const uploadProposalAttachment = async (req: AuthRequest, res: Response) 
     try {
       fs.copyFileSync(req.file.path, finalPath);
       fs.unlinkSync(req.file.path);
-
-      if (
-        !isUsingFallback &&
-        finalPath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
-        (await getMirrorNasUploadsToLocalEnabled())
-      ) {
-        createLocalBackup(finalPath, finalPath);
-      }
     } catch (moveError) {
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
@@ -743,7 +735,10 @@ export const downloadAttachment = async (req: AuthRequest, res: Response) => {
 
     const resolvedPath = resolveFilePath(attachment.filepath);
     if (!resolvedPath || !fs.existsSync(resolvedPath)) {
-      return res.status(404).json({ message: 'Attachment file not found' });
+      return res.status(404).json({
+        message: FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE,
+        code: 'FILE_NOT_AVAILABLE',
+      });
     }
 
     return res.download(resolvedPath, attachment.filename);

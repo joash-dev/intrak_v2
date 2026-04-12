@@ -2,12 +2,12 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { auditLog } from '../services/audit.service';
-import { getMirrorNasUploadsToLocalEnabled } from '../services/adminSettingsFlags.service';
-import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, createLocalBackup, invalidateNASCache, getNASConfig } from '../config/nas';
+import { getStoragePathWithFallback, ensureNASDirectoryExists, resolveFilePath, invalidateNASCache, getNASConfig } from '../config/nas';
 
 const NAS_IO_ERRORS = ['EHOSTDOWN', 'EIO', 'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH'];
 import path from 'path';
 import fs from 'fs';
+import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from '../constants/storageMessages';
 
 const prisma = new PrismaClient();
 
@@ -65,18 +65,6 @@ export const uploadTemplate = async (req: AuthRequest, res: Response) => {
     try {
       fs.copyFileSync(req.file.path, filepath);
       fs.unlinkSync(req.file.path);
-      
-      // Optional local mirror when primary save is on NAS (admin toggle)
-      if (
-        !isUsingFallback &&
-        filepath.startsWith(process.env.NAS_PATH || '/mnt/nas/intrak') &&
-        (await getMirrorNasUploadsToLocalEnabled())
-      ) {
-        const backupPath = createLocalBackup(filepath, filepath);
-        if (backupPath) {
-          console.log(`[NAS] Created local backup for template: ${backupPath}`);
-        }
-      }
     } catch (moveError: any) {
       if (NAS_IO_ERRORS.includes(moveError?.code)) invalidateNASCache();
       console.error('Error moving template file:', moveError);
@@ -227,10 +215,11 @@ export const downloadTemplate = async (req: AuthRequest, res: Response) => {
       console.error('Template file not found. Template ID:', id);
       console.error('Stored filepath:', template.filepath);
       console.error('Resolved filepath:', filepath);
-      return res.status(404).json({ 
-        message: 'Template file not found. The file may be on disconnected storage.',
-        details: process.env.NODE_ENV === 'development' ? { 
-          storedPath: template.filepath, 
+      return res.status(404).json({
+        message: FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE,
+        code: 'FILE_NOT_AVAILABLE',
+        details: process.env.NODE_ENV === 'development' ? {
+          storedPath: template.filepath,
           resolvedPath: filepath
         } : undefined
       });

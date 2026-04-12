@@ -1,4 +1,5 @@
 import api from './api';
+import { getMessageFromAxiosError } from '../utils/axiosErrorMessage';
 
 export interface Document {
   id: string;
@@ -92,10 +93,18 @@ class DocumentService {
 
   // Download a document
   async downloadDocument(documentId: string): Promise<Blob> {
-    const response = await api.get(`/documents/${documentId}/download`, {
-      responseType: 'blob',
-    });
-    return response.data;
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (err) {
+      const parsed = await getMessageFromAxiosError(err);
+      if (parsed) {
+        throw new Error(parsed);
+      }
+      throw err;
+    }
   }
 
   // Delete a document

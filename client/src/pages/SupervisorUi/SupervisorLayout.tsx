@@ -19,6 +19,7 @@ import { useOptimizedData } from "../../hooks/useOptimizedData";
 import api from "../../services/api";
 import { useWalkthrough } from "../../hooks/useWalkthrough";
 import { devLog } from "../../utils/devLog";
+import SafeImage from "../../components/SafeImage";
 
 // Define the context type for shared data
 type SupervisorContextType = {
@@ -375,10 +376,15 @@ const SupervisorLayout: React.FC = () => {
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
                                 ) : profilePhoto ? (
-                                    <img
+                                    <SafeImage
                                         src={profilePhoto}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
+                                        fallback={
+                                            <span className="text-white font-semibold text-sm">
+                                                {currentUser?.initials || "SU"}
+                                            </span>
+                                        }
                                     />
                                 ) : (
                                     <span className="text-white font-semibold text-sm">
@@ -512,10 +518,15 @@ const SupervisorLayout: React.FC = () => {
                                 {photoLoading ? (
                                     <div className="w-full h-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 animate-pulse" />
                                 ) : profilePhoto ? (
-                                    <img
+                                    <SafeImage
                                         src={profilePhoto}
                                         alt="Profile"
                                         className="w-full h-full object-cover"
+                                        fallback={
+                                            <span className="text-white font-semibold text-sm">
+                                                {currentUser?.initials || "SU"}
+                                            </span>
+                                        }
                                     />
                                 ) : (
                                     <span className="text-white font-semibold text-sm">
