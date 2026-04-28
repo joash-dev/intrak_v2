@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FileText,
   Search,
@@ -75,6 +76,7 @@ const DOCUMENT_REQUIREMENTS: DocumentRequirement[] = [
 const STUDENTS_PER_PAGE = 10;
 
 const InstructorDocumentsTab = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   // --- State ---
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedStudent, setSelectedStudent] = useState<InstructorStudent | null>(null);
@@ -101,6 +103,39 @@ const InstructorDocumentsTab = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  const docParam = searchParams.get("doc");
+
+  useEffect(() => {
+    if (!docParam || loading) return;
+    const match = documents.find((d) => d.id === docParam);
+    if (!match) {
+      setSearchParams((p) => {
+        p.delete("doc");
+        return p;
+      }, { replace: true });
+      return;
+    }
+    const student = students.find((s) => s.id === match.studentId);
+    if (!student) return;
+    if (selectedStudent?.id !== student.id) {
+      setSelectedStudent(student);
+      return;
+    }
+    const raf = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-intrak-doc-id="${docParam}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setPulseDocIds(new Set([docParam]));
+        window.setTimeout(() => setPulseDocIds(new Set()), 1600);
+        setSearchParams((p) => {
+          p.delete("doc");
+          return p;
+        }, { replace: true });
+      });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [docParam, loading, documents, students, selectedStudent, setSearchParams]);
 
   // Cleanup preview URL
   useEffect(() => {
@@ -851,15 +886,14 @@ const InstructorDocumentsTab = () => {
                       .sort((a, b) => new Date(b.submittedDate).getTime() - new Date(a.submittedDate).getTime())[0];
 
                     const status = doc ? doc.status : "MISSING";
-                    const docMatchesSidebar =
-                      doc != null && instructorNavCountsDocumentReview(doc.status);
 
                     return (
                       <div
                         key={req.id}
+                        {...(doc ? { "data-intrak-doc-id": doc.id } : {})}
                         className={[
                           "p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
-                          docMatchesSidebar && doc ? (pulseDocIds.has(doc.id) ? "animate-attention-once" : "") : "",
+                          doc && pulseDocIds.has(doc.id) ? "animate-attention-once" : "",
                         ]
                           .filter(Boolean)
                           .join(" ")}

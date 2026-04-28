@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FileCheck,
   Eye,
@@ -105,6 +106,7 @@ type SortDir = "asc" | "desc";
 const ITEMS_PER_PAGE = 10;
 
 const CoordinatorDocumentsTab: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
@@ -354,6 +356,56 @@ const CoordinatorDocumentsTab: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterStatus, filterType, filterStudent, sortKey, sortDir]);
+
+  const docParam = searchParams.get("doc");
+
+  useEffect(() => {
+    if (!docParam || loading) return;
+
+    let idx = filteredDocuments.findIndex((d) => d.id === docParam);
+    if (idx < 0) {
+      const exists = documents.some((d) => d.id === docParam);
+      if (exists) {
+        setSearchQuery("");
+        setFilterStatus("all");
+        setFilterType("all");
+        setFilterStudent("all");
+        return;
+      }
+      setSearchParams((p) => {
+        p.delete("doc");
+        return p;
+      }, { replace: true });
+      return;
+    }
+
+    const wantPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
+    if (currentPage !== wantPage) {
+      setCurrentPage(wantPage);
+      return;
+    }
+
+    const raf = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-intrak-doc-id="${docParam}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setPulseDocIds(new Set([docParam]));
+        window.setTimeout(() => setPulseDocIds(new Set()), 1600);
+        setSearchParams((p) => {
+          p.delete("doc");
+          return p;
+        }, { replace: true });
+      });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [
+    docParam,
+    loading,
+    filteredDocuments,
+    documents,
+    currentPage,
+    setSearchParams,
+  ]);
 
   const documentTypes = useMemo(
     () => [...new Set(documents.map((d) => d.type))],
@@ -711,6 +763,7 @@ const CoordinatorDocumentsTab: React.FC = () => {
         {paginatedDocuments.map((doc) => (
           <div
             key={doc.id}
+            data-intrak-doc-id={doc.id}
             className={[
               "bg-white dark:bg-[#212124] rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-all hover:shadow-md",
               pulseDocIds.has(doc.id) ? "animate-attention-once" : "",

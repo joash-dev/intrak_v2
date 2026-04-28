@@ -21,7 +21,7 @@ import {
   Printer,
 } from "lucide-react";
 import { PDFDocument } from "pdf-lib";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useOutletContext, useNavigate, useSearchParams } from "react-router-dom";
 import { documentService } from "../../services/documentService";
 import type { Document } from "../../services/documentService";
 import Skeleton from "../../components/Skeleton";
@@ -33,6 +33,8 @@ import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from "../../constants/storageMessa
 const StudentDocumentsTab: React.FC = () => {
   const { refreshStudentData } = useOutletContext<{ refreshStudentData: () => void }>() || { refreshStudentData: () => { } };
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [flashDocId, setFlashDocId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -442,6 +444,50 @@ const StudentDocumentsTab: React.FC = () => {
     }
     return activeDocs.find(d => d.type === docType);
   };
+
+  const docParam = searchParams.get("doc");
+
+  useEffect(() => {
+    if (!docParam || loading) return;
+    const doc = documents.find((d) => d.id === docParam);
+    if (!doc) {
+      setSearchParams((p) => {
+        p.delete("doc");
+        return p;
+      }, { replace: true });
+      return;
+    }
+    const dt = documentTypes.find(
+      (t) =>
+        t.value === doc.type ||
+        (doc.type === "ENDORSEMENT_LETTER_MULTI" && t.value === "ENDORSEMENT_LETTER")
+    );
+    if (!dt) {
+      setSearchParams((p) => {
+        p.delete("doc");
+        return p;
+      }, { replace: true });
+      return;
+    }
+    setExpandedCategories((prev) => ({ ...prev, [dt.category]: true }));
+    setFlashDocId(docParam);
+    const raf = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-intrak-doc-id="${docParam}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+    const t = window.setTimeout(() => setFlashDocId(null), 2000);
+    setSearchParams((p) => {
+      p.delete("doc");
+      return p;
+    }, { replace: true });
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
+  }, [docParam, loading, documents, setSearchParams]);
 
   const preDeploymentComplete = useMemo(() => {
     const preDeploymentReqs = documentTypes.filter(
@@ -1086,7 +1132,17 @@ const StudentDocumentsTab: React.FC = () => {
                           : doc?.status === "APPROVED";
 
                       return (
-                        <div key={req.value} className={`p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${isCompleted ? 'bg-green-50/30 dark:bg-green-900/5' : ''}`}>
+                        <div
+                          key={req.value}
+                          {...(doc ? { "data-intrak-doc-id": doc.id } : {})}
+                          className={[
+                            "p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
+                            isCompleted ? "bg-green-50/30 dark:bg-green-900/5" : "",
+                            doc && flashDocId === doc.id ? "animate-attention-once" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
                           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             {/* Left: Info */}
                             <div className="flex-1">

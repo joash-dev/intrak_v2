@@ -70,6 +70,18 @@ const getOrdinalSuffix = (num: number): string => {
 };
 
 const MAX_SEGMENTS_PER_DAY = 2;
+const getDurationMinutes = (start: Date, end: Date): number =>
+  Math.max(0, Math.floor((end.getTime() - start.getTime()) / 60000));
+const roundUpToNext30Minutes = (date: Date): Date => {
+  const rounded = new Date(date);
+  rounded.setSeconds(0, 0);
+  const minutes = rounded.getMinutes();
+  const remainder = minutes % 30;
+  if (remainder !== 0) {
+    rounded.setMinutes(minutes + (30 - remainder));
+  }
+  return rounded;
+};
 
 // Log Attendance (manual time-in/time-out)
 export const logAttendance = async (req: AuthRequest, res: Response) => {
@@ -386,13 +398,11 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
       // If they forgot to time-out in the morning session and it's already past noon,
       // close at exactly 12:00 PM and treat this scan as a new login (session 2).
       if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
-        const pair = getOfficialPairOnClose(openLog.timeIn, noon);
         await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeIn: pair.officialIn,
-            timeOut: pair.officialOut,
-            durationMinutes: pair.durationMinutes,
+            timeOut: noon,
+            durationMinutes: getDurationMinutes(openLog.timeIn, noon),
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -408,13 +418,11 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         openLog.timeIn.getTime() >= noon.getTime() &&
         now.getTime() >= fivePm.getTime()
       ) {
-        const pair = getOfficialPairOnClose(openLog.timeIn, fivePm);
         log = await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeIn: pair.officialIn,
-            timeOut: pair.officialOut,
-            durationMinutes: pair.durationMinutes,
+            timeOut: fivePm,
+            durationMinutes: getDurationMinutes(openLog.timeIn, fivePm),
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -425,13 +433,11 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
         action = 'logout';
       } else {
-        const pair = getOfficialPairOnClose(openLog.timeIn!, now);
         log = await prisma.attendanceLog.update({
           where: { id: openLog.id },
           data: {
-            timeIn: pair.officialIn,
-            timeOut: pair.officialOut,
-            durationMinutes: pair.durationMinutes,
+            timeOut: now,
+            durationMinutes: openLog.timeIn ? getDurationMinutes(openLog.timeIn, now) : 0,
             verified: true,
             verificationMethod: 'QR',
             verificationMetadata: {
@@ -445,6 +451,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     } else {
       // Enforce max segments/day (PHT) for new QR time-in.
       const now = new Date();
+      const roundedNow = roundUpToNext30Minutes(now);
       const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
       const segmentsToday = await prisma.attendanceLog.count({
         where: {
@@ -461,12 +468,11 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
       }
 
-      const officialIn = getOfficialTimeIn(segmentsToday, now);
       log = await prisma.attendanceLog.create({
         data: {
           studentId: qrToken.studentId,
           date: new Date(),
-          timeIn: officialIn,
+          timeIn: roundedNow,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {
@@ -480,6 +486,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     // If we auto-closed the morning openLog at noon, we still need to create a new login now.
     if (!log && openLog) {
       const now = new Date();
+      const roundedNow = roundUpToNext30Minutes(now);
       const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
       const segmentsToday = await prisma.attendanceLog.count({
         where: {
@@ -496,12 +503,11 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
       }
 
-      const officialIn2 = getOfficialTimeIn(segmentsToday, now);
       log = await prisma.attendanceLog.create({
         data: {
           studentId: qrToken.studentId,
           date: now,
-          timeIn: officialIn2,
+          timeIn: roundedNow,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {

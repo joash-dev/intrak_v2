@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -14,6 +14,7 @@ import {
 import api from "../../services/api";
 import { settingsService } from "../../services/settingsService";
 import i18n from "i18next";
+import { decodeSafeDocumentNext } from "../../utils/documentEmailLink";
 
 // Import Outfit font
 const outfitFont = {
@@ -36,6 +37,22 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({ email: false, password: false });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const resolvePostAuthPath = (roleLower: string): string => {
+    const nextRaw = searchParams.get("next");
+    const fromEmail = nextRaw ? decodeSafeDocumentNext(nextRaw) : null;
+    if (fromEmail) return fromEmail;
+
+    const roleRoutes: Record<string, string> = {
+      admin: "/admin",
+      coordinator: "/coordinator/dashboard",
+      instructor: "/instructor/dashboard",
+      student: "/student/dashboard",
+      industry_partner: "/industry-partner/dashboard",
+    };
+    return roleRoutes[roleLower] || "/login";
+  };
 
   // 2FA State
   const [requires2FA, setRequires2FA] = useState(false);
@@ -165,21 +182,8 @@ const Login: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(user));
       window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
-      // Normalize role for consistency
       const normalizedRole = user.role.toLowerCase();
-
-      // Role-based routes
-      const roleRoutes: Record<string, string> = {
-        admin: "/admin",
-        coordinator: "/coordinator/dashboard",
-        instructor: "/instructor/dashboard",
-        student: "/student/dashboard",
-        industry_partner: "/industry-partner/dashboard",
-      };
-
-      // Pick route or fallback
-      const route = roleRoutes[normalizedRole] || "/dashboard";
-      navigate(route);
+      navigate(resolvePostAuthPath(normalizedRole));
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Login failed";
 
@@ -231,8 +235,8 @@ const Login: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(user));
       window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
-      // Navigate to admin dashboard
-      navigate("/admin");
+      const normalizedRole = user.role.toLowerCase();
+      navigate(resolvePostAuthPath(normalizedRole));
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Verification failed";
       setErrors({ otp: errorMessage });
@@ -295,15 +299,8 @@ const Login: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(user));
       window.dispatchEvent(new Event("intrak:auth-token-changed"));
 
-      // Navigate based on user role
-      const roleRoutes: Record<string, string> = {
-        ADMIN: "/admin",
-        STUDENT: "/student",
-        INSTRUCTOR: "/instructor",
-        COORDINATOR: "/coordinator",
-        INDUSTRY_PARTNER: "/supervisor"
-      };
-      navigate(roleRoutes[user.role] || "/");
+      const normalizedRole = user.role.toLowerCase();
+      navigate(resolvePostAuthPath(normalizedRole));
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Invalid backup code";
       setErrors({ otp: errorMessage });

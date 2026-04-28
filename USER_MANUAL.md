@@ -4,7 +4,7 @@
 
 - **System Name:** INTRAK (Internship/OJT Tracking and Management System)
 - **Version:** 2.0
-- **Manual Version:** 2026.04.3
+- **Manual Version:** 2026.04.4
 - **Audience:** Students, Instructors, Coordinators, Industry Partners, Administrators
 - **Purpose:** Step-by-step guidance for every feature in the system, organized by role
 
@@ -25,6 +25,7 @@
 - [10. Status Definitions and Business Rules](#10-status-definitions-and-business-rules)
 - [11. Troubleshooting Guide](#11-troubleshooting-guide)
 - [12. Support and Escalation](#12-support-and-escalation)
+- [13. System Development and Deployment Process](#13-system-development-and-deployment-process)
 - [Appendix A: System Deployment Guide](#appendix-a-system-deployment-guide)
 
 ---
@@ -998,6 +999,179 @@ When requesting support, provide:
 1. **Student** → Instructor
 2. **Instructor** → Coordinator
 3. **Coordinator** → Admin / Technical Team
+
+---
+
+## 13. System Development and Deployment Process
+
+This section provides documented evidence of how INTRAK was actually developed, uploaded to an Ubuntu server, and validated before final presentation.
+
+### 13.0 Final Defense Panel Recommendation Completion List
+
+The following panel recommendations were integrated into this manual revision:
+
+- [x] **More pictures/screenshots of step-by-step walkthroughs for all processes/transactions**  
+  Covered through role-based workflows in Sections 4 to 8 and supported by Section 13 figure guidance.
+
+- [x] **Actual demonstration of Appendix pages 26-36**  
+  Covered through Section 13.7 (`Appendix Demonstration Mapping`) where each appendix page is mapped to actual system evidence.
+
+- [x] **Show how the actual system was developed (including Ubuntu server upload)**  
+  Covered through Sections 13.3 (development process), 13.5 (Ubuntu upload/deployment), and Appendix A (deployment guide).
+
+- [x] **Discuss every screenshot and table from start -> developing -> uploading -> testing**  
+  Covered through Sections 13.2 to 13.6 and enforced by Section 13.8 (`Screenshot and Table Discussion Standard`).
+
+### 13.1 Development Overview
+
+The team followed an iterative development process from planning to deployment.
+
+| Item | Description |
+|------|-------------|
+| **Project Goal** | Build a centralized OJT tracking and management platform for PSU-UC CPE students and stakeholders |
+| **Core Users** | Students, Instructors, Coordinators, Industry Partners, Admins |
+| **Technology Stack** | React (client), Node.js/Express (server), PostgreSQL + Prisma (database), Docker + Nginx (deployment) |
+| **Target Host** | Ubuntu server (AWS EC2) |
+
+### 13.2 System Design Phase
+
+This phase defines how the system is structured before full implementation.
+
+**Include and discuss:**
+
+1. System architecture diagram (client-server-database).
+2. Database schema or ERD used in development.
+3. Role-based module flow (Student, Instructor, Coordinator, Industry Partner, Admin).
+4. Initial interface wireframes or module map.
+
+**Figure template (copy per screenshot):**
+
+- **Figure 13.x - [Title of Screenshot]**
+- **Purpose:** [What this artifact is and why it is important in design]
+- **Discussion:** [2-4 sentences explaining components and expected behavior]
+
+### 13.3 Actual Development Process
+
+This subsection demonstrates how the actual system was built module by module.
+
+**Recommended evidence:**
+
+1. Project/repository structure screenshot.
+2. Screenshots of key implemented modules:
+   - Authentication and account management
+   - Document workflow
+   - Company application/proposal workflow
+   - Attendance and verification workflow
+   - Evaluation forms and export
+   - Announcements/notifications/reports
+3. Development iteration table (version history and fixes).
+
+**Table 13.1 - Development Iteration Log (sample format):**
+
+| Iteration | Scope Implemented | Issues Found | Action Taken | Result |
+|-----------|-------------------|--------------|--------------|--------|
+| v1 | [Module/feature] | [Issue] | [Fix] | [Outcome] |
+| v2 | [Module/feature] | [Issue] | [Fix] | [Outcome] |
+| v3 | [Module/feature] | [Issue] | [Fix] | [Outcome] |
+
+### 13.4 Local Testing and Validation
+
+Before deployment, all critical transactions were tested in a local environment.
+
+**Minimum testing walkthrough to include:**
+
+1. User login and role-based redirection.
+2. Student document submission and reviewer decision flow.
+3. Company application/proposal approval flow.
+4. Attendance (QR/manual) and supervisor verification.
+5. Evaluation submission and student visibility/export.
+6. Announcement visibility by audience and notification behavior.
+
+**Table 13.2 - Test Results Summary (sample format):**
+
+| Test ID | Scenario | Expected Result | Actual Result | Status |
+|---------|----------|-----------------|---------------|--------|
+| T-01 | [Login scenario] | [Expected] | [Actual] | Pass/Fail |
+| T-02 | [Document submission] | [Expected] | [Actual] | Pass/Fail |
+| T-03 | [Attendance flow] | [Expected] | [Actual] | Pass/Fail |
+
+### 13.5 Ubuntu Server Upload and Deployment
+
+This subsection documents how the developed system was uploaded and hosted on Ubuntu.
+
+**Required deployment evidence:**
+
+1. SSH access to Ubuntu server.
+2. Repository upload/clone on server.
+3. Environment configuration (`.env`) and production values setup.
+4. Build and run commands (Docker Compose).
+5. Database migration/deployment command execution.
+6. Live domain/IP access showing the running production system.
+
+**Deployment command reference (example):**
+
+```bash
+ssh -i your-key.pem ubuntu@your-elastic-ip
+cd ~/intrak_v2
+docker compose -f docker-compose.aws.yml up -d --build
+docker compose ps
+```
+
+**Figure template (copy per deployment screenshot):**
+
+- **Figure 13.x - [Deployment Step Title]**
+- **Purpose:** [What deployment step is being shown]
+- **Discussion:** [2-4 sentences explaining command/result and why this confirms successful deployment]
+
+### 13.6 Post-Deployment Testing (Production Validation)
+
+After Ubuntu deployment, production validation was performed to confirm that major workflows work in the hosted environment.
+
+**Checklist:**
+
+- Student, Instructor, Coordinator, Industry Partner, and Admin login verification.
+- Role-based module access verification.
+- End-to-end transaction test in production (submit -> review -> decision).
+- File upload/access verification.
+- Notification and announcement behavior verification.
+
+**Table 13.3 - Production Validation Log (sample format):**
+
+| Validation ID | Production Scenario | Result | Remarks |
+|---------------|---------------------|--------|---------|
+| P-01 | [Role login] | Pass/Fail | [Notes] |
+| P-02 | [End-to-end transaction] | Pass/Fail | [Notes] |
+| P-03 | [Deployment health check] | Pass/Fail | [Notes] |
+
+### 13.7 Appendix Demonstration Mapping (Pages 26-36)
+
+To address panel feedback, every process shown in Appendix pages 26-36 must have matching actual system evidence and discussion.
+
+**Table 13.4 - Appendix Evidence Mapping:**
+
+| Appendix Page | Process/Transaction | Screenshot Figure No. | Discussion Completed (Yes/No) |
+|---------------|---------------------|-----------------------|--------------------------------|
+| 26 | [Process] | [Figure 13.x] | Yes/No |
+| 27 | [Process] | [Figure 13.x] | Yes/No |
+| 28 | [Process] | [Figure 13.x] | Yes/No |
+| ... | ... | ... | ... |
+| 36 | [Process] | [Figure 13.x] | Yes/No |
+
+### 13.8 Screenshot and Table Discussion Standard
+
+For consistency and panel compliance, each screenshot and table in this manual should include:
+
+1. **Figure/Table number**
+2. **Clear title**
+3. **Purpose statement**
+4. **Discussion** (what happened, why it matters, expected outcome)
+5. **Result/Status** (if part of testing or validation)
+
+**Standard caption format:**
+
+- **Figure [No.] - [Title]**
+- **Purpose:** [Short purpose statement]
+- **Discussion:** [2-4 sentence explanation of action and system response]
 
 ---
 
