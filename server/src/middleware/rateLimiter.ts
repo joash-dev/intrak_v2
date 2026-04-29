@@ -1,16 +1,26 @@
 import rateLimit from 'express-rate-limit';
 
-// More lenient rate limiting for development
+const shouldSkipRateLimit = () =>
+  process.env.NODE_ENV === 'development' || process.env.DISABLE_RATE_LIMIT === 'true';
+
+// Global API limiter (kept fairly lenient for normal usage)
+export const apiRateLimiter = rateLimit({
+  windowMs: parseInt(process.env.API_RATE_LIMIT_WINDOW || '1', 10) * 60 * 1000, // 1 minute
+  max: parseInt(process.env.API_RATE_LIMIT_MAX || '300', 10), // 300 req/min per IP
+  message: 'Too many API requests from this IP, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => shouldSkipRateLimit(),
+});
+
+// More lenient auth limiter
 export const rateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || '1') * 60 * 1000, // 1 minute window
-  max: parseInt(process.env.RATE_LIMIT_MAX || '1000'), // 1000 requests per minute
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW || '1', 10) * 60 * 1000, // 1 minute window
+  max: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10), // 1000 requests per minute
   message: 'Too many requests from this IP, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting in development mode
-    return process.env.NODE_ENV === 'development';
-  }
+  skip: () => shouldSkipRateLimit(),
 });
 
 // Dynamic rate limiter for login attempts (uses database setting)
@@ -28,10 +38,7 @@ export const createLoginRateLimiter = async () => {
       message: `Too many login attempts. Maximum ${maxAttempts} attempts allowed per 15 minutes. Please try again later.`,
       standardHeaders: true,
       legacyHeaders: false,
-      skip: (req) => {
-        // Skip rate limiting in development mode
-        return process.env.NODE_ENV === 'development';
-      }
+      skip: () => shouldSkipRateLimit(),
     });
   } catch (error) {
     console.error('Error creating login rate limiter, using default:', error);
@@ -42,7 +49,7 @@ export const createLoginRateLimiter = async () => {
       message: 'Too many login attempts, please try again later',
       standardHeaders: true,
       legacyHeaders: false,
-      skip: (req) => process.env.NODE_ENV === 'development'
+      skip: () => shouldSkipRateLimit(),
     });
   }
 };
@@ -54,8 +61,15 @@ export const loginRateLimiter = rateLimit({
   message: 'Too many login attempts, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => {
-    // Skip rate limiting in development mode
-    return process.env.NODE_ENV === 'development';
-  }
+  skip: () => shouldSkipRateLimit(),
+});
+
+// QR verification limiter to reduce brute-force token guessing/spam scans
+export const qrVerifyRateLimiter = rateLimit({
+  windowMs: parseInt(process.env.QR_RATE_LIMIT_WINDOW || '1', 10) * 60 * 1000, // 1 minute
+  max: parseInt(process.env.QR_RATE_LIMIT_MAX || '20', 10), // 20 verify requests/min per IP
+  message: 'Too many QR verification attempts, please wait and try again',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => shouldSkipRateLimit(),
 });

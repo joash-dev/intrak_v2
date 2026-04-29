@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
-import { rateLimiter, loginRateLimiter } from './middleware/rateLimiter';
+import { apiRateLimiter, rateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthRequest } from './middleware/auth';
 import { checkMaintenanceMode } from './middleware/maintenance';
 import { validateNASConnection, syncLocalToNAS } from './config/nas';
@@ -108,6 +108,9 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Global API rate limiting
+app.use('/api', apiRateLimiter);
 
 // Rate limiting for auth routes (general protection, very lenient)
 // Note: Login now uses per-account lockout instead of IP-based rate limiting

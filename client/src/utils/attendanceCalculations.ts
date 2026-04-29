@@ -184,3 +184,164 @@ export function formatAttendanceTime(dateString: string | null): string {
     hour12: true,
   }).format(new Date(dateString));
 }
+
+/** Format minutes into "X hrs Y mins". */
+export function formatHoursMinutes(minutes: number): string {
+  const safeMinutes = Math.max(0, Math.floor(minutes || 0));
+  const hours = Math.floor(safeMinutes / 60);
+  const mins = safeMinutes % 60;
+  return `${hours} hrs ${mins} mins`;
+}
+
+/** Minutes from midnight in Asia/Manila (0–1439) for a given instant. */
+export function getManilaMinutesFromMidnight(iso: string | Date): number {
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Manila",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+  const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+  return h * 60 + m;
+}
+
+const MS_PER_MIN = 60000;
+
+function minutesBetweenIso(isoStart: string | null, isoEnd: string | null): number {
+  if (!isoStart || !isoEnd) return 0;
+  const t0 = new Date(isoStart).getTime();
+  const t1 = new Date(isoEnd).getTime();
+  if (Number.isNaN(t0) || Number.isNaN(t1) || t1 <= t0) return 0;
+  return Math.floor((t1 - t0) / MS_PER_MIN);
+}
+
+/**
+ * Column H — raw presence: (AM dep − AM arr) + (PM dep − PM arr), no clamping.
+ */
+export function computeActualHoursDayMinutes(
+  amArrival: string | null,
+  amDeparture: string | null,
+  pmArrival: string | null,
+  pmDeparture: string | null
+): number {
+  return (
+    minutesBetweenIso(amArrival, amDeparture) + minutesBetweenIso(pmArrival, pmDeparture)
+  );
+}
+
+/**
+ * Column I — minutes inside official windows only (Asia/Manila):
+ * AM 7:30–12:00, PM 13:00–18:00. Uses calendar-day windows anchored on `dateKey` (YYYY-MM-DD Manila).
+ */
+export function computeOfficialHoursDayMinutes(
+  amArrival: string | null,
+  amDeparture: string | null,
+  pmArrival: string | null,
+  pmDeparture: string | null,
+  dateKeyYyyyMmDd: string
+): number {
+  const morningStart = new Date(`${dateKeyYyyyMmDd}T07:30:00.000+08:00`);
+  const morningEnd = new Date(`${dateKeyYyyyMmDd}T12:00:00.000+08:00`);
+  const afternoonStart = new Date(`${dateKeyYyyyMmDd}T13:00:00.000+08:00`);
+  const afternoonEnd = new Date(`${dateKeyYyyyMmDd}T18:00:00.000+08:00`);
+
+  const overlapWithWindow = (
+    inIso: string | null,
+    outIso: string | null,
+    winStart: Date,
+    winEnd: Date
+  ): number => {
+    if (!inIso || !outIso) return 0;
+    const inMs = new Date(inIso).getTime();
+    const outMs = new Date(outIso).getTime();
+    if (Number.isNaN(inMs) || Number.isNaN(outMs) || outMs <= inMs) return 0;
+    const start = Math.max(inMs, winStart.getTime());
+    const end = Math.min(outMs, winEnd.getTime());
+    return end > start ? Math.floor((end - start) / MS_PER_MIN) : 0;
+  };
+
+  return (
+    overlapWithWindow(amArrival, amDeparture, morningStart, morningEnd) +
+    overlapWithWindow(pmArrival, pmDeparture, afternoonStart, afternoonEnd)
+  );
+}
+
+const ceil30Minutes = (m: number): number => Math.ceil(m / 30) * 30;
+const floor30Minutes = (m: number): number => Math.floor(m / 30) * 30;
+
+/**
+ * Column J — same windows as I, but arrival CEILING to 30 min, departure FLOOR to 30 min (Manila wall clock), then clamp.
+ */
+export function computeThirtyMinuteBlockDayMinutes(
+  amArrival: string | null,
+  amDeparture: string | null,
+  pmArrival: string | null,
+  pmDeparture: string | null,
+  _dateKeyYyyyMmDd: string
+): number {
+  const AM_START = 7 * 60 + 30;
+  const AM_END = 12 * 60;
+  const PM_START = 13 * 60;
+  const PM_END = 18 * 60;
+
+  const blockSession = (
+    arrivalIso: string | null,
+    departureIso: string | null,
+    winStartMin: number,
+    winEndMin: number
+  ): number => {
+    if (!arrivalIso || !departureIso) return 0;
+    const rIn = ceil30Minutes(getManilaMinutesFromMidnight(arrivalIso));
+    const rOut = floor30Minutes(getManilaMinutesFromMidnight(departureIso));
+    const start = Math.max(rIn, winStartMin);
+    const end = Math.min(rOut, winEndMin);
+    return Math.max(0, end - start);
+  };
+
+  return (
+    blockSession(amArrival, amDeparture, AM_START, AM_END) +
+    blockSession(pmArrival, pmDeparture, PM_START, PM_END)
+  );
+}
+
+/**
+ * Compute overlap in minutes between one attendance segment and official windows:
+ * 7:30–12:00 and 13:00–18:00 in Asia/Manila (same rules as spreadsheet column I, per segment).
+ */
+export function calculateOfficialMinutes(
+  timeIn: string | null,
+  timeOut: string | null
+): number {
+  if (!timeIn || !timeOut) return 0;
+
+  const inDate = new Date(timeIn);
+  const outDate = new Date(timeOut);
+  if (Number.isNaN(inDate.getTime()) || Number.isNaN(outDate.getTime()) || outDate <= inDate) {
+    return 0;
+  }
+
+  const yyyyMmDd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(inDate);
+
+  const morningStart = new Date(`${yyyyMmDd}T07:30:00.000+08:00`);
+  const morningEnd = new Date(`${yyyyMmDd}T12:00:00.000+08:00`);
+  const afternoonStart = new Date(`${yyyyMmDd}T13:00:00.000+08:00`);
+  const afternoonEnd = new Date(`${yyyyMmDd}T18:00:00.000+08:00`);
+
+  const overlapMinutes = (startA: Date, endA: Date, startB: Date, endB: Date): number => {
+    const start = Math.max(startA.getTime(), startB.getTime());
+    const end = Math.min(endA.getTime(), endB.getTime());
+    return end > start ? Math.floor((end - start) / 60000) : 0;
+  };
+
+  return (
+    overlapMinutes(inDate, outDate, morningStart, morningEnd) +
+    overlapMinutes(inDate, outDate, afternoonStart, afternoonEnd)
+  );
+}

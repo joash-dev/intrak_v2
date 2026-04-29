@@ -4,6 +4,7 @@ import { enable2FA, disable2FA, get2FAStatus, request2FACode, verify2FACode, reg
 import { body } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate } from '../middleware/auth';
+import { loginRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.post(
 
 router.post(
   '/login',
+  loginRateLimiter,
   [
     body('email').isEmail(),
     body('password').notEmpty(),

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
 import { guardStudentWriteByAuthenticatedUser } from '../middleware/studentLifecycleGuard';
+import { qrVerifyRateLimiter } from '../middleware/rateLimiter';
 import * as attendanceController from '../controllers/attendance.controller';
 import * as attendanceNoWorkController from '../controllers/attendanceNoWork.controller';
 
@@ -33,7 +34,12 @@ router.put(
 );
 router.get('/', attendanceController.getAttendance);
 router.get('/qr/:studentId', attendanceController.generateQR);
-router.post('/qr/verify', guardStudentWriteByAuthenticatedUser, attendanceController.verifyQR);
+router.post(
+  '/qr/verify',
+  qrVerifyRateLimiter,
+  guardStudentWriteByAuthenticatedUser,
+  attendanceController.verifyQR
+);
 router.put(
   '/:id/verify',
   authorize(['INDUSTRY_PARTNER', 'COORDINATOR']),

@@ -15,8 +15,6 @@ import { prisma } from '../config/database';
 import {
   getManilaDayRangeUtc,
   getManilaFixedTimeUtc,
-  getOfficialPairOnClose,
-  getOfficialTimeIn,
 } from '../utils/attendanceOfficialTime.util';
 
 // Resolve template path - works in both development and production
@@ -72,17 +70,6 @@ const getOrdinalSuffix = (num: number): string => {
 const MAX_SEGMENTS_PER_DAY = 2;
 const getDurationMinutes = (start: Date, end: Date): number =>
   Math.max(0, Math.floor((end.getTime() - start.getTime()) / 60000));
-const roundUpToNext30Minutes = (date: Date): Date => {
-  const rounded = new Date(date);
-  rounded.setSeconds(0, 0);
-  const minutes = rounded.getMinutes();
-  const remainder = minutes % 30;
-  if (remainder !== 0) {
-    rounded.setMinutes(minutes + (30 - remainder));
-  }
-  return rounded;
-};
-
 // Log Attendance (manual time-in/time-out)
 export const logAttendance = async (req: AuthRequest, res: Response) => {
   try {
@@ -123,16 +110,40 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
       // Use timeIn if provided, else fall back to date.
       const timeInDate = timeIn ? new Date(timeIn) : new Date(date);
       const { start, end, yyyyMmDd } = getManilaDayRangeUtc(timeInDate);
+      const noon = getManilaFixedTimeUtc(timeInDate, 12, 0);
 
-      const segmentsToday = await prisma.attendanceLog.count({
+      // Enforce "only one PM session if it's already afternoon and there was no AM session yet".
+      // This prevents users from creating 2 PM segments late in the day (which would look like 4 stamps).
+      const amSegments = await prisma.attendanceLog.count({
         where: {
           studentId,
           timeIn: {
             gte: start,
+            lt: noon,
+          },
+        },
+      });
+      const pmSegments = await prisma.attendanceLog.count({
+        where: {
+          studentId,
+          timeIn: {
+            gte: noon,
             lte: end,
           },
         },
       });
+      const segmentsToday = amSegments + pmSegments;
+
+      const isAfterNoon = timeInDate.getTime() >= noon.getTime();
+
+      if (isAfterNoon && amSegments === 0 && pmSegments >= 1) {
+        return res.status(400).json({
+          message: `You already have 1 afternoon attendance session for ${yyyyMmDd}. Additional time-in is not allowed.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: 1,
+        });
+      }
 
       if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
         return res.status(400).json({
@@ -160,13 +171,11 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
         const fivePm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 17, 0);
 
         if (openLog.timeIn && openLog.timeIn.getTime() < noon.getTime() && now.getTime() >= noon.getTime()) {
-          const pair = getOfficialPairOnClose(openLog.timeIn, noon);
           await prisma.attendanceLog.update({
             where: { id: openLog.id },
             data: {
-              timeIn: pair.officialIn,
-              timeOut: pair.officialOut,
-              durationMinutes: pair.durationMinutes,
+              timeOut: noon,
+              durationMinutes: getDurationMinutes(openLog.timeIn, noon),
             },
           });
         } else if (
@@ -174,13 +183,11 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
           openLog.timeIn.getTime() >= noon.getTime() &&
           now.getTime() >= fivePm.getTime()
         ) {
-          const pair = getOfficialPairOnClose(openLog.timeIn, fivePm);
           await prisma.attendanceLog.update({
             where: { id: openLog.id },
             data: {
-              timeIn: pair.officialIn,
-              timeOut: pair.officialOut,
-              durationMinutes: pair.durationMinutes,
+              timeOut: fivePm,
+              durationMinutes: getDurationMinutes(openLog.timeIn, fivePm),
             },
           });
         } else {
@@ -194,17 +201,16 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
       }
 
       const actualIn = new Date(timeIn);
-      const officialIn = getOfficialTimeIn(segmentsToday, actualIn);
       log = await prisma.attendanceLog.create({
         data: {
           studentId,
           date: new Date(date),
-          timeIn: officialIn,
+          timeIn: actualIn,
           verificationMethod: 'MANUAL'
         }
       });
 
-      await ensureStudentStartDate(studentId, officialIn);
+      await ensureStudentStartDate(studentId, actualIn);
     } else if (action === 'time-out') {
       // Close the most recent open segment for the given date (or any date if not provided)
       const existingLog = await prisma.attendanceLog.findFirst({
@@ -221,14 +227,13 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
 
       // Students must use server-detected time for time-out as well.
       const timeOutDate = isStudentSelfLog ? new Date() : new Date(timeOut);
-      const pair = getOfficialPairOnClose(existingLog.timeIn!, timeOutDate);
+      const renderedMinutes = getDurationMinutes(existingLog.timeIn!, timeOutDate);
 
       log = await prisma.attendanceLog.update({
         where: { id: existingLog.id },
         data: {
-          timeIn: pair.officialIn,
-          timeOut: pair.officialOut,
-          durationMinutes: pair.durationMinutes
+          timeOut: timeOutDate,
+          durationMinutes: renderedMinutes
         }
       });
 
@@ -236,7 +241,7 @@ export const logAttendance = async (req: AuthRequest, res: Response) => {
         where: { id: studentId },
         data: {
           completedHours: {
-            increment: Math.floor(pair.durationMinutes / 60)
+            increment: Math.floor(renderedMinutes / 60)
           }
         }
       });
@@ -393,7 +398,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     if (openLog) {
       const now = new Date();
       const noon = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 12, 0);
-      const fivePm = getManilaFixedTimeUtc(openLog.timeIn || openLog.date, 17, 0);
 
       // If they forgot to time-out in the morning session and it's already past noon,
       // close at exactly 12:00 PM and treat this scan as a new login (session 2).
@@ -413,25 +417,6 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         });
 
         // Continue to create a new log as "login" below.
-      } else if (
-        openLog.timeIn &&
-        openLog.timeIn.getTime() >= noon.getTime() &&
-        now.getTime() >= fivePm.getTime()
-      ) {
-        log = await prisma.attendanceLog.update({
-          where: { id: openLog.id },
-          data: {
-            timeOut: fivePm,
-            durationMinutes: getDurationMinutes(openLog.timeIn, fivePm),
-            verified: true,
-            verificationMethod: 'QR',
-            verificationMetadata: {
-              ...(openLog.verificationMetadata as any),
-              token,
-            }
-          }
-        });
-        action = 'logout';
       } else {
         log = await prisma.attendanceLog.update({
           where: { id: openLog.id },
@@ -451,14 +436,39 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     } else {
       // Enforce max segments/day (PHT) for new QR time-in.
       const now = new Date();
-      const roundedNow = roundUpToNext30Minutes(now);
       const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
-      const segmentsToday = await prisma.attendanceLog.count({
+      const noon = getManilaFixedTimeUtc(now, 12, 0);
+
+      const amSegments = await prisma.attendanceLog.count({
         where: {
           studentId: qrToken.studentId,
-          timeIn: { gte: start, lte: end },
+          timeIn: {
+            gte: start,
+            lt: noon,
+          },
         },
       });
+      const pmSegments = await prisma.attendanceLog.count({
+        where: {
+          studentId: qrToken.studentId,
+          timeIn: {
+            gte: noon,
+            lte: end,
+          },
+        },
+      });
+      const segmentsToday = amSegments + pmSegments;
+
+      const isAfterNoon = now.getTime() >= noon.getTime();
+      if (isAfterNoon && amSegments === 0 && pmSegments >= 1) {
+        return res.status(400).json({
+          message: `You already have 1 afternoon attendance session for ${yyyyMmDd}. Additional time-in is not allowed.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: 1,
+        });
+      }
+
       if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
         return res.status(400).json({
           message: `Daily attendance limit reached for ${yyyyMmDd}.`,
@@ -472,7 +482,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         data: {
           studentId: qrToken.studentId,
           date: new Date(),
-          timeIn: roundedNow,
+          timeIn: now,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {
@@ -486,14 +496,39 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
     // If we auto-closed the morning openLog at noon, we still need to create a new login now.
     if (!log && openLog) {
       const now = new Date();
-      const roundedNow = roundUpToNext30Minutes(now);
       const { start, end, yyyyMmDd } = getManilaDayRangeUtc(now);
-      const segmentsToday = await prisma.attendanceLog.count({
+      const noon = getManilaFixedTimeUtc(now, 12, 0);
+
+      const amSegments = await prisma.attendanceLog.count({
         where: {
           studentId: qrToken.studentId,
-          timeIn: { gte: start, lte: end },
+          timeIn: {
+            gte: start,
+            lt: noon,
+          },
         },
       });
+      const pmSegments = await prisma.attendanceLog.count({
+        where: {
+          studentId: qrToken.studentId,
+          timeIn: {
+            gte: noon,
+            lte: end,
+          },
+        },
+      });
+      const segmentsToday = amSegments + pmSegments;
+
+      const isAfterNoon = now.getTime() >= noon.getTime();
+      if (isAfterNoon && amSegments === 0 && pmSegments >= 1) {
+        return res.status(400).json({
+          message: `You already have 1 afternoon attendance session for ${yyyyMmDd}. Additional time-in is not allowed.`,
+          code: 'MAX_DAILY_SEGMENTS_REACHED',
+          date: yyyyMmDd,
+          maxSegments: 1,
+        });
+      }
+
       if (segmentsToday >= MAX_SEGMENTS_PER_DAY) {
         return res.status(400).json({
           message: `Daily attendance limit reached for ${yyyyMmDd}.`,
@@ -507,7 +542,7 @@ export const verifyQR = async (req: AuthRequest, res: Response) => {
         data: {
           studentId: qrToken.studentId,
           date: now,
-          timeIn: roundedNow,
+          timeIn: now,
           verified: true,
           verificationMethod: 'QR',
           verificationMetadata: {

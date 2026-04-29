@@ -23,7 +23,14 @@ import {
   type AttendanceNoWorkNotice,
   type AttendanceNoWorkReason,
 } from "../../services/attendanceService";
-import { roundToOfficialTime } from "../../utils/attendanceCalculations";
+import {
+  computeActualHoursDayMinutes,
+  computeOfficialHoursDayMinutes,
+  computeThirtyMinuteBlockDayMinutes,
+  formatAttendanceTime,
+  formatHoursMinutes,
+  roundToOfficialTime,
+} from "../../utils/attendanceCalculations";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 import Skeleton from "../../components/Skeleton";
@@ -600,6 +607,102 @@ const StudentAttendanceTab: React.FC = () => {
     month: "long",
     year: "numeric",
   });
+
+  const getManilaDateKey = (dateValue: string): string =>
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(dateValue));
+
+  const getManilaHour = (dateValue: string): number => {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Manila",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(dateValue));
+    return parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+  };
+
+  const dtrComputationRows = (() => {
+    const grouped = new Map<
+      string,
+      {
+        date: string;
+        amArrival: string | null;
+        amDeparture: string | null;
+        pmArrival: string | null;
+        pmDeparture: string | null;
+      }
+    >();
+
+    attendanceLogs.forEach((log) => {
+      const dateKey = getManilaDateKey(log.date);
+      const existing =
+        grouped.get(dateKey) ||
+        {
+          date: log.date,
+          amArrival: null,
+          amDeparture: null,
+          pmArrival: null,
+          pmDeparture: null,
+        };
+
+      const hasCompleteSegment = !!log.timeIn && !!log.timeOut;
+
+      if (hasCompleteSegment && log.timeIn && log.timeOut) {
+        const manilaHour = getManilaHour(log.timeIn);
+        const isAmSegment = manilaHour < 12;
+
+        if (isAmSegment) {
+          if (!existing.amArrival || new Date(log.timeIn) < new Date(existing.amArrival)) {
+            existing.amArrival = log.timeIn;
+          }
+          if (!existing.amDeparture || new Date(log.timeOut) > new Date(existing.amDeparture)) {
+            existing.amDeparture = log.timeOut;
+          }
+        } else {
+          if (!existing.pmArrival || new Date(log.timeIn) < new Date(existing.pmArrival)) {
+            existing.pmArrival = log.timeIn;
+          }
+          if (!existing.pmDeparture || new Date(log.timeOut) > new Date(existing.pmDeparture)) {
+            existing.pmDeparture = log.timeOut;
+          }
+        }
+      }
+
+      grouped.set(dateKey, existing);
+    });
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => new Date(a[1].date).getTime() - new Date(b[1].date).getTime())
+      .map(([dateKey, row]) => ({
+        dateKey,
+        ...row,
+        actualMinutes: computeActualHoursDayMinutes(
+          row.amArrival,
+          row.amDeparture,
+          row.pmArrival,
+          row.pmDeparture
+        ),
+        officialMinutes: computeOfficialHoursDayMinutes(
+          row.amArrival,
+          row.amDeparture,
+          row.pmArrival,
+          row.pmDeparture,
+          dateKey
+        ),
+        countBy30Minutes: computeThirtyMinuteBlockDayMinutes(
+          row.amArrival,
+          row.amDeparture,
+          row.pmArrival,
+          row.pmDeparture,
+          dateKey
+        ),
+      }));
+  })();
 
 
   if (loading) {
@@ -1183,72 +1286,65 @@ const StudentAttendanceTab: React.FC = () => {
 
       {/* List View */}
       {viewMode === "list" && (
-        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
-          <table className="w-full">
+        <div className="bg-white dark:bg-[#212124] rounded-xl shadow-sm overflow-x-auto border border-gray-100 dark:border-gray-700">
+          <table className="min-w-max w-full text-sm">
             <thead className="bg-gray-50 dark:bg-[#212124]">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                   Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Time In
+                  AM Arrival
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Time Out
+                  AM Departure
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Hours
+                  PM Arrival
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Method
+                  PM Departure
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                  Status
+                  Actual Hours
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  Only Official Hours
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                  Counts by 30 mins
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {attendanceLogs.map((log) => (
+              {dtrComputationRows.map((row) => (
                 <tr
-                  key={log.id}
+                  key={row.dateKey}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                    {attendanceService.formatDate(log.date)}
+                    {attendanceService.formatDate(row.date)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                    {attendanceService.formatTime(log.timeIn)}
+                    {formatAttendanceTime(row.amArrival)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                    {log.timeOut ? (
-                      attendanceService.formatTime(log.timeOut)
-                    ) : (
-                      <span className="text-blue-600">In progress</span>
-                    )}
+                    {formatAttendanceTime(row.amDeparture)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    {formatAttendanceTime(row.pmArrival)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                    {formatAttendanceTime(row.pmDeparture)}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                    {attendanceService.formatDuration(log.durationMinutes)}
+                    {formatHoursMinutes(row.actualMinutes)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                    {log.verificationMethod}
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                    {formatHoursMinutes(row.officialMinutes)}
                   </td>
-                  <td className="px-6 py-4">
-                    {log.verified ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Pending
-                      </span>
-                    )}
-                    {log.remarks && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {log.remarks}
-                      </p>
-                    )}
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                    {formatHoursMinutes(row.countBy30Minutes)}
                   </td>
                 </tr>
               ))}
