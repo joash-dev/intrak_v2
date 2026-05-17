@@ -1,7 +1,45 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { RateLimitRequestHandler } from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import { RequestHandler } from 'express';
+import { redisClient } from '../config/redis';
 
 const shouldSkipRateLimit = () =>
   process.env.NODE_ENV === 'development' || process.env.DISABLE_RATE_LIMIT === 'true';
+
+// Factory so each limiter gets its own RedisStore instance. The store uses
+// `sendCommand` (the only supported pattern in rate-limit-redis v4+) so it
+// works with the modern node-redis v4/v5 client.
+const createLoginRedisStore = (prefix: string) =>
+  new RedisStore({
+    sendCommand: (...args: string[]) => (redisClient as any).sendCommand(args),
+    prefix,
+  });
+
+// Returns the store to back a login limiter with.
+//
+// - In development, or if REDIS_URL is unset, returns `undefined` so
+//   express-rate-limit falls back to its built-in in-memory store. This
+//   lets developers run the API without a local Redis instance.
+// - In production with REDIS_URL configured, returns a RedisStore so
+//   limits are shared across processes and survive restarts.
+const getStore = (prefix: string): RedisStore | undefined => {
+  if (process.env.NODE_ENV === 'development' || !process.env.REDIS_URL) {
+    return undefined;
+  }
+  return createLoginRedisStore(prefix);
+};
+
+// `rate-limit-redis` calls SCRIPT LOAD inside its constructor, which would
+// run at module-load time (before connectRedis() in the server bootstrap)
+// and crash with "ClientClosedError". Defer building the limiter until the
+// first request, by which point Redis is connected.
+const lazyLimiter = (build: () => RateLimitRequestHandler): RequestHandler => {
+  let inner: RateLimitRequestHandler | null = null;
+  return (req, res, next) => {
+    if (!inner) inner = build();
+    return inner(req, res, next);
+  };
+};
 
 // Global API limiter (kept fairly lenient for normal usage)
 export const apiRateLimiter = rateLimit({
@@ -54,15 +92,37 @@ export const createLoginRateLimiter = async () => {
   }
 };
 
-// Default rate limiter (for immediate use, will be replaced by dynamic one)
-export const loginRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Default, will be overridden by dynamic limiter
-  message: 'Too many login attempts, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: () => shouldSkipRateLimit(),
-});
+// Per-IP login limiter — defends the network edge (one client / NAT egress).
+// Backed by Redis so limits survive process restarts and are shared across
+// horizontally-scaled server instances.
+export const loginIpLimiter = lazyLimiter(() =>
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: parseInt(process.env.LOGIN_IP_MAX ?? '20', 10),
+    message: 'Too many login attempts from this IP, please try again later',
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: (req) => req.ip ?? 'unknown',
+    store: getStore('login:ip:'),
+    skip: () => shouldSkipRateLimit(),
+  }),
+);
+
+// Per-account login limiter — defends a single account from credential
+// stuffing regardless of source IP. Skipped when no email is supplied so
+// validator middleware can return its own 422 instead of a 429.
+export const loginAccountLimiter = lazyLimiter(() =>
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: parseInt(process.env.LOGIN_ACCOUNT_MAX ?? '10', 10),
+    message: 'Too many login attempts for this account, please try again later',
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: (req) => `account:${String(req.body?.email ?? '').toLowerCase()}`,
+    store: getStore('login:account:'),
+    skip: (req) => !req.body?.email || shouldSkipRateLimit(),
+  }),
+);
 
 // QR verification limiter to reduce brute-force token guessing/spam scans
 export const qrVerifyRateLimiter = rateLimit({

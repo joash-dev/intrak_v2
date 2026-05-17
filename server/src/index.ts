@@ -15,6 +15,7 @@ import { FILE_UNAVAILABLE_TRY_AGAIN_MESSAGE } from './constants/storageMessages'
 import { startNASSyncJob } from './jobs/nasSync.job';
 import { startAttendanceAutoTimeoutJob } from './jobs/attendanceAutoTimeout.job';
 import { testDatabaseConnection, prisma } from './config/database';
+import { connectRedis } from './config/redis';
 
 // Routes
 import authRoutes from './routes/auth.routes';
@@ -333,6 +334,16 @@ if (process.env.NODE_ENV !== 'test') {
 
   const startServer = async () => {
     await initializeDatabase();
+
+    // Redis is required for distributed login rate limiting. If it can't be
+    // reached on startup we abort — refusing to listen is safer than starting
+    // with the brute-force protection silently disabled.
+    try {
+      await connectRedis();
+    } catch (error: any) {
+      console.error('[Redis] FATAL: cannot start server without Redis:', error?.message || error);
+      process.exit(1);
+    }
 
     const http = require('http');
     const { initializeSocketServer } = require('./socket');
