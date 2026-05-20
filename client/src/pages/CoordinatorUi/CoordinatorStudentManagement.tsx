@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Users,
   Search,
@@ -1564,111 +1565,107 @@ const PartnershipDocumentsSection: React.FC<{ studentId: string; studentName: st
         </div>
       )}
 
-      {/* Review Modal */}
-      {selectedDoc && approveModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style={{ margin: "0" }} onClick={() => {
-          setApproveModalOpen(false);
-          setRemarks("");
-        }}>
-          <div className="bg-white dark:bg-[#212124] rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Approve Document
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {getDocName(selectedDoc.type)}
-            </p>
-            <textarea
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              placeholder="Optional remarks..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#212124] text-gray-900 dark:text-white mb-4"
-              rows={4}
-            />
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={handleApprove}
-                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => {
-                  setApproveModalOpen(false);
-                  setRemarks("");
-                }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preview Modal */}
-      {selectedDoc && previewUrl && !approveModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-4" onClick={() => {
-          setSelectedDoc(null);
-          if (previewUrl) {
-            window.URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-          }
-        }}>
-          <div className="bg-white dark:bg-[#212124] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+      {/* Review Modal — portaled so it is not clipped inside parent overflow / modals */}
+      {selectedDoc &&
+        approveModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-50 p-4"
+            style={{ margin: 0 }}
+            onClick={() => {
+              setApproveModalOpen(false);
+              setRemarks("");
+            }}
+          >
+            <div className="w-full max-w-md rounded-xl bg-white p-6 dark:bg-[#212124]" onClick={(e) => e.stopPropagation()}>
+              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Approve Document</h3>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{getDocName(selectedDoc.type)}</p>
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Optional remarks..."
+                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-[#212124] dark:text-white"
+                rows={4}
+              />
               <div className="flex items-center space-x-3">
-                <FileText className="w-6 h-6 text-indigo-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedDoc.filename}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {getDocName(selectedDoc.type)}
-                  </p>
-                </div>
+                <button
+                  onClick={handleApprove}
+                  className="flex-1 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => {
+                    setApproveModalOpen(false);
+                    setRemarks("");
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setSelectedDoc(null);
-                  if (previewUrl) {
-                    window.URL.revokeObjectURL(previewUrl);
-                    setPreviewUrl(null);
-                  }
-                }}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
             </div>
-            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
-              {selectedDoc.mimeType === 'application/pdf' ? (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full"
-                  title={selectedDoc.filename}
-                />
-              ) : selectedDoc.mimeType?.startsWith('image/') ? (
-                <div className="flex items-center justify-center h-full p-4">
-                  <img
-                    src={previewUrl}
-                    alt={selectedDoc.filename}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Preview not available for this file type
-                    </p>
+          </div>,
+          document.body
+        )}
+
+      {/* Preview Modal — portaled + explicit height so PDF iframe gets a real viewport */}
+      {selectedDoc &&
+        previewUrl &&
+        !approveModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-75 p-3 sm:p-4"
+            style={{ margin: 0 }}
+            onClick={() => {
+              setSelectedDoc(null);
+              window.URL.revokeObjectURL(previewUrl);
+              setPreviewUrl(null);
+            }}
+          >
+            <div
+              className="flex h-[92vh] max-h-[95vh] w-full max-w-6xl min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#212124]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
+                <div className="flex min-w-0 items-center space-x-3">
+                  <FileText className="h-6 w-6 flex-shrink-0 text-indigo-600" />
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white">{selectedDoc.filename}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{getDocName(selectedDoc.type)}</p>
                   </div>
                 </div>
-              )}
+                <button
+                  onClick={() => {
+                    setSelectedDoc(null);
+                    window.URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                  }}
+                  className="flex-shrink-0 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900">
+                {selectedDoc.mimeType === "application/pdf" ? (
+                  <iframe src={previewUrl} className="h-full min-h-[50vh] w-full border-0" title={selectedDoc.filename} />
+                ) : selectedDoc.mimeType?.startsWith("image/") ? (
+                  <div className="flex h-full min-h-[50vh] items-center justify-center p-4">
+                    <img src={previewUrl} alt={selectedDoc.filename} className="max-h-full max-w-full object-contain" />
+                  </div>
+                ) : (
+                  <div className="flex h-full min-h-[50vh] items-center justify-center">
+                    <div className="text-center">
+                      <FileText className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                      <p className="text-gray-600 dark:text-gray-400">Preview not available for this file type</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
